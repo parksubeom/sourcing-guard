@@ -67,8 +67,15 @@ def _heuristic_fallback(text: str, url: str | None) -> ProductFacts:
     Deliberately dumb. It exists for wiring and tests, not for accuracy.
     """
     import re
+    import unicodedata
 
-    kc = re.findall(r"[A-Z]{2}\d{6,}|\bKC[- ]?\d{5,}", text.upper())
+    # 실제 형식은 설계서 예시대로 하이픈이 들어간다: 'JU071047-12002C',
+    # 'CB123A123-1234'. 하이픈 패턴을 먼저 두지 않으면 앞부분만 잘려 나가고,
+    # 잘린 번호는 조회에 실패해 멀쩡한 인증에 RED 가 뜬다.
+    kc = re.findall(
+        r"[A-Z]{2}[A-Z0-9]{4,}-[A-Z0-9]{3,}|[A-Z]{2}\d{6,}|\bKC[- ]?\d{5,}",
+        unicodedata.normalize("NFKC", text).upper(),
+    )
     m = re.search(r"(?:모델명|모델|型号|model)\s*[:：]?\s*([A-Za-z0-9][A-Za-z0-9\-_]{2,})", text, re.I)
     cat = ItemCategory.UNCLASSIFIED
     if any(w in text for w in ("완구", "장난감", "블록", "toy")):

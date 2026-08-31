@@ -13,6 +13,9 @@ from .models import Finding, FindingKind, ProductFacts, ScanResult, Signal, Item
 _PENALTY: dict[FindingKind, int] = {
     FindingKind.RECALL_MATCH: 100,
     FindingKind.KC_NOT_FOUND: 100,
+    FindingKind.KC_REVOKED: 100,
+    FindingKind.KC_SUSPENDED: 100,
+    FindingKind.KC_UNDER_ACTION: 40,
     FindingKind.KC_MISSING_BUT_REQUIRED: 45,
     FindingKind.HAZARD_RULE_APPLIES: 20,
     FindingKind.SUBSTANCE_MENTIONED: 25,
@@ -21,7 +24,14 @@ _PENALTY: dict[FindingKind, int] = {
     FindingKind.RECALL_CLEAR: 0,
 }
 
-_HARD_RED = {FindingKind.RECALL_MATCH, FindingKind.KC_NOT_FOUND}
+_HARD_RED = {
+    FindingKind.RECALL_MATCH,
+    FindingKind.KC_NOT_FOUND,
+    # 취소·표시사용금지 상태의 인증번호는 조회는 되지만 그 인증으로 판매 표시를
+    # 유지할 수 없다. 인증이 아예 없는 것과 실질이 같으므로 같은 무게로 다룬다.
+    FindingKind.KC_REVOKED,
+    FindingKind.KC_SUSPENDED,
+}
 
 _REGULATED = {
     ItemCategory.CHILDREN_TOY,
@@ -67,6 +77,7 @@ def _signal_for(facts: ProductFacts, kinds: set[FindingKind]) -> Signal:
         return Signal.UNKNOWN
 
     if kinds & {
+        FindingKind.KC_UNDER_ACTION,
         FindingKind.KC_MISSING_BUT_REQUIRED,
         FindingKind.SUBSTANCE_MENTIONED,
         FindingKind.HAZARD_RULE_APPLIES,

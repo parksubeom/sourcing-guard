@@ -56,6 +56,10 @@ class ProductFacts(BaseModel):
 class FindingKind(str, Enum):
     KC_NOT_FOUND = "kc_not_found"
     KC_VERIFIED = "kc_verified"
+    # 인증번호가 조회돼도 그 인증이 살아 있다는 뜻은 아니다 (설계서 p.5).
+    KC_REVOKED = "kc_revoked"            # 취소·효력상실·반납·기간만료
+    KC_SUSPENDED = "kc_suspended"        # 표시 사용금지
+    KC_UNDER_ACTION = "kc_under_action"  # 개선명령·청문실시
     KC_MISSING_BUT_REQUIRED = "kc_missing_but_required"
     RECALL_MATCH = "recall_match"
     RECALL_CLEAR = "recall_clear"

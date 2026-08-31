@@ -196,3 +196,117 @@ def test_invalid_ip_error_explains_the_fix():
 )
 def test_normalize_kc_collapses_variants(raw):
     assert normalize_kc(raw) == "CB123A123-1234"
+
+
+# ---------------------------------------------------------------------------
+# A: certState 분류 (설계서 p.5 / p.8)
+# ---------------------------------------------------------------------------
+from sourcing_guard.kats_client import (  # noqa: E402
+    CertState,
+    classify_cert_state,
+    split_list_field,
+)
+import yaml  # noqa: E402
+from pathlib import Path  # noqa: E402
+
+_CFG = yaml.safe_load(
+    (Path("sourcing_guard/data/kats_field_map.yaml")).read_text(encoding="utf-8")
+)
+_STATES = _CFG["cert_states"]
+
+
+def test_cert_states_cover_all_ten_spec_values():
+    """설계서 3.2.1 의 certState 열거값은 10가지다. 누락되면 UNKNOWN 으로 떨어진다."""
+    spec = {
+        "적합",
+        "안전인증취소",
+        "개선명령",
+        "안전인증표시 사용금지 2개월",
+        "안전인증표시 사용금지 4개월",
+        "안전확인신고 효력상실",
+        "안전확인신고표시 사용금지 2개월",
+        "반납",
+        "청문실시",
+        "기간만료",
+    }
+    mapped = {v for values in _STATES.values() for v in values}
+    assert mapped == spec, f"차이: {spec ^ mapped}"
+    assert len(mapped) == 10
+
+
+@pytest.mark.parametrize(
+    "raw,expected",
+    [
+        ("적합", CertState.OK),
+        ("안전인증취소", CertState.REVOKED),
+        ("안전확인신고 효력상실", CertState.REVOKED),
+        ("기간만료", CertState.REVOKED),
+        ("반납", CertState.REVOKED),
+        ("안전인증표시 사용금지 2개월", CertState.SUSPENDED),
+        ("안전인증표시 사용금지 4개월", CertState.SUSPENDED),
+        ("안전확인신고표시 사용금지 2개월", CertState.SUSPENDED),
+        ("개선명령", CertState.UNDER_ACTION),
+        ("청문실시", CertState.UNDER_ACTION),
+    ],
+)
+def test_classify_each_spec_state(raw, expected):
+    assert classify_cert_state(raw, _STATES) is expected
+
+
+@pytest.mark.parametrize("raw", [None, "", "적 합", "적합 ", "알수없는상태"])
+def test_unmapped_state_is_unknown_never_ok(raw):
+    """공백이 끼거나 표기가 다르면 '적합'으로 추측하지 않는다 (CLAUDE.md R3).
+
+    '적합 ' 처럼 뒤에 공백만 있는 경우는 strip 으로 살리고, 가운데 공백이 낀
+    '적 합' 은 다른 값으로 본다.
+    """
+    result = classify_cert_state(raw, _STATES)
+    if raw == "적합 ":
+        assert result is CertState.OK
+    else:
+        assert result is not CertState.OK
+
+
+# ---------------------------------------------------------------------------
+# B: 콤마 목록 분해 (설계서 p.11, p.14)
+# ---------------------------------------------------------------------------
+@pytest.mark.parametrize(
+    "raw,expected",
+    [
+        (None, []),
+        ("", []),
+        ("BLK-100", ["BLK-100"]),
+        ("A,B,C", ["A", "B", "C"]),
+        (" A , B ,, C ", ["A", "B", "C"]),
+        ("공급자적합성", ["공급자적합성"]),
+    ],
+)
+def test_split_list_field(raw, expected):
+    assert split_list_field(raw) == expected
+
+
+# ---------------------------------------------------------------------------
+# C: 국내/국외 필드 의미 차이 (설계서 p.14 vs p.17)
+# ---------------------------------------------------------------------------
+def test_domestic_and_overseas_action_guide_come_from_different_fields():
+    """accidentCaseDscr 은 국내에서 위해정보, 국외에서 소비자 행동요령이다.
+
+    같은 이름이므로 하드코딩하면 국외 리콜에 엉뚱한 문구가 표시된다.
+    """
+    dom = _CFG["operations"]["recall_domestic"]["fields"]
+    ovs = _CFG["operations"]["recall_overseas"]["fields"]
+
+    assert dom["action_guide"] == "publishActionDscr"
+    assert ovs["action_guide"] == "accidentCaseDscr"
+    assert dom["reason"] == "harmDscr"
+    assert ovs["reason"] == "violateDscr"
+    assert dom["action_guide"] != ovs["action_guide"]
+
+
+def test_mock_mode_surfaces_revoked_certificate():
+    """목 모드에도 취소된 인증이 있어야 이 경로가 개발 중에 실제로 걸린다."""
+    client = KatsClient(None, None, mock=True)
+    rec = client.lookup_certification("CB123A123-1234")
+    assert rec is not None
+    assert rec.state is CertState.REVOKED
+    assert rec.status == "안전인증취소"

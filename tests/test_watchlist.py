@@ -112,3 +112,36 @@ def test_alert_rejects_verdict_language():
                     matched_on="model_name", statement_ko="이 상품은 위법입니다",
                     source_label="국가기술표준원", source_url="https://www.safetykorea.kr/",
                     detected_at=TODAY)
+
+
+# --- B: 콤마로 묶인 목록 (설계서 p.11, p.14) ------------------------------
+def multi(models: str, **kw) -> RecallRecord:
+    from sourcing_guard.kats_client import split_list_field
+
+    return recall(model_name=models, models=split_list_field(models), **kw)
+
+
+def test_multi_model_recall_matches_a_middle_entry():
+    """'A,B,C' 리콜에서 B 를 감시 중인 셀러도 알림을 받아야 한다."""
+    r = multi("HKAK31101S-00,T3S-T-1-503,BLK-100")
+    m = match(item(model_name="T3S-T-1-503"), r)
+    assert m and m.strength is MatchStrength.EXACT
+
+
+def test_packed_string_alone_would_not_match():
+    """분해하지 않으면 놓친다는 것을 명시적으로 남긴다 (회귀 방지)."""
+    packed = "HKAK31101S-00,T3S-T-1-503"
+    assert normalize_model(packed) != normalize_model("T3S-T-1-503")
+    assert match(item(model_name="T3S-T-1-503"), multi(packed)) is not None
+
+
+def test_recall_cert_numbers_match_exactly():
+    r = multi("전혀다른모델", cert_numbers=["CB123A123-1234", "JU071047-12002C"])
+    m = match(item(kc_numbers=["인증번호: CB123A123-1234"]), r)
+    assert m and m.strength is MatchStrength.EXACT and m.matched_on == "kc_number"
+
+
+def test_fingerprint_uses_uid_when_present():
+    a = multi("BLK-100", uid="3802")
+    b = multi("BLK-100", uid="9999")
+    assert recall_fingerprint(a) != recall_fingerprint(b)

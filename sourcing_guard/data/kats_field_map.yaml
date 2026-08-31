@@ -14,11 +14,11 @@
 #   - 결과코드: 2000 성공 / 2004 No Data / 4000 Invalid Auth Key / 4001 Invalid IP /
 #     4005 Invalid Parameter / 5000 Internal Server Error (p.19).
 #
-# 아직 반영하지 않은 것 (별도 작업으로 진행):
-#   - certState 는 존재가 아니라 유효성이다. 8가지 상태값이 있고 '적합'만 유효하다.
-#     조회됐다고 초록불을 주면 안 된다 (p.5, p.8).
-#   - recallModelName 과 certNum 은 콤마로 묶인 목록이다. 통짜 비교하면 다중 모델
-#     리콜을 놓친다 (p.11, p.14).
+# 반영 완료:
+#   - certState 는 존재가 아니라 유효성이다. 상태값 10가지 중 '적합'만 유효하다.
+#     아래 cert_states 참조 (p.5, p.8).
+#   - recallModelName 과 certNum 은 콤마로 묶인 목록이다 (p.11, p.14).
+#     kats_client.split_list_field() 가 분해한다.
 #   - 국내/국외에서 accidentCaseDscr 의 뜻이 다르다. 국내=위해정보(p.14),
 #     국외=소비자 행동요령(p.17). 같은 이름이지만 다른 필드다.
 
@@ -52,8 +52,15 @@ operations:
       product_name: "productName"
       model_name: "modelName"
       maker: "makerName"
-      status: "certState"        # 존재가 아니라 유효성. 8가지 상태값
+      status: "certState"        # 존재가 아니라 유효성. cert_states 참조
       detail_url: ""             # 응답에 없다. kats_client 가 searchPop URL 을 만든다
+      brand_name: "brandName"
+      category_name: "categoryName"
+      maker_country: "makerCntryName"
+      importer: "importerName"
+      import_div: "importDiv"
+      cert_div: "certDiv"        # 전안법/어린이법의 안전인증·안전확인 대상 구분
+      cert_date: "certDate"
 
   # p.9 — 국내리콜정보 조회
   recall_domestic:
@@ -79,6 +86,11 @@ operations:
       reason: "harmDscr"              # 제품 결함
       announced_on: "publishDate"     # yyyyMMdd
       detail_url: ""                  # 응답에 없다. recallUid 로 상세 조회 가능
+      cert_numbers: "certNum"         # 콤마 구분 목록
+      brand_name: "recallBrandName"
+      recall_type: "recallTypeName"
+      action_guide: "publishActionDscr"  # 국내: 소비자 행동요령 (p.14)
+      uid: "recallUid"
 
   # p.15 — 국외리콜정보 조회
   recall_overseas:
@@ -103,6 +115,29 @@ operations:
       reason: "violateDscr"           # 위해내용. 국내의 harmDscr 과 이름이 다르다
       announced_on: "publishDate"
       detail_url: "recallUrl"         # 국외는 원문 URL 이 응답에 있다
+      brand_name: "recallBrandName"
+      recall_type: "recallTypeName"
+      # ⚠ 국외에서는 accidentCaseDscr 가 소비자 행동요령이다 (p.17).
+      #   국내(p.14)에서는 같은 이름이 위해정보다. 섞으면 엉뚱한 문구가 나간다.
+      action_guide: "accidentCaseDscr"
+      uid: "fRecallUid"
+
+# p.5 / p.8 — certState 열거값과 신호등 매핑.
+#
+# 조회 성공은 유효성이 아니다. 취소·효력상실·사용금지 상태의 인증번호는 조회는
+# 되지만 그 인증으로 판매 표시를 유지할 수 없으므로, 인증이 아예 없는 것과
+# 실질이 같다. 따라서 RED 다.
+#
+# 문자열은 설계서 표기 그대로여야 한다. 한 글자만 달라도 classify_cert_state()
+# 가 조용히 UNKNOWN 으로 떨어지고, 취소된 인증이 RED 가 아니게 된다.
+cert_states:
+  ok: ["적합"]
+  revoked: ["안전인증취소", "안전확인신고 효력상실", "반납", "기간만료"]
+  suspended:
+    - "안전인증표시 사용금지 2개월"
+    - "안전인증표시 사용금지 4개월"
+    - "안전확인신고표시 사용금지 2개월"
+  under_action: ["개선명령", "청문실시"]
 
 # p.18 — URL 링크. 인증키가 필요 없어서 근거 링크(R2)로 쓴다.
 public_urls:

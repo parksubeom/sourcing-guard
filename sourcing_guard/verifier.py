@@ -11,10 +11,34 @@ from pathlib import Path
 
 import yaml
 
-from .kats_client import KatsClient
+from .kats_client import CertState, KatsClient
 from .models import Finding, FindingKind, ItemCategory, ProductFacts, Signal
 
 _RULES_PATH = Path(__file__).parent / "data" / "hazard_rules.yaml"
+
+# certState -> (FindingKind, Signal, 셀러에게 덧붙일 말)
+#
+# 어느 상태를 RED 로 볼지는 제품 판단이다. 코드 정합성만으로 바꾸지 말 것
+# (00_프로젝트_핸드오프.md §3.1).
+_CERT_STATE_FINDING: dict[CertState, tuple[FindingKind, Signal, str]] = {
+    CertState.OK: (FindingKind.KC_VERIFIED, Signal.GREEN, ""),
+    CertState.REVOKED: (
+        FindingKind.KC_REVOKED, Signal.RED,
+        "이 인증번호로는 판매 표시를 유지할 수 없습니다. 공급처에 유효한 인증을 요청하세요.",
+    ),
+    CertState.SUSPENDED: (
+        FindingKind.KC_SUSPENDED, Signal.RED,
+        "현재 인증표시 사용이 제한된 상태입니다. 원문에서 제한 기간을 확인하세요.",
+    ),
+    CertState.UNDER_ACTION: (
+        FindingKind.KC_UNDER_ACTION, Signal.AMBER,
+        "행정 조치가 진행 중인 인증입니다. 원문에서 진행 상황을 확인하세요.",
+    ),
+    CertState.UNKNOWN: (
+        FindingKind.KC_UNDER_ACTION, Signal.AMBER,
+        "인증상태를 해석하지 못했습니다. 원문에서 직접 확인해 주세요.",
+    ),
+}
 
 _CERT_REQUIRED = {
     ItemCategory.CHILDREN_TOY,
@@ -94,17 +118,33 @@ def verify(facts: ProductFacts, kats: KatsClient, rules: RuleBook) -> list[Findi
                     )
                 )
             else:
+                # 조회 성공 != 유효한 인증. certState 를 보고 갈라야 한다.
+                kind, signal, advice = _CERT_STATE_FINDING[rec.state]
+                if kind is FindingKind.KC_VERIFIED:
+                    statement = (
+                        f"인증번호 '{rec.cert_number}' 이(가) 조회되었습니다"
+                        f"(인증상태: {rec.status}). 등록 제품명: {rec.product_name or '-'}"
+                    )
+                else:
+                    statement = (
+                        f"인증번호 '{rec.cert_number}' 의 인증상태가 "
+                        f"'{rec.status or '미표기'}' 로 조회되었습니다. {advice}"
+                    )
                 findings.append(
                     Finding(
-                        kind=FindingKind.KC_VERIFIED,
-                        signal=Signal.GREEN,
-                        statement_ko=(
-                            f"인증번호 '{rec.cert_number}' 이(가) 조회되었습니다. "
-                            f"등록 제품명: {rec.product_name or '-'}"
-                        ),
+                        kind=kind,
+                        signal=signal,
+                        statement_ko=statement,
                         source_label="국가기술표준원 안전인증정보 조회",
                         source_url=rec.detail_url or "https://www.safetykorea.kr/release/certDetail",
-                        detail={"maker": rec.maker, "status": rec.status},
+                        detail={
+                            "maker": rec.maker,
+                            "maker_country": rec.maker_country,
+                            "cert_state": rec.status,
+                            "cert_div": rec.cert_div,
+                            "registered_model": rec.model_name,
+                            "registered_product": rec.product_name,
+                        },
                         checked_at=today,
                     )
                 )
@@ -125,7 +165,9 @@ def verify(facts: ProductFacts, kats: KatsClient, rules: RuleBook) -> list[Findi
 
     # --- (b) recall matching --------------------------------------------
     recalls = kats.search_recalls(
-        product_name=facts.product_name, model_name=facts.model_name
+        product_name=facts.product_name,
+        model_name=facts.model_name,
+        cert_number=facts.kc_numbers[0] if facts.kc_numbers else None,
     )
     if recalls:
         for r in recalls:
