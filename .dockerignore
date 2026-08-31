@@ -1,0 +1,22 @@
+.git/
+.github/
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+tests/
+docs/
+reference/
+
+# 시크릿은 이미지에 절대 들어가지 않는다. fly secrets 로 주입한다.
+.env
+
+# 런타임 DB. 볼륨에서 온다.
+data/
+*.db
+*.db-wal
+*.db-shm
+
+*.md
+!README.md

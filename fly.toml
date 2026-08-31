@@ -1,0 +1,53 @@
+# Fly.io 배포 설정 — 안심 소싱 돋보기
+#
+# 앱 이름은 `fly launch` 가 생성한 값으로 바꿔야 한다. 아래는 자리표시자다.
+app = "sourcing-guard"
+primary_region = "nrt"          # 도쿄. 서울(icn)은 지역에 따라 미제공일 수 있다.
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  # 인증키가 없는 동안에는 목 모드로 뜬다. 키를 넣으면 실연동으로 바뀐다.
+  MOCK_MODE = "true"
+  # ⚠ 반드시 영구 볼륨 경로. 컨테이너 기본 파일시스템에 두면 재배포마다
+  #   워치리스트가 사라지고, "리콜 공표되면 가장 먼저 알린다"는 이 서비스의
+  #   유일한 약속이 조용히 깨진다 (기획서 §6.1).
+  WATCHLIST_DB_PATH = "/data/watchlist.db"
+  # 리콜 로컬 동기화 DB 도 같은 볼륨을 쓴다 (D 작업에서 사용).
+  RECALL_DB_PATH = "/data/recalls.db"
+
+# 영구 볼륨. 워치리스트 + 리콜 동기화 DB 양쪽이 여기 들어간다.
+# 생성: fly volumes create sg_data --region nrt --size 3
+[[mounts]]
+  source = "sg_data"
+  destination = "/data"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+
+  # ⚠ 슬립 금지. 9/20~10/7 투표 기간 18일간 무중단이어야 하고, 깨어나는 데
+  #   30초~1분 걸리면 투표자가 그냥 닫는다 (기획서 §8: 캐시 히트 3초 이내).
+  auto_stop_machines = false
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [http_service.concurrency]
+    type = "requests"
+    soft_limit = 40
+    hard_limit = 60
+
+  # /healthz 는 목 모드 여부·규칙 개수와 함께 watched_items 를 돌려주는데,
+  # 이 값을 세려면 SQLite 를 실제로 읽어야 한다. 즉 볼륨이 안 붙었으면
+  # 헬스체크가 실패한다 — 배포 사고를 조용히 넘기지 않는다.
+  [[http_service.checks]]
+    grace_period = "10s"
+    interval = "30s"
+    method = "GET"
+    path = "/healthz"
+    timeout = "5s"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"
