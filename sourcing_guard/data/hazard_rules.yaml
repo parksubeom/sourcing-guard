@@ -1,0 +1,43 @@
+# 자체 구축 유해물질 규칙 DB
+#
+# 이 파일이 프로젝트의 핵심 자산입니다. 유해물질 기준치를 제공하는 공공 API 는
+# 존재하지 않으며, 국가기술표준원 고시·부속서(HWP/PDF)를 파싱해 구조화한 것입니다.
+#
+# 규정 (CLAUDE.md §5):
+#   - status: draft  → LLM 이 문서에서 뽑은 초안. 스코어링에서 제외됨.
+#   - status: verified → 사람이 원문 대조를 마침. 이때만 프로덕션 반영.
+#   - limit_value 와 legal_basis 는 원문 표기 그대로. 단위 환산은 코드에서.
+
+meta:
+  schema_version: 1
+  note: "draft 룰은 scorer 에 반영되지 않습니다."
+
+rules:
+  - id: PB-CHILD-001
+    substance: "납"
+    aliases: ["Pb", "lead", "铅"]
+    applies_to: [children_toy, children_stationery]
+    limit_value: 300
+    unit: "mg/kg"
+    legal_basis: "안전확인대상 어린이제품(완구, 학용품) 안전기준 부속서"
+    source_url: "https://www.safetykorea.kr/policy/targetsSafetyCheck3"
+    status: draft          # TODO: 부속서 원문 대조 후 verified 로 승격
+    verified_by: null
+    verified_at: null
+
+  - id: PHT-CHILD-001
+    substance: "프탈레이트계 가소제"
+    aliases: ["phthalate", "DEHP", "DBP", "BBP", "DINP", "DIDP", "DnOP", "邻苯二甲酸酯"]
+    applies_to: [children_toy, children_stationery]
+    limit_value: null      # 물질별 상이. 원문 확인 전까지 수치 미기재.
+    unit: null
+    legal_basis: "어린이제품 공통 유해물질 안전기준 / 완구·학용품 안전기준 부속서"
+    source_url: "https://law.go.kr/행정규칙/어린이제품공통안전기준"
+    status: draft
+    verified_by: null
+    verified_at: null
+    note: "DnOP·DINP·DIDP 는 유아가 입에 넣도록 의도된 완구에 한정 적용된 이력이 있어 적용범위 확인 필요."
+
+# 커버리지 선언: 여기에 없는 품목군은 COVERAGE_GAP 으로 처리되어 UNKNOWN 이 됩니다.
+coverage:
+  categories: [children_toy, children_stationery, children_textile]
