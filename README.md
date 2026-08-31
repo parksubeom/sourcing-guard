@@ -2,8 +2,12 @@
 
 **안심 소싱 돋보기** — 이커머스 셀러용 KC 인증·리콜 리스크 스크리너
 
-> 처음 이 저장소를 여는 사람(또는 에이전트)은 `00_프로젝트_핸드오프.md` 부터 읽으세요.
-> 결정 사항과 그 이유, 검증된 API 사실, 남은 일정이 전부 거기 있습니다.
+**배포**: https://sourcing-guard.fly.dev (목 모드 가동 중)
+
+> **이어서 작업하는 사람은 `docs/작업로그_2026-09-01.md` 부터 읽으세요.**
+> 지금 상태와 바로 착수할 일이 거기 있습니다.
+>
+> 결정 사항과 그 이유, 검증된 API 사실, 남은 일정은 `00_프로젝트_핸드오프.md` 에 있습니다.
 
 ---
 
@@ -16,7 +20,7 @@
 python -m venv .venv && source .venv/Scripts/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 cp .env.example .env          # MOCK_MODE=true 로 키 없이 구동됩니다
-pytest -q                     # 57 passed
+pytest -q                     # 100 passed
 uvicorn sourcing_guard.main:app --reload
 curl -s localhost:8000/healthz
 ```
@@ -44,7 +48,7 @@ curl -s localhost:8000/healthz
 
 **GREEN은 두 축의 적극적 증거가 모두 있어야 나옵니다.** 침묵은 증거가 아닙니다. finding이 하나도 없으면 GREEN이 아니라 UNKNOWN입니다.
 
-**선언된 커버리지만으로는 부족합니다.** `hazard_rules.yaml`의 `coverage`에 품목군이 적혀 있어도, 그 품목군에 `verified` 룰이 하나도 없으면 커버되지 않은 것으로 처리됩니다. 그래서 지금 상태(2건 전부 draft)에서는 완구조차 UNKNOWN이 나옵니다. 의도된 동작입니다.
+**선언된 커버리지만으로는 부족합니다.** `hazard_rules.yaml`의 `coverage`에 품목군이 적혀 있어도, 그 품목군에 `verified` 룰이 하나도 없으면 커버되지 않은 것으로 처리됩니다. 그래서 지금 상태(17건 전부 draft)에서는 완구조차 UNKNOWN이 나옵니다. 의도된 동작입니다. 승격 절차는 `docs/규칙DB_검수목록.md` 참조.
 
 **워치리스트만 오류 비대칭이 반대입니다.** 스캔은 모르면 UNKNOWN으로 물러서지만, 리콜 알림은 놓치는 쪽이 훨씬 비쌉니다. 그래서 약한 매칭도 버리지 않고 `MatchStrength`(정확/유사/약한 일치)를 붙여 내보냅니다. 다만 3자 미만 모델명("A1")은 우연 충돌이 심해 아예 매칭하지 않습니다.
 
@@ -53,29 +57,31 @@ curl -s localhost:8000/healthz
 현재 목 모드 동작:
 
 ```
-[인증 조회됨]   → UNKNOWN  (규칙 DB 미검증 상태이므로 정직하게 모름)
-[인증 미조회]   → RED
+[인증 적합]     → UNKNOWN  (규칙 DB 미검증 상태이므로 정직하게 모름)
+[인증 취소]     → RED
+[표시 사용금지] → RED
+[인증 미조회]   → AMBER    (SCoC 대상은 조회 DB에 없는 게 정상. CLAUDE.md R3-b)
 [리콜 일치]     → RED
 [품목 미분류]   → UNKNOWN
 ```
+
+**RED는 정부 DB가 문제를 적어둔 경우에만 줍니다. 부재는 증거가 아닙니다** (R3-b).
 
 ## 미구현 / 알려진 불일치
 
 - **실응답 검증만 남았습니다.** 경로·파라미터·필드명은 설계서 v2.0 원문 대조로
   전부 채웠습니다(`kats_field_map.yaml`, 항목마다 원문 페이지 주석). 인증키가 오면
   `scripts/probe_kats_schema.py` 로 실제 응답과 한 번 대조하면 됩니다.
-- **아직 반영하지 않은 설계서 사항 3건** — 별도 작업으로 진행합니다.
-  `certState` 유효성 판정(8가지 상태값 중 '적합'만 유효), `recallModelName`·`certNum`의
-  콤마 목록 분해, 국내/국외 `accidentCaseDscr` 의미 차이.
-- 프론트엔드, 리콜 로컬 동기화 DB, Extractor 실제 프롬프트와 골든셋, 알림 발송(v1 범위 밖).
+- 프론트엔드(0%), 리콜 로컬 동기화 스케줄러(`kats_client.recalls_published_on()` 이
+  준비됨), Extractor 실제 프롬프트와 골든셋, 알림 발송(v1 범위 밖).
 - **배포 시 `WATCHLIST_DB_PATH` 를 영구 볼륨으로 지정해야 합니다.** 컨테이너 기본
   파일시스템에 두면 재배포마다 워치리스트가 사라져, 이 서비스가 유일하게 보증하는
   알림 약속이 조용히 깨집니다 (기획서 §6.1).
 
 ## 다음에 할 일
 
-순서와 근거는 `00_프로젝트_핸드오프.md` §10 을 따릅니다. 요약하면:
-**규칙 DB 검수** → 배포 → 프론트엔드. (매핑은 설계서 대조로 확정됐고, 인증키가 오면
-실응답 대조 한 번만 하면 됩니다.)
+**`docs/작업로그_2026-09-01.md` §2 를 보세요.** 바로 착수할 것은 **규칙 DB 검수**입니다.
 
+배포는 끝났고(https://sourcing-guard.fly.dev), 매핑도 설계서 대조로 확정됐습니다.
 규칙 DB 검수가 D4~D7 구간 전체를 쓰는 진짜 작업이고, 프로젝트의 유일한 진입장벽입니다.
+지금 `active_rules: 0` 이라 신호등이 갈라지지 않습니다.
