@@ -1,74 +1,119 @@
 # SafetyKorea Open API 필드 매핑
 #
-# 근거: 「Open API 인터페이스 설계서 v2.0」(2025-06-30, 국가기술표준원). 원문 대조 완료.
+# 근거: 「Open API 인터페이스 설계서 v2.0」(2025-06-30, 국가기술표준원).
+# 아래 값은 전부 설계서 원문에서 확인한 것이다. 추측으로 채운 값은 없다 (CLAUDE.md R5).
+# 각 항목에 원문 페이지를 주석으로 남긴다.
 #
-# 설계서에서 확인된 사실 (핸드오프 §4):
-#   - 인증은 HTTP 헤더 `AuthKey`. 쿼리 파라미터가 아니고 대소문자를 구분한다.
-#     → 그래서 이 파일에 service_key 파라미터명이 없다. kats_client 가 헤더로 보낸다.
-#   - IP 제한이 있다. 등록되지 않은 IP 는 결과코드 4001 Invalid IP.
-#   - 평문 HTTP. 브라우저에서 직접 호출 불가(mixed content). 반드시 백엔드 경유.
-#   - 목록 조회는 최대 1,000줄이고 페이징 파라미터가 없다.
+# 설계서에서 확인된 사실:
+#   - 인증은 HTTP 헤더 `AuthKey`, 대소문자 구분 (p.2). 쿼리 파라미터가 아니므로
+#     이 파일에 service_key 항목이 없다. kats_client 가 헤더로 보낸다.
+#   - 응답 포맷은 URL 확장자로 정한다 (`.json` / `.xml`). type 파라미터가 아니다 (p.2).
+#   - 모든 조회목록은 최대 1,000줄. 페이지 크기/번호 파라미터가 없다 (p.2).
 #     대량 수집은 conditionKey=publishDate 로 날짜를 잘라서 한다.
+#   - 평문 HTTP. HTTPS 페이지에서 브라우저가 직접 호출 불가(mixed content) → 백엔드 경유.
+#   - 결과코드: 2000 성공 / 2004 No Data / 4000 Invalid Auth Key / 4001 Invalid IP /
+#     4005 Invalid Parameter / 5000 Internal Server Error (p.19).
+#
+# 아직 반영하지 않은 것 (별도 작업으로 진행):
+#   - certState 는 존재가 아니라 유효성이다. 8가지 상태값이 있고 '적합'만 유효하다.
+#     조회됐다고 초록불을 주면 안 된다 (p.5, p.8).
 #   - recallModelName 과 certNum 은 콤마로 묶인 목록이다. 통짜 비교하면 다중 모델
-#     리콜을 전부 놓친다.
-#   - certState 는 존재가 아니라 유효성이다. 조회됐다고 초록불을 주면 안 된다.
-#
-# ⚠ 아래 경로·필드명은 아직 미검증입니다 (CLAUDE.md R5).
-# 인증키 수령 후 다음 절차로 채웁니다.
-#
-#   1) python scripts/probe_kats_schema.py --base-url <설계서의 호스트> --path <경로>
-#      → 실제 응답 구조와 필드 후보를 출력합니다
-#   2) 출력된 후보를 설계서와 대조해 TODO 를 교체하고 verified 를 true 로
-#
-# 값을 추측해서 채우지 마세요. 채우기 전까지는 MOCK_MODE 로 개발합니다.
+#     리콜을 놓친다 (p.11, p.14).
+#   - 국내/국외에서 accidentCaseDscr 의 뜻이 다르다. 국내=위해정보(p.14),
+#     국외=소비자 행동요령(p.17). 같은 이름이지만 다른 필드다.
 
-verified: false
+verified: true
+verified_source: "Open API 인터페이스 설계서 v2.0 (2025-06-30)"
+verified_at: "2026-08-31"
+verified_note: "설계서 원문 대조 완료. 실응답 검증은 인증키 수령 후."
+
+# 공통. 확장자가 응답 포맷을 정하므로 경로에 .json 이 포함되어 있다.
+base_url: "http://www.safetykorea.kr/openapi/api"
 
 operations:
+  # p.3 — KC인증정보 조회
   certification:
-    path: "TODO(unverified)"
-    rows_path: ["response", "body", "items", "item"]   # TODO(unverified)
+    path: "cert/certificationList.json"
+    rows_path: ["resultData"]
     params:
-      query: "TODO(unverified)"     # 인증번호 검색 파라미터명
+      condition_key: "conditionKey"
+      query: "conditionValue"
+    # conditionKey 로 검색 대상을 고른다 (p.3):
+    #   all / certNum / productName / modelName / certDate / signDate
+    condition_keys:
+      all: "all"
+      cert_number: "certNum"
+      product_name: "productName"
+      model_name: "modelName"
     defaults:
-      type: "json"
-      numOfRows: "10"
-    fields:
-      cert_number: "TODO(unverified)"
-      product_name: "TODO(unverified)"
-      model_name: "TODO(unverified)"
-      maker: "TODO(unverified)"
-      status: "TODO(unverified)"
-      detail_url: ""
+      conditionKey: "certNum"
+    fields:                      # p.5 응답 메시지 명세
+      cert_number: "certNum"
+      product_name: "productName"
+      model_name: "modelName"
+      maker: "makerName"
+      status: "certState"        # 존재가 아니라 유효성. 8가지 상태값
+      detail_url: ""             # 응답에 없다. kats_client 가 searchPop URL 을 만든다
 
+  # p.9 — 국내리콜정보 조회
   recall_domestic:
-    path: "TODO(unverified)"
-    rows_path: ["response", "body", "items", "item"]
+    path: "recall/recallList.json"
+    rows_path: ["resultData"]
     params:
-      query: "TODO(unverified)"
+      condition_key: "conditionKey"
+      query: "conditionValue"
+    # p.9: all / barcodeNum / recallProductName / recallBrandName /
+    #      recallModelName / certNum / publishDate
+    condition_keys:
+      all: "all"
+      product_name: "recallProductName"
+      model_name: "recallModelName"
+      cert_number: "certNum"
+      published_on: "publishDate"
     defaults:
-      type: "json"
-      numOfRows: "50"
-    fields:
-      product_name: "TODO(unverified)"
-      model_name: "TODO(unverified)"
-      maker: "TODO(unverified)"
-      reason: "TODO(unverified)"
-      announced_on: "TODO(unverified)"
-      detail_url: ""
+      conditionKey: "recallModelName"
+    fields:                      # p.11, p.14 응답 메시지 명세
+      product_name: "recallProductName"
+      model_name: "recallModelName"   # 콤마 구분 목록
+      maker: "makerName"
+      reason: "harmDscr"              # 제품 결함
+      announced_on: "publishDate"     # yyyyMMdd
+      detail_url: ""                  # 응답에 없다. recallUid 로 상세 조회 가능
 
+  # p.15 — 국외리콜정보 조회
   recall_overseas:
-    path: "TODO(unverified)"
-    rows_path: ["response", "body", "items", "item"]
+    path: "recall/fRecallList.json"
+    rows_path: ["resultData"]
     params:
-      query: "TODO(unverified)"
+      condition_key: "conditionKey"
+      query: "conditionValue"
+    # p.15: all / recallProductName / recallBrandName / recallModelName /
+    #       publishDate / fRecallUid
+    condition_keys:
+      all: "all"
+      product_name: "recallProductName"
+      model_name: "recallModelName"
+      published_on: "publishDate"
     defaults:
-      type: "json"
-      numOfRows: "50"
-    fields:
-      product_name: "TODO(unverified)"
-      model_name: "TODO(unverified)"
-      maker: "TODO(unverified)"
-      reason: "TODO(unverified)"
-      announced_on: "TODO(unverified)"
-      detail_url: ""
+      conditionKey: "recallModelName"
+    fields:                      # p.17 응답 메시지 명세
+      product_name: "recallProductName"
+      model_name: "recallModelName"
+      maker: "makerName"
+      reason: "violateDscr"           # 위해내용. 국내의 harmDscr 과 이름이 다르다
+      announced_on: "publishDate"
+      detail_url: "recallUrl"         # 국외는 원문 URL 이 응답에 있다
+
+# p.18 — URL 링크. 인증키가 필요 없어서 근거 링크(R2)로 쓴다.
+public_urls:
+  cert_search: "http://www.safetykorea.kr/release/certificationsearch"
+  cert_detail: "http://www.safetykorea.kr/search/searchPop?certNum={cert_number}"
+
+# p.19 — 결과 코드
+result_codes:
+  "2000": "Success"
+  "2004": "No Data"
+  "4000": "Invalid Auth Key"
+  "4001": "Invalid IP"
+  "4005": "Invalid Parameter"
+  "5000": "Internal Server Error"

@@ -16,7 +16,7 @@
 python -m venv .venv && source .venv/Scripts/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 cp .env.example .env          # MOCK_MODE=true 로 키 없이 구동됩니다
-pytest -q                     # 37 passed
+pytest -q                     # 57 passed
 uvicorn sourcing_guard.main:app --reload
 curl -s localhost:8000/healthz
 ```
@@ -61,9 +61,12 @@ curl -s localhost:8000/healthz
 
 ## 미구현 / 알려진 불일치
 
-- **엔드포인트 경로와 응답 필드명이 전부 `TODO(unverified)` 입니다.** 인증키 수령 후
-  `scripts/probe_kats_schema.py` 로 실제 응답을 받아 설계서와 대조해 채웁니다
-  (CLAUDE.md R5). 그때까지는 `MOCK_MODE` 로 개발합니다.
+- **실응답 검증만 남았습니다.** 경로·파라미터·필드명은 설계서 v2.0 원문 대조로
+  전부 채웠습니다(`kats_field_map.yaml`, 항목마다 원문 페이지 주석). 인증키가 오면
+  `scripts/probe_kats_schema.py` 로 실제 응답과 한 번 대조하면 됩니다.
+- **아직 반영하지 않은 설계서 사항 3건** — 별도 작업으로 진행합니다.
+  `certState` 유효성 판정(8가지 상태값 중 '적합'만 유효), `recallModelName`·`certNum`의
+  콤마 목록 분해, 국내/국외 `accidentCaseDscr` 의미 차이.
 - 프론트엔드, 리콜 로컬 동기화 DB, Extractor 실제 프롬프트와 골든셋, 알림 발송(v1 범위 밖).
 - **배포 시 `WATCHLIST_DB_PATH` 를 영구 볼륨으로 지정해야 합니다.** 컨테이너 기본
   파일시스템에 두면 재배포마다 워치리스트가 사라져, 이 서비스가 유일하게 보증하는
@@ -72,6 +75,7 @@ curl -s localhost:8000/healthz
 ## 다음에 할 일
 
 순서와 근거는 `00_프로젝트_핸드오프.md` §10 을 따릅니다. 요약하면:
-인증키 수령 → 스키마 탐침으로 매핑 확정 → **규칙 DB 검수** → 배포 → 프론트엔드.
+**규칙 DB 검수** → 배포 → 프론트엔드. (매핑은 설계서 대조로 확정됐고, 인증키가 오면
+실응답 대조 한 번만 하면 됩니다.)
 
 규칙 DB 검수가 D4~D7 구간 전체를 쓰는 진짜 작업이고, 프로젝트의 유일한 진입장벽입니다.
