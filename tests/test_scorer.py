@@ -78,3 +78,32 @@ def test_scoring_is_deterministic():
                 f(FindingKind.HAZARD_RULE_APPLIES, Signal.AMBER)]
     results = {(score(toy(), findings).signal, score(toy(), findings).score) for _ in range(100)}
     assert len(results) == 1
+
+
+# --- A: certState -- 조회 성공은 유효성이 아니다 (설계서 p.5) ---------------
+def test_revoked_cert_is_red_even_with_clean_recall():
+    """취소된 인증에 초록불이 뜨면 안 된다. 셀러를 잘못 안심시키는 오류다."""
+    r = score(toy(), [f(FindingKind.KC_REVOKED, Signal.RED),
+                      f(FindingKind.RECALL_CLEAR, Signal.GREEN)])
+    assert r.signal is Signal.RED
+
+
+def test_suspended_cert_is_red():
+    """표시 사용금지는 그 인증으로 판매 표시를 유지할 수 없으므로 취소와 동급."""
+    r = score(toy(), [f(FindingKind.KC_SUSPENDED, Signal.RED),
+                      f(FindingKind.RECALL_CLEAR, Signal.GREEN)])
+    assert r.signal is Signal.RED
+
+
+def test_cert_under_action_is_amber_not_red():
+    r = score(toy(), [f(FindingKind.KC_UNDER_ACTION, Signal.AMBER),
+                      f(FindingKind.RECALL_CLEAR, Signal.GREEN)])
+    assert r.signal is Signal.AMBER
+
+
+def test_every_finding_kind_has_a_penalty():
+    """새 FindingKind 를 추가하고 가중치를 빠뜨리면 score() 가 KeyError 로 죽는다."""
+    from sourcing_guard.scorer import _PENALTY
+
+    missing = [k.value for k in FindingKind if k not in _PENALTY]
+    assert not missing, f"_PENALTY 에 빠진 kind: {missing}"

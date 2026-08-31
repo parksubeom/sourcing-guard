@@ -56,7 +56,14 @@ def tokenize_name(raw: str | None) -> set[str]:
 def recall_fingerprint(r: RecallRecord) -> str:
     """Stable id for a recall notice, so repeat sweeps do not re-alert."""
     parts = "|".join(
-        [r.scope, r.model_name or "", r.product_name or "", r.maker or "", r.announced_on or ""]
+        [
+            r.scope,
+            r.uid or "",          # 서버가 주는 안정적인 id. 있으면 이게 가장 정확하다
+            r.model_name or "",
+            r.product_name or "",
+            r.maker or "",
+            r.announced_on or "",
+        ]
     )
     return hashlib.sha256(parts.encode("utf-8")).hexdigest()[:16]
 
@@ -70,26 +77,45 @@ class Match:
     matched_on: str
 
 
+def _recall_models(r: RecallRecord) -> list[str]:
+    """리콜 레코드가 담고 있는 모델명들을 정규화해서 돌려준다.
+
+    recallModelName 은 콤마로 묶인 목록이다 (설계서 p.11). 통짜 문자열로 비교하면
+    'A,B,C' 리콜에서 B 를 감시 중인 셀러가 알림을 받지 못한다. 놓친 알림은 이
+    서비스가 하는 유일한 약속을 깨뜨린다 (CLAUDE.md R6).
+    """
+    raw = r.models or ([r.model_name] if r.model_name else [])
+    return [m for m in (normalize_model(x) for x in raw) if m]
+
+
 def match(item: WatchItem, r: RecallRecord) -> Match | None:
     """Return the strongest match tier, or None.
 
     Tiers are ordered and mutually exclusive; the first hit wins.
     """
-    wm, rm = normalize_model(item.model_name), normalize_model(r.model_name)
+    wm = normalize_model(item.model_name)
+    recall_models = _recall_models(r)
 
-    if wm and rm and len(wm) >= _MIN_EXACT_LEN and wm == rm:
+    if wm and len(wm) >= _MIN_EXACT_LEN and wm in recall_models:
         return Match(MatchStrength.EXACT, "model_name")
 
-    # A recall notice sometimes carries the cert number inside the model field.
-    if item.kc_numbers and rm:
-        for kc in item.kc_numbers:
-            n = normalize_kc(kc)
-            if n and len(n) >= _MIN_EXACT_LEN and n in rm:
+    # 리콜 레코드에 인증번호가 따로 실려 온다 (certNum, 콤마 목록). 모델명 표기가
+    # 흔들려도 인증번호가 같으면 확실하다.
+    watched_kc = {n for n in (normalize_kc(k) for k in item.kc_numbers) if n}
+    if watched_kc:
+        recall_kc = {n for n in (normalize_kc(c) for c in r.cert_numbers) if n}
+        if watched_kc & recall_kc:
+            return Match(MatchStrength.EXACT, "kc_number")
+        # 예전 공표는 인증번호를 모델명 칸에 적어 둔 경우가 있다.
+        for n in watched_kc:
+            if len(n) >= _MIN_EXACT_LEN and any(n in rm for rm in recall_models):
                 return Match(MatchStrength.EXACT, "kc_number")
 
-    if wm and rm and (len(wm) >= _MIN_CONTAIN_LEN or len(rm) >= _MIN_CONTAIN_LEN):
-        if wm in rm or rm in wm:
-            return Match(MatchStrength.STRONG, "model_name")
+    if wm:
+        for rm in recall_models:
+            if len(wm) >= _MIN_CONTAIN_LEN or len(rm) >= _MIN_CONTAIN_LEN:
+                if wm in rm or rm in wm:
+                    return Match(MatchStrength.STRONG, "model_name")
 
     if item.maker and r.maker:
         if normalize_model(item.maker) == normalize_model(r.maker):

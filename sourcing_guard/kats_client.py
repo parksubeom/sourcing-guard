@@ -16,7 +16,8 @@ pipeline is developable and testable on day 1.
 from __future__ import annotations
 
 import unicodedata
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from enum import Enum
 from pathlib import Path
 from typing import Any
 
@@ -24,6 +25,11 @@ import httpx
 import yaml
 
 _MAP_PATH = Path(__file__).parent / "data" / "kats_field_map.yaml"
+_CFG: dict[str, Any] = yaml.safe_load(_MAP_PATH.read_text(encoding="utf-8")) or {}
+_MOCK_STATES: dict[str, list[str]] = _CFG.get("cert_states", {})
+_MOCK_FIELDS: dict[str, str] = (
+    _CFG.get("operations", {}).get("certification", {}).get("fields", {})
+)
 
 # 설계서 v2.0 확인 사항: 인증키는 헤더로 보내며 이름이 대소문자를 구분한다 (p.2).
 _AUTH_HEADER = "AuthKey"
@@ -51,25 +57,74 @@ class KatsApiError(RuntimeError):
         super().__init__(f"SafetyKorea API 오류 {code}: {message} {hint}".strip())
 
 
+class CertState(str, Enum):
+    """certState 를 신호등 관점으로 분류한 것 (설계서 p.5, p.8)."""
+
+    OK = "ok"                      # 적합
+    REVOKED = "revoked"            # 취소·효력상실·반납·기간만료
+    SUSPENDED = "suspended"        # 표시 사용금지
+    UNDER_ACTION = "under_action"  # 개선명령·청문실시
+    UNKNOWN = "unknown"            # 매핑에 없는 값
+
+
+def classify_cert_state(raw: str | None, states: dict[str, list[str]]) -> CertState:
+    """원문 상태 문자열 -> CertState.
+
+    매핑에 없으면 UNKNOWN 이다. 임의로 '적합'으로 추측하지 않는다 (CLAUDE.md R3).
+    """
+    if not raw:
+        return CertState.UNKNOWN
+    s = raw.strip()
+    for bucket in (CertState.OK, CertState.REVOKED, CertState.SUSPENDED, CertState.UNDER_ACTION):
+        if s in states.get(bucket.value, ()):
+            return bucket
+    return CertState.UNKNOWN
+
+
+def split_list_field(raw: Any) -> list[str]:
+    """recallModelName / certNum 은 콤마로 묶인 목록이다 (설계서 p.11, p.14).
+
+    통짜 문자열로 비교하면 다중 모델 리콜을 전부 놓친다. 놓친 알림은 이 서비스가
+    하는 유일한 약속을 깨뜨린다 (CLAUDE.md R6).
+    """
+    if raw in (None, ""):
+        return []
+    return [p.strip() for p in str(raw).split(",") if p.strip()]
+
+
 @dataclass(frozen=True)
 class CertRecord:
     cert_number: str
     product_name: str | None
     model_name: str | None
     maker: str | None
-    status: str | None
+    status: str | None            # certState 원문 값. 화면에 그대로 보여준다
+    state: CertState              # 위 값을 분류한 것. 판정은 이쪽을 쓴다
     detail_url: str | None
+    brand_name: str | None = None
+    category_name: str | None = None
+    maker_country: str | None = None
+    importer: str | None = None
+    import_div: str | None = None
+    cert_div: str | None = None
+    cert_date: str | None = None
 
 
 @dataclass(frozen=True)
 class RecallRecord:
     product_name: str | None
-    model_name: str | None
+    model_name: str | None        # 원문 그대로. 콤마 목록일 수 있다
     maker: str | None
     reason: str | None
     announced_on: str | None
     detail_url: str | None
     scope: str  # "domestic" | "overseas"
+    models: list[str] = field(default_factory=list)        # model_name 을 분해한 것
+    cert_numbers: list[str] = field(default_factory=list)  # certNum 을 분해한 것
+    brand_name: str | None = None
+    recall_type: str | None = None
+    action_guide: str | None = None   # 소비자 행동요령. 국내/국외 필드명이 다르다
+    uid: str | None = None
 
 
 def normalize_kc(raw: str) -> str:
@@ -113,20 +168,51 @@ class KatsClient:
             return None
         return self._to_cert(rows[0])
 
-    def search_recalls(self, *, product_name: str | None, model_name: str | None) -> list[RecallRecord]:
+    def search_recalls(
+        self,
+        *,
+        product_name: str | None = None,
+        model_name: str | None = None,
+        cert_number: str | None = None,
+    ) -> list[RecallRecord]:
         term = (model_name or product_name or "").strip()
-        if not term:
-            return []
         if self._mock:
-            return _mock_recalls(term)
-        # 모델명이 있으면 모델명으로, 없으면 제품명으로 찾는다. conditionKey 가
-        # 검색 대상 필드를 정하므로 무엇으로 찾는지 명시해야 한다 (설계서 p.9, p.15).
-        logical = "model_name" if model_name else "product_name"
+            return _mock_recalls(term or (cert_number or ""))
+        if not term and not cert_number:
+            return []
+
         out: list[RecallRecord] = []
-        for op, scope in (("recall_domestic", "domestic"), ("recall_overseas", "overseas")):
-            rows = self._call(op, self._query(op, logical, term))
-            out.extend(self._to_recall(r, scope) for r in rows)
+
+        # 인증번호는 국내리콜 조회가 받는 가장 강한 키다 (설계서 p.9). 모델명 표기가
+        # 흔들려도 인증번호가 같으면 확실히 잡힌다. 국외리콜에는 certNum 검색이 없다.
+        if cert_number:
+            rows = self._call(
+                "recall_domestic",
+                self._query("recall_domestic", "cert_number", normalize_kc(cert_number)),
+            )
+            out.extend(self._to_recall(r, "domestic") for r in rows)
+
+        if term:
+            # 모델명이 있으면 모델명으로, 없으면 제품명으로 찾는다. conditionKey 가
+            # 검색 대상 필드를 정하므로 무엇으로 찾는지 명시해야 한다 (p.9, p.15).
+            logical = "model_name" if model_name else "product_name"
+            for op, scope in (("recall_domestic", "domestic"), ("recall_overseas", "overseas")):
+                rows = self._call(op, self._query(op, logical, term))
+                out.extend(self._to_recall(r, scope) for r in rows)
         return out
+
+    def recalls_published_on(self, yyyymmdd: str, *, overseas: bool = False) -> list[RecallRecord]:
+        """공표일자로 하루치를 받는다. 로컬 동기화용.
+
+        목록은 최대 1,000줄이고 페이징 파라미터가 없다 (설계서 p.2). 그래서 `all`
+        로 통째로 긁는 대신 날짜로 잘라서 받는다. 하루치는 1,000줄을 넘지 않는다.
+        """
+        if self._mock:
+            return []
+        op = "recall_overseas" if overseas else "recall_domestic"
+        rows = self._call(op, self._query(op, "published_on", yyyymmdd))
+        scope = "overseas" if overseas else "domestic"
+        return [self._to_recall(r, scope) for r in rows]
 
     # -- internals ---------------------------------------------------------
     def _op(self, op: str) -> dict[str, Any]:
@@ -193,26 +279,48 @@ class KatsClient:
 
     def _to_cert(self, row: dict) -> CertRecord:
         f = self._op("certification")["fields"]
+        g = lambda key: row.get(f.get(key, "")) if f.get(key) else None  # noqa: E731
+        raw_state = g("status")
         return CertRecord(
             cert_number=str(row.get(f["cert_number"], "")),
-            product_name=row.get(f.get("product_name", "")),
-            model_name=row.get(f.get("model_name", "")),
-            maker=row.get(f.get("maker", "")),
-            status=row.get(f.get("status", "")),
-            detail_url=row.get(f.get("detail_url", "")) or _center_search_url(row.get(f["cert_number"], "")),
+            product_name=g("product_name"),
+            model_name=g("model_name"),
+            maker=g("maker"),
+            status=raw_state,
+            state=classify_cert_state(raw_state, self._map.get("cert_states", {})),
+            detail_url=g("detail_url") or _center_search_url(row.get(f["cert_number"], "")),
+            brand_name=g("brand_name"),
+            category_name=g("category_name"),
+            maker_country=g("maker_country"),
+            importer=g("importer"),
+            import_div=g("import_div"),
+            cert_div=g("cert_div"),
+            cert_date=g("cert_date"),
         )
 
     def _to_recall(self, row: dict, scope: str) -> RecallRecord:
+        # 국내/국외는 필드 의미가 다르다. reason 과 action_guide 를 매핑에서 각각
+        # 가져오는 이유가 그것이다. 하드코딩하면 국외 리콜에 위해내용 대신
+        # 소비자 행동요령이 표시된다 (설계서 p.14 vs p.17).
         op = "recall_domestic" if scope == "domestic" else "recall_overseas"
         f = self._op(op)["fields"]
+        g = lambda key: row.get(f.get(key, "")) if f.get(key) else None  # noqa: E731
+        models_raw = g("model_name")
+        uid = g("uid")
         return RecallRecord(
-            product_name=row.get(f.get("product_name", "")),
-            model_name=row.get(f.get("model_name", "")),
-            maker=row.get(f.get("maker", "")),
-            reason=row.get(f.get("reason", "")),
-            announced_on=row.get(f.get("announced_on", "")),
-            detail_url=row.get(f.get("detail_url", "")),
+            product_name=g("product_name"),
+            model_name=models_raw,
+            maker=g("maker"),
+            reason=g("reason"),
+            announced_on=g("announced_on"),
+            detail_url=g("detail_url"),
             scope=scope,
+            models=split_list_field(models_raw),
+            cert_numbers=split_list_field(g("cert_numbers")),
+            brand_name=g("brand_name"),
+            recall_type=g("recall_type"),
+            action_guide=g("action_guide"),
+            uid=str(uid) if uid else None,
         )
 
 
@@ -229,33 +337,81 @@ def _center_search_url(cert_number: str) -> str:
 # Fixtures for MOCK_MODE. Clearly fake so they can never be mistaken for real
 # lookups: every mock record is tagged.
 # ---------------------------------------------------------------------------
-_MOCK_CERTS = {
-    "XU07012345": CertRecord(
-        cert_number="XU07012345",
-        product_name="[MOCK] 유아용 블록 완구",
-        model_name="BLK-100",
-        maker="[MOCK] 안심완구",
-        status="유효",
-        detail_url=_center_search_url("XU07012345"),
-    )
+_MOCK_ROWS = {
+    # 설계서 3.2.1 예시와 같은 모양. 실제 응답 필드명으로 목을 만들면 매핑 오류가
+    # 목 모드에서도 드러난다.
+    "JU071047-12002C": {
+        "certNum": "JU071047-12002C", "certState": "적합",
+        "certDiv": "전기용품안전관리법 대상>자율안전확인 대상",
+        "productName": "[MOCK] 관상어용히터", "modelName": "SH-100",
+        "categoryName": "전기기기>관상 및 애완용 전기기기", "brandName": None,
+        "makerName": "[MOCK] Sanhu Factory", "makerCntryName": "중국",
+        "importerName": "[MOCK] 수입사", "importDiv": "수입", "certDate": "20130719",
+    },
+    # 조회는 되지만 취소된 인증. 이게 초록불로 통과하면 안 된다.
+    "CB123A123-1234": {
+        "certNum": "CB123A123-1234", "certState": "안전인증취소",
+        "certDiv": "어린이제품 특별법 대상>안전확인 대상",
+        "productName": "[MOCK] 유아용섬유제품", "modelName": "아동배낭",
+        "categoryName": None, "brandName": None,
+        "makerName": "[MOCK] 아이테스트", "makerCntryName": "한국",
+        "importerName": None, "importDiv": "제조", "certDate": "20190717",
+    },
+    # 표시 사용금지. 취소와 같은 무게로 다뤄야 한다.
+    "XU07012345": {
+        "certNum": "XU07012345", "certState": "안전인증표시 사용금지 2개월",
+        "certDiv": "어린이제품 특별법 대상>안전확인 대상",
+        "productName": "[MOCK] 유아용 블록 완구", "modelName": "BLK-100",
+        "categoryName": None, "brandName": None,
+        "makerName": "[MOCK] 안심완구", "makerCntryName": "한국",
+        "importerName": None, "importDiv": "제조", "certDate": "20200101",
+    },
 }
 
 
 def _mock_cert(key: str) -> CertRecord | None:
-    return _MOCK_CERTS.get(key)
+    row = _MOCK_ROWS.get(key)
+    if row is None:
+        return None
+    f = _MOCK_FIELDS
+    raw_state = row.get("certState")
+    return CertRecord(
+        cert_number=row["certNum"],
+        product_name=row.get("productName"),
+        model_name=row.get("modelName"),
+        maker=row.get("makerName"),
+        status=raw_state,
+        state=classify_cert_state(raw_state, _MOCK_STATES),
+        detail_url=_center_search_url(row["certNum"]),
+        brand_name=row.get("brandName"),
+        category_name=row.get("categoryName"),
+        maker_country=row.get("makerCntryName"),
+        importer=row.get("importerName"),
+        import_div=row.get("importDiv"),
+        cert_div=row.get("certDiv"),
+        cert_date=row.get("certDate"),
+    )
 
 
 def _mock_recalls(term: str) -> list[RecallRecord]:
-    if "RCL" in term.upper():
-        return [
-            RecallRecord(
-                product_name="[MOCK] 리콜 대상 완구",
-                model_name=term,
-                maker="[MOCK] 제조사",
-                reason="[MOCK] 프탈레이트계 가소제 기준 초과",
-                announced_on="2026-03-19",
-                detail_url="https://www.safetykorea.kr/",
-                scope="domestic",
-            )
-        ]
-    return []
+    if "RCL" not in (term or "").upper():
+        return []
+    # 콤마로 묶인 다중 모델. 통짜 비교하면 term 이 안 잡힌다.
+    models = f"{term},HKAK31101S-00"
+    return [
+        RecallRecord(
+            product_name="[MOCK] 가정용섬유제품(책가방)",
+            model_name=models,
+            maker="[MOCK] 제조사",
+            reason="[MOCK] 프탈레이트계 가소제 기준 초과",
+            announced_on="20260319",
+            detail_url="https://www.safetykorea.kr/",
+            scope="domestic",
+            models=split_list_field(models),
+            cert_numbers=["CB123A123-1234"],
+            brand_name="JJ",
+            recall_type="명령에따른리콜",
+            action_guide="수선 및 교환, 환불",
+            uid="3802",
+        )
+    ]
