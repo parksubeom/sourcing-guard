@@ -45,6 +45,7 @@ class Settings:
     extractor_model: str
     kats_base_url: str | None
     kats_service_key: str | None
+    watchlist_db_path: str
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -55,6 +56,9 @@ class Settings:
             extractor_model=os.getenv("EXTRACTOR_MODEL", "claude-sonnet-5"),
             kats_base_url=os.getenv("KATS_BASE_URL") or None,
             kats_service_key=os.getenv("KATS_SERVICE_KEY") or None,
+            # 배포 시 반드시 영구 볼륨 경로를 지정한다. 컨테이너 기본 파일시스템에
+            # 두면 재배포마다 워치리스트가 사라진다 (기획서 §6.1).
+            watchlist_db_path=os.getenv("WATCHLIST_DB_PATH", "data/watchlist.db"),
         )
 
 
