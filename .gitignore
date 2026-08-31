@@ -5,3 +5,11 @@ __pycache__/
 .venv/
 venv/
 .DS_Store
+
+# 런타임 DB (배포 시 영구 볼륨으로 분리)
+# 루트 앵커(/)가 중요하다. 그냥 data/ 로 두면 sourcing_guard/data/ 의
+# 규칙 DB 까지 삼켜서 새 룰 파일이 조용히 커밋에서 빠진다.
+/data/
+*.db
+*.db-wal
+*.db-shm

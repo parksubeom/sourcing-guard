@@ -16,13 +16,13 @@
 python -m venv .venv && source .venv/Scripts/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 cp .env.example .env          # MOCK_MODE=true 로 키 없이 구동됩니다
-pytest -q                     # 25 passed
+pytest -q                     # 37 passed
 uvicorn sourcing_guard.main:app --reload
 curl -s localhost:8000/healthz
 ```
 
-`/healthz` 는 목 모드 여부와 활성/초안 룰 개수를 함께 돌려줍니다. 활성 룰이 0이면
-정상입니다 — 아래 "설계상 눈여겨볼 지점" 참조.
+`/healthz` 는 목 모드 여부, 활성/초안 룰 개수, 워치리스트 등록 건수를 돌려줍니다.
+활성 룰이 0이면 정상입니다 — 아래 "설계상 눈여겨볼 지점" 참조.
 
 ## 무엇이 들어 있나
 
@@ -35,7 +35,8 @@ curl -s localhost:8000/healthz
 | `verifier.py` | ② 결정론 검증. 규칙 DB 로더 포함 |
 | `scorer.py` | 위험도 연산. 순수 함수, I/O·시각·난수 없음 |
 | `watchlist.py` | 리콜 워치리스트 매칭. 순수 함수, 저장소 비의존 |
-| `main.py` | FastAPI. `/healthz`, `/api/v1/scan`, `/api/v1/watch`, `/api/v1/watch/sweep` |
+| `storage.py` | 워치리스트 SQLite 저장소. `WATCHLIST_DB_PATH` 로 경로 지정 |
+| `main.py` | FastAPI. `/healthz`, `/api/v1/scan`, `/api/v1/watch`(등록·조회), `/api/v1/watch/sweep` |
 | `data/hazard_rules.yaml` | 자체 규칙 DB. `status: draft`는 스코어링에서 제외 |
 | `scripts/probe_kats_schema.py` | API 응답 스키마 탐침 |
 
@@ -63,8 +64,10 @@ curl -s localhost:8000/healthz
 - **엔드포인트 경로와 응답 필드명이 전부 `TODO(unverified)` 입니다.** 인증키 수령 후
   `scripts/probe_kats_schema.py` 로 실제 응답을 받아 설계서와 대조해 채웁니다
   (CLAUDE.md R5). 그때까지는 `MOCK_MODE` 로 개발합니다.
-- 워치리스트 영속 저장 — 현재 메모리 dict (`main.py` 의 `TODO(v1)`). 재시작하면 사라집니다.
 - 프론트엔드, 리콜 로컬 동기화 DB, Extractor 실제 프롬프트와 골든셋, 알림 발송(v1 범위 밖).
+- **배포 시 `WATCHLIST_DB_PATH` 를 영구 볼륨으로 지정해야 합니다.** 컨테이너 기본
+  파일시스템에 두면 재배포마다 워치리스트가 사라져, 이 서비스가 유일하게 보증하는
+  알림 약속이 조용히 깨집니다 (기획서 §6.1).
 
 ## 다음에 할 일
 
