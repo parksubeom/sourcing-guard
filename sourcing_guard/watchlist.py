@@ -16,7 +16,7 @@ from dataclasses import dataclass
 from datetime import date
 from typing import Iterable, Protocol
 
-from .kats_client import RecallRecord, normalize_kc
+from .kats_client import RecallRecord, is_cert_number, normalize_kc
 from .models import MatchStrength, RecallAlert, WatchItem, WatchStatus
 
 # Model names shorter than this produce too many coincidental hits
@@ -103,7 +103,13 @@ def match(item: WatchItem, r: RecallRecord) -> Match | None:
     # 흔들려도 인증번호가 같으면 확실하다.
     watched_kc = {n for n in (normalize_kc(k) for k in item.kc_numbers) if n}
     if watched_kc:
-        recall_kc = {n for n in (normalize_kc(c) for c in r.cert_numbers) if n}
+        # "공급자적합성" 같은 자리표시자는 인증번호가 아니다. 걸러내지 않으면
+        # 같은 자리표시자를 가진 서로 다른 상품이 전부 일치로 잡힌다.
+        recall_kc = {
+            n
+            for n in (normalize_kc(c) for c in r.cert_numbers if is_cert_number(c))
+            if n
+        }
         if watched_kc & recall_kc:
             return Match(MatchStrength.EXACT, "kc_number")
         # 예전 공표는 인증번호를 모델명 칸에 적어 둔 경우가 있다.

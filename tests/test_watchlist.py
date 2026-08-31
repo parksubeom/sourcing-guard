@@ -145,3 +145,13 @@ def test_fingerprint_uses_uid_when_present():
     a = multi("BLK-100", uid="3802")
     b = multi("BLK-100", uid="9999")
     assert recall_fingerprint(a) != recall_fingerprint(b)
+
+
+def test_placeholder_cert_number_does_not_match():
+    """리콜 레코드의 certNum 에 '공급자적합성' 같은 자리표시자가 온다 (설계서 p.10).
+
+    인증번호로 취급하면 같은 자리표시자를 가진 서로 다른 상품이 전부 일치한다.
+    """
+    r = RecallRecord(**{**recall(model_name="전혀다른모델").__dict__,
+                        "cert_numbers": ["공급자적합성"]})
+    assert match(item(kc_numbers=["공급자적합성"]), r) is None

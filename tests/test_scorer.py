@@ -37,9 +37,37 @@ def test_recall_match_is_red():
     assert r.signal is Signal.RED
 
 
-def test_unverified_kc_is_red():
-    r = score(toy(), [f(FindingKind.KC_NOT_FOUND, Signal.RED)])
-    assert r.signal is Signal.RED
+def test_unverified_kc_is_amber_not_red():
+    """미조회는 RED 가 아니다. 부재는 위반의 증거가 아니기 때문이다.
+
+    전안법은 위해도 4단계이고, 가장 낮은 공급자적합성확인(SCoC) 대상은
+    제조·수입자가 스스로 시험해 확인하므로 정부 조회 DB 에 번호가 없는 것이
+    정상이다. 미조회를 RED 로 두면 정상 상품에 반복해서 빨간불이 뜨고,
+    셀러가 모든 RED 를 무시하게 된다.
+    """
+    r = score(toy(), [f(FindingKind.KC_NOT_FOUND, Signal.AMBER)])
+    assert r.signal is Signal.AMBER
+
+
+def test_red_requires_positive_evidence_from_the_government_db():
+    """RED 는 정부 DB 가 문제를 적어둔 경우에만 나온다."""
+    from sourcing_guard.scorer import _HARD_RED
+
+    assert _HARD_RED == {
+        FindingKind.RECALL_MATCH,
+        FindingKind.KC_REVOKED,
+        FindingKind.KC_SUSPENDED,
+    }
+    assert FindingKind.KC_NOT_FOUND not in _HARD_RED
+    assert FindingKind.KC_MISSING_BUT_REQUIRED not in _HARD_RED
+
+
+def test_tier_unknown_blocks_green():
+    """인증 구분을 모르면 인증번호 유무를 해석할 수 없다 (R3)."""
+    r = score(toy(), [f(FindingKind.KC_VERIFIED, Signal.GREEN),
+                      f(FindingKind.RECALL_CLEAR, Signal.GREEN),
+                      f(FindingKind.KC_TIER_UNKNOWN, Signal.UNKNOWN)])
+    assert r.signal is not Signal.RED
 
 
 def test_silence_is_not_green():

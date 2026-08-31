@@ -108,8 +108,12 @@ def verify(facts: ProductFacts, kats: KatsClient, rules: RuleBook) -> list[Findi
                 findings.append(
                     Finding(
                         kind=FindingKind.KC_NOT_FOUND,
-                        signal=Signal.RED,
-                        statement_ko=f"상세페이지에 표기된 인증번호 '{num}' 이(가) 조회되지 않습니다.",
+                        signal=Signal.AMBER,
+                        statement_ko=(
+                            f"상세페이지에 표기된 인증번호 '{num}' 이(가) 조회되지 않습니다. "
+                            "공급자적합성확인 대상 품목은 인증번호가 조회 DB에 없는 것이 "
+                            "정상이므로, 이 품목의 인증 구분을 먼저 확인해 주세요."
+                        ),
                         source_label="국가기술표준원 안전인증정보 조회",
                         # 조회에 실제로 쓴 정규화 번호로 링크한다. 셀러가 눌러
                         # 정부 사이트에서 직접 빈 결과를 확인하는 것이 "우리가
@@ -157,10 +161,28 @@ def verify(facts: ProductFacts, kats: KatsClient, rules: RuleBook) -> list[Findi
                 kind=FindingKind.KC_MISSING_BUT_REQUIRED,
                 signal=Signal.AMBER,
                 statement_ko=(
-                    "안전인증 대상으로 보이는 품목이나 상세페이지에서 인증번호를 찾지 못했습니다. "
-                    "공급처에 인증번호를 요청해 확인이 필요합니다."
+                    "규제 품목군으로 보이나 상세페이지에서 인증번호를 찾지 못했습니다. "
+                    "안전인증·안전확인 대상이면 인증번호가 있어야 하고, "
+                    "공급자적합성확인 대상이면 없는 것이 정상입니다. "
+                    "공급처에 인증 구분과 시험성적서를 요청해 확인하세요."
                 ),
                 source_label="제품안전정보센터 안전확인 대상 품목 안내",
+                source_url="https://www.safetykorea.kr/policy/targetsSafetyCheck3",
+                checked_at=today,
+            )
+        )
+
+        # 어느 위해도 단계(안전인증 / 안전확인 / 공급자적합성확인)인지 모르면
+        # 인증번호 부재를 해석할 수 없다. 모른다는 사실을 감추지 않는다 (R3).
+        findings.append(
+            Finding(
+                kind=FindingKind.KC_TIER_UNKNOWN,
+                signal=Signal.UNKNOWN,
+                statement_ko=(
+                    "이 품목의 인증 구분(안전인증 / 안전확인 / 공급자적합성확인)을 "
+                    "판별하지 못했습니다. 구분에 따라 인증번호 유무의 의미가 달라집니다."
+                ),
+                source_label="제품안전정보센터 대상 품목 안내",
                 source_url="https://www.safetykorea.kr/policy/targetsSafetyCheck3",
                 checked_at=today,
             )
