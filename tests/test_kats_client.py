@@ -310,3 +310,51 @@ def test_mock_mode_surfaces_revoked_certificate():
     assert rec is not None
     assert rec.state is CertState.REVOKED
     assert rec.status == "안전인증취소"
+
+
+# ---------------------------------------------------------------------------
+# 근거 링크(R2)는 설계서에 실린 인증번호별 주소 하나만 쓴다
+# ---------------------------------------------------------------------------
+from sourcing_guard.kats_client import cert_evidence_url  # noqa: E402
+
+
+def _py_files_containing(needle: str) -> list[str]:
+    return [
+        f.name
+        for f in Path("sourcing_guard").rglob("*.py")
+        if needle in f.read_text(encoding="utf-8")
+    ]
+
+
+def test_evidence_url_is_per_certificate():
+    url = cert_evidence_url("JU071047-12002C")
+    assert "searchPop" in url
+    assert "certNum=JU071047-12002C" in url
+
+
+def test_evidence_url_normalises_the_number():
+    """화면 문구와 링크가 같은 대상을 가리켜야 한다."""
+    assert cert_evidence_url("인증번호: ju071047-12002c") == cert_evidence_url("JU071047-12002C")
+
+
+def test_undocumented_endpoint_is_not_used_in_code():
+    """`release/certDetail` 은 설계서에 없는 주소다.
+
+    실측으로 200 이 뜨더라도 문서화되지 않은 엔드포인트는 예고 없이 바뀌고,
+    파라미터가 없어 특정 인증번호를 가리키지 못한다 (CLAUDE.md R5).
+    되돌리려는 시도를 이 테스트가 막는다.
+    """
+    offenders = _py_files_containing("safetykorea.kr/release/certDetail")
+    assert not offenders, f"설계서에 없는 주소를 쓰는 파일: {offenders}"
+
+
+def test_get_hostile_search_url_is_not_used_as_evidence():
+    """`release/certificationsearch` 는 GET 에 405 를 돌려준다 (실측).
+
+    설계서 p.18 에 실려 있지만 셀러가 클릭하면 오류 화면을 보므로 근거 링크로
+    쓸 수 없다. 매핑의 unusable_urls 에 기록용으로만 남긴다.
+    """
+    assert "cert_search" not in _CFG.get("public_urls", {})
+    assert "cert_search_405_on_get" in _CFG.get("unusable_urls", {})
+    offenders = _py_files_containing("safetykorea.kr/release/certificationsearch")
+    assert not offenders, f"405 주소를 근거 링크로 쓰는 파일: {offenders}"

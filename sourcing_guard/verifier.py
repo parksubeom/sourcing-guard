@@ -11,7 +11,7 @@ from pathlib import Path
 
 import yaml
 
-from .kats_client import CertState, KatsClient
+from .kats_client import CertState, KatsClient, cert_evidence_url
 from .models import Finding, FindingKind, ItemCategory, ProductFacts, Signal
 
 _RULES_PATH = Path(__file__).parent / "data" / "hazard_rules.yaml"
@@ -111,7 +111,10 @@ def verify(facts: ProductFacts, kats: KatsClient, rules: RuleBook) -> list[Findi
                         signal=Signal.RED,
                         statement_ko=f"상세페이지에 표기된 인증번호 '{num}' 이(가) 조회되지 않습니다.",
                         source_label="국가기술표준원 안전인증정보 조회",
-                        source_url="https://www.safetykorea.kr/release/certDetail",
+                        # 조회에 실제로 쓴 정규화 번호로 링크한다. 셀러가 눌러
+                        # 정부 사이트에서 직접 빈 결과를 확인하는 것이 "우리가
+                        # 못 찾았다" 보다 강한 근거다 (R2).
+                        source_url=cert_evidence_url(num),
                         legal_basis="전기용품 및 생활용품 안전관리법 / 어린이제품 안전 특별법",
                         detail={"kc_number": num},
                         checked_at=today,
@@ -136,7 +139,7 @@ def verify(facts: ProductFacts, kats: KatsClient, rules: RuleBook) -> list[Findi
                         signal=signal,
                         statement_ko=statement,
                         source_label="국가기술표준원 안전인증정보 조회",
-                        source_url=rec.detail_url or "https://www.safetykorea.kr/release/certDetail",
+                        source_url=rec.detail_url or cert_evidence_url(rec.cert_number),
                         detail={
                             "maker": rec.maker,
                             "maker_country": rec.maker_country,

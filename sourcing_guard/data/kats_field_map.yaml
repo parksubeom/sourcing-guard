@@ -141,8 +141,19 @@ cert_states:
 
 # p.18 — URL 링크. 인증키가 필요 없어서 근거 링크(R2)로 쓴다.
 public_urls:
-  cert_search: "http://www.safetykorea.kr/release/certificationsearch"
+  # 인증번호별 상세 팝업. 근거 링크(R2)는 이것 하나만 쓴다.
   cert_detail: "http://www.safetykorea.kr/search/searchPop?certNum={cert_number}"
+
+# ⚠ 아래 두 주소는 근거 링크로 쓰지 않는다. 기록용으로만 남긴다.
+#
+#   certificationsearch : 설계서 p.18 "인증번호 검색 (신)" 이지만 실측 결과
+#                         GET 에 405 를 돌려준다. 셀러가 클릭하면 오류 화면을 본다.
+#   release/certDetail  : 실측 200 이지만 설계서에 없는 주소다. 문서화되지 않은
+#                         엔드포인트는 예고 없이 바뀌고, 파라미터가 없어 특정
+#                         인증번호를 가리키지 못한다. 근거가 아니라 안내에 그친다.
+unusable_urls:
+  cert_search_405_on_get: "http://www.safetykorea.kr/release/certificationsearch"
+  cert_detail_undocumented: "https://www.safetykorea.kr/release/certDetail"
 
 # p.19 — 결과 코드
 result_codes:
