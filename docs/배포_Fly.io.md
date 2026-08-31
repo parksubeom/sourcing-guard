@@ -1,5 +1,27 @@
 # Fly.io 배포 절차
 
+## ✅ 배포 완료 (2026-08-31)
+
+**https://sourcing-guard.fly.dev** — 목 모드로 가동 중. 9/2 목표 이틀 앞당김.
+
+| 항목 | 값 |
+|---|---|
+| 앱 | `sourcing-guard` (org: personal) |
+| 리전 | `nrt` (도쿄) |
+| 머신 | `185175db33d968`, 헬스체크 1/1 passing |
+| 볼륨 | `sg_data` 3GB (`vol_vwnxgn7l9dkgxymv`) |
+| 이미지 | 54MB |
+| IP | shared ipv4 `66.241.124.15` / dedicated ipv6 |
+
+검증한 것:
+- `/healthz` 200, 0.2초
+- `/api/v1/scan` → 미조회 인증번호에 RED + 근거 링크 3건
+- `/api/v1/watch` 등록 → **머신 재시작 후에도 유지**(볼륨 영속성 실증)
+
+**아직 안 한 것**: 인증키 미수령이라 실연동 검증 불가. IP 등록도 대기.
+
+---
+
 **목표: 목 모드 그대로 공개 URL 확보** (기획서 §10, 9/2 마감)
 
 인증키가 없어도 배포한다. `MOCK_MODE=true` 로 전 파이프라인이 돌고,
