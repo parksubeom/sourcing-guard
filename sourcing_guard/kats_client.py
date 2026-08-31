@@ -31,6 +31,9 @@ _MOCK_FIELDS: dict[str, str] = (
     _CFG.get("operations", {}).get("certification", {}).get("fields", {})
 )
 
+# 설계서 p.18 의 인증번호별 상세 팝업 템플릿. 근거 링크(R2)의 유일한 출처다.
+_CERT_DETAIL_TEMPLATE: str = _CFG.get("public_urls", {}).get("cert_detail", "")
+
 # 설계서 v2.0 확인 사항: 인증키는 헤더로 보내며 이름이 대소문자를 구분한다 (p.2).
 _AUTH_HEADER = "AuthKey"
 
@@ -288,7 +291,7 @@ class KatsClient:
             maker=g("maker"),
             status=raw_state,
             state=classify_cert_state(raw_state, self._map.get("cert_states", {})),
-            detail_url=g("detail_url") or _center_search_url(row.get(f["cert_number"], "")),
+            detail_url=g("detail_url") or cert_evidence_url(row.get(f["cert_number"], "")),
             brand_name=g("brand_name"),
             category_name=g("category_name"),
             maker_country=g("maker_country"),
@@ -324,13 +327,26 @@ class KatsClient:
         )
 
 
-def _center_search_url(cert_number: str) -> str:
-    """근거 링크(R2)로 쓰는 인증정보 상세 조회 팝업.
+def cert_evidence_url(cert_number: str) -> str:
+    """근거 링크(R2)로 쓰는 인증번호별 상세 조회 팝업.
 
     설계서 p.18 의 "인증번호 상세 조회 (신)" URL 이다. 인증키가 필요 없어서
     셀러가 그대로 눌러 원문을 확인할 수 있다.
+
+    후보 세 개를 실측(도쿄 리전)한 결과 이 주소만 쓴다:
+
+      release/certDetail           200 이지만 설계서에 없는 주소다. 문서화되지
+                                   않은 엔드포인트는 예고 없이 바뀌고, 파라미터가
+                                   없어 특정 인증번호를 가리키지 못한다.
+      release/certificationsearch  설계서 p.18 에 있으나 GET 에 405.
+      search/searchPop?certNum=    200, 인증키 불필요, 인증번호별. 존재하지 않는
+                                   번호도 빈 결과가 나오므로 미조회 케이스의
+                                   근거로 그대로 쓸 수 있다.
+
+    조회에 사용한 정규화 번호로 링크해야 화면 문구와 링크가 같은 대상을 가리킨다.
+    주소는 매핑에서 읽는다 (CLAUDE.md R5).
     """
-    return f"http://www.safetykorea.kr/search/searchPop?certNum={cert_number}"
+    return _CERT_DETAIL_TEMPLATE.format(cert_number=normalize_kc(cert_number))
 
 
 # ---------------------------------------------------------------------------
@@ -382,7 +398,7 @@ def _mock_cert(key: str) -> CertRecord | None:
         maker=row.get("makerName"),
         status=raw_state,
         state=classify_cert_state(raw_state, _MOCK_STATES),
-        detail_url=_center_search_url(row["certNum"]),
+        detail_url=cert_evidence_url(row["certNum"]),
         brand_name=row.get("brandName"),
         category_name=row.get("categoryName"),
         maker_country=row.get("makerCntryName"),
