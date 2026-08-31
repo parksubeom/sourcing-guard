@@ -12,7 +12,7 @@ from .models import Finding, FindingKind, ProductFacts, ScanResult, Signal, Item
 # accompanied by a test case explaining the new behaviour.
 _PENALTY: dict[FindingKind, int] = {
     FindingKind.RECALL_MATCH: 100,
-    FindingKind.KC_NOT_FOUND: 100,
+    FindingKind.KC_NOT_FOUND: 45,
     FindingKind.KC_REVOKED: 100,
     FindingKind.KC_SUSPENDED: 100,
     FindingKind.KC_UNDER_ACTION: 40,
@@ -20,15 +20,20 @@ _PENALTY: dict[FindingKind, int] = {
     FindingKind.HAZARD_RULE_APPLIES: 20,
     FindingKind.SUBSTANCE_MENTIONED: 25,
     FindingKind.COVERAGE_GAP: 0,
+    FindingKind.KC_TIER_UNKNOWN: 0,
     FindingKind.KC_VERIFIED: 0,
     FindingKind.RECALL_CLEAR: 0,
 }
 
 _HARD_RED = {
+    # RED 는 정부 DB 가 문제를 적어둔 경우에만 준다. 부재는 증거가 아니다.
+    #
+    # KC_NOT_FOUND 는 여기 없다. 전안법은 위해도 4단계이고 가장 낮은
+    # 공급자적합성확인(SCoC) 대상은 제조·수입자가 스스로 시험해 확인하므로
+    # 조회 DB 에 번호가 없는 것이 정상이다. 미조회를 RED 로 두면 정상 상품에
+    # 반복해서 빨간불이 뜨고, 셀러가 모든 RED 를 무시하게 된다. 그러면 진짜
+    # 취소된 인증도 안 보게 된다.
     FindingKind.RECALL_MATCH,
-    FindingKind.KC_NOT_FOUND,
-    # 취소·표시사용금지 상태의 인증번호는 조회는 되지만 그 인증으로 판매 표시를
-    # 유지할 수 없다. 인증이 아예 없는 것과 실질이 같으므로 같은 무게로 다룬다.
     FindingKind.KC_REVOKED,
     FindingKind.KC_SUSPENDED,
 }
@@ -77,6 +82,7 @@ def _signal_for(facts: ProductFacts, kinds: set[FindingKind]) -> Signal:
         return Signal.UNKNOWN
 
     if kinds & {
+        FindingKind.KC_NOT_FOUND,
         FindingKind.KC_UNDER_ACTION,
         FindingKind.KC_MISSING_BUT_REQUIRED,
         FindingKind.SUBSTANCE_MENTIONED,

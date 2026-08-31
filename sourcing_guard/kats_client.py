@@ -84,6 +84,18 @@ def classify_cert_state(raw: str | None, states: dict[str, list[str]]) -> CertSt
     return CertState.UNKNOWN
 
 
+# 리콜 레코드의 certNum 에는 인증번호 대신 자리표시자 문자열이 오기도 한다.
+# 설계서 p.10 예시의 "공급자적합성" 이 그것이다. 인증번호로 취급해 매칭에 쓰면
+# 서로 다른 상품이 같은 자리표시자를 공유해 엉뚱하게 일치한다.
+CERT_PLACEHOLDERS = frozenset({"공급자적합성", "해당없음", "해당사항없음", "-", "없음", "N/A"})
+
+
+def is_cert_number(value: str) -> bool:
+    """실제 인증번호처럼 보이는가. 자리표시자와 구분한다."""
+    v = (value or "").strip()
+    return bool(v) and v not in CERT_PLACEHOLDERS
+
+
 def split_list_field(raw: Any) -> list[str]:
     """recallModelName / certNum 은 콤마로 묶인 목록이다 (설계서 p.11, p.14).
 

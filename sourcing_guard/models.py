@@ -61,6 +61,9 @@ class FindingKind(str, Enum):
     KC_SUSPENDED = "kc_suspended"        # 표시 사용금지
     KC_UNDER_ACTION = "kc_under_action"  # 개선명령·청문실시
     KC_MISSING_BUT_REQUIRED = "kc_missing_but_required"
+    # 공급자적합성확인(SCoC) 대상은 제조·수입자가 스스로 시험해 확인하므로
+    # 정부 조회 DB 에 인증번호가 없는 것이 정상이다. 부재를 위반으로 읽으면 안 된다.
+    KC_TIER_UNKNOWN = "kc_tier_unknown"
     RECALL_MATCH = "recall_match"
     RECALL_CLEAR = "recall_clear"
     HAZARD_RULE_APPLIES = "hazard_rule_applies"
