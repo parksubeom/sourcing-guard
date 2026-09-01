@@ -52,9 +52,9 @@ rules:
     test_method: "KS G ISO 8124-3 (4.1.1)"
     legal_basis: "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)"
     source_url: "https://www.law.go.kr/행정규칙/어린이제품공통안전기준"
-    status: draft
-    verified_by: null
-    verified_at: null
+    status: verified
+    verified_by: "박수범"
+    verified_at: "2026-09-02"
 
   - id: KC-COMMON-3.1.1-AS
     substance: "비소"
@@ -68,9 +68,9 @@ rules:
     test_method: "KS G ISO 8124-3 (4.1.1)"
     legal_basis: "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)"
     source_url: "https://www.law.go.kr/행정규칙/어린이제품공통안전기준"
-    status: draft
-    verified_by: null
-    verified_at: null
+    status: verified
+    verified_by: "박수범"
+    verified_at: "2026-09-02"
 
   - id: KC-COMMON-3.1.1-BA
     substance: "바륨"
@@ -84,9 +84,9 @@ rules:
     test_method: "KS G ISO 8124-3 (4.1.1)"
     legal_basis: "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)"
     source_url: "https://www.law.go.kr/행정규칙/어린이제품공통안전기준"
-    status: draft
-    verified_by: null
-    verified_at: null
+    status: verified
+    verified_by: "박수범"
+    verified_at: "2026-09-02"
 
   - id: KC-COMMON-3.1.1-CD
     substance: "카드뮴"
@@ -100,9 +100,9 @@ rules:
     test_method: "KS G ISO 8124-3 (4.1.1)"
     legal_basis: "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)"
     source_url: "https://www.law.go.kr/행정규칙/어린이제품공통안전기준"
-    status: draft
-    verified_by: null
-    verified_at: null
+    status: verified
+    verified_by: "박수범"
+    verified_at: "2026-09-02"
 
   - id: KC-COMMON-3.1.1-CR
     substance: "크로뮴"
@@ -116,9 +116,9 @@ rules:
     test_method: "KS G ISO 8124-3 (4.1.1)"
     legal_basis: "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)"
     source_url: "https://www.law.go.kr/행정규칙/어린이제품공통안전기준"
-    status: draft
-    verified_by: null
-    verified_at: null
+    status: verified
+    verified_by: "박수범"
+    verified_at: "2026-09-02"
 
   - id: KC-COMMON-3.1.1-PB
     substance: "납(용출)"
@@ -132,9 +132,9 @@ rules:
     test_method: "KS G ISO 8124-3 (4.1.1)"
     legal_basis: "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)"
     source_url: "https://www.law.go.kr/행정규칙/어린이제품공통안전기준"
-    status: draft
-    verified_by: null
-    verified_at: null
+    status: verified
+    verified_by: "박수범"
+    verified_at: "2026-09-02"
     note: >-
       ⚠ 기획서 §2.3·§4 와 이전 draft 가 "납 300 mg/kg" 이라고 적고 있으나
       이 고시에는 300 이라는 값이 없다. 용출 90, 함유량 100(페인트·표면코팅 90)이다.
@@ -152,9 +152,9 @@ rules:
     test_method: "KS G ISO 8124-3 (4.1.1)"
     legal_basis: "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)"
     source_url: "https://www.law.go.kr/행정규칙/어린이제품공통안전기준"
-    status: draft
-    verified_by: null
-    verified_at: null
+    status: verified
+    verified_by: "박수범"
+    verified_at: "2026-09-02"
 
   - id: KC-COMMON-3.1.1-SE
     substance: "셀레늄"
@@ -168,9 +168,9 @@ rules:
     test_method: "KS G ISO 8124-3 (4.1.1)"
     legal_basis: "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)"
     source_url: "https://www.law.go.kr/행정규칙/어린이제품공통안전기준"
-    status: draft
-    verified_by: null
-    verified_at: null
+    status: verified
+    verified_by: "박수범"
+    verified_at: "2026-09-02"
 
   # --- 3.1.2 유해원소 함유량 (원문 p.3) -----------------------------------
   # 시험방법 4.1.2: 부록 A 로 시험시료 준비 후 부록 B
@@ -197,9 +197,9 @@ rules:
     test_method: "부록 A(시료준비) + 부록 B (4.1.2)"
     legal_basis: "어린이제품 공통안전기준 3.1.2 (산업통상자원부고시 제2022-220호)"
     source_url: "https://www.law.go.kr/행정규칙/어린이제품공통안전기준"
-    status: draft
-    verified_by: null
-    verified_at: null
+    status: verified
+    verified_by: "박수범"
+    verified_at: "2026-09-02"
 
   - id: KC-COMMON-3.1.2-CD
     substance: "총 카드뮴(함유량)"
@@ -214,9 +214,9 @@ rules:
     test_method: "부록 A(시료준비) + 부록 B (4.1.2)"
     legal_basis: "어린이제품 공통안전기준 3.1.2 (산업통상자원부고시 제2022-220호)"
     source_url: "https://www.law.go.kr/행정규칙/어린이제품공통안전기준"
-    status: draft
-    verified_by: null
-    verified_at: null
+    status: verified
+    verified_by: "박수범"
+    verified_at: "2026-09-02"
 
   # --- 3.1.3 프탈레이트계 가소제 (원문 p.3) -------------------------------
   # 6종의 "총 합" 이 0.1 % 이하. 물질별 개별 한도가 아니다.
@@ -249,9 +249,9 @@ rules:
     test_method: "부록 C (4.1.3)"
     legal_basis: "어린이제품 공통안전기준 3.1.3 (산업통상자원부고시 제2022-220호)"
     source_url: "https://www.law.go.kr/행정규칙/어린이제품공통안전기준"
-    status: draft
-    verified_by: null
-    verified_at: null
+    status: verified
+    verified_by: "박수범"
+    verified_at: "2026-09-02"
     note: >-
       "DnOP·DINP·DIDP 는 입에 넣도록 의도된 완구에 한정" 은 옛 완구 부속서
       조항이며 삭제됐다. 현행 3.1.3 은 7종을 구분 없이 총합 0.1 % 로 규제하고,
@@ -287,9 +287,9 @@ rules:
     test_method: "안전확인 안전기준 부속서 6 - 완구 제12부 니트로사민류 및 니트로사민류 생성 가능물질 (4.1.4)"
     legal_basis: "어린이제품 공통안전기준 3.1.4 (산업통상자원부고시 제2022-220호)"
     source_url: "https://www.law.go.kr/행정규칙/어린이제품공통안전기준"
-    status: draft
-    verified_by: null
-    verified_at: null
+    status: verified
+    verified_by: "박수범"
+    verified_at: "2026-09-02"
 
   - id: KC-COMMON-3.1.4-NITROSATABLE
     substance: "니트로사민류 생성 가능물질"
@@ -311,9 +311,9 @@ rules:
     test_method: "안전확인 안전기준 부속서 6 - 완구 제12부 니트로사민류 및 니트로사민류 생성 가능물질 (4.1.4)"
     legal_basis: "어린이제품 공통안전기준 3.1.4 (산업통상자원부고시 제2022-220호)"
     source_url: "https://www.law.go.kr/행정규칙/어린이제품공통안전기준"
-    status: draft
-    verified_by: null
-    verified_at: null
+    status: verified
+    verified_by: "박수범"
+    verified_at: "2026-09-02"
 
   # --- 3.1.5 폼알데하이드, 아릴아민, pH (원문 p.4) ------------------------
   # 셋 다 "개별안전기준이 없는 섬유제품" 으로 한정된다.
@@ -329,9 +329,9 @@ rules:
     test_method: "KS K ISO 14184-1 (4.1.5)"
     legal_basis: "어린이제품 공통안전기준 3.1.5 (산업통상자원부고시 제2022-220호)"
     source_url: "https://www.law.go.kr/행정규칙/어린이제품공통안전기준"
-    status: draft
-    verified_by: null
-    verified_at: null
+    status: verified
+    verified_by: "박수범"
+    verified_at: "2026-09-02"
 
   - id: KC-COMMON-3.1.5-ARYLAMINE
     substance: "아릴아민"
@@ -346,9 +346,9 @@ rules:
     test_method: "KS K 0147, KS K 0739 (4.1.6)"
     legal_basis: "어린이제품 공통안전기준 3.1.5 (산업통상자원부고시 제2022-220호)"
     source_url: "https://www.law.go.kr/행정규칙/어린이제품공통안전기준"
-    status: draft
-    verified_by: null
-    verified_at: null
+    status: verified
+    verified_by: "박수범"
+    verified_at: "2026-09-02"
 
   - id: KC-COMMON-3.1.5-PH
     substance: "pH"
@@ -363,9 +363,9 @@ rules:
     test_method: "KS K ISO 3071 (4.1.7)"
     legal_basis: "어린이제품 공통안전기준 3.1.5 (산업통상자원부고시 제2022-220호)"
     source_url: "https://www.law.go.kr/행정규칙/어린이제품공통안전기준"
-    status: draft
-    verified_by: null
-    verified_at: null
+    status: verified
+    verified_by: "박수범"
+    verified_at: "2026-09-02"
     note: "상한값이 아니라 4.0~7.5 범위다. limit_value 로 표현할 수 없어 range 필드를 쓴다."
 
   # --- 3.1.6 사용금지 물질 (원문 p.4) -------------------------------------
@@ -381,9 +381,9 @@ rules:
     condition: "사용하거나 검출되어서는 안 된다(전면 금지)."
     legal_basis: "어린이제품 공통안전기준 3.1.6 (산업통상자원부고시 제2022-220호)"
     source_url: "https://www.law.go.kr/행정규칙/어린이제품공통안전기준"
-    status: draft
-    verified_by: null
-    verified_at: null
+    status: verified
+    verified_by: "박수범"
+    verified_at: "2026-09-02"
     note: "한도 초과가 아니라 검출 자체가 위반이다. 스코어링에서 별도 취급이 필요할 수 있다."
 
 # 커버리지 선언: 여기에 없는 품목군은 COVERAGE_GAP 으로 처리되어 UNKNOWN 이 됩니다.
