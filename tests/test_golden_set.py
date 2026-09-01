@@ -6,6 +6,22 @@ KC 인증번호가 없다 — 구매대행 소싱 상품은 인증정보가 없�
 
 이 테스트는 리콜 인덱스 없이 돈다(추출·분류·범위 판정은 리콜과 독립적이다).
 리콜 매칭 자체는 test_recall_index / test_watchlist 가 따로 검증한다.
+
+────────────────────────────────────────────────────────────────
+기본은 목 모드다 (CLAUDE.md §7: 테스트가 네트워크에 의존하면 안 된다)
+────────────────────────────────────────────────────────────────
+이 파일은 케이스마다 extract() 를 부르므로, 개발자 .env 에 키가 들어오면
+케이스마다 실제 Anthropic API 를 때린다 — 실측 2026-09-01 로 이 파일의 한
+테스트가 43초였다. conftest.py 의 autouse 픽스처가 목 모드를 강제한다.
+
+실제 LLM 으로 재는 것은 계측이지 회귀 테스트가 아니다:
+
+    SG_LIVE_LLM=1 pytest tests/test_golden_set.py   # 같은 단정을 LLM 으로
+    python scripts/golden_report.py                 # 필드별 정확도 리포트
+
+목 모드에서도 신호·필수 finding·필수 추출은 그대로 단정한다. 품목 분류만
+느슨해지는데, 기대값이 LLM 답으로 갱신돼 있고 휴리스틱은 키워드로만 분류하기
+때문이다 (아래 used_llm 분기 참조).
 """
 
 from pathlib import Path
@@ -87,10 +103,19 @@ def test_golden_case(case):
         )
 
 
-def test_all_eleven_samples_lack_kc_number():
-    """11건 전부 KC 번호가 없다는 것 자체가 시장 사실이다.
+def test_no_sample_has_a_kc_number_in_its_pasted_text():
+    """붙여넣은 상품정보 표에 KC 번호가 없다는 것 자체가 시장 사실이다.
 
     이 전제가 깨지면(표본이 바뀌면) 골든셋의 성격이 달라진 것이므로 알린다.
+
+    ⚠ 범위는 text 다. 골든셋 text 는 원본 캡처의 '상품정보 표' 만 옮겨 적은
+      것이고, KC 마크는 보통 그 표가 아니라 페이지 하단 이미지에 붙는다.
+      그래서 이 테스트가 통과한다고 "원본 페이지에 인증번호가 없었다" 가
+      되지는 않는다.
+
+      원본 캡처 11장이 저장소에 없어 이미지 쪽은 확인하지 못했다. 캡처가
+      확보되면 골든셋에 images 를 배선하고 led-penlight 부터 다시 봐야 한다
+      (근거와 순서는 golden_set.yaml 머리말에 적어뒀다).
     """
     without = [c["id"] for c in _GOLDEN if not extract(c["text"]).kc_numbers]
     assert len(without) == len(_GOLDEN), (
