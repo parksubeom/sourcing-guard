@@ -8,14 +8,18 @@ primary_region = "nrt"          # 도쿄. 서울(icn)은 지역에 따라 미제
   dockerfile = "Dockerfile"
 
 [env]
-  # 인증키가 없는 동안에는 목 모드로 뜬다. 키를 넣으면 실연동으로 바뀐다.
-  MOCK_MODE = "true"
+  # 2026-09-01 인증키 수령으로 실연동 전환. 키는 secrets 로 넣는다.
+  MOCK_MODE = "false"
   # ⚠ 반드시 영구 볼륨 경로. 컨테이너 기본 파일시스템에 두면 재배포마다
   #   워치리스트가 사라지고, "리콜 공표되면 가장 먼저 알린다"는 이 서비스의
   #   유일한 약속이 조용히 깨진다 (기획서 §6.1).
+  #
+  #   리콜 로컬 사본(37,313건, 약 59MB)도 이 DB 의 recalls 테이블에 들어간다.
+  #   별도 RECALL_DB_PATH 를 두려던 초안이 있었으나 구현은 한 DB 로 갔다 —
+  #   워치리스트 스윕이 리콜을 조인해서 읽으므로 나눌 이유가 없었다.
   WATCHLIST_DB_PATH = "/data/watchlist.db"
-  # 리콜 로컬 동기화 DB 도 같은 볼륨을 쓴다 (D 작업에서 사용).
-  RECALL_DB_PATH = "/data/recalls.db"
+  # 리콜 일일 동기화. 시작 시 1회 + 하루 한 번.
+  SYNC_ENABLED = "true"
 
 # 영구 볼륨. 워치리스트 + 리콜 동기화 DB 양쪽이 여기 들어간다.
 # 생성: fly volumes create sg_data --region nrt --size 3
