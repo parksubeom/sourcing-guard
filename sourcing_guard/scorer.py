@@ -32,6 +32,9 @@ _PENALTY: dict[FindingKind, int] = {
     FindingKind.COVERAGE_GAP: 0,
     FindingKind.LOOKUP_FAILED: 0,
     FindingKind.KC_TIER_UNKNOWN: 0,
+    FindingKind.OUT_OF_SCOPE: 0,
+    FindingKind.AGE_OUT_OF_CHILD_RANGE: 0,
+    FindingKind.INFO_REQUEST: 0,
     FindingKind.KC_VERIFIED: 0,
     FindingKind.RECALL_CLEAR: 0,
 }
@@ -102,6 +105,11 @@ def _signal_for(facts: ProductFacts, kinds: set[FindingKind]) -> Signal:
     if FindingKind.LOOKUP_FAILED in kinds:
         return Signal.UNKNOWN
 
+    # 우리 소관 밖 품목(식품·화장품 등)은 신호를 매기지 않는다. "판별 못 함"이
+    # 아니라 "다른 부처 소관"이므로, 안내만 하고 UNKNOWN 으로 둔다.
+    if FindingKind.OUT_OF_SCOPE in kinds:
+        return Signal.UNKNOWN
+
     # R3: an unclassified item means we do not know which rules apply.
     if facts.category is ItemCategory.UNCLASSIFIED:
         return Signal.UNKNOWN
@@ -137,6 +145,12 @@ def _signal_for(facts: ProductFacts, kinds: set[FindingKind]) -> Signal:
 
 
 def _coverage_note(facts: ProductFacts, kinds: set[FindingKind]) -> str | None:
+    if FindingKind.OUT_OF_SCOPE in kinds:
+        return "이 품목은 본 서비스가 다루는 규제 범위 밖입니다. 해당 소관 부처 기준을 확인하세요."
+    if FindingKind.AGE_OUT_OF_CHILD_RANGE in kinds:
+        return "연령 표기 기준으로는 어린이제품 안전기준 적용 대상이 아닙니다."
+    if FindingKind.INFO_REQUEST in kinds and facts.category is ItemCategory.UNCLASSIFIED:
+        return "판정에 필요한 정보가 상세페이지에 없습니다. 공급처 확인 항목을 확인해 주세요."
     if facts.category is ItemCategory.UNCLASSIFIED:
         return "품목군을 특정하지 못해 적용 기준을 확정할 수 없습니다."
     if FindingKind.COVERAGE_GAP in kinds:

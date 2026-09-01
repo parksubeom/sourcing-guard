@@ -20,6 +20,13 @@ from .kats_client import (
     cert_evidence_url,
     is_state_not_stated,
 )
+from .scoping import (
+    CHILDREN_CATEGORIES,
+    AgeScope,
+    classify_age,
+    missing_inputs,
+    out_of_scope_reason,
+)
 from .models import Finding, FindingKind, ItemCategory, ProductFacts, Signal
 
 if TYPE_CHECKING:  # 순환 import 방지 — recall_index 가 watchlist 를 쓴다
@@ -167,6 +174,57 @@ def verify(
     today = date.today()
     findings: list[Finding] = []
 
+    # --- (0) 우리 소관인가 -------------------------------------------------
+    # 공통안전기준 1항이 제외하는 물품이면 여기서 끝낸다. 셀러에게 "판별 못 함"
+    # 이 아니라 "우리 소관이 아니고 어디 소관인지" 를 알려주는 것이 유용하다.
+    scope_reason = out_of_scope_reason(
+        facts.product_name, facts.model_name, *facts.materials, *facts.substances_mentioned
+    )
+    if facts.category is ItemCategory.OUT_OF_SCOPE or scope_reason:
+        findings.append(
+            Finding(
+                kind=FindingKind.OUT_OF_SCOPE,
+                signal=Signal.UNKNOWN,
+                statement_ko=(
+                    "이 품목은 어린이제품 공통안전기준 적용 대상에서 제외됩니다"
+                    + (f" ({scope_reason})" if scope_reason else "")
+                    + ". 해당 소관 부처의 별도 기준을 확인해 주세요."
+                ),
+                source_label="어린이제품 공통안전기준 1. 적용범위",
+                source_url="https://law.go.kr/행정규칙/어린이제품공통안전기준",
+                legal_basis="어린이제품 공통안전기준 1. 적용범위",
+                detail={"reason": scope_reason},
+                checked_at=today,
+            )
+        )
+        return findings
+
+    # 연령 표기를 먼저 해석한다. 어린이제품 기준을 적용할지, 인증번호를 요구할지
+    # 모두 여기에 달려 있다. 공통안전기준은 만 13세 이하에 적용된다.
+    age = classify_age(facts.target_age)
+    if age is AgeScope.DECLARED_NOT_CHILD:
+        findings.append(
+            Finding(
+                kind=FindingKind.AGE_OUT_OF_CHILD_RANGE,
+                signal=Signal.UNKNOWN,
+                statement_ko=(
+                    f"사용연령이 '{facts.target_age}' 로 표기되어 어린이제품 공통안전기준"
+                    "(만 13세 이하) 적용 대상이 아닙니다. 다만 실사용 연령이 13세 이하이면 "
+                    "대상이 될 수 있으니 표기 근거를 공급처에 확인해 주세요."
+                ),
+                source_label="어린이제품 공통안전기준 1. 적용범위",
+                source_url="https://law.go.kr/행정규칙/어린이제품공통안전기준",
+                legal_basis="어린이제품 공통안전기준 1. 적용범위",
+                detail={"target_age": facts.target_age, "age_scope": age.value},
+                checked_at=today,
+            )
+        )
+
+    # 표기상 어린이제품이 아니면 어린이 품목군의 인증번호를 요구하지 않는다.
+    _cert_required_here = facts.category in _CERT_REQUIRED and not (
+        age is AgeScope.DECLARED_NOT_CHILD and facts.category in CHILDREN_CATEGORIES
+    )
+
     # --- (a) KC certification -------------------------------------------
     if facts.kc_numbers:
         for num in facts.kc_numbers:
@@ -241,7 +299,7 @@ def verify(
                         checked_at=today,
                     )
                 )
-    elif facts.category in _CERT_REQUIRED:
+    elif _cert_required_here:
         findings.append(
             Finding(
                 kind=FindingKind.KC_MISSING_BUT_REQUIRED,
@@ -288,13 +346,15 @@ def verify(
     # 스윕이 로컬 watchlist.match() 로 서로 다른 방법을 썼다 — 같은 상품이
     # 스캔에선 안 걸리고 스윕에선 걸릴 수 있는 상태였다. 이제 둘 다 match() 다.
     hits: list = []
-    if recalls is not None and not recalls.is_empty():
+    recall_available = recalls is not None and not recalls.is_empty()
+    if recall_available:
         hits = recalls.find(facts, today=today)
     else:
         # 로컬 사본이 아직 없다(초기 적재 전). 대조하지 않은 것을 대조했다고
-        # 말할 수 없으므로 조회 실패와 같이 다룬다 (R3).
+        # 말할 수 없으므로 조회 실패와 같이 다룬다 (R3). 다만 여기서 끝내지
+        # 않는다 — 재질·연령·품목 확인 요청은 리콜 조회와 독립적이고, 그것이
+        # 소싱 단계에서 셀러에게 주는 실질 가치다.
         findings.append(_lookup_failed("리콜", today))
-        return findings
 
     if hits:
         for r, m in hits:
@@ -320,7 +380,7 @@ def verify(
                     checked_at=today,
                 )
             )
-    elif facts.product_name or facts.model_name:
+    elif recall_available and (facts.product_name or facts.model_name):
         # "리콜 이력 없음" 에는 유효기간이 있다. 로컬 사본이라 오늘 공표된
         # 리콜은 다음 동기화 전까지 안 잡힌다. 숨기면 안 되는 트레이드오프다.
         as_of = _as_of_label(recalls.as_of)
@@ -339,8 +399,28 @@ def verify(
             )
         )
 
+    # --- (b-3) 공급처에 물어야 할 것 ----------------------------------------
+    # "모르겠습니다" 로 끝내지 않는다. 소싱 단계에서 셀러가 실제로 할 수 있는
+    # 행동은 공급처에 묻는 것뿐이고, 무엇을 물어야 하는지가 실질 가치다.
+    for label, ask in missing_inputs(
+        materials=facts.materials, target_age=facts.target_age, category=facts.category
+    ):
+        findings.append(
+            Finding(
+                kind=FindingKind.INFO_REQUEST,
+                signal=Signal.UNKNOWN,
+                statement_ko=f"[{label} 확인 필요] {ask}",
+                source_label="제품안전정보센터 대상 품목 안내",
+                source_url="https://www.safetykorea.kr/policy/targetsSafetyCheck3",
+                detail={"missing": label},
+                checked_at=today,
+            )
+        )
+
     # --- (c) hazard rules ------------------------------------------------
-    if not rules.covers(facts.category):
+    if age is AgeScope.DECLARED_NOT_CHILD and facts.category in CHILDREN_CATEGORIES:
+        pass  # 표기상 대상이 아니므로 어린이제품 기준을 적용하지 않는다.
+    elif not rules.covers(facts.category):
         findings.append(
             Finding(
                 kind=FindingKind.COVERAGE_GAP,

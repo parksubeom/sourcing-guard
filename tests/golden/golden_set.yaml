@@ -1,0 +1,173 @@
+# 골든셋 — 실제 도매·구매대행 상세페이지에서 뽑은 판정 정답
+#
+# 목적: 추출·분류·신호 판정이 실데이터에서 기대대로 도는지 회귀 고정.
+# 표본 11건 전부 KC 인증번호가 없다 — 이것이 예외가 아니라 정상이다.
+# 구매대행·도매 상품은 인증정보가 없는 것이 기본이고, 우리 서비스의 본체는
+# "KC 번호가 없을 때 무엇을 확인해야 하는지" 를 답하는 것이다.
+#
+# text 는 상세페이지 상품정보 표를 셀러가 붙여넣는다고 가정한 것. 이미지에서
+# 사람이 옮겨 적었다.
+#
+# expect:
+#   signal        기대 신호등 (green/amber/red/unknown)
+#   category      기대 품목 분류
+#   must_extract  이 값들이 추출돼야 한다 (부분 문자열)
+#   must_find     이 FindingKind 들이 결과에 있어야 한다
+#   note          왜 이 정답인지 (사람용)
+
+cases:
+  - id: cleansing-foam
+    text: |
+      전자상거래 등에서의 상품정보제공고시
+      내용물의 용량 또는 중량: 40ml
+      제품 주요사양: 약산성 클렌징폼 시카 5가지 성분 EWG 그린등급
+      화장품제조업자, 화장품책임판매업자: 한국콜마(주), 에스앤비코리아 주식회사
+      제조국: 대한민국
+      화장품법에 따라 기재·표시하여야 하는 모든 성분: 상세정보 별도표기
+    expect:
+      signal: unknown
+      must_find: [out_of_scope]
+      note: 화장품. 식약처 소관. "화장품책임판매업자"·"EWG" 가 신호.
+
+  - id: zabara-chair
+    text: |
+      상세정보고시
+      품명: 휴대용 자바라 의자
+      제조국: 중국 OEM
+      사이즈: 45*25cm
+      재질: ABS+PC
+      색상: 블랙
+      무게: 1.2kg
+      수입자: (주)리예코퍼레이션
+    expect:
+      signal: unknown
+      category: unclassified
+      must_extract: [ABS]
+      must_find: [info_request]
+      note: 성인 가구. 품목 불명이라 확인 요청. 재질 ABS 는 뽑혀야 한다.
+
+  - id: kk230-unknown
+    text: |
+      상품정보
+      원산지: 수입산 아시아 중국
+      모델명: KK230
+      제조사: KLAND
+      상품포장 부피/무게: 8X10.5 / 1
+    expect:
+      signal: unknown
+      category: unclassified
+      must_find: [info_request]
+      note: 정보 극도로 부족. 재질·연령·품목 전부 확인 요청.
+
+  - id: slim-bin
+    text: |
+      제품정보 PRODUCT INFORMATION
+      제품명: 슬림 원터치 휴지통
+      소재: ABS, PP
+      색상: 화이트, 블랙
+      제조국: 중국
+    expect:
+      signal: unknown
+      category: unclassified
+      must_extract: [ABS, PP]
+      note: 생활용품. 성인용. 재질 두 개 다 뽑혀야 한다.
+
+  - id: skinfoou-ampoule
+    text: |
+      상품정보
+      제품명: 스킨포유 브라이트닝 플루이드 앰플
+      내용량: 2ml x 10ea
+      화장품제조업자: (주)메조팜
+      제조국: 대한민국
+      화장품책임판매업자: 에스앤비코리아(주)
+      화장품법에 따라 기재 표시하여야 하는 모든성분: 정제수, 부틸렌글라이콜 외
+    expect:
+      signal: unknown
+      must_find: [out_of_scope]
+      note: 화장품(앰플). 성분표 대량. 식약처 소관.
+
+  - id: pearl-earring
+    text: |
+      귤팩토리 진주 귀걸이
+      구매 전 필독사항
+      악세사리 특성상 착용 여부를 알 수 없습니다
+      인증사항: 해당사항 없음
+      제조국/제조자: 중국 OEM (made in china)
+      소비자상담번호: 02-6929-4106
+    expect:
+      signal: unknown
+      category: unclassified
+      note: >
+        판매자가 "인증사항 해당사항 없음" 을 명시. 액세서리는 실제로 안전관리
+        대상이 아닌 경우가 많다. 판매자 표기를 존중하고 대상 아님을 단정도
+        하지 않는다. 미조회 RED 를 내면 안 된다.
+
+  - id: led-penlight
+    text: |
+      LED 5W 소형 펜라이트 볼펜랜턴
+      제품명: LED 5W 초소형 펜라이트
+      소재/재질: CNC 가공한 하드 아노다이즈드 항공기용 T6061 알루미늄
+      LED 칩: LICHAO 5W LED
+      전원: AAA건전지 X 1EA (별도구매)
+      사이즈: 전체길이 9.8 cm / 랜즈지름 1.4 cm
+      무게: 19g (건전지 제외)
+      원산지: 중국
+    expect:
+      signal: unknown
+      category: unclassified
+      note: >
+        전기용품(LED 조명). 전파인증 대상 가능 — KC 와 별개 제도라 셀러가 자주
+        놓친다. 지금은 규칙 DB 에 전기용품이 없어 UNKNOWN 이 정상. 확장 후보.
+
+  - id: beads-accessory
+    text: |
+      귤팩토리 비즈 부속
+      구매 전 필독사항
+      악세사리 특성상 착용 여부를 알 수 없습니다
+      인증사항: 해당사항 없음
+      제조국/제조자: 중국 OEM (made in china)
+    expect:
+      signal: unknown
+      category: unclassified
+      note: pearl-earring 과 같은 판매자. 판매자 인증 비대상 표기 존중.
+
+  - id: bamboo-salt-set
+    text: |
+      850C 황토가마에서 제대로 구운 죽염 소금
+      글라인더 구운 죽염 천일염
+      글라인더 통후추
+      글라인더 핑크소금
+      글라인더 볶음참깨
+      선물포장 디자인
+    expect:
+      signal: unknown
+      must_find: [out_of_scope]
+      note: 식품(소금·후추·참깨). 식약처 소관. "죽염"·"소금"·"통후추" 가 신호.
+
+  - id: bear-keyring
+    text: |
+      Detail Information
+      상품명: 곰돌이 인형 키링 9종
+      재질: 폴리+PP+금속
+      고리 색상: 옵션별 상이
+      사이즈: 세로 약 12cm
+    expect:
+      signal: unknown
+      category: unclassified
+      must_extract: [PP]
+      note: >
+        인형이 붙은 키링. 주된 용도가 완구가 아니라 액세서리다. 완구로 단정하지
+        않는다 — 완구 기준(프탈레이트·납)을 들이대는 것 자체가 품목 오판정(R1).
+        대상 고객이 어린이로 명시된 경우에만 완구 기준을 안내한다.
+
+  - id: canvas-tote
+    text: |
+      Specification
+      소재: 캔버스원단
+      제조: 중국
+      크기: 가로 39cm / 세로 29.5cm / 넓이 10.5cm
+      색상: 2종 (블랙/아이보리)
+    expect:
+      signal: unknown
+      category: unclassified
+      note: 성인 잡화(토트백). 섬유지만 어린이용 아님. 품목 불명.
