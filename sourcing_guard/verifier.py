@@ -19,6 +19,7 @@ from .kats_client import (
     KatsClient,
     OPERATOR_FAULT_CODES,
     cert_evidence_url,
+    item_search_url,
     is_state_not_stated,
 )
 from .scoping import (
@@ -323,6 +324,14 @@ def verify(
                     )
                 )
     elif _cert_required_here:
+        # 제품명·업체명이 있으면 셀러가 정부 사이트에서 직접 인증 여부를 검색할 수
+        # 있게 링크를 연다. 우리가 대신 조회해 "인증 없음"을 단정하지 않는다 -
+        # 브랜드명 미등록·SCoC 대상이면 DB 에 없는 게 정상이다 (R3).
+        search_hint = facts.maker or facts.product_name
+        guide = (
+            f" 아래 링크에서 '{search_hint}' 로 직접 검색해 인증 이력을 확인할 수 있습니다."
+            if search_hint else ""
+        )
         findings.append(
             Finding(
                 kind=FindingKind.KC_MISSING_BUT_REQUIRED,
@@ -330,11 +339,13 @@ def verify(
                 statement_ko=(
                     "규제 품목군으로 보이나 상세페이지에서 인증번호를 찾지 못했습니다. "
                     "안전인증·안전확인 대상이면 인증번호가 있어야 하고, "
-                    "공급자적합성확인 대상이면 없는 것이 정상입니다. "
-                    "공급처에 인증 구분과 시험성적서를 요청해 확인하세요."
+                    "공급자적합성확인 대상이면 없는 것이 정상입니다."
+                    + guide
+                    + " 공급처에 인증 구분과 시험성적서를 요청해 확인하세요."
                 ),
-                source_label="제품안전정보센터 안전확인 대상 품목 안내",
-                source_url="https://www.safetykorea.kr/policy/targetsSafetyCheck3",
+                source_label="제품안전정보센터에서 인증 여부 직접 검색",
+                source_url=item_search_url(search_hint),
+                detail={"search_term": search_hint},
                 checked_at=today,
             )
         )

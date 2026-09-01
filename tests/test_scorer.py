@@ -332,3 +332,110 @@ def test_out_of_scope_headline_points_to_the_right_authority():
     result = score(facts, verify(facts, KatsClient(None, None, mock=True), RuleBook(), None))
     assert "소관" in result.headline
     assert "공급처에 아래 항목" not in result.headline
+
+
+# --- 워치리스트 제안: GREEN 의 약점을 잇는 다리 (허점 2) --------------------
+def test_green_suggests_watching_because_it_is_time_bound():
+    """GREEN 은 시점 판단이라 가장 약한 신호다. 워치리스트로 유효기간을 잇는다."""
+    from sourcing_guard.scorer import _watch_suggestion
+    from sourcing_guard.models import Signal, ProductFacts
+
+    facts = ProductFacts(product_name="히터", model_name="SH-100", kc_numbers=["JU071047-12002C"])
+    w = _watch_suggestion(facts, Signal.GREEN, set())
+    assert w.can_watch
+    assert "조회 시점" in w.reason and "가장 먼저" in w.reason
+
+
+def test_out_of_scope_does_not_suggest_watching():
+    """우리가 리콜을 대조하지 않는 품목은 감시를 권하지 않는다 - 지킬 수 없는 약속."""
+    from sourcing_guard.scorer import _watch_suggestion
+    from sourcing_guard.models import Signal, ProductFacts, FindingKind
+
+    facts = ProductFacts(product_name="클렌징폼", model_name="CF-1")
+    w = _watch_suggestion(facts, Signal.UNKNOWN, {FindingKind.OUT_OF_SCOPE})
+    assert not w.can_watch
+
+
+def test_no_clue_means_no_watch_offer():
+    """모델명·인증번호·제조사가 없으면 감시할 수 없다 (WatchItem.is_matchable 과 일치)."""
+    from sourcing_guard.scorer import _watch_suggestion
+    from sourcing_guard.models import Signal, ProductFacts
+
+    facts = ProductFacts(product_name="이름만 있는 상품")
+    w = _watch_suggestion(facts, Signal.GREEN, set())
+    assert not w.can_watch
+
+
+def test_every_signal_has_a_watch_reason():
+    from sourcing_guard.scorer import _WATCH_REASON
+    from sourcing_guard.models import Signal
+
+    for sig in Signal:
+        assert sig in _WATCH_REASON and _WATCH_REASON[sig].strip()
+
+
+def test_watch_suggestion_matchability_matches_watchitem():
+    """스캔의 can_watch 와 실제 등록의 is_matchable 이 어긋나면 안 된다.
+
+    스캔에서 '감시 가능' 이라 했는데 등록에서 422 가 나면 사용자를 배신한다.
+    """
+    from sourcing_guard.scorer import _watch_suggestion
+    from sourcing_guard.models import Signal, ProductFacts, WatchItem
+    from datetime import date
+
+    for facts in [
+        ProductFacts(product_name="A", model_name="MDL-100"),
+        ProductFacts(product_name="B", kc_numbers=["CB061R2170-3018"]),
+        ProductFacts(product_name="C", maker="어느제조사"),
+        ProductFacts(product_name="이름만"),
+    ]:
+        w = _watch_suggestion(facts, Signal.GREEN, set())
+        item = WatchItem.from_facts(id="x", owner_id="o", facts=facts, on=date.today())
+        assert w.can_watch == item.is_matchable(), f"불일치: {facts.product_name}"
+
+
+# --- "우리가 읽은 것" 표시 (신뢰) ------------------------------------------
+def test_extracted_shows_what_we_read_with_cert_link():
+    """판정 위에 추출 결과를 보여줘야 셀러가 '제대로 읽었네' 를 믿는다.
+
+    인증번호에는 정부 조회 링크를 붙여, 그 번호가 맞는지 직접 확인하게 한다.
+    """
+    from sourcing_guard.scorer import _extracted_fields
+    from sourcing_guard.models import ProductFacts, ItemCategory
+
+    facts = ProductFacts(
+        product_name="도시락 슬라임", model_name="매직액체", maker="(주)대양무역",
+        kc_numbers=["CB061R2170-3018"], materials=["PVC"],
+        category=ItemCategory.CHILDREN_TOY, target_age="3세 이상",
+    )
+    fields = _extracted_fields(facts)
+    by_label = {f.label: f for f in fields}
+
+    assert by_label["제품명"].value == "도시락 슬라임"
+    assert by_label["품목 구분"].value == "완구"          # 코드값 아닌 한국어
+    cert = by_label["인증번호"]
+    assert cert.value == "CB061R2170-3018"
+    assert "searchPop" in cert.link and "CB061R2170-3018" in cert.link
+
+
+def test_extracted_omits_empty_fields():
+    """못 읽은 것을 읽은 것처럼 채우지 않는다 (R3)."""
+    from sourcing_guard.scorer import _extracted_fields
+    from sourcing_guard.models import ProductFacts
+
+    fields = _extracted_fields(ProductFacts(product_name="이름만 있음"))
+    labels = {f.label for f in fields}
+    assert labels == {"제품명"}       # 나머지는 빈 값이라 빠진다
+
+
+def test_extracted_number_matches_what_was_looked_up():
+    """화면에 보이는 인증번호가 조회에 쓴 번호와 같아야 한다.
+
+    다르면 '이 번호를 조회했다' 는 말이 거짓이 된다.
+    """
+    from sourcing_guard.scorer import _extracted_fields
+    from sourcing_guard.models import ProductFacts
+
+    facts = ProductFacts(product_name="x", kc_numbers=["B363R871-5002"])
+    cert = next(f for f in _extracted_fields(facts) if f.label == "인증번호")
+    assert "B363R871-5002" in cert.link

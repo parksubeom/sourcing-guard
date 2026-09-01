@@ -254,12 +254,40 @@
   });
   go.addEventListener("click", scan);
 
+  // 정부 사이트로 나가는 링크. 모양은 버튼이지만 요소는 a 로 둔다 — 실제로
+  // 페이지를 이동하므로 button 으로 쓰면 스크린리더가 동작을 잘못 알린다.
+  function goLink(url, label) {
+    return '<a class="golink" href="' + esc(url) + '" target="_blank" rel="noopener noreferrer">' +
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" ' +
+      'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+      '<path d="M14 4h6v6"/><path d="M20 4l-8.5 8.5"/>' +
+      '<path d="M18 14v5a1 1 0 01-1 1H5a1 1 0 01-1-1V7a1 1 0 011-1h5"/></svg>' +
+      esc(label) + "<span class=\"skip\"> (새 창)</span></a>";
+  }
+
+  // "우리가 페이지에서 이렇게 읽었습니다." 판정보다 위에 둔다 — 셀러가 추출
+  // 결과를 눈으로 확인하면 "제대로 읽었구나" 라는 신뢰가 생기고, 잘못 읽었을
+  // 때 바로 잡아낼 수 있다. 서버가 빈 값을 안 넣으므로 그대로 그린다.
+  function readBlock(fields) {
+    if (!fields || !fields.length) return "";
+    var rows = fields.map(function (f) {
+      var val = esc(f.value) + (f.link ? goLink(f.link, "정부 조회") : "");
+      return "<dt>" + esc(f.label) + "</dt><dd>" + val + "</dd>";
+    }).join("");
+    return '<div class="read"><h4>이 페이지에서 이렇게 읽었습니다</h4><dl>' + rows + "</dl></div>";
+  }
+
   function findingRow(f) {
     var basis = f.legal_basis ? '<span class="tag">' + esc(f.legal_basis) + "</span>" : "";
-    var link = f.source_url
-      ? '<a href="' + esc(f.source_url) + '" target="_blank" rel="noopener noreferrer">'
-        + esc(f.source_label || "근거 원문") + " (새 창)</a>"
-      : esc(f.source_label || "");
+    // 인증번호가 없는 경우의 검색 링크는 셀러가 다음에 할 일이라 버튼으로 낸다.
+    // 나머지 근거 링크는 읽을거리라 본문 링크로 둔다.
+    var isAction = f.kind === "kc_missing_but_required";
+    var link = !f.source_url
+      ? esc(f.source_label || "")
+      : isAction
+        ? goLink(f.source_url, f.source_label || "정부 사이트에서 직접 검색")
+        : '<a href="' + esc(f.source_url) + '" target="_blank" rel="noopener noreferrer">'
+          + esc(f.source_label || "근거 원문") + " (새 창)</a>";
     return '<li><span class="tick ' + esc(f.signal) + '" aria-hidden="true"></span>' +
            '<div class="f-body"><p class="f-text">' + esc(f.statement_ko) + "</p>" +
            '<p class="f-meta">' + basis + link + "</p></div></li>";
@@ -282,6 +310,9 @@
     var sig = data.signal || "UNKNOWN";
 
     var html = '<div class="result">';
+    // 판정보다 먼저 "우리가 이렇게 읽었습니다" 를 보여준다. 우리가 잘못 읽었으면
+    // 셀러가 여기서 바로 알아채고, 제대로 읽었으면 아래 판정을 믿는다.
+    html += readBlock(data.extracted);
     // 셀러의 질문은 "이거 소싱해도 돼?" 다. 헤드라인이 그 질문에 직접 답한다.
     // 서버가 내려주는 문장을 그대로 쓴다 — 프론트가 다시 쓰면 §6.1 한계 문구가
     // 조용히 사라진다.
@@ -305,9 +336,20 @@
               rules.map(ruleRow).join("") + "</ul></details>";
     }
 
-    html += '<div class="watch-cta" id="cta">' +
-            "<p>검사는 이 시점의 판단입니다. 저장해두면 새로 공표되는 리콜과 매일 대조합니다.</p>" +
-            '<button class="btn-t" id="watch" type="button">이 상품 감시하기</button></div>';
+    // 감시 제안. 문구는 서버가 신호별로 내려준다 — 프론트가 다시 쓰면 GREEN 의
+    // "조회 시점 기준" 같은 §6.1 한계가 조용히 사라진다. GREEN 은 가장 약한
+    // 신호라 강조한다: 셀러가 '안전'으로 읽으면 우리가 가장 크게 빗나간다.
+    var ws = data.watch_suggestion;
+    var canWatch = ws ? ws.can_watch : true;
+    var reason = (ws && ws.reason) ||
+      "검사는 이 시점의 판단입니다. 저장해두면 새로 공표되는 리콜과 매일 대조합니다.";
+    var lead = canWatch && sig === "GREEN" ? " lead" : "";
+    html += '<div class="watch-cta' + (canWatch ? lead : " off") + '" id="cta">' +
+            "<p>" + esc(reason) + "</p>" +
+            (canWatch
+              ? '<button class="btn-t" id="watch" type="button">이 상품 감시하기</button>'
+              : "") +
+            "</div>";
 
     if (data.disclaimer) html += '<p class="disclaimer">' + esc(data.disclaimer) + "</p>";
     html += "</div>";

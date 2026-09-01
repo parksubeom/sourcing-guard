@@ -218,6 +218,23 @@ cert_states:
 public_urls:
   # 인증번호별 상세 팝업. 근거 링크(R2)는 이것 하나만 쓴다.
   cert_detail: "http://www.safetykorea.kr/search/searchPop?certNum={cert_number}"
+  # 제품명·업체명으로 인증 여부를 직접 검색하는 페이지. 인증번호가 없을 때
+  # 셀러를 여기로 보내 스스로 확인하게 한다 (우리는 판정하지 않는다, R1).
+  # GET 파라미터 실측 완료 (2026-09-01, 프로덕션). 같은 URL 두 번 호출 시 응답
+  # 차이가 0줄이라 아래 차이는 전부 실제 효과다.
+  #
+  #   searchWord / itemName / keyword / searchKeyword / prdtNm / certNum
+  #       → 무시된다. 응답이 파라미터 없는 경우와 같다(요청 카운터 1줄 제외).
+  #   pageNo=2          → 먹는다. 목록 246줄이 바뀌고 다른 인증번호가 나온다.
+  #   categoryCode3=01  → hidden 필드에 echo 되지만 목록이 0행이다.
+  #                        01·03·41·42 모두 0행 — 3단계 코드 체계를 모르면
+  #                        빈 화면으로 셀러를 보내게 된다. 추측해 넣지 않는다(R5).
+  #
+  # 결론: 검색어를 붙일 방법이 없다. 이 페이지에 키워드 입력 필드 자체가 없고
+  # (폼은 categoryCode3·pageNo 뿐), 키워드 검색은 certificationsearch 에 있는데
+  # 그건 POST 전용이라 GET 으로 열면 405 다(아래 unusable_urls). 그래서 순수
+  # 링크로 두고 검색어는 화면 문구로 안내한다.
+  item_search: "https://www.safetykorea.kr/release/itemSearch"
 
 # ⚠ 아래 두 주소는 근거 링크로 쓰지 않는다. 기록용으로만 남긴다.
 #

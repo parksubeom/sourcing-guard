@@ -707,6 +707,34 @@ def cert_evidence_url(cert_number: str) -> str:
     return _CERT_DETAIL_TEMPLATE.format(cert_number=normalize_kc(cert_number))
 
 
+_ITEM_SEARCH_URL: str = _CFG.get("public_urls", {}).get("item_search", "")
+
+
+def item_search_url(term: str | None = None) -> str:
+    """제품명·업체명으로 인증 여부를 직접 검색하는 페이지 링크.
+
+    인증번호가 없을 때 셀러를 여기로 보낸다. 우리가 대신 조회해 "인증 없음"을
+    단정하지 않는다 - 브랜드명 미등록·SCoC 대상이면 DB 에 없는 게 정상이라,
+    부재를 위반으로 읽으면 SCoC 오탐과 같은 실수가 된다 (R3). 판정은 셀러가.
+
+    ⚠ term 은 의도적으로 버린다. 프로덕션 실측(2026-09-01) 결과 이 페이지는
+      검색어 파라미터를 받지 않는다 - searchWord·itemName·keyword·prdtNm·certNum
+      전부 응답이 파라미터 없는 경우와 같았다. 페이지에 키워드 입력 필드 자체가
+      없고(폼은 categoryCode3·pageNo 뿐), 키워드 검색은 certificationsearch 에
+      있는데 그건 POST 전용이라 GET 으로 열면 405 다.
+
+      pageNo 와 categoryCode3 은 GET 으로 먹지만 쓰지 않는다. pageNo 는 셀러를
+      임의 페이지로 보내는 것이고, categoryCode3 은 3단계 코드 체계를 모르는
+      상태로 추측하면(01·03·41·42 모두 목록 0행) 빈 화면으로 보낸다 (R5).
+
+      시그니처에 term 을 남겨둔 것은 호출부가 "검색어를 넘겼다"고 읽히게 해서
+      화면 문구가 그 검색어를 안내하도록 만들기 위한 것이다. 링크에는 안 붙는다.
+
+    측정 근거는 data/kats_field_map.yaml 의 item_search 주석에 적어뒀다.
+    """
+    return _ITEM_SEARCH_URL
+
+
 # ---------------------------------------------------------------------------
 # Fixtures for MOCK_MODE. Clearly fake so they can never be mistaken for real
 # lookups: every mock record is tagged.

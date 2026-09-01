@@ -34,6 +34,18 @@ class ItemCategory(str, Enum):
     OUT_OF_SCOPE = "out_of_scope"
     UNCLASSIFIED = "unclassified"
 
+    @property
+    def label_ko(self) -> str:
+        return {
+            "children_toy": "완구",
+            "children_stationery": "학용품",
+            "children_textile": "아동용 섬유제품",
+            "electrical": "전기용품",
+            "household": "생활용품",
+            "out_of_scope": "본 서비스 범위 밖",
+            "unclassified": "품목 미확정",
+        }[self.value]
+
 
 # ---------------------------------------------------------------------------
 # Stage 1 output: extraction only. Deliberately contains NO verdict field.
@@ -117,6 +129,31 @@ class Finding(BaseModel):
         return v
 
 
+class ExtractedField(BaseModel):
+    """페이지에서 읽은 값 하나. '우리가 이렇게 봤습니다' 를 셀러에게 보여준다.
+
+    셀러가 추출 결과를 눈으로 확인하면 두 가지가 된다: (1) '제대로 읽었네' 라는
+    신뢰, (2) 잘못 읽었을 때 바로 잡아낼 기회. 인증번호는 link 로 정부 조회를
+    바로 연다.
+    """
+
+    label: str
+    value: str
+    link: str | None = None
+
+
+class WatchSuggestion(BaseModel):
+    """스캔 결과에서 워치리스트로 잇는 제안.
+
+    can_watch=False 면 감시할 단서가 없어 제안하지 않는다 - 지킬 수 없는 약속을
+    권하지 않는다. reason 은 신호마다 다르다: GREEN 은 "지금 괜찮음의 유효기간",
+    AMBER 는 "확인하는 동안 놓치지 않기".
+    """
+
+    can_watch: bool
+    reason: str
+
+
 class ScanResult(BaseModel):
     signal: Signal
     # 셀러의 질문은 "이거 소싱해도 돼?" 다. 신호(RED/AMBER/GREEN)와 개별 근거만으로는
@@ -131,6 +168,17 @@ class ScanResult(BaseModel):
     # 리콜 로컬 사본의 기준일 (YYYYMMDD). "리콜 이력 없음" 이라는 문장의
     # 유효기간이다. 로컬 사본이라 최대 하루 늦는 트레이드오프를 숨기지 않는다.
     recall_data_as_of: str | None = None
+    # GREEN 은 시점 판단이다 - "지금 리콜 없음" 이지 "앞으로도 안전" 이 아니다
+    # (§6.1). 부재의 증명은 원래 약하므로, GREEN 일수록 워치리스트로 잇는다.
+    # "지금 괜찮음" 은 못 보증해도 "나중에 리콜되면 알림" 은 보증할 수 있다 -
+    # 이것이 이 서비스가 유일하게 보증하는 것이자 구독 명분이다 (§3.3).
+    #
+    #   can_watch    감시할 단서(모델명·인증번호·제조사)가 있는가
+    #   watch_reason 왜 지금 감시를 권하는가. 신호마다 이유가 다르다.
+    watch_suggestion: "WatchSuggestion | None" = None
+    # "우리가 페이지에서 이렇게 읽었습니다." 판정 위에 입력을 먼저 보여줘야
+    # 셀러가 "제대로 봤구나" 를 믿는다. 잘못 읽었으면 여기서 바로 잡아낸다.
+    extracted: list["ExtractedField"] = Field(default_factory=list)
     # 일일 분석 한도를 넘겨 간이 추출로 처리했을 때의 안내. 정확도가 낮아진
     # 사실을 감추지 않는다 - 감추면 셀러가 덜 정확한 결과를 최신 분석으로 읽는다.
     extraction_note: str | None = None
