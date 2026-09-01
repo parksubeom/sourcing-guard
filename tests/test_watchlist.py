@@ -4,7 +4,7 @@ from datetime import date
 
 import pytest
 
-from sourcing_guard.kats_client import RecallRecord
+from sourcing_guard.kats_client import RecallRecord, extract_model_hints
 from sourcing_guard.models import MatchStrength, RecallAlert, WatchItem, WatchStatus
 from sourcing_guard.watchlist import match, normalize_model, recall_fingerprint, sweep
 
@@ -155,3 +155,78 @@ def test_placeholder_cert_number_does_not_match():
     r = RecallRecord(**{**recall(model_name="전혀다른모델").__dict__,
                         "cert_numbers": ["공급자적합성"]})
     assert match(item(kc_numbers=["공급자적합성"]), r) is None
+
+
+# ---------------------------------------------------------------------------
+# 포함 매칭 게이트 — 짧은 쪽을 재야 한다
+#
+# 라이브에서 이미지 입력을 눌러보다 발견했다. 'MB-120S' 하나로 리콜 일치가
+# 137건 나왔다. 게이트가 `len(wm) >= 5 or len(rm) >= 5` 였고, 우리 쪽이 길면
+# 리콜 쪽이 1자여도 통과했다.
+#
+# 오탐 137건은 RED 를 무의미하게 만든다. 셀러가 "리콜 137건 일치"를 보면 그건
+# 경고가 아니라 소음이고, 다음에 진짜 1건이 떴을 때도 소음으로 읽는다.
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "fragment",
+    # 로컬 사본 37,313건 실측으로 실제로 걸렸던 조각들. 모델명이 아니라 정부
+    # 데이터를 쪼갠 부스러기다 - 괄호 주석, 콤마 목록, 슬래시 조각.
+    ["S", "1", "2", "0", "M", "B", "12", "20", "120", "B12", "B120", "120S"],
+)
+def test_short_recall_fragment_does_not_match_a_long_watched_model(fragment):
+    watched = item(product_name="말랑 블록 완구 세트", model_name="MB-120S")
+    assert match(watched, recall(product_name="블록완구", model_name=fragment)) is None
+
+
+@pytest.mark.parametrize("fragment", ["뱀", "렌치", "드릴", "품번", "번호", "품명", "주황", "살색"])
+def test_korean_annotation_fragments_do_not_match(fragment):
+    """괄호 주석과 필드 라벨이 모델명 칸에 섞여 들어온다.
+
+    '(뱀)' 은 봉제인형 색상 주석이고 '품번' 은 필드 이름이다. 이것들이 포함
+    매칭을 통과하면 감시 중인 모든 상품이 그 리콜에 걸린다.
+    """
+    watched = item(product_name="블록 완구", model_name="BLOCK-1000")
+    assert match(watched, recall(product_name="완구", model_name=fragment)) is None
+
+
+def test_containment_still_matches_when_both_sides_are_substantial():
+    """게이트를 조인 것이지 포함 매칭을 없앤 것이 아니다.
+
+    셀러가 'MB-120' 을 감시하고 리콜이 'MB-120S' 로 공표되면 잡아야 한다.
+    표기 흔들림을 놓치면 이 서비스의 유일한 약속이 깨진다 (CLAUDE.md R6).
+    """
+    m = match(item(model_name="MB-120"), recall(model_name="MB-120S"))
+    assert m is not None and m.strength is MatchStrength.STRONG
+
+    m = match(item(model_name="MB-120S"), recall(model_name="MB-120"))
+    assert m is not None and m.strength is MatchStrength.STRONG
+
+
+def test_short_but_real_model_is_still_caught_by_the_exact_tier():
+    """진짜 짧은 모델명은 exact 티어가 잡는다.
+
+    포함 게이트를 짧은 쪽 5자로 올려도 '솔로-X' 같은 3자 모델은 잃지 않는다 -
+    리콜의 콤마 목록을 쪼개 둔 덕분에 정확 일치로 걸린다.
+    """
+    raw = "솔로, 솔로-X, 솔로 윈터, 듀오"
+    r = recall(model_name=raw, models=extract_model_hints(raw))
+    m = match(item(model_name="솔로-X"), r)
+    assert m is not None and m.strength is MatchStrength.EXACT
+
+
+def test_the_gate_measures_the_shorter_side_not_the_longer():
+    """구현이 다시 `or` 로 돌아가지 않게 코드 형태를 고정한다.
+
+    주석에는 이전 구현이 그대로 적혀 있다(발견 경위 기록). 주석을 걷어내고
+    코드만 본다.
+    """
+    from pathlib import Path
+
+    src = Path("sourcing_guard/watchlist.py").read_text(encoding="utf-8")
+    body = "\n".join(
+        line for line in src.splitlines() if not line.lstrip().startswith("#")
+    )
+    assert "min(len(wm), len(rm)) >= _MIN_CONTAIN_LEN" in body
+    assert "len(wm) >= _MIN_CONTAIN_LEN or" not in body
