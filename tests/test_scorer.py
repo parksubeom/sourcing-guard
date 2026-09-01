@@ -188,3 +188,88 @@ def test_lookup_failure_does_not_mask_a_red():
 def test_lookup_failed_is_not_in_hard_red():
     """조회 실패는 상품의 문제가 아니라 우리 쪽 사정이다."""
     assert FindingKind.LOOKUP_FAILED not in _HARD_RED
+
+
+# ---------------------------------------------------------------------------
+# 유해물질 기준 "적용" 과 "언급" 을 가른다.
+#
+# 이 두 케이스가 계약이다. 나중에 누가 GREEN 조건을 만지면 여기가 잡아야 한다.
+#
+# 왜 갈랐나 (2026-09-02, 카나리아 승격 1건으로 발견):
+#   HAZARD_RULE_APPLIES 를 AMBER 로 두면 완구·학용품·아동섬유가 무엇을 해도
+#   노란불이 된다. 규칙 DB 가 커버하는 순간 GREEN 에 도달하는 경로가 사라진다.
+#   항상 켜지는 경고는 꺼진 경고와 같고, 그러면 셀러가 진짜 노란불도 무시한다
+#   (SCoC 오탐 7a6fd70 때 세운 논리 그대로).
+# ---------------------------------------------------------------------------
+
+
+REGULATED_FACTS = ProductFacts(category=ItemCategory.CHILDREN_TOY)
+
+
+def test_hazard_rule_applying_does_not_block_green():
+    """계약 ①: 적합 + 리콜없음 + 규제품목군 + 물질언급 없음 -> GREEN.
+
+    "이 품목군에 납 기준이 걸린다" 는 적용 범위 안내이지 문제 지적이 아니다.
+    """
+    result = score(
+        REGULATED_FACTS,
+        [
+            _finding(FindingKind.KC_VERIFIED, Signal.GREEN),
+            _finding(FindingKind.RECALL_CLEAR, Signal.GREEN),
+            _finding(FindingKind.HAZARD_RULE_APPLIES, Signal.UNKNOWN),
+        ],
+    )
+    assert result.signal is Signal.GREEN
+
+
+def test_substance_mentioned_turns_it_amber():
+    """계약 ②: 같은 조건에 상세페이지 물질 언급이 더해지면 -> AMBER.
+
+    "PVC 재질" 이라고 적힌 완구를 초록불로 통과시키면, 프탈레이트가 걸리는
+    재질을 명시했는데 안심시키는 것이 된다. 기획서 §3 의 AMBER 정의
+    ("규제 물질 언급 감지")와 일치한다.
+    """
+    result = score(
+        REGULATED_FACTS,
+        [
+            _finding(FindingKind.KC_VERIFIED, Signal.GREEN),
+            _finding(FindingKind.RECALL_CLEAR, Signal.GREEN),
+            _finding(FindingKind.HAZARD_RULE_APPLIES, Signal.UNKNOWN),
+            _finding(FindingKind.SUBSTANCE_MENTIONED, Signal.AMBER),
+        ],
+    )
+    assert result.signal is Signal.AMBER
+
+
+def test_green_always_states_what_was_not_checked():
+    """초록불은 "안 걸린다"는 보증이 아니다 (기획서 §6.1).
+
+    우리는 상세페이지 텍스트를 읽고 단속은 실물을 수거해 시험한다. 그 간극을
+    화면이 말해야 한다. 점검 범위 없는 초록불은 잘못 안심시킨다.
+    """
+    result = score(
+        REGULATED_FACTS,
+        [
+            _finding(FindingKind.KC_VERIFIED, Signal.GREEN),
+            _finding(FindingKind.RECALL_CLEAR, Signal.GREEN),
+            _finding(FindingKind.HAZARD_RULE_APPLIES, Signal.UNKNOWN),
+        ],
+    )
+    assert result.signal is Signal.GREEN
+    assert result.coverage_note, "초록불에 점검 범위가 병기되지 않았습니다"
+    assert "시험성적서" in result.coverage_note
+    # 단정 표현은 쓰지 않는다 (CLAUDE.md §9)
+    for banned in ("안전합니다", "합법입니다", "판매 가능합니다"):
+        assert banned not in result.coverage_note
+
+
+def test_hazard_rule_alone_is_not_in_the_amber_set():
+    """회귀 가드: AMBER 집합에 되돌려 놓으면 GREEN 이 다시 사라진다."""
+    import inspect
+
+    from sourcing_guard import scorer
+
+    src = inspect.getsource(scorer._signal_for)
+    amber_block = src.split("kinds & {")[1].split("}")[0]
+    assert "HAZARD_RULE_APPLIES" not in amber_block
+    assert "SUBSTANCE_MENTIONED" in amber_block
