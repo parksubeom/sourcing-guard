@@ -94,3 +94,56 @@ def test_llm_failure_degrades_to_heuristic_not_a_500(monkeypatch):
 
     assert facts.kc_numbers == ["CB061R2170-3018"], "휴리스틱이 안 돌았습니다"
     assert "PVC" in facts.materials
+
+
+def test_extraction_path_is_counted_not_inferred():
+    """어느 경로로 추출했는지는 세야 한다. 출력 모양으로 추론하면 틀린다.
+
+    처음엔 "키가 설정됐으면 LLM" 으로 판단했다가, 키가 400 을 돌려주는 상태에서
+    전부 폴백된 결과를 LLM 정확도로 읽을 뻔했다. 그래서 출력 모양(maker 유무,
+    product_name 이 첫 줄과 다른가)으로 바꿨더니 이번엔 11건 중 4건을 오탐했다 -
+    LLM 이 정직하게 None 을 내거나 상품명이 마침 첫 줄과 같은 경우다.
+
+    추론을 다른 추론으로 바꾸지 않는다.
+    """
+    import sourcing_guard.extractor as ex
+
+    ex.stats.reset()
+    assert ex.stats.snapshot() == {"llm": 0, "heuristic": 0, "llm_failures": 0}
+
+    ex.extract("완구 장난감 KC CB061R2170-3018", allow_llm=False)
+    ex.extract("완구 장난감 KC CB061R2170-3018", allow_llm=False)
+
+    assert ex.stats.snapshot() == {"llm": 0, "heuristic": 2, "llm_failures": 0}
+    ex.stats.reset()
+
+
+def test_llm_failure_is_counted_separately_from_a_deliberate_skip(monkeypatch):
+    """호출 실패와 '상한 때문에 안 부름' 은 다른 사건이다.
+
+    전자는 로그를 봐야 할 장애고 후자는 정상 동작이다. 같이 세면 운영자가
+    구분할 수 없다.
+    """
+    import sys
+    from dataclasses import replace
+
+    import sourcing_guard.extractor as ex
+
+    class Boom:
+        def __init__(self, **kw):
+            raise RuntimeError("네트워크 오류")
+
+    ex.stats.reset()
+    monkeypatch.setattr(
+        ex, "settings",
+        replace(ex.settings, mock_mode=False, anthropic_api_key="sk-test"),
+    )
+    monkeypatch.setitem(sys.modules, "anthropic", type("m", (), {"Anthropic": Boom}))
+
+    ex.extract("완구 장난감")                     # 호출 실패
+    ex.extract("완구 장난감", allow_llm=False)     # 의도적 건너뜀
+
+    snap = ex.stats.snapshot()
+    assert snap["llm_failures"] == 1
+    assert snap["heuristic"] == 2
+    ex.stats.reset()
