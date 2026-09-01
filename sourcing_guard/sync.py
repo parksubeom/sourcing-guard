@@ -193,7 +193,21 @@ def run_sync(
 
     # 메모리 인덱스가 갱신된 사본을 다시 읽게 한다. 안 부르면 스캔이 재시작
     # 전까지 옛 사본으로 대조하고, 새로 공표된 리콜을 놓친다.
-    if on_updated is not None and any(report.new.values()):
+    #
+    # ⚠ 조건은 "무언가 썼는가" 다. 이전에는 `any(report.new.values())` 였는데
+    #   report.new 는 '처음 본 uid 수' 라서, 이미 알던 레코드를 갱신만 한
+    #   경우에 0 이 된다. 그러면 디스크는 새 값인데 서빙 인덱스가 옛 값을
+    #   계속 들고 있다.
+    #
+    #   실제로 겪었다. 제조사 필드를 recallCmpnyName 으로 바꾸고 프로덕션에
+    #   force_initial 재적재를 돌렸는데, 전량(4,243+33,070)을 다시 받아 payload
+    #   를 덮어썼음에도 new=0 이라 invalidate 가 안 불렸다. 그래서 '이케아' 조회가
+    #   옛 makerName 기준 28건을 계속 돌려줬다 (새 값은 37건).
+    #
+    #   같은 함정이 평시에도 있다. 정부가 기존 공표의 내용을 정정하면 uid 는
+    #   그대로이므로 new=0 이고, 정정된 내용이 재시작 전까지 반영되지 않는다.
+    wrote_something = bool(report.fetched) and any(report.fetched.values())
+    if on_updated is not None and wrote_something:
         try:
             on_updated()
         except Exception:  # noqa: BLE001 — 콜백 실패가 동기화를 실패로 만들면 안 된다
