@@ -15,6 +15,33 @@ from .models import ItemCategory, ProductFacts
 
 _log = logging.getLogger(__name__)
 
+
+class ExtractionStats:
+    """어느 경로로 추출했는지 실제로 센다.
+
+    출력 모양으로 추론하면 틀린다. LLM 이 정직하게 product_name=None 을 내거나
+    상품명이 마침 첫 줄과 같으면 휴리스틱으로 오인된다 - 실제로 11건 중 4건을
+    그렇게 오탐했다. 추론을 다른 추론으로 바꾸지 말고 세야 한다.
+    """
+
+    def __init__(self) -> None:
+        self.llm = 0
+        self.heuristic = 0
+        self.llm_failures = 0
+
+    def snapshot(self) -> dict:
+        return {
+            "llm": self.llm,
+            "heuristic": self.heuristic,
+            "llm_failures": self.llm_failures,
+        }
+
+    def reset(self) -> None:
+        self.llm = self.heuristic = self.llm_failures = 0
+
+
+stats = ExtractionStats()
+
 SYSTEM_PROMPT = """\
 당신은 이커머스 상품 상세페이지에서 **사실만** 추출하는 파서입니다.
 판정 엔진이 따로 있으므로, 당신은 절대 판단하지 않습니다.
@@ -110,6 +137,7 @@ def extract(
     멈추는 대신 정확도가 낮아지고, 그 사실을 화면이 말한다 (핸드오프 §8).
     """
     if not allow_llm or settings.mock_mode or not settings.anthropic_api_key:
+        stats.heuristic += 1
         return _heuristic_fallback(page_text, page_url)
 
     from anthropic import Anthropic
@@ -135,8 +163,11 @@ def extract(
             "추출기 LLM 호출 실패, 휴리스틱으로 대체합니다: %s: %s",
             type(exc).__name__, exc,
         )
+        stats.llm_failures += 1
+        stats.heuristic += 1
         return _heuristic_fallback(page_text, page_url)
 
+    stats.llm += 1
     text = "".join(b.text for b in msg.content if b.type == "text").strip()
     text = text.removeprefix("```json").removeprefix("```").removesuffix("```").strip()
 

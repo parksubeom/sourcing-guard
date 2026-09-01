@@ -24,36 +24,23 @@ KATS = KatsClient(None, None, mock=True)
 RULES = RuleBook()
 
 
-def _looks_like_llm(facts, text: str) -> bool:
-    """이 추출 결과가 LLM 에서 나왔는가.
-
-    휴리스틱은 product_name 을 "첫 줄 80자" 로 자르고 maker 를 아예 못 뽑는다.
-    둘 중 하나라도 휴리스틱이 낼 수 없는 모양이면 LLM 이 돈 것이다.
-
-    완벽한 판별은 아니지만, "키가 있으니 LLM 모드" 라고 적는 것보다는 훨씬
-    낫다 - 실제로 그 표기 때문에 400 오류로 전부 폴백된 결과를 LLM 정확도로
-    읽을 뻔했다.
-    """
-    if facts.maker:
-        return True
-    first_line = (text.strip().splitlines() or [""])[0][:80]
-    return bool(facts.product_name) and facts.product_name != first_line
-
-
 def main() -> int:
     sig_hit = find_hit = ext_hit = 0
     sig_tot = find_tot = ext_tot = 0
     rows = []
 
-    # 설정만 보고 "LLM 모드" 라고 적으면 안 된다. 키가 400 을 돌려주는 상태에서
-    # 11건 전부 휴리스틱으로 떨어졌는데도 리포트는 LLM 이라고 표시했다.
-    # 실제 호출 성공 건수를 세서 판단한다.
-    llm_ok = 0
+    # 설정만 보고 "LLM 모드" 라고 적으면 안 된다. 키가 400 을 돌려주던 때
+    # 11건 전부 폴백됐는데도 리포트는 LLM 이라고 표시했다.
+    #
+    # 출력 모양으로 추론하는 것도 안 된다. LLM 이 정직하게 product_name=None 을
+    # 내거나 상품명이 마침 첫 줄과 같으면 휴리스틱으로 오인된다 - 실제로 11건
+    # 중 4건을 그렇게 오탐했다. 추출기가 직접 센 값을 읽는다.
+    from sourcing_guard.extractor import stats as ex_stats
+
+    ex_stats.reset()
 
     for c in CASES:
         facts = extract(c["text"])
-        if _looks_like_llm(facts, c["text"]):
-            llm_ok += 1
         findings = verify(facts, KATS, RULES, None)
         result = score(facts, findings)
         kinds = {f.kind.value for f in findings}
@@ -92,6 +79,7 @@ def main() -> int:
     from sourcing_guard.config import settings
 
     configured = not settings.mock_mode and bool(settings.anthropic_api_key)
+    llm_ok = ex_stats.llm
     if llm_ok:
         mode = f"LLM ({settings.extractor_model}) — 호출 성공 {llm_ok}/{len(CASES)}건"
     elif configured:
@@ -102,8 +90,10 @@ def main() -> int:
     print(f"\n추출 모드   {mode}")
     print(f"표본 {len(CASES)}건 (전부 KC 번호 없음 — 구매대행 소싱 상황)")
 
-    if llm_ok and llm_ok < len(CASES):
-        print(f"\n⚠ {len(CASES) - llm_ok}건이 휴리스틱으로 떨어졌습니다. 로그에서 실패 원인을 확인하세요.")
+    if ex_stats.llm_failures:
+        print(f"\n⚠ {ex_stats.llm_failures}건이 LLM 호출 실패로 휴리스틱에 떨어졌습니다. 로그를 확인하세요.")
+    elif llm_ok and llm_ok < len(CASES):
+        print(f"\n※ {len(CASES) - llm_ok}건은 상한·설정으로 휴리스틱을 썼습니다(호출 실패 아님).")
     elif configured and not llm_ok:
         print("\n⚠ 키가 설정돼 있는데 LLM 호출이 한 건도 성공하지 못했습니다.")
         print("  아래 수치는 전부 휴리스틱 결과입니다. 로그에서 원인을 확인하세요.")
