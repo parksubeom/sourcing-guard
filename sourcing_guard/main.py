@@ -19,6 +19,7 @@ from .extractor import extract
 from .kats_client import KatsClient, health
 from .models import RecallAlert, ScanResult, WatchItem
 from .scorer import score
+from .recall_index import RecallIndex
 from .storage import SqliteWatchStore
 from .sync import run_sync, sync_loop
 from .verifier import RuleBook, verify
@@ -35,7 +36,9 @@ async def _lifespan(app: FastAPI):
     """
     task = None
     if settings.sync_enabled:
-        task = asyncio.create_task(sync_loop(_kats, _store))
+        task = asyncio.create_task(
+            sync_loop(_kats, _store, on_updated=_recalls.invalidate)
+        )
     try:
         yield
     finally:
@@ -90,14 +93,16 @@ def trigger_sync(
     """
     if not settings.sync_token or x_sync_token != settings.sync_token:
         raise HTTPException(status_code=403, detail="유효한 X-Sync-Token 이 필요합니다.")
-    return run_sync(_kats, _store, force_initial=force_initial).to_dict()
+    return run_sync(
+        _kats, _store, force_initial=force_initial, on_updated=_recalls.invalidate
+    ).to_dict()
 
 
 @app.post("/api/v1/scan", response_model=ScanResult)
 def scan(req: ScanRequest) -> ScanResult:
     facts = extract(req.page_text, req.page_url)
-    findings = verify(facts, _kats, _rules)
-    return score(facts, findings)
+    findings = verify(facts, _kats, _rules, _recalls)
+    return score(facts, findings, recall_data_as_of=_recalls.as_of)
 
 
 # ---------------------------------------------------------------------------
@@ -110,6 +115,10 @@ def scan(req: ScanRequest) -> ScanResult:
 # 감시되지 않는다 (기획서 §6.1). 배포 시 WATCHLIST_DB_PATH 를 영구 볼륨으로.
 # ---------------------------------------------------------------------------
 _store = SqliteWatchStore(settings.watchlist_db_path)
+
+# 리콜 로컬 사본 위의 매칭. 스캔과 워치리스트 스윕이 같은 watchlist.match() 를
+# 쓰게 하는 지점이다 (이전에는 스캔만 API 검색이라 결과가 갈릴 수 있었다).
+_recalls = RecallIndex(_store)
 
 
 class WatchRequest(BaseModel):

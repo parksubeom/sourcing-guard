@@ -624,3 +624,94 @@ def test_healthz_never_reports_not_ok_on_kats_failure():
         health.record_success()
         health.last_error_code = None
         health.last_error_at = None
+
+
+# ---------------------------------------------------------------------------
+# 인증 조회 캐시. 인증 DB 는 동기화 대상이 아니라 실시간 조회를 유지하되,
+# 반복 조회를 막고 API 장애를 버틴다.
+# ---------------------------------------------------------------------------
+
+
+class _CountingClient(KatsClient):
+    """lookup_certification 호출 횟수를 세고 실패를 흉내낸다."""
+
+    def __init__(self, record, *, fail_after: int | None = None):
+        super().__init__("http://example.invalid", "key", mock=False)
+        self._record = record
+        self._fail_after = fail_after
+        self.calls = 0
+
+    def lookup_certification(self, kc_number):
+        self.calls += 1
+        if self._fail_after is not None and self.calls > self._fail_after:
+            raise KatsApiError("5000", "테스트 장애")
+        return self._record
+
+
+def _cert(state="적합"):
+    from sourcing_guard.kats_client import CertRecord
+
+    return CertRecord(
+        cert_number="CB061R2170-3018", product_name="완구", model_name="매직액체",
+        maker="-", status=state, state=classify_cert_state(state, _STATES),
+        detail_url=None,
+    )
+
+
+def test_cert_cache_avoids_repeat_lookups():
+    """같은 번호를 투표자들이 반복 조회하는 것을 막는다. 데모 샘플 3종이 이 경우다."""
+    client = _CountingClient(_cert())
+
+    first = client.lookup_certification_cached("CB061R2170-3018")
+    second = client.lookup_certification_cached("CB061R2170-3018")
+
+    assert client.calls == 1
+    assert first.record == second.record
+    assert second.stale is False
+
+
+def test_cert_cache_normalises_the_key():
+    """셀러가 'KC CB061R2170-3018' 로 적어도 같은 캐시를 써야 한다."""
+    client = _CountingClient(_cert())
+
+    client.lookup_certification_cached("CB061R2170-3018")
+    client.lookup_certification_cached("인증번호:CB061R2170-3018")
+
+    assert client.calls == 1
+
+
+def test_cert_cache_falls_back_to_stale_on_failure():
+    """API 가 죽으면 만료된 캐시라도 준다. 다만 하루 묵은 답이라고 말해야 한다."""
+    client = _CountingClient(_cert(), fail_after=1)
+    client.lookup_certification_cached("CB061R2170-3018")   # 캐시 채움
+
+    client._cert_cache._ttl = -1                            # 강제 만료
+    result = client.lookup_certification_cached("CB061R2170-3018")
+
+    assert result.stale is True
+    assert result.record is not None
+    assert result.fetched_at            # 조회 시각을 함께 내보낸다
+    assert result.error
+
+
+def test_cert_lookup_raises_when_there_is_no_cache_to_fall_back_to():
+    """캐시조차 없으면 LOOKUP_FAILED 로 가야 한다. 조용히 None 을 주면 안 된다.
+
+    None 은 '조회했는데 없음'(KC_NOT_FOUND, AMBER)으로 해석되는데, 그건
+    정부 DB 를 실제로 확인했다는 뜻이다.
+    """
+    client = _CountingClient(_cert(), fail_after=0)
+
+    with pytest.raises(KatsApiError):
+        client.lookup_certification_cached("CB061R2170-3018")
+
+
+def test_expired_cache_is_refetched_when_the_api_is_healthy():
+    client = _CountingClient(_cert())
+    client.lookup_certification_cached("CB061R2170-3018")
+
+    client._cert_cache._ttl = -1
+    result = client.lookup_certification_cached("CB061R2170-3018")
+
+    assert client.calls == 2
+    assert result.stale is False

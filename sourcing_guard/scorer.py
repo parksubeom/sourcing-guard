@@ -52,7 +52,12 @@ _REGULATED = {
 }
 
 
-def score(facts: ProductFacts, findings: list[Finding]) -> ScanResult:
+def score(
+    facts: ProductFacts,
+    findings: list[Finding],
+    *,
+    recall_data_as_of: str | None = None,
+) -> ScanResult:
     """Combine findings into a display score and a signal.
 
     The score is a UI affordance, not a legal judgement. The signal is what
@@ -74,6 +79,7 @@ def score(facts: ProductFacts, findings: list[Finding]) -> ScanResult:
         facts=facts,
         findings=findings,
         coverage_note=_coverage_note(facts, kinds),
+        recall_data_as_of=recall_data_as_of,
     )
 
 

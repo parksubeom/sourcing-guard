@@ -90,6 +90,7 @@ def run_sync(
     *,
     force_initial: bool = False,
     today: date | None = None,
+    on_updated=None,
 ) -> SyncReport:
     """한 번 동기화한다. 예외를 밖으로 던지지 않는다.
 
@@ -137,6 +138,14 @@ def run_sync(
     store.set_sync_state("last_sync_at", report.finished_at)
     store.set_sync_state("last_sync_error", "; ".join(report.errors) if report.errors else "")
 
+    # 메모리 인덱스가 갱신된 사본을 다시 읽게 한다. 안 부르면 스캔이 재시작
+    # 전까지 옛 사본으로 대조하고, 새로 공표된 리콜을 놓친다.
+    if on_updated is not None and any(report.new.values()):
+        try:
+            on_updated()
+        except Exception:  # noqa: BLE001 — 콜백 실패가 동기화를 실패로 만들면 안 된다
+            _log.exception("동기화 후 콜백 실패")
+
     _log.info(
         "리콜 동기화 %s: 수집 %s / 신규 %s / 오류 %d",
         mode, report.fetched, report.new, len(report.errors),
@@ -149,6 +158,7 @@ async def sync_loop(
     store: SqliteWatchStore,
     *,
     interval: int = SYNC_INTERVAL_SECONDS,
+    on_updated=None,
 ) -> None:
     """앱 수명 동안 도는 백그라운드 루프.
 
@@ -160,7 +170,7 @@ async def sync_loop(
     """
     while True:
         try:
-            await asyncio.to_thread(run_sync, kats, store)
+            await asyncio.to_thread(run_sync, kats, store, on_updated=on_updated)
         except asyncio.CancelledError:
             raise
         except Exception:  # noqa: BLE001 — 루프가 죽으면 동기화가 조용히 멈춘다

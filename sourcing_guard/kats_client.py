@@ -17,8 +17,11 @@ from __future__ import annotations
 
 import logging
 import re
+import threading
+import time
 import unicodedata
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
 from typing import Any
@@ -109,6 +112,63 @@ class KatsHealth:
 
 
 health = KatsHealth()
+
+
+CERT_CACHE_TTL_SECONDS = 24 * 60 * 60
+
+
+@dataclass(frozen=True)
+class CertLookup:
+    """인증 조회 결과 + 그 값이 언제 것인가.
+
+    stale=True 는 정부 API 가 실패해 캐시로 답했다는 뜻이다. 셀러에게 조회
+    시각을 함께 보여줘야 한다 — certState 는 언제든 취소로 바뀔 수 있는 값이라
+    하루 묵은 답을 최신인 것처럼 말하면 안 된다.
+    """
+
+    record: CertRecord | None
+    fetched_at: str
+    stale: bool = False
+    error: str | None = None
+
+
+class CertCache:
+    """인증번호별 조회 캐시.
+
+    인증 DB 는 동기화 대상이 아니다(20만+ 건이고 certState 는 언제든 바뀐다).
+    그래서 실시간 조회를 유지하되 두 가지를 붙인다:
+
+      TTL 24시간   같은 번호를 투표자들이 반복 조회하는 것을 막는다.
+                   데모 샘플 3종이 정확히 이 경우다.
+      실패 폴백    API 가 죽으면 만료된 캐시라도 준다. 조회 시각을 함께
+                   내보내고, 캐시조차 없으면 LOOKUP_FAILED 로 간다.
+    """
+
+    def __init__(self, ttl_seconds: int = CERT_CACHE_TTL_SECONDS) -> None:
+        self._ttl = ttl_seconds
+        self._lock = threading.Lock()
+        self._entries: dict[str, tuple[float, str, CertRecord | None]] = {}
+
+    def get(self, key: str, *, allow_stale: bool = False) -> tuple[str, CertRecord | None] | None:
+        with self._lock:
+            hit = self._entries.get(key)
+        if hit is None:
+            return None
+        stored_at, fetched_at, record = hit
+        if not allow_stale and (time.monotonic() - stored_at) > self._ttl:
+            return None
+        return fetched_at, record
+
+    def put(self, key: str, record: CertRecord | None, fetched_at: str) -> None:
+        with self._lock:
+            self._entries[key] = (time.monotonic(), fetched_at, record)
+
+    def clear(self) -> None:
+        with self._lock:
+            self._entries.clear()
+
+    def __len__(self) -> int:
+        return len(self._entries)
 
 
 class CertState(str, Enum):
@@ -367,6 +427,7 @@ class KatsClient:
         self._base = (base_url or self._map.get("base_url") or "").rstrip("/")
         self._key = service_key
         self._mock = mock or not (self._base and service_key)
+        self._cert_cache = CertCache()
         self._client = httpx.Client(timeout=timeout)
 
     # -- public ------------------------------------------------------------
@@ -411,6 +472,39 @@ class KatsClient:
                 rows = self._call(op, self._query(op, logical, term))
                 out.extend(self._to_recall(r, scope) for r in rows)
         return out
+
+    def lookup_certification_cached(self, kc_number: str) -> CertLookup:
+        """캐시 우선 인증 조회. API 가 죽으면 만료된 캐시라도 준다.
+
+        certState 는 언제든 취소로 바뀔 수 있어 동기화 대상이 아니다. 그래서
+        실시간 조회를 유지하되 TTL 24시간 캐시를 앞에 두고, 실패 시 만료 캐시로
+        폴백한다. 캐시조차 없으면 예외를 그대로 올려 LOOKUP_FAILED 가 되게 한다.
+
+        폴백으로 답할 때는 stale=True 와 조회 시각을 함께 돌려준다. 하루 묵은
+        답을 최신인 것처럼 말하면 안 된다.
+        """
+        key = normalize_kc(kc_number)
+        fresh = self._cert_cache.get(key)
+        if fresh is not None:
+            fetched_at, record = fresh
+            return CertLookup(record=record, fetched_at=fetched_at)
+
+        try:
+            record = self.lookup_certification(kc_number)
+        except KatsApiError as exc:
+            stale = self._cert_cache.get(key, allow_stale=True)
+            if stale is None:
+                raise
+            fetched_at, record = stale
+            _log.warning(
+                "인증 조회 실패, 만료된 캐시로 응답합니다 (%s, 조회 시각 %s): %s",
+                kc_number, fetched_at, exc,
+            )
+            return CertLookup(record=record, fetched_at=fetched_at, stale=True, error=str(exc))
+
+        fetched_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
+        self._cert_cache.put(key, record, fetched_at)
+        return CertLookup(record=record, fetched_at=fetched_at)
 
     def recalls_published_on(self, date_prefix: str, *, overseas: bool = False) -> list[RecallRecord]:
         """공표일자로 받는다. 로컬 동기화용.
