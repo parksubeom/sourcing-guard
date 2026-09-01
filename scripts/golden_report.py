@@ -66,7 +66,15 @@ def main() -> int:
         print(f"finding 적중  {find_hit}/{find_tot}  ({100*find_hit//find_tot}%)")
     if ext_tot:
         print(f"추출 적중     {ext_hit}/{ext_tot}  ({100*ext_hit//ext_tot}%)")
-    print(f"\n표본 {len(CASES)}건 (전부 KC 번호 없음 — 구매대행 소싱 상황)")
+    from sourcing_guard.config import settings
+
+    live = not settings.mock_mode and settings.anthropic_api_key
+    mode = f"LLM ({settings.extractor_model})" if live else "휴리스틱 (오프라인 대체)"
+    print(f"\n추출 모드   {mode}")
+    print(f"표본 {len(CASES)}건 (전부 KC 번호 없음 — 구매대행 소싱 상황)")
+    if not live:
+        print("\n※ ANTHROPIC_API_KEY 설정 + MOCK_MODE=false 로 다시 돌리면 LLM 정확도가 나옵니다.")
+        print("  두 수치의 차이가 'AI 를 왜 쓰는가' 의 답입니다.")
     return 0
 
 
