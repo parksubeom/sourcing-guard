@@ -170,6 +170,25 @@ def _extracted_fields(facts: ProductFacts) -> list[ExtractedField]:
     return out
 
 
+def _input_note(extracted: list[ExtractedField]) -> str | None:
+    """읽은 값이 하나도 없으면 그건 상품 문제가 아니라 입력 문제다.
+
+    "이 페이지에서 이렇게 읽었습니다" 블록이 통째로 비는 경우다. 그대로 두면
+    화면은 "판단 보류 — 판매자 제공 정보만으로는 소싱 여부를 가릴 수 없습니다"
+    로 끝나는데, 셀러는 그 문장을 상품에 대한 판정으로 읽는다. 실제로는 URL
+    한 줄이나 배송 안내만 붙여넣은 것일 수 있고, 그건 다시 붙여넣으면 풀린다.
+
+    판정은 그대로 둔다 (R3: 못 읽었으면 UNKNOWN 이다). 원인만 말해준다.
+    """
+    if extracted:
+        return None
+    return (
+        "상품 정보를 하나도 읽지 못했습니다. 상품 상세페이지 내용을 붙여넣으셨나요? "
+        "상품명·모델명·재질·KC 인증번호가 들어가도록 본문을 그대로 복사해 주세요. "
+        "상세표가 이미지뿐이면 캡처를 붙여넣어도 됩니다."
+    )
+
+
 def _watch_suggestion(facts: ProductFacts, signal: Signal, kinds: set[FindingKind]) -> WatchSuggestion:
     # 감시할 단서가 있어야 약속을 지킬 수 있다. WatchItem.is_matchable 과 같은 기준.
     can_watch = bool(
@@ -216,6 +235,7 @@ def score(
             "해당 기준으로 확인하세요."
         )
 
+    extracted = _extracted_fields(facts)
     return ScanResult(
         signal=signal,
         headline=headline,
@@ -224,7 +244,8 @@ def score(
         findings=findings,
         coverage_note=_coverage_note(facts, kinds),
         watch_suggestion=_watch_suggestion(facts, signal, kinds),
-        extracted=_extracted_fields(facts),
+        extracted=extracted,
+        input_note=_input_note(extracted),
         grouped_findings=_grouped_findings(findings),
         recall_data_as_of=recall_data_as_of,
     )

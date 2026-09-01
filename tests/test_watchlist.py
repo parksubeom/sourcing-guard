@@ -300,17 +300,27 @@ def test_maker_gate_checks_both_sides_are_non_empty():
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize("digits", ["153", "1000", "12345"])
-def test_digits_only_model_is_demoted_not_dropped(digits):
-    """숫자만인 짧은 모델명은 서로 다른 상품이 우연히 공유한다."""
+@pytest.mark.parametrize("digits", ["153", "510", "999"])
+def test_three_digit_model_is_demoted_not_dropped(digits):
+    """3자리 숫자는 서로 다른 상품이 우연히 공유한다.
+
+    실측(37,313건): 3자리 숫자 모델 502개 중 46.8% 가 둘 이상의 리콜에 걸린다.
+    '153'(모나미 볼펜)이 2014년 국외 'LED 전등' 과 부딪힌 것이 그 경우다.
+    """
     m = match(item(model_name=digits), recall(model_name=digits))
     assert m is not None, "버리면 진짜 일치를 놓친다 (R6)"
     assert m.strength is MatchStrength.WEAK
 
 
-def test_long_digits_only_model_stays_exact():
-    """자릿수가 충분하면 숫자만이어도 우연 충돌이 아니다."""
-    m = match(item(model_name="123456"), recall(model_name="123456"))
+@pytest.mark.parametrize("digits", ["1000", "12345", "123456"])
+def test_four_or_more_digits_stays_exact(digits):
+    """4자리부터는 대체로 유일하다. 여기까지 강등하면 재현율만 깎인다.
+
+    실측: 충돌률이 3자리 46.8% → 4자리 18.3% → 5자리 10.3% 로 꺾이고 이후
+    평평하다. 처음에 최소 6자리로 뒀다가 4·5자리 3,035개를 통째로 버려
+    재현율이 7.8pp 깎였다.
+    """
+    m = match(item(model_name=digits), recall(model_name=digits))
     assert m is not None and m.strength is MatchStrength.EXACT
 
 

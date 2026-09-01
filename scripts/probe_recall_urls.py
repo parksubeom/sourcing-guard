@@ -4,9 +4,11 @@
 왜 재는가
 --------
 근거 링크는 눌렀을 때 그 리콜을 볼 수 있어야 근거다 (CLAUDE.md R2). 국외
-리콜은 2009년부터 쌓여 있고 recallUrl 은 외국 기관의 원출처 주소라, 오래된
-공표일수록 만료돼 있을 가능성이 높다. 죽은 링크를 셀러에게 보여주면 한 번
-헛걸음한 뒤로 다른 링크도 안 누른다.
+recallUrl 은 외국 기관의 원출처 주소라 우리가 관리하지 못하고, 오래된 공표일수록
+만료돼 있을 수 있다. 죽은 링크를 셀러에게 보여주면 한 번 헛걸음한 뒤로 다른
+링크도 안 누른다.
+
+(로컬 사본 실측: URL 이 붙은 국외 공표는 2019~2026년분이다.)
 
 무엇을 재는가
 -------------
@@ -15,8 +17,9 @@
   ③ 실제 응답            표본을 실제로 열어 본 결과
        live        2xx 이고 원래 경로에 머물렀다
        redirected  2xx 이지만 호스트 루트/메인으로 떨어졌다  → 근거가 아니다
-       dead        4xx / 5xx
-       error       DNS·TLS·타임아웃
+       dead        404 등, 그 문서가 없다
+       unmeasured  403·429(봇 차단) · TLS · DNS · 타임아웃. 링크 상태를
+                   말해주지 않으므로 비율 계산에서 뺀다
 
 돌리는 법
 ---------
@@ -38,6 +41,7 @@ import argparse
 import json
 import random
 import sys
+import ssl
 import urllib.error
 import urllib.request
 from collections import Counter, defaultdict
@@ -52,9 +56,29 @@ from sourcing_guard.kats_client import is_usable_recall_url     # noqa: E402
 from sourcing_guard.storage import SqliteWatchStore             # noqa: E402
 
 # 외국 기관 서버를 두드리는 것이므로 조심스럽게 간다.
-TIMEOUT = 12
-WORKERS = 8
-UA = "Mozilla/5.0 (compatible; sourcing-guard-linkcheck/1.0)"
+TIMEOUT = 20
+WORKERS = 6
+
+# ⚠ 브라우저 헤더로 보낸다. 처음에 "sourcing-guard-linkcheck/1.0" 으로 보냈더니
+#   cpsc.gov 가 전부 403 을 돌려줘 '죽은 링크' 로 집계됐다. 같은 URL 을 브라우저
+#   UA 로 순차 요청하니 8/8 이 200 이었다. 봇 차단은 링크가 죽은 것이 아니다.
+HEADERS = {
+    "User-Agent": ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                   "(KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"),
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Accept-Language": "en-US,en;q=0.9,ko;q=0.8",
+    "Connection": "close",
+}
+
+# ⚠ certifi 번들을 명시한다. 윈도우 파이썬 기본 신뢰 저장소로는 ec.europa.eu ·
+#   rappel.conso.gouv.fr 이 전부 SSLCertVerificationError 였다. 첫 측정에서
+#   52.1% 가 '오류' 로 잡힌 원인이 이것이고, 링크 상태와는 아무 상관이 없었다.
+try:
+    import certifi
+
+    _SSL = ssl.create_default_context(cafile=certifi.where())
+except ImportError:      # pragma: no cover - certifi 는 httpx 가 끌고 온다
+    _SSL = ssl.create_default_context()
 
 # 경로가 없는 것과 같은 취급. kats_client._DEAD_PATHS 와 같은 뜻이지만 여기서는
 # "리다이렉트로 여기 도착했는가" 를 보는 용도라 따로 둔다.
@@ -97,18 +121,25 @@ def field_stats(scope: str | None) -> dict[str, dict[str, int]]:
 
 
 def probe(url: str) -> tuple[str, str]:
-    """(분류, 비고). HEAD 를 거절하는 서버가 많아 GET 으로 간다."""
-    req = urllib.request.Request(url, headers={"User-Agent": UA})
+    """(분류, 비고). HEAD 를 거절하는 서버가 많아 GET 으로 간다.
+
+    ⚠ "우리가 못 열었다" 와 "없어졌다" 를 섞지 않는다. 403(봇 차단) · TLS ·
+      DNS · 타임아웃은 링크 상태에 대해 아무 말도 해주지 않으므로 unmeasured
+      로 뺀다. 이걸 dead 에 넣으면 멀쩡한 근거 링크를 걷어내게 된다.
+    """
+    req = urllib.request.Request(url, headers=HEADERS)
     try:
-        with urllib.request.urlopen(req, timeout=TIMEOUT) as r:
+        with urllib.request.urlopen(req, timeout=TIMEOUT, context=_SSL) as r:
             final = r.geturl()
             code = r.status
             # 본문을 조금만 읽는다. 전량을 받으면 느리고 남의 대역폭을 쓴다.
             r.read(2048)
     except urllib.error.HTTPError as e:
+        if e.code in (401, 403, 429):
+            return ("unmeasured", f"HTTP {e.code} (차단)")
         return ("dead", f"HTTP {e.code}")
     except Exception as e:  # noqa: BLE001 — 계측이므로 어떤 실패도 분류만 한다
-        return ("error", type(e).__name__)
+        return ("unmeasured", type(e).__name__)
 
     if code >= 400:
         return ("dead", f"HTTP {code}")
@@ -162,11 +193,17 @@ def main() -> int:
         by_scope[sc][verdict] += 1
         by_year[(on or "????")[:4]][verdict] += 1
 
-    order = ("live", "redirected", "dead", "error")
+    order = ("live", "redirected", "dead", "unmeasured")
     for sc, c in sorted(by_scope.items()):
         n = sum(c.values())
         parts = "  ".join(f"{k} {c[k]:4d} ({c[k]/n:5.1%})" for k in order)
         print(f"  {sc:9s} n={n:4d}   {parts}")
+        measured = n - c["unmeasured"]
+        if measured:
+            print(f"  {'':9s} 측정된 {measured}건 기준 — "
+                  f"live {c['live']/measured:5.1%}  "
+                  f"redirected {c['redirected']/measured:5.1%}  "
+                  f"dead {c['dead']/measured:5.1%}")
 
     print("\n  공표 연도별 (live 비율)")
     for year in sorted(by_year):

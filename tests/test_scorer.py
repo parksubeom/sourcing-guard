@@ -489,3 +489,36 @@ def test_empty_groups_are_omitted():
     result = score(facts, verify(facts, KatsClient(None, None, mock=True), RuleBook(), None))
     for g in result.grouped_findings:
         assert g["findings"], f"빈 구획이 들어감: {g['group']}"
+
+
+# ---------------------------------------------------------------------------
+# 읽은 값이 없을 때 — 판정이 아니라 입력 문제
+# ---------------------------------------------------------------------------
+
+
+def test_input_note_when_nothing_was_read():
+    from sourcing_guard.scorer import score
+    from sourcing_guard.models import ProductFacts
+
+    r = score(ProductFacts(), [])
+    assert r.extracted == []
+    assert r.input_note and "붙여넣으셨나요" in r.input_note
+    # 판정은 그대로 UNKNOWN 이다. 원인을 말할 뿐 판정을 바꾸지 않는다 (R3).
+    assert r.signal is Signal.UNKNOWN
+
+
+@pytest.mark.parametrize("facts", [
+    ProductFacts(product_name="블록완구"),
+    ProductFacts(model_name="BLK-100"),
+    ProductFacts(maker="우드토이"),
+    ProductFacts(kc_numbers=["CB061R2170-3018"]),
+    ProductFacts(kc_numbers_from_image=["CB061R2170-3018"]),
+    ProductFacts(materials=["ABS"]),
+    ProductFacts(target_age="3세 이상"),
+    ProductFacts(category=ItemCategory.CHILDREN_TOY),
+])
+def test_no_input_note_when_something_was_read(facts):
+    """하나라도 읽었으면 입력 문제가 아니다. 과잉 안내는 신뢰를 깎는다."""
+    from sourcing_guard.scorer import score
+
+    assert score(facts, []).input_note is None
