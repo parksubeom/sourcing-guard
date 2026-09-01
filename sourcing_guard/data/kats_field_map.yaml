@@ -8,8 +8,14 @@
 #   - 인증은 HTTP 헤더 `AuthKey`, 대소문자 구분 (p.2). 쿼리 파라미터가 아니므로
 #     이 파일에 service_key 항목이 없다. kats_client 가 헤더로 보낸다.
 #   - 응답 포맷은 URL 확장자로 정한다 (`.json` / `.xml`). type 파라미터가 아니다 (p.2).
-#   - 모든 조회목록은 최대 1,000줄. 페이지 크기/번호 파라미터가 없다 (p.2).
-#     대량 수집은 conditionKey=publishDate 로 날짜를 잘라서 한다.
+#   - 페이지 크기/번호 파라미터가 없다 (p.2).
+#
+#   ⚠ "모든 조회목록은 최대 1,000 줄까지만 제공됩니다"(p.2)는 실측과 다르다.
+#     2026-09-01 실측: conditionKey=all & conditionValue=%
+#       국내 recall/recallList.json   4,243건
+#       국외 recall/fRecallList.json 33,070건
+#     둘 다 단일 응답으로 왔다. 상한이 실재하지 않거나 훨씬 높다.
+#     따라서 날짜를 잘라 대량 수집하는 설계는 불필요하다. 아래 limits 참조.
 #   - 평문 HTTP. HTTPS 페이지에서 브라우저가 직접 호출 불가(mixed content) → 백엔드 경유.
 #   - 결과코드: 2000 성공 / 2004 No Data / 4000 Invalid Auth Key / 4001 Invalid IP /
 #     4005 Invalid Parameter / 5000 Internal Server Error (p.19).
@@ -28,6 +34,52 @@ verified_at: "2026-08-31"
 verified_note: "설계서 원문 대조 완료. 실응답 검증은 인증키 수령 후."
 
 # 공통. 확장자가 응답 포맷을 정하므로 경로에 .json 이 포함되어 있다.
+# 실측으로 확인한 조회 한계와 사용법. 설계서 기재와 다른 부분이 있어 따로 둔다.
+limits:
+  verified_at: "2026-09-01"
+  spec_says_max_rows: 1000        # 설계서 p.2 "모든 조회목록은 최대 1,000 줄까지만 제공됩니다"
+  observed_max_rows: 33070        # 실측: 국외 리콜 전량이 단일 응답
+  observed:
+    recall_domestic: 4243
+    recall_overseas: 33070
+  note: >-
+    상한이 실재하지 않거나 훨씬 높다. 날짜 슬라이스는 불필요하다.
+  full_dump_cost:                 # 실측 2026-09-01
+    recall_domestic: "5.42 MB / 2.0초"
+    recall_overseas: "32.84 MB / 5.7초"
+
+  # 전량 조회는 conditionKey=all + conditionValue=% 다.
+  #
+  # ⚠ conditionValue 를 비우면 전량이 아니라 4005(Invalid Parameter)다.
+  #   "전체 조회는 값을 비우면 되겠지" 가 통하지 않는다. 와일드카드 % 를 넣어야 한다.
+  #
+  # ⚠ 설계서에 명시된 사용법이 아니다. conditionValue 는 검색어 자리인데
+  #   와일드카드로 전량을 받는 것이다. 신청서 안내문에 "개발 명세서 포맷을
+  #   어길 시 별도 통보 없이 인증이 취소될 수 있다" 고 되어 있으므로,
+  #   초기 적재 1회에만 쓰고 반복 호출에는 쓰지 않는다.
+  full_dump:
+    condition_key: "all"
+    condition_value: "%"
+    empty_value_result: "4005"
+
+  # conditionValue 는 접두 부분 매칭이 된다. 범위 문법(~ - ,)은 안 된다.
+  #   publishDate=20260723        53건   (날짜 하나)
+  #   publishDate=202607          55건   (그 달 전체)
+  #   publishDate=2026           116건   (그 해 전체)
+  #   publishDate=20260101~20260901   0건 — 범위 문법은 통하지 않는다
+  #
+  # 월 단위 조회가 가볍다(2026-08 기준): 국내 2건 3KB, 국외 253건 398KB, 0.2초.
+  # 일일 동기화는 이걸 쓴다. all=% 전량(38MB)을 매일 받을 이유가 없다.
+  prefix_match:
+    supported: true
+    examples: ["20260723", "202607", "2026"]
+    range_syntax_supported: false   # 20260101~20260901 -> 0건
+
+  # 정렬은 스코프마다 다르다. 국내 응답의 정렬을 신뢰하면 안 된다.
+  ordering:
+    recall_domestic: "정렬 보장 없음"
+    recall_overseas: "publishDate 내림차순"
+
 base_url: "http://www.safetykorea.kr/openapi/api"
 
 operations:
