@@ -81,9 +81,11 @@ def test_month_windows_always_include_previous_month(today, expected):
 
 
 def test_first_run_is_initial_and_uses_full_dump(store):
+    # min_plausible=0: 이 테스트의 관심사는 "첫 실행은 전량 조회" 다.
+    # 건수 임계값은 test_thin_full_load_rolls_back_both_rows_and_flag 가 본다.
     client = StubClient(full={"domestic": [rec("1"), rec("2")],
                               "overseas": [rec("3", scope="overseas")]})
-    report = run_sync(client, store, today=date(2026, 9, 1))
+    report = run_sync(client, store, today=date(2026, 9, 1), min_plausible=0)
 
     assert report.mode == "initial"
     assert report.ok
@@ -94,7 +96,7 @@ def test_first_run_is_initial_and_uses_full_dump(store):
 
 def test_second_run_is_incremental_and_uses_month_prefix(store):
     client = StubClient(full={"domestic": [rec("1")], "overseas": []})
-    run_sync(client, store, today=date(2026, 9, 1))
+    run_sync(client, store, today=date(2026, 9, 1), min_plausible=0)
     client.calls.clear()
 
     # min_plausible=0: 이 테스트의 관심사는 "완료 표시가 있으면 증분" 이다.
@@ -113,7 +115,7 @@ def test_new_records_are_detected_by_uid_not_by_date(store):
     날짜로 비교하면, 이미 받은 날짜에 뒤늦게 추가된 건을 놓친다.
     """
     client = StubClient(full={"domestic": [rec("1", on="20260723")], "overseas": []})
-    run_sync(client, store, today=date(2026, 9, 1))
+    run_sync(client, store, today=date(2026, 9, 1), min_plausible=0)
 
     # 같은 날짜에 새 uid 가 추가된 상황
     client.monthly[("domestic", "202609")] = [
@@ -132,7 +134,7 @@ def test_records_without_uid_are_skipped(store):
     object.__setattr__(no_uid, "uid", None)
     client = StubClient(full={"domestic": [rec("1"), no_uid], "overseas": []})
 
-    run_sync(client, store, today=date(2026, 9, 1))
+    run_sync(client, store, today=date(2026, 9, 1), min_plausible=0)
     assert store.recall_count("domestic") == 1
 
 
@@ -143,7 +145,7 @@ def test_records_without_uid_are_skipped(store):
 
 def test_api_failure_never_raises(store):
     client = StubClient(fail_scopes={"domestic", "overseas"})
-    report = run_sync(client, store, today=date(2026, 9, 1))   # 예외가 나면 실패
+    report = run_sync(client, store, today=date(2026, 9, 1), min_plausible=0)   # 예외가 나면 실패
 
     assert report.ok is False
     assert len(report.errors) == 2
@@ -152,14 +154,14 @@ def test_api_failure_never_raises(store):
 def test_partial_failure_does_not_mark_initial_load_complete(store):
     """반쪽 적재를 완료로 기록하면 다음 실행이 증분으로 넘어가 빈 구간이 영구히 남는다."""
     client = StubClient(full={"domestic": [rec("1")]}, fail_scopes={"overseas"})
-    run_sync(client, store, today=date(2026, 9, 1))
+    run_sync(client, store, today=date(2026, 9, 1), min_plausible=0)
 
     assert store.get_sync_state("initial_load_at") is None
 
     # 복구되면 다시 초기 적재를 시도해야 한다.
     client.fail_scopes.clear()
     client.full["overseas"] = [rec("2", scope="overseas")]
-    report = run_sync(client, store, today=date(2026, 9, 1))
+    report = run_sync(client, store, today=date(2026, 9, 1), min_plausible=0)
 
     assert report.mode == "initial"
     assert store.get_sync_state("initial_load_at") is not None
@@ -167,7 +169,7 @@ def test_partial_failure_does_not_mark_initial_load_complete(store):
 
 def test_failure_is_recorded_for_the_operator(store):
     client = StubClient(fail_scopes={"domestic", "overseas"})
-    run_sync(client, store, today=date(2026, 9, 1))
+    run_sync(client, store, today=date(2026, 9, 1), min_plausible=0)
 
     assert store.get_sync_state("last_sync_error")
     assert store.get_sync_state("last_sync_at")
@@ -175,22 +177,22 @@ def test_failure_is_recorded_for_the_operator(store):
 
 def test_successful_run_clears_the_previous_error(store):
     client = StubClient(fail_scopes={"domestic", "overseas"})
-    run_sync(client, store, today=date(2026, 9, 1))
+    run_sync(client, store, today=date(2026, 9, 1), min_plausible=0)
     assert store.get_sync_state("last_sync_error")
 
     client.fail_scopes.clear()
     client.full = {"domestic": [rec("1")], "overseas": []}
-    run_sync(client, store, today=date(2026, 9, 1))
+    run_sync(client, store, today=date(2026, 9, 1), min_plausible=0)
 
     assert store.get_sync_state("last_sync_error") == ""
 
 
 def test_force_initial_redoes_the_full_load(store):
     client = StubClient(full={"domestic": [rec("1")], "overseas": []})
-    run_sync(client, store, today=date(2026, 9, 1))
+    run_sync(client, store, today=date(2026, 9, 1), min_plausible=0)
     client.calls.clear()
 
-    report = run_sync(client, store, force_initial=True, today=date(2026, 9, 1))
+    report = run_sync(client, store, force_initial=True, today=date(2026, 9, 1), min_plausible=0)
 
     assert report.mode == "initial"
     assert {c[0] for c in client.calls} == {"all"}
@@ -206,7 +208,7 @@ def test_snapshot_reports_latest_published_date(store):
         "domestic": [rec("1", on="20260723"), rec("2", on="20260811")],
         "overseas": [rec("3", on="20260828", scope="overseas")],
     })
-    run_sync(client, store, today=date(2026, 9, 1))
+    run_sync(client, store, today=date(2026, 9, 1), min_plausible=0)
 
     snap = store.sync_snapshot()
     assert snap["latest_published_on"] == "20260828"
@@ -302,3 +304,67 @@ def test_a_healthy_full_load_still_goes_incremental(store):
 
     assert report.mode == "incremental"
     assert "all" not in {c[0] for c in client.calls}
+
+
+# ---------------------------------------------------------------------------
+# 반쪽 적재가 완료로 기록되지 않게 — 근본 원인
+#
+# 정부 API 가 2004(No Data)나 빈 resultData 를 돌려주면 _call 이 [] 를 반환한다.
+# 그건 오류가 아니라서 호출부가 성공으로 읽고, 0건 적재가 완료로 기록됐다.
+# 그 뒤로는 증분만 돌아 255건(당월+전월)이 쌓였고, 스캔은 조용히
+# "리콜 이력 없음" 을 돌려줬다. 실제로 겪은 상태다.
+# ---------------------------------------------------------------------------
+
+
+class EmptyClient:
+    """API 가 빈 목록을 돌려주는 경우. 예외가 아니라 정상 응답이다."""
+
+    def recalls_all(self, *, overseas=False):
+        return []
+
+    def recalls_published_on(self, date_prefix, *, overseas=False):
+        return []
+
+
+def test_empty_api_response_is_not_recorded_as_complete(store):
+    report = run_sync(EmptyClient(), store, today=date(2026, 9, 1))
+
+    assert store.get_sync_state("initial_load_at") is None, "0건이 완료로 기록됐습니다"
+    assert report.ok is False
+    assert store.recall_count() == 0
+
+
+def test_thin_full_load_rolls_back_both_rows_and_flag(store):
+    """적재와 완료 표시는 한 트랜잭션이다. 하나만 남으면 상태가 갈린다."""
+    client = StubClient(full={"domestic": [rec("1"), rec("2")], "overseas": [rec("3", scope="overseas")]})
+
+    report = run_sync(client, store, today=date(2026, 9, 1), min_plausible=1000)
+
+    assert store.get_sync_state("initial_load_at") is None
+    assert store.recall_count() == 0, "완료로 못 찍을 적재분이 남았습니다"
+    assert report.ok is False
+
+
+def test_full_load_writes_rows_and_flag_together(store):
+    client = StubClient(
+        full={"domestic": [rec(str(i)) for i in range(30)],
+              "overseas": [rec(f"o{i}", scope="overseas") for i in range(30)]}
+    )
+
+    report = run_sync(client, store, today=date(2026, 9, 1), min_plausible=10)
+
+    assert report.ok
+    assert store.recall_count() == 60
+    assert store.get_sync_state("initial_load_at")
+    assert report.new == {"domestic": 30, "overseas": 30}
+
+
+def test_half_finished_load_is_not_marked_complete(store):
+    """한 스코프만 성공하면 아무것도 쓰지 않는다."""
+    client = StubClient(full={"domestic": [rec(str(i)) for i in range(30)]},
+                        fail_scopes={"overseas"})
+
+    run_sync(client, store, today=date(2026, 9, 1), min_plausible=10)
+
+    assert store.get_sync_state("initial_load_at") is None
+    assert store.recall_count() == 0
