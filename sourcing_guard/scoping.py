@@ -28,15 +28,22 @@ from .models import ItemCategory
 # 공통안전기준 1항 — 적용 대상에서 제외되는 물품. 다른 부처 소관이거나
 # 별도 법령 체계를 따른다. 값은 (표시 사유, 판별 힌트) 순.
 OUT_OF_SCOPE_HINTS: dict[str, tuple[str, ...]] = {
+    # ⚠ 한두 글자 일반 명사를 넣지 않는다. 한국어 부분 문자열 매칭에는 단어
+    #   경계가 없어서 "차" 가 기차놀이·자동차·유아차에, "크림" 이 아이스크림·
+    #   크림색에 걸린다. OUT_OF_SCOPE 는 인증·리콜 검증을 통째로 건너뛰므로
+    #   오탐 하나가 리콜된 완구를 놓치게 만든다 — 실제로 겪었다. 데모용
+    #   '모형완구 기차놀이' 가 "차" 때문에 식품으로 판정돼 RED 가 사라졌다.
+    #
+    #   남기는 기준: 그 도메인에서만 쓰이는 표기이거나, 다른 품목 이름에
+    #   섞일 여지가 없을 만큼 긴 복합어.
     "식품 (식품위생법 / 식약처 소관)": (
-        "커피", "원두", "드립백", "차", "티백", "과자", "젤리", "음료", "식품",
-        "소금", "죽염", "후추", "향신료", "설탕",
-        "coffee", "arabica", "食品", "咖啡",
+        "드립백", "티백", "식품위생법", "건강기능식품", "죽염", "천일염",
+        "향신료", "원두커피", "인스턴트커피", "통후추",
+        "arabica", "食品",
     ),
     "화장품 (화장품법 / 식약처 소관)": (
-        "화장품", "스킨", "토너", "로션", "에센스", "크림", "앰플", "세럼",
-        "마스크팩", "클렌징", "클렌징폼", "립스틱", "선크림",
-        "ewg", "화장품책임판매업자", "화장품제조업자",
+        "화장품", "마스크팩", "클렌징폼", "클렌징오일", "립스틱", "선크림",
+        "ewg", "화장품책임판매업자", "화장품제조업자", "기능성화장품",
         "cosmetic", "化妆品",
     ),
     "의약품·의약외품 (약사법 / 식약처 소관)": (
@@ -100,10 +107,22 @@ def classify_age(raw: str | None) -> AgeScope:
     return AgeScope.CHILD_PRODUCT if lower_bound <= CHILD_AGE_MAX else AgeScope.DECLARED_NOT_CHILD
 
 
+# 소관 안이라는 적극적 증거. 소관 밖 힌트가 함께 걸려도 단락하지 않는다 —
+# 힌트를 걷어낸 뒤에도 남을 오탐에 대한 안전망이다.
+IN_SCOPE_MARKERS = ("완구", "장난감", "어린이", "유아", "아동", "학용품", "toy")
+
+
 def out_of_scope_reason(*parts: str | None) -> str | None:
-    """제품명·본문에서 우리 소관 밖임이 드러나면 그 사유를 돌려준다."""
+    """제품명·본문에서 우리 소관 밖임이 드러나면 그 사유를 돌려준다.
+
+    소관 안이라는 적극적 증거(완구·어린이 등)가 있으면 판정하지 않는다.
+    OUT_OF_SCOPE 는 인증·리콜 검증을 통째로 건너뛰므로, 애매하면 검증하는
+    쪽이 안전하다. 놓친 리콜이 불필요한 안내보다 비싸다 (CLAUDE.md R6).
+    """
     haystack = " ".join(p for p in parts if p).lower()
     if not haystack:
+        return None
+    if any(m in haystack for m in IN_SCOPE_MARKERS):
         return None
     for reason, hints in OUT_OF_SCOPE_HINTS.items():
         if any(h.lower() in haystack for h in hints):
