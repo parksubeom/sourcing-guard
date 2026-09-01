@@ -63,12 +63,17 @@ def test_golden_case(case):
         #
         # 나머지 단정(신호·필수추출·필수finding)은 두 모드 모두에서 지킨다 —
         # 그것들이 실제로 사용자가 보는 결과다.
+        # 기대값을 목록으로 적을 수 있다. 판단이 갈릴 수 있는 입력에서 LLM 이
+        # 두 답 사이를 오가는데, 사용자가 보는 신호가 같으면 둘 다 받는다.
+        # 어느 경우에 목록을 썼고 실측이 어땠는지는 골든셋 주석에 적는다.
+        want = exp["category"]
+        want = set(want) if isinstance(want, list) else {want}
         if used_llm:
-            assert facts.category.value == exp["category"], (
-                f"{case['id']}: 품목 기대 {exp['category']}, 실제 {facts.category.value}"
+            assert facts.category.value in want, (
+                f"{case['id']}: 품목 기대 {sorted(want)}, 실제 {facts.category.value}"
             )
         else:
-            assert facts.category.value in {exp["category"], "unclassified"}, (
+            assert facts.category.value in want | {"unclassified"}, (
                 f"{case['id']}: 휴리스틱 모드인데 품목이 {facts.category.value} 입니다"
             )
 
