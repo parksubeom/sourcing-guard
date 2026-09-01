@@ -7,10 +7,13 @@ risky. It asks what the page says. Judgement happens in scorer.py.
 from __future__ import annotations
 
 import json
+import logging
 
 from .config import settings
 from .kats_client import CERT_NUMBER_RE
 from .models import ItemCategory, ProductFacts
+
+_log = logging.getLogger(__name__)
 
 SYSTEM_PROMPT = """\
 당신은 이커머스 상품 상세페이지에서 **사실만** 추출하는 파서입니다.
@@ -101,13 +104,29 @@ def extract(page_text: str, page_url: str | None = None) -> ProductFacts:
 
     from anthropic import Anthropic
 
-    client = Anthropic(api_key=settings.anthropic_api_key)
-    msg = client.messages.create(
-        model=settings.extractor_model,
-        max_tokens=1200,
-        system=SYSTEM_PROMPT,
-        messages=[*_few_shot_messages(), {"role": "user", "content": page_text[:60_000]}],
-    )
+    try:
+        client = Anthropic(api_key=settings.anthropic_api_key)
+        msg = client.messages.create(
+            model=settings.extractor_model,
+            max_tokens=1200,
+            system=SYSTEM_PROMPT,
+            messages=[*_few_shot_messages(), {"role": "user", "content": page_text[:60_000]}],
+        )
+    except Exception as exc:  # noqa: BLE001
+        # 남의 API 장애로 우리 서비스를 죽이지 않는다. 정부 API 에 적용한 원칙과
+        # 같다 - 투표 기간 18일 동안 추출기 하나 때문에 스캔 전체가 500 이 되면
+        # 안 된다.
+        #
+        # 빈 ProductFacts 가 아니라 휴리스틱으로 내린다. 빈 값으로 두면 페이지에
+        # 인증번호가 적혀 있는데도 "표기 없음" 이라고 말하게 된다 - 못 찾은 것과
+        # 찾아보지 않은 것은 다르다 (R3). 휴리스틱은 정규식이라 인증번호·재질은
+        # 그대로 잡는다.
+        _log.warning(
+            "추출기 LLM 호출 실패, 휴리스틱으로 대체합니다: %s: %s",
+            type(exc).__name__, exc,
+        )
+        return _heuristic_fallback(page_text, page_url)
+
     text = "".join(b.text for b in msg.content if b.type == "text").strip()
     text = text.removeprefix("```json").removeprefix("```").removesuffix("```").strip()
 

@@ -62,3 +62,35 @@ def test_schema_drops_a_hallucinated_verdict_field():
 def test_heuristic_fallback_also_emits_no_verdict():
     facts = _heuristic_fallback("완구 인형 KC CB061R2170-3018", None)
     assert not (_VERDICT_FIELDS & set(facts.model_dump()))
+
+
+def test_llm_failure_degrades_to_heuristic_not_a_500(monkeypatch):
+    """남의 API 장애로 우리 서비스를 죽이지 않는다.
+
+    정부 API 에 적용한 원칙과 같다. 투표 기간 18일 동안 추출기 하나 때문에
+    스캔 전체가 500 이 되면 안 된다.
+
+    빈 ProductFacts 가 아니라 휴리스틱으로 내려야 한다 - 빈 값이면 페이지에
+    인증번호가 적혀 있는데도 "표기 없음"(AMBER)이라고 말하게 된다. 못 찾은
+    것과 찾아보지 않은 것은 다르다 (R3).
+    """
+    import sourcing_guard.extractor as ex
+
+    class Boom:
+        def __init__(self, **kw):
+            raise RuntimeError("400 anthropic-workspace-id is required")
+
+    import sys
+    from dataclasses import replace
+
+    # Settings 는 frozen dataclass 다. 필드를 바꾸지 말고 인스턴스를 갈아끼운다.
+    monkeypatch.setattr(
+        ex, "settings",
+        replace(ex.settings, mock_mode=False, anthropic_api_key="sk-test"),
+    )
+    monkeypatch.setitem(sys.modules, "anthropic", type("m", (), {"Anthropic": Boom}))
+
+    facts = ex.extract("완구 장난감 KC 인증번호 CB061R2170-3018 재질 PVC")
+
+    assert facts.kc_numbers == ["CB061R2170-3018"], "휴리스틱이 안 돌았습니다"
+    assert "PVC" in facts.materials
