@@ -26,9 +26,17 @@ def test_prompt_declares_page_is_data_not_instructions():
         assert phrase in SYSTEM_PROMPT
 
 
-def test_prompt_forbids_kc_number_from_image():
-    """이미지에서 읽은 인증번호는 판정 키로 쓰지 않는다 (0/O 오독)."""
-    assert "이미지에서 읽은 경우에도 인증번호는" in SYSTEM_PROMPT
+def test_prompt_scopes_the_kc_restriction_to_images_only():
+    """이미지 한정 규칙임이 분명해야 한다.
+
+    처음 문구는 "이미지에서 읽은 경우에도 인증번호는 넣지 마십시오 ... 인증번호는
+    사용자가 텍스트로 직접 확인합니다" 였다. 마지막 문장이 일반 규칙으로 읽혀서
+    LLM 이 텍스트에 명시된 인증번호도 약 10% 확률로 빠뜨렸다 - 인증 검증 축이
+    사라지고 RED 가 AMBER 로 바뀐다.
+    """
+    assert "이미지에서만 읽은 번호는 넣지 마십시오" in SYSTEM_PROMPT
+    assert "이미지 한정 규칙이며 텍스트에는" in SYSTEM_PROMPT
+    assert "텍스트에 적힌 인증번호는 빠뜨리지 말고" in SYSTEM_PROMPT
 
 
 # --- 프롬프트 캐싱 ---------------------------------------------------------
@@ -108,3 +116,51 @@ def test_image_only_input_without_llm_degrades_cleanly(monkeypatch):
     facts = extract("", images=[{"media_type": "image/png", "data": "aGVsbG8="}])
     assert isinstance(facts, ProductFacts)
     assert facts.kc_numbers == []
+
+
+# --- 인증번호는 정규식과 합집합 (LLM 변동 무관) ----------------------------
+def test_text_kc_number_survives_an_llm_omission(_live):
+    """LLM 이 인증번호를 빠뜨려도 텍스트에 있으면 살아남아야 한다.
+
+    실측으로 약 10% 확률로 빠뜨렸다(로컬 5/5, 프로덕션 4/5). 인증번호가 사라지면
+    인증 검증 축이 통째로 없어져 RED 가 AMBER 로 바뀐다 - 데모 클라이맥스가
+    발표 중 무너진다는 뜻이다.
+
+    인증번호는 형태가 정해진 하드 데이터다. LLM 판단에 맡길 이유가 없다.
+    """
+    fake = _fake_client({
+        "product_name": "모형완구 기차놀이",
+        "kc_numbers": [],                      # LLM 이 빠뜨린 상황
+        "category": "children_toy", "category_confidence": 0.9, "raw_language": "ko",
+    })
+    with patch("anthropic.Anthropic", return_value=fake):
+        facts = extract("모형완구 기차놀이 제우스 완구 KC 인증번호 CB067R317-5002")
+
+    assert facts.kc_numbers == ["CB067R317-5002"]
+
+
+def test_image_only_kc_number_is_not_recovered_by_regex(_live):
+    """이미지에서만 읽은 번호는 살리지 않는다.
+
+    0/O 오독이 정상 인증을 "미조회" 로 만들고, 그건 셀러에게 거짓말이 된다.
+    정규식은 page_text 만 본다.
+    """
+    fake = _fake_client({
+        "product_name": "블록완구", "kc_numbers": [],
+        "category": "children_toy", "category_confidence": 0.9, "raw_language": "ko",
+    })
+    with patch("anthropic.Anthropic", return_value=fake):
+        facts = extract("", images=[{"media_type": "image/png", "data": "aGVsbG8="}])
+
+    assert facts.kc_numbers == []
+
+
+def test_llm_and_regex_numbers_are_merged_without_duplicates(_live):
+    fake = _fake_client({
+        "product_name": "완구", "kc_numbers": ["CB061R2170-3018"],
+        "category": "children_toy", "category_confidence": 0.9, "raw_language": "ko",
+    })
+    with patch("anthropic.Anthropic", return_value=fake):
+        facts = extract("완구 KC 인증번호 CB061R2170-3018 및 CB067R317-5002")
+
+    assert facts.kc_numbers == ["CB061R2170-3018", "CB067R317-5002"]
