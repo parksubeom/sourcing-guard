@@ -82,6 +82,10 @@ class RecallIndex:
             _log.info("리콜 인덱스 적재: %d건 (기준 %s)", len(records), self._as_of)
             return self._records
 
+    def all_records(self) -> list[RecallRecord]:
+        """스윕용. sweep() 이 match() 로 직접 거르므로 전량을 넘긴다."""
+        return self._load()
+
     @property
     def as_of(self) -> str | None:
         """가장 최근 공표일 (YYYYMMDD). "리콜 이력 없음" 의 유효기간이다."""
