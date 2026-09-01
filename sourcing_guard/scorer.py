@@ -14,6 +14,7 @@ _PENALTY: dict[FindingKind, int] = {
     FindingKind.RECALL_MATCH: 100,
     FindingKind.KC_NOT_FOUND: 45,
     FindingKind.KC_REVOKED: 100,
+    FindingKind.KC_EXPIRED: 30,
     FindingKind.KC_SUSPENDED: 100,
     FindingKind.KC_UNDER_ACTION: 40,
     FindingKind.KC_MISSING_BUT_REQUIRED: 45,
@@ -27,6 +28,10 @@ _PENALTY: dict[FindingKind, int] = {
 
 _HARD_RED = {
     # RED 는 정부 DB 가 문제를 적어둔 경우에만 준다. 부재는 증거가 아니다.
+    #
+    # KC_EXPIRED 도 여기 없다. 기간만료·반납은 정부 DB 가 "문제가 있다" 고 적은
+    # 것이 아니라 인증의 수명이 끝났다고 적은 것이다. 완구 인증의 67% 가
+    # 기간만료여서(2026-09-01 실측) RED 로 두면 정상 상품 대부분에 빨간불이 뜬다.
     #
     # KC_NOT_FOUND 는 여기 없다. 전안법은 위해도 4단계이고 가장 낮은
     # 공급자적합성확인(SCoC) 대상은 제조·수입자가 스스로 시험해 확인하므로
@@ -83,6 +88,7 @@ def _signal_for(facts: ProductFacts, kinds: set[FindingKind]) -> Signal:
 
     if kinds & {
         FindingKind.KC_NOT_FOUND,
+        FindingKind.KC_EXPIRED,
         FindingKind.KC_UNDER_ACTION,
         FindingKind.KC_MISSING_BUT_REQUIRED,
         FindingKind.SUBSTANCE_MENTIONED,
