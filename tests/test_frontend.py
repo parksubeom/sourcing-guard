@@ -212,3 +212,29 @@ def test_scan_page_shows_the_server_headline(pages):
     index = pages["index.html"]
     assert "data.headline" in index
     assert "esc(head)" in index
+
+
+def test_demo_texts_come_from_the_server(pages):
+    """프론트가 데모 문구를 따로 들고 있으면 서버의 상한 면제 목록과 갈라진다.
+
+    그러면 상한을 넘긴 순간 데모 버튼이 429 를 받는다 - 투표자가 첫 화면에서
+    보는 그 버튼이다 (핸드오프 §9).
+    """
+    from sourcing_guard.demos import DEMO_TEXTS
+
+    index = pages["index.html"]
+    assert "/api/v1/demos" in index
+    # placeholder 예시에 인증번호가 있는 건 정상이다. 데모 문구 자체가 박혀
+    # 있는지를 본다 — 그게 서버 면제 목록과 갈라지는 지점이다.
+    for text in DEMO_TEXTS:
+        assert text not in index, f"데모 문구가 프론트에 하드코딩돼 있습니다: {text[:30]}"
+
+
+def test_scan_page_shows_the_rate_limit_message(pages):
+    """429 를 "서버가 429 로 응답했습니다" 로 보여주면 셀러가 뭘 해야 할지 모른다."""
+    assert "429" in pages["index.html"]
+
+
+def test_scan_page_surfaces_degraded_extraction(pages):
+    """한도를 넘겨 간이 추출로 갔으면 그 사실을 감추지 않는다."""
+    assert "extraction_note" in pages["index.html"]

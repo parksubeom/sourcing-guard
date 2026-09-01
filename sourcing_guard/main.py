@@ -10,7 +10,7 @@ from contextlib import asynccontextmanager, suppress
 
 from pathlib import Path
 
-from fastapi import FastAPI, Header, HTTPException
+from fastapi import FastAPI, Header, HTTPException, Request
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
@@ -23,6 +23,8 @@ from .extractor import extract
 from .kats_client import KatsClient, health
 from .models import RecallAlert, ScanResult, WatchItem
 from .scorer import score
+from .demos import DEMOS, DEMO_TEXTS
+from .ratelimit import RateLimiter, text_fingerprint
 from .recall_index import RecallIndex
 from .storage import SqliteWatchStore
 from .sync import run_sync, sync_loop
@@ -108,6 +110,7 @@ def healthz() -> dict:
         "watched_items": _store.count(),
         "kats": health.snapshot(),
         "sync": {"enabled": settings.sync_enabled, **_store.sync_snapshot()},
+        "limits": _limiter.snapshot(),
     }
 
 
@@ -131,11 +134,43 @@ def trigger_sync(
     ).to_dict()
 
 
+@app.get("/api/v1/demos", include_in_schema=False)
+def demos() -> list[dict]:
+    """데모 3종. 서버가 단일 출처다.
+
+    프론트가 문구를 따로 들고 있으면 서버의 면제 목록과 갈라지고, 상한을
+    넘긴 순간 데모 버튼이 429 를 받는다.
+    """
+    return DEMOS
+
+
 @app.post("/api/v1/scan", response_model=ScanResult)
-def scan(req: ScanRequest) -> ScanResult:
-    facts = extract(req.page_text, req.page_url)
+def scan(req: ScanRequest, request: Request) -> ScanResult:
+    fp = text_fingerprint(req.page_text)
+    client_ip = (request.client.host if request.client else "unknown")
+    # Fly 는 원 IP 를 이 헤더로 넘긴다. 없으면 프록시 IP 하나로 뭉쳐 전원이 막힌다.
+    forwarded = request.headers.get("fly-client-ip") or request.headers.get("x-forwarded-for")
+    if forwarded:
+        client_ip = forwarded.split(",")[0].strip()
+
+    if not _limiter.allow_request(client_ip, fingerprint=fp):
+        raise HTTPException(
+            status_code=429,
+            detail="요청이 잠시 많습니다. 1분 뒤에 다시 시도해 주세요.",
+            headers={"Retry-After": str(_limiter.retry_after_seconds(client_ip))},
+        )
+
+    # 상한을 넘겨도 멈추지 않는다. LLM 대신 휴리스틱으로 내리고 그 사실을 적는다.
+    allow_llm = _limiter.take_llm_budget(fingerprint=fp)
+    facts = extract(req.page_text, req.page_url, allow_llm=allow_llm)
     findings = verify(facts, _kats, _rules, _recalls)
-    return score(facts, findings, recall_data_as_of=_recalls.as_of)
+    result = score(facts, findings, recall_data_as_of=_recalls.as_of)
+    if not allow_llm:
+        result.extraction_note = (
+            "오늘 분석 한도에 도달해 간이 추출로 처리했습니다. "
+            "상품명·제조사가 덜 정확할 수 있으니 결과의 인증번호를 확인해 주세요."
+        )
+    return result
 
 
 # ---------------------------------------------------------------------------
@@ -152,6 +187,11 @@ _store = SqliteWatchStore(settings.watchlist_db_path)
 # 리콜 로컬 사본 위의 매칭. 스캔과 워치리스트 스윕이 같은 watchlist.match() 를
 # 쓰게 하는 지점이다 (이전에는 스캔만 API 검색이라 결과가 갈릴 수 있었다).
 _recalls = RecallIndex(_store)
+
+# 호출 상한. 데모 3종은 지문으로 면제한다 - 투표자가 첫 화면에서 버튼을
+# 눌렀는데 429 를 보면 그대로 이탈한다 (핸드오프 §9).
+_limiter = RateLimiter()
+_limiter.register_exempt(*DEMO_TEXTS)
 
 
 class WatchRequest(BaseModel):

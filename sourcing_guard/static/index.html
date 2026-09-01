@@ -82,16 +82,6 @@
 (function () {
   "use strict";
 
-  var SLIME = "완구 매직액체 슬라임 장난감 KC 인증번호 CB061R2170-3018 대상연령 3세 이상";
-  var DEMOS = [
-    { tone:"green", title:"인증 조회됨 · 리콜 없음",
-      note:"도매꾹 슬라임 (CB061R2170-3018)", text:SLIME },
-    { tone:"amber", title:"같은 상품에 재질 한 줄 추가",
-      note:"\"PVC 재질\" 표기가 더해지면 신호가 바뀝니다", text:SLIME + " 재질 PVC" },
-    { tone:"red", title:"인증은 적합인데 리콜된 상품",
-      note:"모형완구 기차놀이 (CB067R317-5002)",
-      text:"모형완구 기차놀이 제우스 완구 장난감 KC 인증번호 CB067R317-5002" }
-  ];
 
   var SIGNAL_LABEL = { GREEN:"확인된 문제 없음", AMBER:"확인 필요", RED:"확인 필요 (중대)", UNKNOWN:"판단 근거 부족" };
   var SIGNAL_SHORT = { GREEN:"정상", AMBER:"주의", RED:"위험", UNKNOWN:"모름" };
@@ -109,17 +99,23 @@
 
   function updateCount() { count.textContent = pt.value.length.toLocaleString("ko-KR") + "자"; }
 
-  // 데모 버튼
-  DEMOS.forEach(function (d, i) {
-    var b = document.createElement("button");
-    b.type = "button";
-    b.className = "demo";
-    b.innerHTML =
-      '<span class="dot ' + d.tone + '" aria-hidden="true"></span>' +
-      '<span><b>' + esc(d.title) + '</b><span>' + esc(d.note) + '</span></span>';
-    b.addEventListener("click", function () { pt.value = d.text; updateCount(); scan(); });
-    $("demos").appendChild(b);
-  });
+  // 데모 버튼. 문구를 서버에서 받는다 — 프론트가 따로 들고 있으면 서버의
+  // 호출 상한 면제 목록과 갈라지고, 상한을 넘긴 순간 데모가 429 를 받는다.
+  fetch("/api/v1/demos")
+    .then(function (r) { return r.ok ? r.json() : []; })
+    .then(function (list) {
+      (list || []).forEach(function (d) {
+        var b = document.createElement("button");
+        b.type = "button";
+        b.className = "demo";
+        b.innerHTML =
+          '<span class="dot ' + esc(d.tone) + '" aria-hidden="true"></span>' +
+          '<span><b>' + esc(d.title) + "</b><span>" + esc(d.note) + "</span></span>";
+        b.addEventListener("click", function () { pt.value = d.text; updateCount(); scan(); });
+        $("demos").appendChild(b);
+      });
+    })
+    .catch(function () { /* 데모가 없어도 본 기능은 돈다 */ });
 
   pt.addEventListener("input", updateCount);
   $("clear").addEventListener("click", function () {
@@ -164,6 +160,7 @@
               '<span class="meta"><strong>' + esc(head) + "</strong>" +
               "<span>" + esc(asOfLabel(data.recall_data_as_of)) + "</span></span></div>";
 
+    if (data.extraction_note) html += '<p class="scope">' + esc(data.extraction_note) + "</p>";
     if (data.coverage_note) html += '<p class="scope">' + esc(data.coverage_note) + "</p>";
 
     html += '<ul class="findings">' + main.map(findingRow).join("") + "</ul>";
@@ -249,6 +246,11 @@
       body: JSON.stringify({ page_text: text })
     })
       .then(function (r) {
+        if (r.status === 429) {
+          return r.json().then(function (b) {
+            throw new Error(b.detail || "요청이 잠시 많습니다. 1분 뒤에 다시 시도해 주세요");
+          });
+        }
         if (!r.ok) throw new Error("서버가 " + r.status + " 로 응답했습니다");
         return r.json();
       })

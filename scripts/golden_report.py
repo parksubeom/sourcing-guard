@@ -24,13 +24,36 @@ KATS = KatsClient(None, None, mock=True)
 RULES = RuleBook()
 
 
+def _looks_like_llm(facts, text: str) -> bool:
+    """이 추출 결과가 LLM 에서 나왔는가.
+
+    휴리스틱은 product_name 을 "첫 줄 80자" 로 자르고 maker 를 아예 못 뽑는다.
+    둘 중 하나라도 휴리스틱이 낼 수 없는 모양이면 LLM 이 돈 것이다.
+
+    완벽한 판별은 아니지만, "키가 있으니 LLM 모드" 라고 적는 것보다는 훨씬
+    낫다 - 실제로 그 표기 때문에 400 오류로 전부 폴백된 결과를 LLM 정확도로
+    읽을 뻔했다.
+    """
+    if facts.maker:
+        return True
+    first_line = (text.strip().splitlines() or [""])[0][:80]
+    return bool(facts.product_name) and facts.product_name != first_line
+
+
 def main() -> int:
     sig_hit = find_hit = ext_hit = 0
     sig_tot = find_tot = ext_tot = 0
     rows = []
 
+    # 설정만 보고 "LLM 모드" 라고 적으면 안 된다. 키가 400 을 돌려주는 상태에서
+    # 11건 전부 휴리스틱으로 떨어졌는데도 리포트는 LLM 이라고 표시했다.
+    # 실제 호출 성공 건수를 세서 판단한다.
+    llm_ok = 0
+
     for c in CASES:
         facts = extract(c["text"])
+        if _looks_like_llm(facts, c["text"]):
+            llm_ok += 1
         findings = verify(facts, KATS, RULES, None)
         result = score(facts, findings)
         kinds = {f.kind.value for f in findings}
@@ -68,11 +91,23 @@ def main() -> int:
         print(f"추출 적중     {ext_hit}/{ext_tot}  ({100*ext_hit//ext_tot}%)")
     from sourcing_guard.config import settings
 
-    live = not settings.mock_mode and settings.anthropic_api_key
-    mode = f"LLM ({settings.extractor_model})" if live else "휴리스틱 (오프라인 대체)"
+    configured = not settings.mock_mode and bool(settings.anthropic_api_key)
+    if llm_ok:
+        mode = f"LLM ({settings.extractor_model}) — 호출 성공 {llm_ok}/{len(CASES)}건"
+    elif configured:
+        mode = "휴리스틱 (LLM 호출이 전부 실패해 폴백됨)"
+    else:
+        mode = "휴리스틱 (키 없음 또는 MOCK_MODE)"
+
     print(f"\n추출 모드   {mode}")
     print(f"표본 {len(CASES)}건 (전부 KC 번호 없음 — 구매대행 소싱 상황)")
-    if not live:
+
+    if llm_ok and llm_ok < len(CASES):
+        print(f"\n⚠ {len(CASES) - llm_ok}건이 휴리스틱으로 떨어졌습니다. 로그에서 실패 원인을 확인하세요.")
+    elif configured and not llm_ok:
+        print("\n⚠ 키가 설정돼 있는데 LLM 호출이 한 건도 성공하지 못했습니다.")
+        print("  아래 수치는 전부 휴리스틱 결과입니다. 로그에서 원인을 확인하세요.")
+    elif not configured:
         print("\n※ ANTHROPIC_API_KEY 설정 + MOCK_MODE=false 로 다시 돌리면 LLM 정확도가 나옵니다.")
         print("  두 수치의 차이가 'AI 를 왜 쓰는가' 의 답입니다.")
     return 0
