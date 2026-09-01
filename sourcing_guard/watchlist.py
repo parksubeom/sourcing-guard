@@ -22,6 +22,29 @@ from .models import MatchStrength, RecallAlert, WatchItem, WatchStatus
 # Model names shorter than this produce too many coincidental hits
 # ("A1", "100") to be worth alerting on.
 _MIN_EXACT_LEN = 3
+
+# 포함 매칭에서 "짧은 쪽"이 가져야 하는 최소 길이.
+#
+# ⚠ 두 문자열 중 긴 쪽이 아니라 짧은 쪽을 재야 한다. 포함 관계의 식별력은
+#   짧은 쪽에서 나온다 - 'S' 가 'MB120S' 안에 있다는 사실은 아무것도 말해주지
+#   않는다. 이전 구현은 `len(wm) >= 5 or len(rm) >= 5` 였고, 우리 쪽이 길면
+#   리콜 쪽이 1자여도 통과했다. 실측(로컬 사본 37,313건):
+#
+#     'MB-120S' 를 감시   →  일치 137건. 걸린 리콜 모델명은
+#                            'S'(33) '1'(20) '2'(25) '12'(35) '120'(30) 등 13종
+#
+#   저 조각들은 모델명이 아니라 정부 데이터를 쪼갠 부스러기다 - 괄호 주석
+#   ('뱀','렌치'), 콤마 목록('FR','FS'), 슬래시 조각('62/6150' → '62').
+#
+#   임계값별 실측 (현실 입력 기준 역검증 3,000건 / 무관 상품 3종 오탐):
+#     OR  >= 5   재현율 95.1%   오탐 105.3건   ← 이전
+#     min >= 4   재현율 94.6%   오탐   3.3건
+#     min >= 5   재현율 94.0%   오탐   0.0건   ← 채택
+#
+#   min>=5 가 잃는 1.1pp 를 전수 확인했다. 23건 전부 역검증이 부스러기를 감시
+#   모델명으로 뽑은 경우였다 - '품번' '번호' '품명'(필드 라벨), '주황' '크림'
+#   '살색'(색상 주석), 'L' '02' '19'. 셀러가 입력할 문자열이 아니다. 즉 실질
+#   재현율 손실은 0 이고, 진짜 짧은 모델명('솔로X')은 exact 티어가 잡는다.
 _MIN_CONTAIN_LEN = 5
 _MIN_TOKEN_OVERLAP = 2
 
@@ -119,7 +142,8 @@ def match(item: WatchItem, r: RecallRecord) -> Match | None:
 
     if wm:
         for rm in recall_models:
-            if len(wm) >= _MIN_CONTAIN_LEN or len(rm) >= _MIN_CONTAIN_LEN:
+            # 짧은 쪽을 잰다. 긴 쪽으로 재면 1자 부스러기가 전부 통과한다.
+            if min(len(wm), len(rm)) >= _MIN_CONTAIN_LEN:
                 if wm in rm or rm in wm:
                     return Match(MatchStrength.STRONG, "model_name")
 
