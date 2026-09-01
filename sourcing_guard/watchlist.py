@@ -147,11 +147,22 @@ def match(item: WatchItem, r: RecallRecord) -> Match | None:
                 if wm in rm or rm in wm:
                     return Match(MatchStrength.STRONG, "model_name")
 
-    if item.maker and r.maker:
-        if normalize_model(item.maker) == normalize_model(r.maker):
-            overlap = tokenize_name(item.product_name) & tokenize_name(r.product_name)
-            if len(overlap) >= _MIN_TOKEN_OVERLAP:
-                return Match(MatchStrength.WEAK, "maker+product")
+    # ⚠ 정규화 결과가 빈 문자열이면 후보에서 뺀다. 모델명 쪽은 `if wm:` 과
+    #   _recall_models 의 `if m` 이 이미 걸러내는데, 제조사 쪽에 같은 가드가
+    #   없어서 `"" == ""` 로 게이트를 통과했다.
+    #
+    #   normalize_model 은 [A-Z0-9가-힣] 만 남기므로 중국어·그리스문자만인
+    #   업체명과 '-' 가 모두 "" 가 된다. 로컬 사본에서 15,937건(42.7%)이
+    #   여기 해당한다. 실측: 제조사 '深圳市特格尔科技有限公司' 로 감시하면
+    #   maker='-' 인 리콜과 맞아떨어져 4~15건이 걸렸다.
+    #
+    #   137건 오탐(ee7011c)과 같은 모양이다 - 비교의 한쪽이 비었는데 통과했다.
+    watched_maker = normalize_model(item.maker)
+    recall_maker = normalize_model(r.maker)
+    if watched_maker and recall_maker and watched_maker == recall_maker:
+        overlap = tokenize_name(item.product_name) & tokenize_name(r.product_name)
+        if len(overlap) >= _MIN_TOKEN_OVERLAP:
+            return Match(MatchStrength.WEAK, "maker+product")
 
     return None
 

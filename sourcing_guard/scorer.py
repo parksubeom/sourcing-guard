@@ -6,7 +6,7 @@ CLAUDE.md R3: absence of data yields UNKNOWN, never GREEN.
 
 from __future__ import annotations
 
-from .models import Finding, FindingKind, ProductFacts, ScanResult, Signal, ItemCategory, WatchSuggestion, ExtractedField
+from .models import Finding, FindingKind, ProductFacts, ScanResult, Signal, ItemCategory, WatchSuggestion, ExtractedField, FindingGroup
 
 # Weights are intentionally boring and auditable. Any change must be
 # accompanied by a test case explaining the new behaviour.
@@ -37,6 +37,11 @@ _PENALTY: dict[FindingKind, int] = {
     FindingKind.INFO_REQUEST: 0,
     FindingKind.KC_VERIFIED: 0,
     FindingKind.RECALL_CLEAR: 0,
+    # 0 이다. 같은 제조사에 다른 리콜이 있다는 사실이 이 상품의 결함은 아니다.
+    # 점수를 깎으면 대형 수입사 상품이 전부 노란불이 되고, 그러면 셀러가
+    # 노란불을 무시하게 된다 - HAZARD_RULE_APPLIES 를 0 으로 둔 것과 같은 논리.
+    # _HARD_RED 와 AMBER 집합에도 넣지 않는다 (아래 _signal_for 참조).
+    FindingKind.MAKER_OTHER_RECALLS: 0,
 }
 
 _HARD_RED = {
@@ -94,6 +99,28 @@ _WATCH_REASON: dict[Signal, str] = {
         "판단에 필요한 정보가 부족합니다. 감시 목록에 넣으면 이후 리콜 공표 시 알려드립니다."
     ),
 }
+
+
+# 각 화면 구획의 제목. 셀러가 "무엇부터 봐야 하나" 를 안다.
+_GROUP_HEADER: dict[FindingGroup, str] = {
+    FindingGroup.ACTION: "소싱하려면 확인할 것",
+    FindingGroup.FINDING: "확인된 문제",
+    FindingGroup.CONTEXT: "참고 정보",
+}
+
+
+def _grouped_findings(findings: list[Finding]) -> list[dict]:
+    """finding 을 셀러 관점 구획으로 묶는다.
+
+    리콜·인증 결과보다 '확인할 것' 을 앞에 둔다. 소싱 셀러는 리콜 조회가 아니라
+    '이거 팔려면 뭘 준비하나' 를 먼저 알고 싶다. 빈 구획은 넣지 않는다.
+    """
+    out: list[dict] = []
+    for group in (FindingGroup.ACTION, FindingGroup.FINDING, FindingGroup.CONTEXT):
+        items = [f for f in findings if f.group is group]
+        if items:
+            out.append({"group": group.value, "header": _GROUP_HEADER[group], "findings": items})
+    return out
 
 
 def _extracted_fields(facts: ProductFacts) -> list[ExtractedField]:
@@ -178,6 +205,7 @@ def score(
         coverage_note=_coverage_note(facts, kinds),
         watch_suggestion=_watch_suggestion(facts, signal, kinds),
         extracted=_extracted_fields(facts),
+        grouped_findings=_grouped_findings(findings),
         recall_data_as_of=recall_data_as_of,
     )
 

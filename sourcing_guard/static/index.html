@@ -279,6 +279,10 @@
 
   function findingRow(f) {
     var basis = f.legal_basis ? '<span class="tag">' + esc(f.legal_basis) + "</span>" : "";
+    // 같은 제조사의 다른 리콜은 이 상품의 위험이 아니라 공급처 참고 정보다.
+    // 리콜 일치(빨강)와 같은 모양으로 그리면 셀러가 "이 상품이 리콜됐다" 로
+    // 읽는다. 서버 문장에 단서가 붙어 있고, 화면에서도 표시를 달리 준다.
+    var aside = f.kind === "maker_other_recalls" ? " aside" : "";
     // 인증번호가 없는 경우의 검색 링크는 셀러가 다음에 할 일이라 버튼으로 낸다.
     // 나머지 근거 링크는 읽을거리라 본문 링크로 둔다.
     var isAction = f.kind === "kc_missing_but_required";
@@ -288,7 +292,8 @@
         ? goLink(f.source_url, f.source_label || "정부 사이트에서 직접 검색")
         : '<a href="' + esc(f.source_url) + '" target="_blank" rel="noopener noreferrer">'
           + esc(f.source_label || "근거 원문") + " (새 창)</a>";
-    return '<li><span class="tick ' + esc(f.signal) + '" aria-hidden="true"></span>' +
+    return '<li class="' + esc(f.kind) + aside + '">' +
+           '<span class="tick ' + esc(f.signal) + '" aria-hidden="true"></span>' +
            '<div class="f-body"><p class="f-text">' + esc(f.statement_ko) + "</p>" +
            '<p class="f-meta">' + basis + link + "</p></div></li>";
   }

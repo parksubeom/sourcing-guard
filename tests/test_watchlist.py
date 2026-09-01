@@ -230,3 +230,56 @@ def test_the_gate_measures_the_shorter_side_not_the_longer():
     )
     assert "min(len(wm), len(rm)) >= _MIN_CONTAIN_LEN" in body
     assert "len(wm) >= _MIN_CONTAIN_LEN or" not in body
+
+
+# ---------------------------------------------------------------------------
+# 빈 문자열 정규화 가드 — 제조사 쪽 (137건 오탐과 같은 모양)
+#
+# normalize_model 은 [A-Z0-9가-힣] 만 남긴다. 그래서 중국어·그리스문자만인
+# 업체명과 '-' 가 모두 "" 가 되고, `"" == ""` 로 제조사 게이트를 통과했다.
+# 로컬 사본 실측: maker 가 있는데 정규화하면 빈 문자열인 레코드 15,937건(42.7%).
+#
+# 모델명 쪽은 `if wm:` 과 _recall_models 의 `if m` 이 이미 막고 있었다.
+# 비교의 한쪽이 비었는데 통과하는 것이 137건 오탐의 본질이었다.
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "watched_maker,recall_maker",
+    [
+        ("深圳市特格尔科技有限公司", "-"),          # 실측으로 실제 걸렸던 조합
+        ("-", "深圳市特格尔科技有限公司"),
+        ("广东三角牌电器股份有限公司", "-"),
+        ("ΤΙ-ΤΙΝ", "乐金生活健康贸易（上海）有限公司"),
+        ("-", "-"),
+    ],
+)
+def test_makers_that_normalise_to_nothing_do_not_match(watched_maker, recall_maker):
+    """정규화하면 빈 문자열이 되는 업체명끼리 맞아떨어지면 안 된다.
+
+    제품명 토큰은 일부러 2개 이상 겹치게 뒀다. 제조사 게이트만 막으면
+    약한 일치가 성립하지 않는다는 것을 보이기 위한 것이다.
+    """
+    watched = item(product_name="어린이용 장신구 목걸이", maker=watched_maker)
+    r = recall(product_name="어린이용 장신구 목걸이 팔찌", maker=recall_maker)
+    assert match(watched, r) is None
+
+
+def test_normal_maker_weak_match_still_works():
+    """가드는 빈 문자열만 막는다. 정상 업체명의 약한 일치는 그대로 남는다."""
+    watched = item(product_name="어린이 원목 의자", maker="이케아")
+    r = recall(product_name="어린이 원목 의자 세트", maker="이케아")
+    m = match(watched, r)
+    assert m is not None and m.strength is MatchStrength.WEAK
+
+
+def test_maker_gate_checks_both_sides_are_non_empty():
+    """구현이 다시 `normalize(a) == normalize(b)` 단독으로 돌아가지 않게 고정한다."""
+    from pathlib import Path
+
+    src = Path("sourcing_guard/watchlist.py").read_text(encoding="utf-8")
+    body = "\n".join(
+        line for line in src.splitlines() if not line.lstrip().startswith("#")
+    )
+    assert "if watched_maker and recall_maker and watched_maker == recall_maker:" in body
+    assert "normalize_model(item.maker) == normalize_model(r.maker)" not in body

@@ -215,6 +215,11 @@ textarea:focus{border-color:var(--primary-50); outline:2px solid var(--border-fo
 .findings>li{padding:var(--s5) var(--s6); border-bottom:1px solid var(--gray-20); display:flex; gap:var(--s3)}
 .findings>li:last-child{border-bottom:0}
 @media (max-width:640px){ .findings>li{padding:var(--s4) var(--s5)} }
+/* 공급처 참고 정보. 이 상품의 판정이 아니라는 것이 눈에 보여야 한다 -
+ * 리콜 일치와 같은 모양으로 그리면 셀러가 '이 상품이 리콜됐다' 로 읽는다. */
+.findings>li.aside{background:var(--gray-5)}
+.findings>li.aside .f-text{color:var(--fg-2)}
+
 .tick{width:8px; border-radius:999px; flex:none; margin:6px 0 auto; align-self:stretch; min-height:8px; max-height:8px}
 .tick.GREEN{background:var(--success)} .tick.AMBER{background:var(--warning)}
 .tick.RED{background:var(--danger)} .tick.UNKNOWN{background:var(--gray-50)}
