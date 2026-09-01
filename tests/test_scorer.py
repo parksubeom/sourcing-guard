@@ -5,7 +5,7 @@ from datetime import date
 import pytest
 
 from sourcing_guard.models import Finding, FindingKind, ItemCategory, ProductFacts, Signal
-from sourcing_guard.scorer import score
+from sourcing_guard.scorer import _HARD_RED, score
 
 SRC = {"source_label": "국가기술표준원", "source_url": "https://www.safetykorea.kr/"}
 
@@ -135,3 +135,56 @@ def test_every_finding_kind_has_a_penalty():
 
     missing = [k.value for k in FindingKind if k not in _PENALTY]
     assert not missing, f"_PENALTY 에 빠진 kind: {missing}"
+
+
+# ---------------------------------------------------------------------------
+# 조회 실패 — "조회했는데 없음" 과 "조회를 못 함" 은 다른 정보다.
+# ---------------------------------------------------------------------------
+
+
+def _finding(kind, signal):
+    return Finding(
+        kind=kind,
+        signal=signal,
+        statement_ko="테스트",
+        source_label="국가기술표준원",
+        source_url="https://www.safetykorea.kr/",
+    )
+
+
+def test_lookup_failure_never_yields_green():
+    """조회를 못 했으면 아무것도 확인하지 못한 것이다.
+
+    지금은 RECALL_CLEAR 가 안 붙어서 자동으로 막히지만, 나중에 누가 GREEN
+    조건을 완화하면 조용히 뚫린다. 확인하지 못한 것을 확인한 것처럼 말하는
+    것은 이 서비스에서 가장 비싼 오류다.
+    """
+    facts = ProductFacts(category=ItemCategory.CHILDREN_TOY)
+    result = score(
+        facts,
+        [
+            _finding(FindingKind.KC_VERIFIED, Signal.GREEN),
+            _finding(FindingKind.RECALL_CLEAR, Signal.GREEN),
+            _finding(FindingKind.LOOKUP_FAILED, Signal.UNKNOWN),
+        ],
+    )
+    assert result.signal is Signal.UNKNOWN
+    assert result.score == 0
+
+
+def test_lookup_failure_does_not_mask_a_red():
+    """조회 실패가 이미 확인된 문제를 덮으면 안 된다."""
+    facts = ProductFacts(category=ItemCategory.CHILDREN_TOY)
+    result = score(
+        facts,
+        [
+            _finding(FindingKind.RECALL_MATCH, Signal.RED),
+            _finding(FindingKind.LOOKUP_FAILED, Signal.UNKNOWN),
+        ],
+    )
+    assert result.signal is Signal.RED
+
+
+def test_lookup_failed_is_not_in_hard_red():
+    """조회 실패는 상품의 문제가 아니라 우리 쪽 사정이다."""
+    assert FindingKind.LOOKUP_FAILED not in _HARD_RED

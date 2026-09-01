@@ -21,6 +21,7 @@ _PENALTY: dict[FindingKind, int] = {
     FindingKind.HAZARD_RULE_APPLIES: 20,
     FindingKind.SUBSTANCE_MENTIONED: 25,
     FindingKind.COVERAGE_GAP: 0,
+    FindingKind.LOOKUP_FAILED: 0,
     FindingKind.KC_TIER_UNKNOWN: 0,
     FindingKind.KC_VERIFIED: 0,
     FindingKind.RECALL_CLEAR: 0,
@@ -79,6 +80,12 @@ def score(facts: ProductFacts, findings: list[Finding]) -> ScanResult:
 def _signal_for(facts: ProductFacts, kinds: set[FindingKind]) -> Signal:
     if kinds & _HARD_RED:
         return Signal.RED
+
+    # 조회를 못 했으면 아무것도 확인하지 못한 것이다. GREEN 이 나오면 확인하지
+    # 못한 것을 확인한 것처럼 말하게 된다. 지금은 RECALL_CLEAR 가 안 붙어서
+    # 자동으로 막히지만, 나중에 GREEN 조건을 완화할 때를 대비해 명시로 막는다.
+    if FindingKind.LOOKUP_FAILED in kinds:
+        return Signal.UNKNOWN
 
     # R3: an unclassified item means we do not know which rules apply.
     if facts.category is ItemCategory.UNCLASSIFIED:

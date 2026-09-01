@@ -72,6 +72,9 @@ class FindingKind(str, Enum):
     HAZARD_RULE_APPLIES = "hazard_rule_applies"
     SUBSTANCE_MENTIONED = "substance_mentioned"
     COVERAGE_GAP = "coverage_gap"
+    # "조회했는데 없음" 과 "조회를 못 함" 은 셀러에게 완전히 다른 정보다.
+    # 후자를 전자로 표시하면 확인하지 못한 것을 확인한 것처럼 말하게 된다.
+    LOOKUP_FAILED = "lookup_failed"
 
 
 class Finding(BaseModel):

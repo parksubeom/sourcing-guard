@@ -13,7 +13,7 @@ from uuid import uuid4
 
 from .config import settings
 from .extractor import extract
-from .kats_client import KatsClient
+from .kats_client import KatsClient, health
 from .models import RecallAlert, ScanResult, WatchItem
 from .scorer import score
 from .storage import SqliteWatchStore
@@ -33,12 +33,19 @@ class ScanRequest(BaseModel):
 
 @app.get("/healthz")
 def healthz() -> dict:
+    """우리 프로세스 상태 + 정부 API 상태.
+
+    ⚠ 정부 API 가 죽어도 ok 는 true 로 둔다. Fly 헬스체크가 이 값을 보고
+    머신을 재시작시키므로, 남의 API 장애로 우리 서비스를 죽이면 안 된다.
+    ok 는 우리 프로세스 상태이고 kats 는 별도 정보다.
+    """
     return {
         "ok": True,
         "mock_mode": settings.mock_mode,
         "active_rules": len(_rules.active),
         "draft_rules": len(_rules.drafts),
         "watched_items": _store.count(),
+        "kats": health.snapshot(),
     }
 
 
