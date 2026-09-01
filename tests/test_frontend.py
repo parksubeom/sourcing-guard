@@ -238,3 +238,90 @@ def test_scan_page_shows_the_rate_limit_message(pages):
 def test_scan_page_surfaces_degraded_extraction(pages):
     """한도를 넘겨 간이 추출로 갔으면 그 사실을 감추지 않는다."""
     assert "extraction_note" in pages["index.html"]
+
+
+# ---------------------------------------------------------------------------
+# 이미지 붙여넣기 (기획서 §2 — 상세표가 이미지뿐인 페이지)
+#
+# 이미지 API 만 열려 있고 화면이 없으면, 통짜 이미지 페이지를 가진 셀러는
+# 이 서비스를 쓸 수 없다. 그게 이 기능을 붙인 이유다.
+# ---------------------------------------------------------------------------
+
+
+def test_paste_area_exists_and_names_the_shortcut(pages):
+    """캡처 도구로 잘라 붙이는 것이 셀러의 자연스러운 동선이다."""
+    index = pages["index.html"]
+    assert 'id="paste"' in index
+    assert "Ctrl+V" in index
+    assert "Cmd+V" in index, "Mac 사용자에게도 단축키를 알려야 한다"
+
+
+def test_scan_sends_images_as_base64(pages):
+    index = pages["index.html"]
+    assert "images:" in index
+    assert "media_type" in index
+    assert "readAsDataURL" in index
+
+
+def test_images_can_be_sent_together_with_text(pages):
+    """텍스트와 이미지를 함께 보낼 수 있어야 한다.
+
+    인증번호는 이미지에서 읽지 않으므로, 셀러는 캡처를 붙이고 인증번호만
+    텍스트로 적는 조합을 쓴다. 그 조합이 막히면 이미지 페이지에서는 인증
+    조회를 아예 못 한다.
+    """
+    index = pages["index.html"]
+    assert "page_text: text," in index, "page_text 와 images 가 같은 본문에 실려야 한다"
+    assert "!text && !shots.length" in index, "이미지만 있어도 검사해야 한다"
+
+
+def test_image_types_match_the_server_allowlist(pages):
+    """SVG 는 서버가 거절한다. 프론트에서 먼저 걸러 사용자가 422 를 보지 않게 한다."""
+    index = pages["index.html"]
+    for mt in ("image/jpeg", "image/png", "image/webp", "image/gif"):
+        assert mt in index, mt
+    assert "image/svg" not in index
+
+    # 서버 상한과 갈라지면 4장을 붙인 뒤 검사에서 거절당한다.
+    from sourcing_guard.main import ScanRequest
+
+    field = ScanRequest.model_fields["images"]
+    server_max = next(
+        (m.max_length for m in field.metadata if getattr(m, "max_length", None)), None
+    )
+    assert server_max == 4
+    assert "MAX_SHOTS = 4" in index
+
+
+def test_kc_number_is_not_read_from_images_and_the_screen_says_so(pages):
+    """추출기가 이미지에서 인증번호를 읽지 않는다. 화면이 그 사실과 이유를 적어야 한다.
+
+    안 적으면 셀러는 캡처만 붙이고 "인증번호가 조회되지 않았습니다" 를 보게
+    되는데, 그건 상품 문제가 아니라 입력 방법 문제다.
+    """
+    index = pages["index.html"]
+    assert "인증번호는 이미지에서 읽지 않습니다" in index
+    assert "직접 적어" in index
+
+
+def test_pasting_plain_text_is_not_intercepted(pages):
+    """클립보드에 이미지가 없으면 붙여넣기를 가로채지 않는다.
+
+    본문 붙여넣기가 주 입력 경로다. 그걸 막으면 기능 하나 붙이려다 본 기능을
+    깨뜨린다.
+    """
+    index = pages["index.html"]
+    assert "if (!files.length) return;" in index
+
+
+def test_demo_buttons_clear_pasted_images(pages):
+    """데모는 서버가 보낸 문구 그대로를 검사해야 한다.
+
+    붙여둔 이미지가 섞이면 예시와 다른 결과가 나오고, 투표자가 첫 화면에서
+    보는 것이 그 결과다.
+    """
+    index = pages["index.html"]
+    demo_click = index[index.index('b.addEventListener("click"'):]
+    demo_click = demo_click[: demo_click.index('$("demos").appendChild(b)')]
+    assert "shots = []" in demo_click
+    assert "scan();" in demo_click
