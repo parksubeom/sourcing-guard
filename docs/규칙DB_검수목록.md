@@ -132,7 +132,8 @@ draft 라 완구·학용품·아동섬유 모두 UNKNOWN 이 나옵니다(의도
 
 남은 확인 사항은 **물질 수**입니다. 이 PDF(2020년판)는 6종이지만, 현행
 제2022-0220호를 인용한 2차 자료에는 **DIBP 가 추가되어 7종**입니다.
-`group_members_pending` 에 분리해 뒀으니 원문에서 확인 후 옮기세요.
+`KC-COMMON-3.1.3-PHT` 의 `substances_pending` 에 분리해 뒀으니, 원문에서 확인되면
+`substances_covered` 로 옮기세요. 옮기기 전에는 총합 계산에 들어가지 않습니다.
 
 ### 3. 섬유 관련 룰의 `applies_to`
 
