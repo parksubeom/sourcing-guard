@@ -559,3 +559,68 @@ def test_values_without_a_cert_number_are_placeholders(raw):
 @pytest.mark.parametrize("num", REAL_CERT_NUMBERS)
 def test_real_cert_numbers_are_not_placeholders(num):
     assert is_cert_number(num) is True
+
+
+# ---------------------------------------------------------------------------
+# 정부 API 실패 추적. 우리 설정 문제와 일시 장애를 갈라야 한다.
+# ---------------------------------------------------------------------------
+
+
+def test_health_counts_consecutive_failures_and_resets_on_success():
+    from sourcing_guard.kats_client import KatsHealth
+
+    h = KatsHealth()
+    assert h.consecutive_failures == 0
+
+    h.record_failure("5000", "Internal Server Error")
+    h.record_failure("5000", "Internal Server Error")
+    assert h.consecutive_failures == 2
+    assert h.last_error_code == "5000"
+    assert h.last_error_at is not None
+
+    h.record_success()
+    assert h.consecutive_failures == 0
+    # 마지막 오류 코드는 남긴다. 방금 무슨 일이 있었는지 알 수 있어야 한다.
+    assert h.last_error_code == "5000"
+
+
+@pytest.mark.parametrize("code,is_ours", [
+    ("4000", True),   # 인증키 무효
+    ("4001", True),   # IP 미등록
+    ("4005", True),   # 파라미터 오류
+    ("5000", False),  # 정부 서버 장애
+    ("network", False),
+])
+def test_operator_fault_is_distinguished(code, is_ours):
+    """우리 설정 문제에 대고 '다시 시도하세요' 라고 하면 거짓말이다.
+
+    고치기 전엔 계속 실패한다. 이 구분이 화면 문구를 가른다.
+    """
+    from sourcing_guard.kats_client import KatsHealth
+
+    h = KatsHealth()
+    h.record_failure(code)
+    assert h.is_operator_fault() is is_ours
+
+
+def test_healthz_never_reports_not_ok_on_kats_failure():
+    """정부 API 가 죽었다고 우리 서비스를 죽이면 안 된다.
+
+    Fly 헬스체크가 ok 를 보고 머신을 재시작시킨다. ok 는 우리 프로세스 상태이고
+    kats 는 별도 정보다.
+    """
+    from fastapi.testclient import TestClient
+
+    from sourcing_guard.kats_client import health
+    from sourcing_guard.main import app
+
+    health.record_failure("4001", "Invalid IP")
+    try:
+        body = TestClient(app).get("/healthz").json()
+        assert body["ok"] is True
+        assert body["kats"]["last_error_code"] == "4001"
+        assert body["kats"]["consecutive_failures"] >= 1
+    finally:
+        health.record_success()
+        health.last_error_code = None
+        health.last_error_at = None

@@ -11,7 +11,14 @@ from pathlib import Path
 
 import yaml
 
-from .kats_client import CertState, is_state_not_stated, KatsClient, cert_evidence_url
+from .kats_client import (
+    CertState,
+    KatsApiError,
+    KatsClient,
+    OPERATOR_FAULT_CODES,
+    cert_evidence_url,
+    is_state_not_stated,
+)
 from .models import Finding, FindingKind, ItemCategory, ProductFacts, Signal
 
 _RULES_PATH = Path(__file__).parent / "data" / "hazard_rules.yaml"
@@ -101,6 +108,39 @@ class RuleBook:
         return cat.value in self.covered and bool(self.for_category(cat))
 
 
+_LOOKUP_FAILED_SOURCE = "https://www.safetykorea.kr/"
+
+
+def _lookup_failed(what: str, today: date, code: str | None = None) -> Finding:
+    """조회를 못 했다는 사실 자체를 Finding 으로 남긴다.
+
+    "조회했는데 없음" 과 "조회를 못 함" 은 셀러에게 완전히 다른 정보다. 후자를
+    전자로 표시하면 우리가 확인하지 못한 것을 확인한 것처럼 말하는 게 된다.
+
+    문구는 원인에 따라 갈린다. 키 무효(4000)·IP 미등록(4001) 은 우리 설정
+    문제라 "다시 시도해 주세요" 가 거짓말이다 — 우리가 고치기 전엔 계속 실패한다.
+    그 경우엔 원인을 로그로 올리고 화면엔 일시적 오류로만 표시한다.
+    """
+    # 전역 상태가 아니라 이번 오류의 코드로 판단한다. 전역을 보면 직전에 다른
+    # 종류의 실패가 있었을 때 엉뚱한 문구가 나간다.
+    if code in OPERATOR_FAULT_CODES:
+        tail = "조회 서비스 설정을 점검하고 있습니다. 확인이 완료되지 않았습니다."
+    else:
+        tail = "잠시 후 다시 시도해 주세요."
+    return Finding(
+        kind=FindingKind.LOOKUP_FAILED,
+        signal=Signal.UNKNOWN,
+        statement_ko=(
+            f"국가기술표준원 {what} 조회 서비스에 일시적으로 연결하지 못했습니다. "
+            f"{what} 확인이 완료되지 않았으니 {tail}"
+        ),
+        source_label="국가기술표준원",
+        source_url=_LOOKUP_FAILED_SOURCE,
+        detail={"scope": what},
+        checked_at=today,
+    )
+
+
 def verify(facts: ProductFacts, kats: KatsClient, rules: RuleBook) -> list[Finding]:
     today = date.today()
     findings: list[Finding] = []
@@ -108,7 +148,11 @@ def verify(facts: ProductFacts, kats: KatsClient, rules: RuleBook) -> list[Findi
     # --- (a) KC certification -------------------------------------------
     if facts.kc_numbers:
         for num in facts.kc_numbers:
-            rec = kats.lookup_certification(num)
+            try:
+                rec = kats.lookup_certification(num)
+            except KatsApiError as exc:
+                findings.append(_lookup_failed("인증", today, exc.code))
+                break
             if rec is None:
                 findings.append(
                     Finding(
@@ -201,11 +245,19 @@ def verify(facts: ProductFacts, kats: KatsClient, rules: RuleBook) -> list[Findi
         )
 
     # --- (b) recall matching --------------------------------------------
-    recalls = kats.search_recalls(
-        product_name=facts.product_name,
-        model_name=facts.model_name,
-        cert_number=facts.kc_numbers[0] if facts.kc_numbers else None,
-    )
+    try:
+        recalls = kats.search_recalls(
+            product_name=facts.product_name,
+            model_name=facts.model_name,
+            cert_number=facts.kc_numbers[0] if facts.kc_numbers else None,
+        )
+    except KatsApiError as exc:
+        # 리콜 조회가 실패하면 RECALL_CLEAR 를 붙이면 안 된다. "일치 항목을 찾지
+        # 못했다" 는 조회에 성공했을 때만 할 수 있는 말이다.
+        findings.append(_lookup_failed("리콜", today, exc.code))
+        recalls = []
+        return findings
+
     if recalls:
         for r in recalls:
             findings.append(

@@ -65,6 +65,52 @@ class KatsApiError(RuntimeError):
 _log = logging.getLogger(__name__)
 
 
+# 설계 문제(키 무효·IP 미등록)와 일시 장애를 갈라야 한다. 전자에 대고 셀러에게
+# "잠시 후 다시 시도하세요" 라고 하면 거짓말이다 — 우리가 고치기 전엔 계속 실패한다.
+OPERATOR_FAULT_CODES = frozenset({"4000", "4001", "4005"})
+
+
+class KatsHealth:
+    """정부 API 호출 상태를 프로세스 메모리에 들고 있는다.
+
+    영속 저장을 하지 않는 이유: 헬스체크가 자주 불리므로 매번 볼륨 I/O 를 태울
+    이유가 없고, 알고 싶은 것은 "3일 전에 4001 이 났었나" 가 아니라 "지금
+    정상인가" 다. 과거 이력이 필요하면 그건 헬스체크가 아니라 로그가 할 일이다.
+    재시작으로 초기화되는 것이 오히려 맞다.
+    """
+
+    def __init__(self) -> None:
+        self.last_error_code: str | None = None
+        self.last_error_at: str | None = None
+        self.last_error_message: str | None = None
+        self.consecutive_failures: int = 0
+
+    def record_success(self) -> None:
+        self.consecutive_failures = 0
+
+    def record_failure(self, code: str, message: str = "") -> None:
+        from datetime import datetime, timezone
+
+        self.last_error_code = code
+        self.last_error_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
+        self.last_error_message = message or None
+        self.consecutive_failures += 1
+
+    def is_operator_fault(self) -> bool:
+        """우리 설정 문제인가. 셀러에게 '다시 시도' 를 권하면 안 되는 경우다."""
+        return self.last_error_code in OPERATOR_FAULT_CODES
+
+    def snapshot(self) -> dict:
+        return {
+            "last_error_code": self.last_error_code,
+            "last_error_at": self.last_error_at,
+            "consecutive_failures": self.consecutive_failures,
+        }
+
+
+health = KatsHealth()
+
+
 class CertState(str, Enum):
     """certState 를 신호등 관점으로 분류한 것 (설계서 p.5, p.8)."""
 
@@ -421,17 +467,37 @@ class KatsClient:
             params=query,
             headers={_AUTH_HEADER: self._key or ""},
         )
-        resp.raise_for_status()
-        payload = resp.json()
+        try:
+            resp.raise_for_status()
+            payload = resp.json()
+        except httpx.HTTPStatusError as exc:
+            # 인증키가 틀리면 JSON 4000 이 아니라 302 로 온다(실측:
+            # error/accessDeniedByKey.json 으로 리다이렉트). 설계서와 다르다.
+            code = "4000" if exc.response.status_code in (301, 302, 401, 403) else "http"
+            health.record_failure(code, f"HTTP {exc.response.status_code}")
+            raise KatsApiError(code, f"HTTP {exc.response.status_code}") from exc
+        except (httpx.HTTPError, ValueError) as exc:
+            health.record_failure("network", type(exc).__name__)
+            raise KatsApiError("network", str(exc)) from exc
 
         # 설계서 p.19: HTTP 200 이어도 resultCode 로 실패를 알린다. 이걸 안 보면
         # 인증 실패(4000)나 IP 미등록(4001)을 "조회 결과 없음"으로 착각하고,
         # 그러면 멀쩡한 인증번호에 RED 를 띄우게 된다.
         code = str(payload.get("resultCode", "")) if isinstance(payload, dict) else ""
         if code == _CODE_NO_DATA:
+            health.record_success()
             return []
         if code and code != _CODE_SUCCESS:
-            raise KatsApiError(code, str(payload.get("resultMsg", "")))
+            msg = str(payload.get("resultMsg", ""))
+            health.record_failure(code, msg)
+            if code in OPERATOR_FAULT_CODES:
+                # 셀러가 다시 시도해도 우리가 고치기 전엔 계속 실패한다.
+                _log.error(
+                    "SafetyKorea API 설정 문제 %s: %s — 인증키/IP 등록을 확인하세요 "
+                    "(연속 실패 %d회)", code, msg, health.consecutive_failures,
+                )
+            raise KatsApiError(code, msg)
+        health.record_success()
 
         rows: Any = payload
         for step in cfg["rows_path"]:            # 설계서 기준 ["resultData"]
