@@ -97,7 +97,9 @@ def test_second_run_is_incremental_and_uses_month_prefix(store):
     run_sync(client, store, today=date(2026, 9, 1))
     client.calls.clear()
 
-    report = run_sync(client, store, today=date(2026, 9, 1))
+    # min_plausible=0: 이 테스트의 관심사는 "완료 표시가 있으면 증분" 이다.
+    # 불완전 적재 복구는 test_incomplete_load_is_redone_even_if_marked_complete 가 본다.
+    report = run_sync(client, store, today=date(2026, 9, 1), min_plausible=0)
 
     assert report.mode == "incremental"
     # all=% 는 설계서 밖 사용법이라 초기 적재 1회에만 쓴다.
@@ -118,7 +120,7 @@ def test_new_records_are_detected_by_uid_not_by_date(store):
         rec("1", on="20260723"),
         rec("99", on="20260723"),
     ]
-    report = run_sync(client, store, today=date(2026, 9, 1))
+    report = run_sync(client, store, today=date(2026, 9, 1), min_plausible=0)
 
     assert report.new["domestic"] == 1
     assert store.recall_count("domestic") == 2
@@ -258,3 +260,45 @@ def test_healthz_exposes_sync_state():
         assert key in body["sync"], key
     # 동기화가 실패해도 서비스는 살아 있어야 한다.
     assert body["ok"] is True
+
+
+def test_incomplete_load_is_redone_even_if_marked_complete(store):
+    """적재 완료 표시와 실제 데이터가 어긋나면 전량을 다시 받는다.
+
+    실제로 겪었다 - initial_load_at 은 찍혀 있는데 recalls 가 255건(증분분)만
+    있었다. 그 상태에서는 다음 실행도 증분이라 영원히 복구되지 않고, 그동안
+    스캔은 조용히 "리콜 이력 없음" 을 돌려준다 (R6).
+    """
+    from sourcing_guard.sync import MIN_PLAUSIBLE_RECALLS
+
+    # 완료로 기록만 해두고 데이터는 거의 없는 상태를 만든다.
+    store.set_sync_state("initial_load_at", "2026-09-01T00:00:00+00:00")
+    client = StubClient(full={"domestic": [rec("1")], "overseas": []})
+    store.upsert_recalls(
+        [{"uid": "old", "published_on": "20260101", "payload": "{}"}],
+        scope="domestic", fetched_at="2026-09-01T00:00:00+00:00",
+    )
+    assert store.recall_count() < MIN_PLAUSIBLE_RECALLS
+
+    report = run_sync(client, store, today=date(2026, 9, 1))
+
+    assert report.mode == "initial", "증분으로 돌아 복구되지 않습니다"
+    assert {c[0] for c in client.calls} == {"all"}
+
+
+def test_a_healthy_full_load_still_goes_incremental(store):
+    """정상 적재분까지 매번 다시 받으면 정부 서버에 매일 38MB 를 요청하게 된다."""
+    from sourcing_guard.sync import MIN_PLAUSIBLE_RECALLS
+
+    store.set_sync_state("initial_load_at", "2026-09-01T00:00:00+00:00")
+    store.upsert_recalls(
+        [{"uid": f"u{i}", "published_on": "20260101", "payload": "{}"}
+         for i in range(MIN_PLAUSIBLE_RECALLS + 1)],
+        scope="domestic", fetched_at="2026-09-01T00:00:00+00:00",
+    )
+    client = StubClient()
+
+    report = run_sync(client, store, today=date(2026, 9, 1))
+
+    assert report.mode == "incremental"
+    assert "all" not in {c[0] for c in client.calls}

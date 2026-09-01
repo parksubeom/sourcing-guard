@@ -38,6 +38,10 @@ _log = logging.getLogger(__name__)
 SCOPES = ("domestic", "overseas")
 SYNC_INTERVAL_SECONDS = 24 * 60 * 60  # 리콜은 공표되는 것이지 실시간으로 안 바뀐다
 
+# 전량 적재가 성공했다면 이보다는 훨씬 많다 (2026-09-01 실측 37,313건).
+# 이 아래로 떨어졌는데 적재 완료로 기록돼 있으면 상태가 어긋난 것이다.
+MIN_PLAUSIBLE_RECALLS = 1000
+
 
 @dataclass
 class SyncReport:
@@ -91,14 +95,31 @@ def run_sync(
     force_initial: bool = False,
     today: date | None = None,
     on_updated=None,
+    min_plausible: int = MIN_PLAUSIBLE_RECALLS,
 ) -> SyncReport:
     """한 번 동기화한다. 예외를 밖으로 던지지 않는다.
 
     동기화 실패가 앱을 죽이면 안 된다. 정부 API 가 죽어도 스캔은 계속돼야 한다.
     실패는 리포트와 sync_state 에 남기고, 호출부가 /healthz 로 노출한다.
     """
+    # 적재 완료 표시와 실제 데이터가 어긋나면 초기 적재를 다시 한다.
+    #
+    # 실제로 겪었다 - initial_load_at 은 찍혀 있는데 recalls 테이블에 255건(당월+
+    # 전월 증분분)만 있었다. 그 상태에서는 다음 실행도 증분이라 영원히 복구되지
+    # 않고, 그동안 스캔은 조용히 "리콜 이력 없음" 을 돌려준다. 놓친 리콜은 이
+    # 서비스가 하는 유일한 약속을 깨뜨린다 (CLAUDE.md R6).
+    #
+    # 임계값은 넉넉하게 잡는다. 정확한 전량 건수를 박아두면 정부 쪽 건수가
+    # 줄었을 때 매번 전량을 다시 받는다.
     done_before = store.get_sync_state("initial_load_at")
-    mode = "initial" if (force_initial or not done_before) else "incremental"
+    stored = store.recall_count()
+    looks_incomplete = bool(done_before) and stored < min_plausible
+    if looks_incomplete:
+        _log.warning(
+            "초기 적재 완료로 기록돼 있으나 리콜이 %d건뿐입니다(기대 %d건 이상). "
+            "전량을 다시 받습니다.", stored, min_plausible,
+        )
+    mode = "initial" if (force_initial or not done_before or looks_incomplete) else "incremental"
     report = SyncReport(mode=mode, started_at=_now())
     fetched_at = report.started_at
 
