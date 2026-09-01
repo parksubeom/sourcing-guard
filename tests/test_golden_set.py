@@ -96,3 +96,67 @@ def test_bear_keyring_is_not_forced_into_toy_category():
     case = next(c for c in _GOLDEN if c["id"] == "bear-keyring")
     facts, _, _ = _run(case["text"])
     assert facts.category.value != "children_toy"
+
+
+# ---------------------------------------------------------------------------
+# 소관 밖 판정의 오탐 — 리콜된 완구를 통째로 놓치게 만든다
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("text", [
+    "모형완구 기차놀이 제우스 완구 장난감 KC 인증번호 CB067R317-5002",
+    "자동차 장난감",
+    "유아차",
+    "젤리 슬라임 완구",
+    "아이스크림 인형",
+    "크림색 캔버스 가방",
+    "소금인형 장식품",
+])
+def test_common_words_do_not_trigger_out_of_scope(text):
+    """한국어 부분 문자열 매칭에는 단어 경계가 없다.
+
+    "차" 한 글자가 기차놀이·자동차·유아차에 걸렸고, OUT_OF_SCOPE 가 인증·리콜
+    검증을 통째로 건너뛰므로 데모용 리콜 상품이 식품으로 판정돼 RED 가
+    사라졌다. 한두 글자 일반 명사를 힌트로 쓰지 않는다.
+    """
+    from sourcing_guard.scoping import out_of_scope_reason
+
+    assert out_of_scope_reason(text) is None, f"'{text}' 가 소관 밖으로 오판됩니다"
+
+
+@pytest.mark.parametrize("text,expect", [
+    ("코시앙 클렌징폼 EWG 그린등급 화장품책임판매업자", "화장품"),
+    ("850C 죽염 천일염 통후추 선물세트", "식품"),
+    ("스킨푸드 앰플 화장품제조업자", "화장품"),
+    ("의료기기 혈압계", "의료기기"),
+])
+def test_real_out_of_scope_items_are_still_caught(text, expect):
+    """오탐을 줄이면서 진짜 소관 밖을 놓치면 안 된다."""
+    from sourcing_guard.scoping import out_of_scope_reason
+
+    reason = out_of_scope_reason(text)
+    assert reason and expect in reason, f"'{text}' -> {reason}"
+
+
+def test_in_scope_evidence_wins_over_a_scope_hint():
+    """완구·어린이 표기가 있으면 소관 밖으로 단락하지 않는다.
+
+    OUT_OF_SCOPE 는 인증·리콜 검증을 건너뛴다. 애매하면 검증하는 쪽이 안전하다 —
+    놓친 리콜이 불필요한 안내보다 비싸다 (R6).
+    """
+    from sourcing_guard.scoping import out_of_scope_reason
+
+    assert out_of_scope_reason("화장품 놀이세트 어린이 완구") is None
+    assert out_of_scope_reason("화장품 클렌징폼 EWG") is not None
+
+
+def test_recalled_toy_demo_still_reaches_red():
+    """데모 클라이맥스가 살아 있는가. 이 케이스가 발표의 마지막 장면이다."""
+    from sourcing_guard.models import FindingKind
+
+    facts = extract("모형완구 기차놀이 제우스 완구 장난감 KC 인증번호 CB067R317-5002")
+    findings = verify(facts, _KATS, _RULES, None)
+    kinds = {f.kind for f in findings}
+
+    assert FindingKind.OUT_OF_SCOPE not in kinds
+    assert facts.kc_numbers == ["CB067R317-5002"]
