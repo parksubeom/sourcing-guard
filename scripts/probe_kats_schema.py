@@ -23,6 +23,15 @@ import sys
 import httpx
 
 # 응답 필드명 후보 → 논리 필드명. 실제 스키마 확인 시 사람이 판단할 근거로만 씁니다.
+RESULT_CODES = {
+    "2000": "Success",
+    "2004": "No Data",
+    "4000": "Invalid Auth Key",
+    "4001": "Invalid IP",
+    "4005": "Invalid Parameter",
+    "5000": "Internal Server Error",
+}
+
 HINTS = {
     "cert_number": ["cert", "인증번호", "certnum", "certno"],
     "product_name": ["prdt", "제품명", "productname", "goods"],
@@ -70,10 +79,16 @@ def main() -> int:
         return 1
 
     data = r.json()
-    if "4001" in json.dumps(data, ensure_ascii=False):
+
+    # resultCode 필드만 본다. 본문 전체에서 코드 문자열을 찾으면 안 된다 —
+    # "CB065R2397-4001" 처럼 -4001 로 끝나는 인증번호가 실제로 흔해서,
+    # 성공한 응답(2000)에 Invalid IP 경고가 뜬다. 실제로 겪었다.
+    code = str(data.get("resultCode") or "")
+    if code and code != "2000":
         print(
-            "\n※ 결과코드 4001(Invalid IP) 로 보입니다. 서비스 ID 가 등록 IP 에 묶여 있으니\n"
-            "  현재 출발 IP 가 등록된 것인지 확인하세요. (핸드오프 §4)",
+            f"\n※ 결과코드 {code} ({RESULT_CODES.get(code, '알 수 없음')})."
+            + ("\n  서비스 ID 가 등록 IP 에 묶여 있습니다. 출발 IP 를 확인하세요 (핸드오프 §4)."
+               if code == "4001" else ""),
             file=sys.stderr,
         )
     print(json.dumps(data, ensure_ascii=False, indent=2)[:3000])

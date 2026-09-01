@@ -204,6 +204,9 @@ def test_normalize_kc_collapses_variants(raw):
 from sourcing_guard.kats_client import (  # noqa: E402
     CertState,
     classify_cert_state,
+    extract_cert_numbers,
+    extract_model_hints,
+    is_cert_number,
     is_state_not_stated,
     split_list_field,
 )
@@ -446,3 +449,80 @@ def test_get_hostile_search_url_is_not_used_as_evidence():
     offenders = _py_files_containing("safetykorea.kr/release/certificationsearch")
     assert not offenders, f"405 주소를 근거 링크로 쓰는 파일: {offenders}"
 
+
+# ---------------------------------------------------------------------------
+# 인증번호 패턴 — 리콜 실데이터 약 1,700건(2026-09-01)으로 확정.
+# 덤프: docs/리콜_certNum_모델명_원문덤프_2026-09-01.tsv
+#       docs/리콜_certNum_품목군별_2026-09-01.tsv
+# ---------------------------------------------------------------------------
+
+# 실인증번호. 조회로 실재를 확인한 것들이다.
+REAL_CERT_NUMBERS = [
+    "CB061R2170-3018",     # 도매꾹 슬라임. 접두 2글자
+    "JU071047-12002C",     # 설계서 예시. 하이픈 뒤 접미 1글자
+    "CA011R021-4001",      # 안전인증취소
+    "B363R871-5002",       # 접두 1글자 (B계열 — 학용품 리콜의 36%)
+    "A123T001-0200",       # 접두 1글자
+    "B361H490-5003CH",     # 하이픈 뒤 접미 2글자
+    "cb064a3166-2004chC",  # 전부 소문자 + 끝에 대문자
+    "Cb061m003-5001",      # 대소문자 혼합
+]
+
+
+@pytest.mark.parametrize("num", REAL_CERT_NUMBERS)
+def test_cert_number_survives_recall_field_extraction(num):
+    """리콜 certNum 필드에 잡음이 섞여 와도 번호는 살아남아야 한다."""
+    assert extract_cert_numbers(f"({num})") == [normalize_kc(num)]
+
+@pytest.mark.parametrize(
+    "raw,numbers,models",
+    [
+        # 부품별로 괄호 라벨이 앞에 붙는 형태 (전기용품)
+        ("(배터리) ZU10282-19001, (충전기)SU07706-17003",
+         ["ZU10282-19001", "SU07706-17003"], ["배터리", "충전기"]),
+        # 모델명 : 인증번호 쌍. 쌍으로 묶지 않고 각각 후보에 넣는다 (v1 범위)
+        ("- WF24A95** : HU072172-21013 / WF25B96** : HU072172-22017",
+         ["HU072172-21013", "HU072172-22017"], ["WF24A95**", "WF25B96**"]),
+        # HTML 조각이 그대로 온다 (완구 certNum 96건)
+        ("CB064R3345-1003 <br (인증모델: 반짝반짝 달님이)>",
+         ["CB064R3345-1003"], ["반짝반짝 달님이"]),
+        # 슬래시 구분 + 중첩 괄호
+        ("CB067R644-4001/CB064R1686-8001A (인증모델 : RC미니카(New 배틀미니 레이서))",
+         ["CB067R644-4001", "CB064R1686-8001A"], ["RC미니카(New 배틀미니 레이서)"]),
+        # 콤마 구분 다중 번호
+        ("B361H490-5003CH,B441R284-7001A,B361R774-8001A",
+         ["B361H490-5003CH", "B441R284-7001A", "B361R774-8001A"], []),
+        # 판매 채널 표시는 모델명이 아니다 (실데이터 9건)
+        ("(온라인)CB061R6936-2001", ["CB061R6936-2001"], []),
+        # 값이 비어 있는 자리표시자
+        ("-<br>(인증모델: -)", [], []),
+    ],
+)
+def test_whitelist_extraction_on_real_recall_values(raw, numbers, models):
+    """구분자를 열거해 자르지 않고 인증번호를 찾아낸다.
+
+    실데이터의 구분자는 콤마만이 아니라 슬래시·괄호·<br>·줄바꿈·공백이 섞여
+    있고 새 형태가 계속 나온다. 화이트리스트 추출은 구분자가 늘어도 안 깨진다.
+    """
+    assert extract_cert_numbers(raw) == numbers
+    assert extract_model_hints(raw) == models
+
+
+@pytest.mark.parametrize(
+    "raw", ["비대상", "공급자적합성대상", "공급자적합성", "(제품에 표시 없음)",
+            "(인증모델: )", "-", "0505-502-0100", "듣도보도못한신종자리표시자"],
+)
+def test_values_without_a_cert_number_are_placeholders(raw):
+    """완전 일치 목록만 쓰면 새 자리표시자가 나올 때마다 통과한다.
+
+    실제로 "비대상"(54건) "공급자적합성대상"(19건)이 목록에 없어 통과하고 있었다.
+    자리표시자를 인증번호로 취급하면 같은 값을 가진 서로 다른 상품이 전부
+    일치로 잡힌다.
+    """
+    assert is_cert_number(raw) is False
+    assert extract_cert_numbers(raw) == []
+
+
+@pytest.mark.parametrize("num", REAL_CERT_NUMBERS)
+def test_real_cert_numbers_are_not_placeholders(num):
+    assert is_cert_number(num) is True
