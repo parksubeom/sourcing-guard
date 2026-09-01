@@ -436,3 +436,83 @@ def test_invalidate_condition_is_not_based_on_new_uids():
     src = Path("sourcing_guard/sync.py").read_text(encoding="utf-8")
     body = "\n".join(l for l in src.splitlines() if not l.lstrip().startswith("#"))
     assert "any(report.new.values())" not in body
+
+
+# ---------------------------------------------------------------------------
+# 최소치는 "이번 배치" 로 잰다 — 테이블 전체로 재면 빈 배치가 업혀서 통과한다
+#
+# 반쪽 적재가 완료로 기록되던 것(e886e36 / f997ad1)과 같은 유형이다. 기존
+# 데이터가 있으면 아무것도 안 받아도 total 이 충분해서 initial_load_at 만
+# 새로 찍히고, 다음 실행은 증분으로 넘어가 그 구간이 영원히 비어 있게 된다.
+# ---------------------------------------------------------------------------
+
+
+def _seed_full(store, *, n: int = 40) -> str:
+    """전량 적재가 한 번 성공한 상태를 만든다."""
+    client = StubClient(
+        full={"domestic": [rec(str(i)) for i in range(n)],
+              "overseas": [rec(f"o{i}", scope="overseas") for i in range(n)]}
+    )
+    run_sync(client, store, today=date(2026, 9, 1), min_plausible=10)
+    stamp = store.get_sync_state("initial_load_at")
+    assert stamp, "선행 조건: 전량 적재가 성공해 있어야 한다"
+    return stamp
+
+
+def test_empty_batch_does_not_ride_on_existing_rows(store):
+    """이미 적재된 데이터가 있어도 빈 배치는 완료로 기록되지 않는다."""
+    first = _seed_full(store)
+
+    report = run_sync(
+        StubClient(full={"domestic": [], "overseas": []}),
+        store,
+        force_initial=True,
+        today=date(2026, 9, 2),
+        min_plausible=10,
+    )
+
+    assert report.ok is False
+    assert store.recall_count() == 80, "기존 사본이 손상됐습니다"
+    assert store.get_sync_state("initial_load_at") == first, (
+        "빈 배치가 전량 적재 완료로 기록됐습니다"
+    )
+
+
+def test_one_empty_scope_does_not_ride_on_the_other(store):
+    """국내가 0건이어도 국외 건수에 묻혀 통과하면 안 된다.
+
+    run_sync 의 `len(batches) == len(SCOPES)` 는 두 스코프가 예외 없이 끝났는지만
+    보지, 행이 왔는지는 보지 않는다.
+    """
+    first = _seed_full(store)
+
+    report = run_sync(
+        StubClient(full={"domestic": [],
+                         "overseas": [rec(f"n{i}", scope="overseas") for i in range(50)]}),
+        store,
+        force_initial=True,
+        today=date(2026, 9, 2),
+        min_plausible=10,
+    )
+
+    assert report.ok is False
+    assert "domestic" in "; ".join(report.errors)
+    assert store.recall_count() == 80, "반쪽 배치가 일부라도 쓰였습니다"
+    assert store.get_sync_state("initial_load_at") == first
+
+
+def test_minimum_is_measured_on_the_batch_not_the_table(store):
+    """기존 사본이 충분해도 이번 배치가 얇으면 완료로 찍지 않는다."""
+    first = _seed_full(store)
+
+    report = run_sync(
+        StubClient(full={"domestic": [rec("x1")], "overseas": [rec("x2", scope="overseas")]}),
+        store,
+        force_initial=True,
+        today=date(2026, 9, 2),
+        min_plausible=1000,
+    )
+
+    assert report.ok is False
+    assert store.get_sync_state("initial_load_at") == first
+    assert store.recall_count() == 80
