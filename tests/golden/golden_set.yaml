@@ -41,10 +41,16 @@ cases:
       수입자: (주)리예코퍼레이션
     expect:
       signal: unknown
-      category: unclassified
+      category: household
       must_extract: [ABS]
       must_find: [info_request]
-      note: 성인 가구. 품목 불명이라 확인 요청. 재질 ABS 는 뽑혀야 한다.
+      note: >
+        성인 가구. 재질 ABS 는 뽑혀야 한다.
+        품목은 household — 2026-09-01 LLM 전환 시 unclassified 에서 갱신했다.
+        휴리스틱은 키워드로만 분류해 의자를 못 가렸으나 LLM 은 생활용품으로
+        분류한다. 3회 반복 모두 같은 답이라 안정적이고, 가구는 실제로 생활용품
+        안전기준 영역이므로 unclassified 보다 정확하다. 규칙 DB 에 생활용품이
+        없어 신호는 여전히 UNKNOWN 이다.
 
   - id: kk230-unknown
     text: |
@@ -68,9 +74,13 @@ cases:
       제조국: 중국
     expect:
       signal: unknown
-      category: unclassified
+      category: household
       must_extract: [ABS, PP]
-      note: 생활용품. 성인용. 재질 두 개 다 뽑혀야 한다.
+      note: >
+        생활용품(휴지통). 성인용. 재질 두 개 다 뽑혀야 한다.
+        품목은 household — 2026-09-01 LLM 전환 시 unclassified 에서 갱신했다.
+        note 가 이미 "생활용품" 이라고 적고 있었는데 기대값만 unclassified 였다.
+        휴리스틱이 분류를 못 하던 시절의 값이다.
 
   - id: skinfoou-ampoule
     text: |
@@ -114,10 +124,14 @@ cases:
       원산지: 중국
     expect:
       signal: unknown
-      category: unclassified
+      category: electrical
       note: >
         전기용품(LED 조명). 전파인증 대상 가능 — KC 와 별개 제도라 셀러가 자주
         놓친다. 지금은 규칙 DB 에 전기용품이 없어 UNKNOWN 이 정상. 확장 후보.
+        품목은 electrical — 2026-09-01 LLM 전환 시 unclassified 에서 갱신했다.
+        LED 조명은 실제로 전기용품 안전관리 대상이다. 규칙 DB 에 전기용품이
+        들어가면 이 분류가 신호를 가른다 — 그때 unclassified 로 두면 인증
+        요구를 통째로 놓친다.
 
   - id: beads-accessory
     text: |

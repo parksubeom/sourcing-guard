@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
 
+import logging
 import yaml
 from typing import TYPE_CHECKING
 
@@ -28,6 +29,8 @@ from .scoping import (
     out_of_scope_reason,
 )
 from .models import Finding, FindingKind, ItemCategory, ProductFacts, Signal
+
+_log = logging.getLogger(__name__)
 
 if TYPE_CHECKING:  # 순환 import 방지 — recall_index 가 watchlist 를 쓴다
     from .recall_index import RecallIndex
@@ -177,10 +180,21 @@ def verify(
     # --- (0) 우리 소관인가 -------------------------------------------------
     # 공통안전기준 1항이 제외하는 물품이면 여기서 끝낸다. 셀러에게 "판별 못 함"
     # 이 아니라 "우리 소관이 아니고 어디 소관인지" 를 알려주는 것이 유용하다.
+    #
+    # ⚠ 단락은 코드가 동의할 때만 한다. LLM 이 category=out_of_scope 라고 해도
+    #   out_of_scope_reason() 이 근거를 못 찾으면 그냥 검증한다.
+    #
+    #   OUT_OF_SCOPE 는 인증·리콜 검증을 통째로 건너뛰는 유일한 분류다. 그런데
+    #   LLM 분류는 완전히 결정론적이지 않다 - 진주 귀걸이를 10회 돌렸더니 2회
+    #   out_of_scope 로 흔들렸다(액세서리는 1항 제외 대상이 아니므로 오분류다).
+    #   같은 페이지가 20% 확률로 검증을 건너뛰면 놓친 리콜이 생긴다 (R6).
+    #
+    #   반대 방향(코드가 근거를 찾았는데 LLM 이 다른 분류)에서는 코드를 따른다.
+    #   화장품책임판매업자·EWG 같은 표기는 흔들리지 않는 하드 신호다.
     scope_reason = out_of_scope_reason(
         facts.product_name, facts.model_name, *facts.materials, *facts.substances_mentioned
     )
-    if facts.category is ItemCategory.OUT_OF_SCOPE or scope_reason:
+    if scope_reason:
         findings.append(
             Finding(
                 kind=FindingKind.OUT_OF_SCOPE,
@@ -198,6 +212,15 @@ def verify(
             )
         )
         return findings
+
+    if facts.category is ItemCategory.OUT_OF_SCOPE:
+        # LLM 만 소관 밖이라고 봤다. 단락하지 않고 계속 검증하되, 판단이
+        # 갈렸다는 사실은 남긴다 - 조용히 무시하면 진짜 소관 밖을 놓쳤을 때
+        # 원인을 못 찾는다.
+        _log.info(
+            "추출기는 out_of_scope 로 분류했으나 근거 표기를 찾지 못해 계속 검증합니다: %r",
+            (facts.product_name or "")[:40],
+        )
 
     # 연령 표기를 먼저 해석한다. 어린이제품 기준을 적용할지, 인증번호를 요구할지
     # 모두 여기에 달려 있다. 공통안전기준은 만 13세 이하에 적용된다.
