@@ -21,6 +21,8 @@ from .kats_client import (
     cert_evidence_url,
     item_search_url,
     is_state_not_stated,
+    normalize_kc,
+    recall_evidence,
 )
 from .scoping import (
     CHILDREN_CATEGORIES,
@@ -29,7 +31,15 @@ from .scoping import (
     missing_inputs,
     out_of_scope_reason,
 )
-from .models import Finding, FindingKind, ItemCategory, ProductFacts, Signal
+from .models import (
+    Finding,
+    FindingKind,
+    ItemCategory,
+    MatchStrength,
+    ProductFacts,
+    Signal,
+    matched_on_label,
+)
 
 _log = logging.getLogger(__name__)
 
@@ -131,6 +141,48 @@ def _fmt_date(yyyymmdd: str | None) -> str | None:
     if not yyyymmdd or len(yyyymmdd) != 8 or not yyyymmdd.isdigit():
         return None
     return f"{yyyymmdd[:4]}-{yyyymmdd[4:6]}-{yyyymmdd[6:]}"
+
+
+def _short(text: str | None, limit: int = 60) -> str:
+    """리콜 원문의 모델명 칸에는 수십 개가 콤마로 묶여 오기도 한다.
+
+    한 줄에 그대로 내보내면 문장이 화면을 넘어가 다른 근거를 밀어낸다.
+    """
+    if not text:
+        return ""
+    t = " ".join(text.split())
+    return t if len(t) <= limit else t[: limit - 1] + "…"
+
+
+def _matched_value(facts: ProductFacts, m) -> str:
+    """셀러 쪽에서 무엇이 맞았는지. 화면에 그 값을 그대로 보여준다."""
+    if m.matched_on == "kc_number":
+        return ", ".join(facts.kc_numbers)
+    if m.matched_on == "model_name":
+        return facts.model_name or ""
+    return facts.maker or ""
+
+
+def _match_statement(facts: ProductFacts, r, m) -> str:
+    """무엇이 어느 강도로 무엇과 맞았는지를 한 문장에 담는다.
+
+    "리콜 목록과 일치합니다" 만으로는 셀러가 판단할 수 없다. 실제로 나온 질문이
+    "펜을 검사했는데 왜 블라인드가 뜨나" 였다 - 우리 쪽 값, 리콜된 제품, 리콜
+    쪽 모델명이 한 줄에 있어야 셀러가 스스로 가린다. 우리는 판정하지 않는다(R1).
+    """
+    where = "국내" if r.scope == "domestic" else "해외"
+    when = _fmt_date(r.announced_on) or "공표일 미상"
+    ours = _short(_matched_value(facts, m), 40)
+    subject = matched_on_label(m.matched_on)
+    head = f"{subject} '{ours}'" if ours else subject
+    recalled = _short(r.product_name) or "제품명 미상"
+    theirs = _short(r.model_name)
+    tail = f", 리콜 쪽 모델명은 '{theirs}'" if theirs else ""
+    return (
+        f"{head} 이(가) 리콜 공표 목록과 {m.strength.label_ko}합니다 — "
+        f"리콜된 제품은 '{recalled}'({where}, {when} 공표){tail} 입니다. "
+        "원문 확인이 필요합니다."
+    )
 
 
 def _as_of_label(yyyymmdd: str | None) -> str:
@@ -250,6 +302,20 @@ def verify(
     )
 
     # --- (a) KC certification -------------------------------------------
+    #
+    # 이미지(KC 마크)에서 읽은 번호는 텍스트 번호와 경로가 다르다. 텍스트는
+    # 바로 조회하고, 이미지는 셀러가 확인한 뒤에 조회한다. 이유는 오독이다 -
+    # 0/O·1/l·5/S 가 뒤바뀌면 멀쩡한 인증이 "조회 안 됨" 으로 뒤집힌다.
+    #
+    # 그렇다고 안 읽으면 더 나쁘다. KC 마크 이미지만 붙이고 번호를 텍스트로
+    # 적지 않는 것이 규정상 유효한 기재라, 안 읽으면 실제로는 있는 인증을
+    # "표기 없음" 으로 처리하게 된다 - 못 찾은 것과 찾아보지 않은 것은
+    # 다르다 (R3).
+    _text_kc = {normalize_kc(x) for x in facts.kc_numbers}
+    image_candidates = [
+        n for n in facts.kc_numbers_from_image if normalize_kc(n) not in _text_kc
+    ]
+
     if facts.kc_numbers:
         for num in facts.kc_numbers:
             try:
@@ -323,48 +389,30 @@ def verify(
                         checked_at=today,
                     )
                 )
-    elif _cert_required_here:
-        # 제품명·업체명이 있으면 셀러가 정부 사이트에서 직접 인증 여부를 검색할 수
-        # 있게 링크를 연다. 우리가 대신 조회해 "인증 없음"을 단정하지 않는다 -
-        # 브랜드명 미등록·SCoC 대상이면 DB 에 없는 게 정상이다 (R3).
-        search_hint = facts.maker or facts.product_name
-        guide = (
-            f" 아래 링크에서 '{search_hint}' 로 직접 검색해 인증 이력을 확인할 수 있습니다."
-            if search_hint else ""
-        )
-        findings.append(
-            Finding(
-                kind=FindingKind.KC_MISSING_BUT_REQUIRED,
-                signal=Signal.AMBER,
-                statement_ko=(
-                    "규제 품목군으로 보이나 상세페이지에서 인증번호를 찾지 못했습니다. "
-                    "안전인증·안전확인 대상이면 인증번호가 있어야 하고, "
-                    "공급자적합성확인 대상이면 없는 것이 정상입니다."
-                    + guide
-                    + " 공급처에 인증 구분과 시험성적서를 요청해 확인하세요."
-                ),
-                source_label="제품안전정보센터에서 인증 여부 직접 검색",
-                source_url=item_search_url(search_hint),
-                detail={"search_term": search_hint},
-                checked_at=today,
-            )
-        )
+    elif image_candidates or _cert_required_here:
+        if image_candidates:
+            # "찾지 못했습니다" 가 아니다. 읽었고, 형식 검증도 통과했다.
+            # 조회만 셀러 확인 뒤로 미룬다.
+            findings.append(_image_candidate_finding(image_candidates, today))
+        else:
+            findings.append(_kc_missing_finding(facts, today))
 
-        # 어느 위해도 단계(안전인증 / 안전확인 / 공급자적합성확인)인지 모르면
-        # 인증번호 부재를 해석할 수 없다. 모른다는 사실을 감추지 않는다 (R3).
-        findings.append(
-            Finding(
-                kind=FindingKind.KC_TIER_UNKNOWN,
-                signal=Signal.UNKNOWN,
-                statement_ko=(
-                    "이 품목의 인증 구분(안전인증 / 안전확인 / 공급자적합성확인)을 "
-                    "판별하지 못했습니다. 구분에 따라 인증번호 유무의 의미가 달라집니다."
-                ),
-                source_label="제품안전정보센터 대상 품목 안내",
-                source_url="https://www.safetykorea.kr/policy/targetsSafetyCheck3",
-                checked_at=today,
+        if _cert_required_here:
+            # 어느 위해도 단계(안전인증 / 안전확인 / 공급자적합성확인)인지 모르면
+            # 인증번호 부재를 해석할 수 없다. 모른다는 사실을 감추지 않는다 (R3).
+            findings.append(
+                Finding(
+                    kind=FindingKind.KC_TIER_UNKNOWN,
+                    signal=Signal.UNKNOWN,
+                    statement_ko=(
+                        "이 품목의 인증 구분(안전인증 / 안전확인 / 공급자적합성확인)을 "
+                        "판별하지 못했습니다. 구분에 따라 인증번호 유무의 의미가 달라집니다."
+                    ),
+                    source_label="제품안전정보센터 대상 품목 안내",
+                    source_url="https://www.safetykorea.kr/policy/targetsSafetyCheck3",
+                    checked_at=today,
+                )
             )
-        )
 
     # --- (b) recall matching --------------------------------------------
     #
@@ -390,44 +438,100 @@ def verify(
         # 소싱 단계에서 셀러에게 주는 실질 가치다.
         findings.append(_lookup_failed("리콜", today))
 
-    if hits:
-        for r, m in hits:
-            findings.append(
-                Finding(
-                    kind=FindingKind.RECALL_MATCH,
-                    signal=Signal.RED,
-                    statement_ko=(
-                        f"모델명/인증번호가 리콜 공표 목록과 {m.strength.label_ko}합니다 "
-                        f"({'국내' if r.scope == 'domestic' else '해외'} "
-                        f"{_fmt_date(r.announced_on) or '공표일 미상'} 공표). "
-                        "원문 확인이 필요합니다."
-                    ),
-                    source_label="국가기술표준원 리콜정보",
-                    source_url=r.detail_url or "https://www.safetykorea.kr/",
-                    detail={
-                        "reason": r.reason,
-                        "model": r.model_name,
-                        "maker": r.maker,
-                        "match_strength": m.strength.value,
-                        "matched_on": m.matched_on,
-                    },
-                    checked_at=today,
-                )
+    # 강도로 가른다. 셀러가 화면에서 묻는 것은 "펜인데 왜 블라인드?" 이고,
+    # 그 답은 "무엇이 맞았는가" 다 (CLAUDE.md R6).
+    #
+    #   exact / strong  모델명·인증번호가 맞았다        → 확인된 문제
+    #   weak            제조사와 제품명 단어만 겹쳤다   → 참고
+    #
+    # 약한 일치를 버리지는 않는다. 놓친 알림이 이 서비스가 하는 유일한 약속을
+    # 깨뜨린다. 대신 "이 상품이 리콜됨" 과 같은 자리에 두지 않는다 - 섞어 놓으면
+    # 셀러가 둘 다 무시하게 되고, 그러면 진짜 일치도 안 보게 된다.
+    confirmed = [(r, m) for r, m in hits if m.strength is not MatchStrength.WEAK]
+    weak = [(r, m) for r, m in hits if m.strength is MatchStrength.WEAK]
+
+    for r, m in confirmed:
+        label, url = recall_evidence(r.detail_url)
+        findings.append(
+            Finding(
+                kind=FindingKind.RECALL_MATCH,
+                signal=Signal.RED,
+                statement_ko=_match_statement(facts, r, m),
+                source_label=label,
+                source_url=url,
+                detail={
+                    "reason": r.reason,
+                    "model": r.model_name,
+                    "maker": r.maker,
+                    "match_strength": m.strength.value,
+                    "match_strength_ko": m.strength.label_ko,
+                    "matched_on": m.matched_on,
+                    "matched_on_ko": matched_on_label(m.matched_on),
+                    "matched_value": _matched_value(facts, m),
+                    "recalled_product_name": r.product_name,
+                    "evidence_is_original": label == "리콜 공표 원문",
+                },
+                checked_at=today,
             )
-    elif recall_available and (facts.product_name or facts.model_name):
+        )
+
+    if weak:
+        # 한 건씩 내지 않고 묶는다. 약한 일치는 원래 여러 건이 한꺼번에 걸린다 -
+        # 중성펜 'M-1000' 하나가 잔디깎이·전기냄비·유아용 드레스 등 6건을 물고
+        # 왔다. 수십 줄로 내면 그건 경고가 아니라 소음이고, 소음이 된 경고는
+        # 꺼진 경고와 같다. 주변 리콜(b-2)을 정확 일치로 좁힌 것과 같은 논리다.
+        newest = max(weak, key=lambda pair: pair[0].announced_on or "")[0]
+        label, url = recall_evidence(newest.detail_url)
+        findings.append(
+            Finding(
+                kind=FindingKind.RECALL_WEAK_MATCH,
+                # 신호를 매기지 않는다. 이 상품에 대해 확인된 것이 없다.
+                signal=Signal.UNKNOWN,
+                statement_ko=(
+                    f"참고 — {_weak_reason(weak)} 리콜 공표가 {len(weak)}건 있습니다 "
+                    f"(가장 최근 {_fmt_date(newest.announced_on) or '공표일 미상'} 공표: "
+                    f"'{_short(newest.product_name) or '제품명 미상'}'). "
+                    "확실하지 않은 유사 일치이며, 이 상품이 리콜 대상이라는 뜻은 "
+                    "아닙니다. 원문에서 확인해 주세요."
+                ),
+                source_label=label,
+                source_url=url,
+                detail={
+                    "count": len(weak),
+                    "match_strength": MatchStrength.WEAK.value,
+                    "match_strength_ko": MatchStrength.WEAK.label_ko,
+                    "matched_on": sorted({m.matched_on for _, m in weak}),
+                    "matched_on_ko": "·".join(
+                        matched_on_label(a) for a in sorted({m.matched_on for _, m in weak})
+                    ),
+                    "latest_announced_on": newest.announced_on,
+                    "products": [
+                        r.product_name for r, _ in weak[:5] if r.product_name
+                    ],
+                },
+                checked_at=today,
+            )
+        )
+
+    if not confirmed and recall_available and (facts.product_name or facts.model_name):
         # "리콜 이력 없음" 에는 유효기간이 있다. 로컬 사본이라 오늘 공표된
         # 리콜은 다음 동기화 전까지 안 잡힌다. 숨기면 안 되는 트레이드오프다.
+        #
+        # ⚠ 문장이 "일치 항목이 없다" 에서 "모델명·인증번호가 일치하는 항목이
+        #   없다" 로 좁혀졌다. 약한 일치가 있는데 "일치 항목 없음" 이라고 하면
+        #   바로 아래 참고 항목과 앞뒤가 맞지 않는다. 좁힌 문장은 약한 일치가
+        #   있어도 참이다.
         as_of = _as_of_label(recalls.as_of)
         findings.append(
             Finding(
                 kind=FindingKind.RECALL_CLEAR,
                 signal=Signal.GREEN,
                 statement_ko=(
-                    f"리콜 공표 목록에서 일치 항목을 찾지 못했습니다. "
-                    f"리콜 대조 기준: {as_of} (매일 갱신)"
+                    f"리콜 공표 목록에서 모델명·인증번호가 일치하는 항목을 "
+                    f"찾지 못했습니다. 리콜 대조 기준: {as_of} (매일 갱신)"
                 ),
                 source_label="국가기술표준원 리콜정보",
-                source_url="https://www.safetykorea.kr/",
+                source_url=recall_evidence(None)[1],
                 detail={"recall_data_as_of": recalls.as_of},
                 checked_at=today,
             )
@@ -461,8 +565,8 @@ def verify(
                         "이 상품이 리콜 대상이라는 뜻은 아닙니다 — "
                         "업체명이 같은 다른 제품의 이력이며, 공급처를 확인할 때 참고하세요."
                     ),
-                    source_label="국가기술표준원 리콜정보",
-                    source_url="https://www.safetykorea.kr/",
+                    source_label="국가기술표준원 리콜정보에서 확인",
+                    source_url=recall_evidence(None)[1],
                     detail={
                         "maker": facts.maker,
                         "count": len(others),
@@ -546,3 +650,77 @@ def verify(
                 )
 
     return findings
+
+
+# 약한 일치가 왜 약한지. 축마다 이유가 다르므로 문구도 달라야 한다.
+#
+#   maker+product  제조사가 같고 제품명 단어가 겹쳤을 뿐이다
+#   model_name     모델명이 맞긴 했는데 그 문자열의 식별력이 낮다
+#                  ('153' 처럼 숫자만이거나, 'M1000' 처럼 글자가 하나뿐)
+_WEAK_REASON_KO: dict[str, str] = {
+    "maker+product": "제조사와 제품명 단어가 겹치는",
+    "model_name": "식별력이 낮은 모델명 문자열이 겹치는",
+    "kc_number": "인증번호 문자열이 겹치는",
+}
+
+
+def _weak_reason(weak: list) -> str:
+    axes = sorted({m.matched_on for _, m in weak})
+    return "·".join(_WEAK_REASON_KO.get(a, a) for a in axes) or "유사한"
+
+
+def _kc_missing_finding(facts: ProductFacts, today: date) -> Finding:
+    """인증번호 표기를 못 찾았을 때.
+
+    제품명·업체명이 있으면 셀러가 정부 사이트에서 직접 인증 여부를 검색할 수
+    있게 링크를 연다. 우리가 대신 조회해 "인증 없음"을 단정하지 않는다 -
+    브랜드명 미등록·SCoC 대상이면 DB 에 없는 게 정상이다 (R3).
+    """
+    search_hint = facts.maker or facts.product_name
+    guide = (
+        f" 아래 링크에서 '{search_hint}' 로 직접 검색해 인증 이력을 확인할 수 있습니다."
+        if search_hint else ""
+    )
+    return Finding(
+        kind=FindingKind.KC_MISSING_BUT_REQUIRED,
+        signal=Signal.AMBER,
+        statement_ko=(
+            "규제 품목군으로 보이나 상세페이지에서 인증번호를 찾지 못했습니다. "
+            "안전인증·안전확인 대상이면 인증번호가 있어야 하고, "
+            "공급자적합성확인 대상이면 없는 것이 정상입니다."
+            + guide
+            + " 공급처에 인증 구분과 시험성적서를 요청해 확인하세요."
+        ),
+        source_label="제품안전정보센터에서 인증 여부 직접 검색",
+        source_url=item_search_url(search_hint),
+        detail={"search_term": search_hint},
+        checked_at=today,
+    )
+
+
+def _image_candidate_finding(candidates: list[str], today: date) -> Finding:
+    """이미지에서 읽고 형식 검증을 통과한 인증번호.
+
+    조회하지 않은 채로 낸다. 자동 조회하면 오독된 한 글자가 "조회 안 됨" 으로
+    나가고, 셀러는 멀쩡한 인증을 문제로 읽는다. 셀러가 눈으로 확인·수정한 뒤
+    텍스트 경로로 들어가면 그때부터는 다른 번호와 똑같이 자동 조회된다.
+
+    "인증번호 없음" 으로 처리하지 않는 것이 핵심이다. 실제로는 적혀 있는데
+    우리가 안 본 것을 없다고 말하면 R3 위반이다.
+    """
+    shown = ", ".join(candidates)
+    return Finding(
+        kind=FindingKind.KC_IMAGE_CANDIDATE,
+        # 아직 조회하지 않았다. 조회 전에 신호를 매기면 확인하지 않은 것을
+        # 확인한 것처럼 말하게 된다 (R3).
+        signal=Signal.UNKNOWN,
+        statement_ko=(
+            f"이미지에서 인증번호 '{shown}' 을(를) 확인했습니다. "
+            "이미지 판독은 0과 O, 1과 l 이 뒤바뀔 수 있어 자동 조회하지 않습니다. "
+            "번호가 맞는지 확인한 뒤 조회해 주세요."
+        ),
+        source_label="국가기술표준원 안전인증정보 조회",
+        source_url=cert_evidence_url(candidates[0]),
+        detail={"candidates": candidates, "read_from": "image"},
+        checked_at=today,
+    )

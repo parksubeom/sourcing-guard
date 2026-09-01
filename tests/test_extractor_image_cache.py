@@ -26,17 +26,24 @@ def test_prompt_declares_page_is_data_not_instructions():
         assert phrase in SYSTEM_PROMPT
 
 
-def test_prompt_scopes_the_kc_restriction_to_images_only():
-    """이미지 한정 규칙임이 분명해야 한다.
+def test_prompt_keeps_text_and_image_cert_numbers_on_separate_fields():
+    """텍스트 번호와 이미지 번호가 서로 다른 필드로 가야 한다.
 
-    처음 문구는 "이미지에서 읽은 경우에도 인증번호는 넣지 마십시오 ... 인증번호는
-    사용자가 텍스트로 직접 확인합니다" 였다. 마지막 문장이 일반 규칙으로 읽혀서
-    LLM 이 텍스트에 명시된 인증번호도 약 10% 확률로 빠뜨렸다 - 인증 검증 축이
-    사라지고 RED 가 AMBER 로 바뀐다.
+    지금은 "이미지에서 읽지 말라" 가 아니라 "다른 칸에 담으라" 다. 이미지의
+    KC 마크는 규정상 유효한 기재라, 안 읽으면 실제로는 있는 인증을 "표기 없음"
+    으로 처리하게 된다 (R3). 대신 조회 경로를 가른다.
+
+    한편 이미지 규칙이 텍스트로 번지면 안 된다. 처음 문구("인증번호는 사용자가
+    텍스트로 직접 확인합니다")가 일반 규칙으로 읽혀 LLM 이 텍스트에 명시된
+    인증번호도 약 10% 확률로 빠뜨렸다 - 인증 검증 축이 사라지고 RED 가 AMBER 로
+    바뀐다. 그래서 두 문장을 함께 고정한다.
     """
-    assert "이미지에서만 읽은 번호는 넣지 마십시오" in SYSTEM_PROMPT
-    assert "이미지 한정 규칙이며 텍스트에는" in SYSTEM_PROMPT
+    assert "kc_numbers_from_image" in SYSTEM_PROMPT
     assert "텍스트에 적힌 인증번호는 빠뜨리지 말고" in SYSTEM_PROMPT
+    # 이미지 번호가 kc_numbers 로 새지 않게 하는 지시
+    assert "이미지에서 읽은 번호는 여기 넣지 마십시오" in SYSTEM_PROMPT
+    # 보정·추측 금지. 오독을 정규식으로 걸러내려면 "보이는 그대로" 여야 한다.
+    assert "보정하거나 추측해서" in SYSTEM_PROMPT
 
 
 # --- 프롬프트 캐싱 ---------------------------------------------------------

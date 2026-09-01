@@ -42,6 +42,13 @@ _PENALTY: dict[FindingKind, int] = {
     # 노란불을 무시하게 된다 - HAZARD_RULE_APPLIES 를 0 으로 둔 것과 같은 논리.
     # _HARD_RED 와 AMBER 집합에도 넣지 않는다 (아래 _signal_for 참조).
     FindingKind.MAKER_OTHER_RECALLS: 0,
+    # 0 이다. 약한 일치는 제조사와 제품명 단어가 겹쳤을 뿐 모델명·인증번호가
+    # 맞은 것이 아니다. 점수를 깎으면 흔한 단어를 쓴 상품이 전부 노란불이 되고,
+    # 그러면 셀러가 노란불을 무시한다 - MAKER_OTHER_RECALLS 와 같은 논리다.
+    FindingKind.RECALL_WEAK_MATCH: 0,
+    # 0 이다. 아직 조회하지 않았다. 조회 전에 점수를 깎으면 이미지에 인증을
+    # 붙여둔 상품이 안 붙인 상품보다 불리해지고, 그건 거꾸로다.
+    FindingKind.KC_IMAGE_CANDIDATE: 0,
 }
 
 _HARD_RED = {
@@ -56,6 +63,11 @@ _HARD_RED = {
     # 조회 DB 에 번호가 없는 것이 정상이다. 미조회를 RED 로 두면 정상 상품에
     # 반복해서 빨간불이 뜨고, 셀러가 모든 RED 를 무시하게 된다. 그러면 진짜
     # 취소된 인증도 안 보게 된다.
+    #
+    # RECALL_WEAK_MATCH 도 여기 없다. 약한 일치는 정부 DB 가 "이 상품에 문제가
+    # 있다" 고 적은 것이 아니라 우리가 제조사·제품명 단어로 추정한 것이다.
+    # RED 로 두면 무관한 상품에 빨간불이 반복되고("펜을 검사했는데 블라인드가
+    # 뜬다"), 셀러가 모든 RED 를 무시하게 된다.
     FindingKind.RECALL_MATCH,
     FindingKind.KC_REVOKED,
     FindingKind.KC_SUSPENDED,
@@ -141,6 +153,14 @@ def _extracted_fields(facts: ProductFacts) -> list[ExtractedField]:
         out.append(ExtractedField(label="제조사", value=facts.maker))
     for num in facts.kc_numbers:
         out.append(ExtractedField(label="인증번호", value=num, link=cert_evidence_url(num)))
+    # 이미지에서 읽은 번호는 라벨을 달리 준다. 같은 "인증번호" 로 보이면 셀러가
+    # 이미 조회된 것으로 읽고, 확인 단계를 건너뛴다.
+    for num in facts.kc_numbers_from_image:
+        out.append(
+            ExtractedField(
+                label="인증번호 (이미지에서 읽음)", value=num, link=cert_evidence_url(num)
+            )
+        )
     if facts.target_age:
         out.append(ExtractedField(label="사용연령", value=facts.target_age))
     if facts.materials:

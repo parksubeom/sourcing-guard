@@ -59,6 +59,17 @@ class ProductFacts(BaseModel):
     materials: list[str] = Field(default_factory=list)
     substances_mentioned: list[str] = Field(default_factory=list)
     kc_numbers: list[str] = Field(default_factory=list)
+    # 이미지(KC 마크)에서 읽은 인증번호 후보. kc_numbers 와 분리해서 담는다.
+    #
+    # 많은 상세페이지가 KC 마크 이미지만 붙이고 번호를 텍스트로 적지 않는다.
+    # 규정상 유효한 기재라, 안 읽으면 실제로는 있는 인증을 "표기 없음" 으로
+    # 처리하게 된다 - 못 찾은 것과 찾아보지 않은 것은 다르다 (R3).
+    #
+    # 그렇다고 kc_numbers 에 바로 넣지는 않는다. 이미지의 0/O·1/l·5/S 오독이
+    # 정상 인증을 "미조회" 로 뒤집기 때문이다. 두 겹으로 막는다:
+    #   (1) 여기 따로 담고            (2) CERT_NUMBER_RE 로 형식 검증
+    # 그리고 화면에서 셀러가 확인·수정한 뒤에야 조회 경로로 들어간다.
+    kc_numbers_from_image: list[str] = Field(default_factory=list)
     target_age: str | None = None
     category: ItemCategory = ItemCategory.UNCLASSIFIED
     category_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
@@ -79,6 +90,9 @@ class FindingKind(str, Enum):
     KC_SUSPENDED = "kc_suspended"        # 표시 사용금지
     KC_UNDER_ACTION = "kc_under_action"  # 개선명령·청문실시
     KC_MISSING_BUT_REQUIRED = "kc_missing_but_required"
+    # 이미지에서 읽었고 형식 검증을 통과한 인증번호. 아직 조회하지 않았다 -
+    # 셀러가 "이 번호가 맞다" 고 확인한 뒤에 텍스트 경로로 조회한다.
+    KC_IMAGE_CANDIDATE = "kc_image_candidate"
     # 공급자적합성확인(SCoC) 대상은 제조·수입자가 스스로 시험해 확인하므로
     # 정부 조회 DB 에 인증번호가 없는 것이 정상이다. 부재를 위반으로 읽으면 안 된다.
     KC_TIER_UNKNOWN = "kc_tier_unknown"
@@ -86,6 +100,10 @@ class FindingKind(str, Enum):
     AGE_OUT_OF_CHILD_RANGE = "age_out_of_child_range"  # 14세 이상 표기
     INFO_REQUEST = "info_request"          # 공급처에 물어야 할 것
     RECALL_MATCH = "recall_match"
+    # 약한 일치(제조사 + 제품명 토큰). 모델명·인증번호가 맞은 것이 아니므로
+    # "이 상품이 리콜됐다" 가 아니라 참고 정보다. 버리지는 않는다 - 놓친 알림이
+    # 이 서비스가 하는 유일한 약속을 깨뜨린다 (R6). 대신 구획을 가른다.
+    RECALL_WEAK_MATCH = "recall_weak_match"
     RECALL_CLEAR = "recall_clear"
     # 같은 제조사의 다른 리콜. 이 상품의 위험이 아니라 공급처를 보는 참고 정보다.
     # 정확 일치만 쓴다 - 포함 매칭은 실측에서 어떤 질의에도 1,600건 이상을 냈다.
@@ -117,6 +135,7 @@ _FINDING_GROUP: dict[str, FindingGroup] = {
     "kc_missing_but_required": FindingGroup.ACTION,
     "kc_tier_unknown": FindingGroup.ACTION,
     "info_request": FindingGroup.ACTION,
+    "kc_image_candidate": FindingGroup.ACTION,
     "substance_mentioned": FindingGroup.ACTION,
     # 문제가 확인된 것
     "kc_not_found": FindingGroup.FINDING,
@@ -129,6 +148,7 @@ _FINDING_GROUP: dict[str, FindingGroup] = {
     "kc_verified": FindingGroup.CONTEXT,
     "recall_clear": FindingGroup.CONTEXT,
     "maker_other_recalls": FindingGroup.CONTEXT,
+    "recall_weak_match": FindingGroup.CONTEXT,
     "hazard_rule_applies": FindingGroup.CONTEXT,
     "coverage_gap": FindingGroup.CONTEXT,
     "out_of_scope": FindingGroup.CONTEXT,
@@ -253,6 +273,21 @@ class ScanResult(BaseModel):
 class WatchStatus(str, Enum):
     ACTIVE = "active"
     ARCHIVED = "archived"
+
+
+# 무엇으로 일치했는지의 한국어 이름. 화면과 알림 문구가 같은 어휘를 쓰게 한다.
+#
+# 셀러의 질문은 "펜인데 왜 블라인드?" 다. 강도만으로는 답이 안 되고, 무엇이
+# 맞았는지를 같이 말해야 스스로 판단할 수 있다.
+MATCHED_ON_KO: dict[str, str] = {
+    "model_name": "모델명",
+    "kc_number": "인증번호",
+    "maker+product": "제조사·제품명",
+}
+
+
+def matched_on_label(matched_on: str) -> str:
+    return MATCHED_ON_KO.get(matched_on, matched_on)
 
 
 class MatchStrength(str, Enum):

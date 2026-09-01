@@ -16,8 +16,8 @@ from dataclasses import dataclass
 from datetime import date
 from typing import Iterable, Protocol
 
-from .kats_client import RecallRecord, is_cert_number, normalize_kc
-from .models import MatchStrength, RecallAlert, WatchItem, WatchStatus
+from .kats_client import RecallRecord, is_cert_number, normalize_kc, recall_evidence
+from .models import MatchStrength, RecallAlert, WatchItem, WatchStatus, matched_on_label
 
 # Model names shorter than this produce too many coincidental hits
 # ("A1", "100") to be worth alerting on.
@@ -47,6 +47,51 @@ _MIN_EXACT_LEN = 3
 #   재현율 손실은 0 이고, 진짜 짧은 모델명('솔로X')은 exact 티어가 잡는다.
 _MIN_CONTAIN_LEN = 5
 _MIN_TOKEN_OVERLAP = 2
+
+# 매칭 키의 식별력. 여기서 걸리면 강도를 낮춘다 (버리지 않는다).
+#
+# 프로덕션 실측(2026-09-01)에서 "펜을 검사했는데 블라인드가 뜬다" 계열 오탐이
+# 전부 여기서 나왔다. 무관한 상품 7종을 넣어 RED 로 나간 리콜을 셌다:
+#
+#   '153'   숫자만 3자      정확 일치 1건   2014 국외 'LED 전등'(Greenline)
+#   'M1000' 글자 1 + 숫자   포함 일치 6건   로봇 잔디깎이·전기 냄비·유아용
+#                                           드레스·체인형 조명기구·휴대용 축전지
+#   'GP-500' 'BLK-100' 'A1' '1000' 'MB-120S'        0건
+#
+# 두 오탐은 문자열로는 진짜 일치와 구분되지 않는다. 'M1000' 이 'HRM1000' 안에
+# 있는 것과 'BLK100' 이 'BLK100A' 안에 있는 것은 같은 모양이다. 가르는 것은
+# 제품 문맥인데 그건 우리가 판정할 것이 아니다 (R1).
+#
+# 그래서 임계값을 올려 매칭을 없애는 대신 강도를 낮춘다. 약한 일치는 화면에서
+# '참고' 구획으로 가고 알림도 계속 나간다 - 놓친 알림이 이 서비스가 하는 유일한
+# 약속을 깨뜨린다 (R6). 바뀌는 것은 빨간불을 켜느냐뿐이다.
+#
+#   숫자만인 모델명    '153' '1000'      → 이 길이 미만이면 약한 일치
+_MIN_DIGITS_ONLY_LEN = 6
+#   포함 일치의 짧은 쪽 'M1000'(글자 1)  → 글자가 이보다 적으면 약한 일치
+_MIN_ALPHA_IN_CONTAIN = 2
+
+
+def _alpha_count(s: str) -> int:
+    return sum(1 for c in s if c.isalpha())
+
+
+def _exact_is_distinctive(key: str) -> bool:
+    """정확 일치를 '확인된 문제' 로 낼 만큼 식별력이 있는가.
+
+    숫자만인 짧은 모델명은 서로 다른 상품이 우연히 공유한다 - 볼펜 '153' 과
+    2014년 LED 전등이 그랬다. 글자가 하나라도 있으면 그 자체로 식별력이 붙는다.
+    """
+    return _alpha_count(key) > 0 or len(key) >= _MIN_DIGITS_ONLY_LEN
+
+
+def _contain_is_distinctive(shorter: str) -> bool:
+    """포함 일치의 식별력은 짧은 쪽이 전부다.
+
+    글자 하나 + 둥근 숫자('M1000')는 다른 모델 코드 안에 우연히 들어간다 -
+    'AM1000PTK' 'HRM1000' 'BYC100M1000D' 'JM1000' 이 전부 걸렸다.
+    """
+    return _alpha_count(shorter) >= _MIN_ALPHA_IN_CONTAIN
 
 _STOPWORDS = {
     "세트", "정품", "무료배송", "당일발송", "신상", "특가", "대용량", "고급",
@@ -111,19 +156,37 @@ def _recall_models(r: RecallRecord) -> list[str]:
     return [m for m in (normalize_model(x) for x in raw) if m]
 
 
+_TIER_ORDER = {MatchStrength.WEAK: 0, MatchStrength.STRONG: 1, MatchStrength.EXACT: 2}
+
+
 def match(item: WatchItem, r: RecallRecord) -> Match | None:
     """Return the strongest match tier, or None.
 
-    Tiers are ordered and mutually exclusive; the first hit wins.
+    축을 전부 재고 가장 강한 것을 돌려준다. 이전에는 첫 히트에서 바로 반환했는데,
+    식별력 강등이 생기면서 그러면 안 되게 됐다 - 모델명이 약하게 맞았다고 해서
+    인증번호 정확 일치를 못 보고 지나치면 진짜 일치를 놓친다 (R6).
     """
+    best: Match | None = None
+
+    def offer(strength: MatchStrength, axis: str) -> None:
+        nonlocal best
+        if best is None or _TIER_ORDER[strength] > _TIER_ORDER[best.strength]:
+            best = Match(strength, axis)
+
     wm = normalize_model(item.model_name)
     recall_models = _recall_models(r)
 
     if wm and len(wm) >= _MIN_EXACT_LEN and wm in recall_models:
-        return Match(MatchStrength.EXACT, "model_name")
+        offer(
+            MatchStrength.EXACT if _exact_is_distinctive(wm) else MatchStrength.WEAK,
+            "model_name",
+        )
 
     # 리콜 레코드에 인증번호가 따로 실려 온다 (certNum, 콤마 목록). 모델명 표기가
     # 흔들려도 인증번호가 같으면 확실하다.
+    #
+    # 인증번호에는 식별력 검사를 걸지 않는다. 형태가 정해진 하드 데이터라
+    # (CERT_NUMBER_RE, 리콜 실데이터 1,631건으로 검증) 우연 충돌이 다르다.
     watched_kc = {n for n in (normalize_kc(k) for k in item.kc_numbers) if n}
     if watched_kc:
         # "공급자적합성" 같은 자리표시자는 인증번호가 아니다. 걸러내지 않으면
@@ -134,18 +197,28 @@ def match(item: WatchItem, r: RecallRecord) -> Match | None:
             if n
         }
         if watched_kc & recall_kc:
-            return Match(MatchStrength.EXACT, "kc_number")
-        # 예전 공표는 인증번호를 모델명 칸에 적어 둔 경우가 있다.
-        for n in watched_kc:
-            if len(n) >= _MIN_EXACT_LEN and any(n in rm for rm in recall_models):
-                return Match(MatchStrength.EXACT, "kc_number")
+            offer(MatchStrength.EXACT, "kc_number")
+        else:
+            # 예전 공표는 인증번호를 모델명 칸에 적어 둔 경우가 있다.
+            for n in watched_kc:
+                if len(n) >= _MIN_EXACT_LEN and any(n in rm for rm in recall_models):
+                    offer(MatchStrength.EXACT, "kc_number")
+                    break
 
     if wm:
         for rm in recall_models:
             # 짧은 쪽을 잰다. 긴 쪽으로 재면 1자 부스러기가 전부 통과한다.
-            if min(len(wm), len(rm)) >= _MIN_CONTAIN_LEN:
-                if wm in rm or rm in wm:
-                    return Match(MatchStrength.STRONG, "model_name")
+            if min(len(wm), len(rm)) >= _MIN_CONTAIN_LEN and (wm in rm or rm in wm):
+                shorter = wm if len(wm) <= len(rm) else rm
+                offer(
+                    MatchStrength.STRONG
+                    if _contain_is_distinctive(shorter)
+                    else MatchStrength.WEAK,
+                    "model_name",
+                )
+
+    if best is not None and best.strength is MatchStrength.EXACT:
+        return best
 
     # ⚠ 정규화 결과가 빈 문자열이면 후보에서 뺀다. 모델명 쪽은 `if wm:` 과
     #   _recall_models 의 `if m` 이 이미 걸러내는데, 제조사 쪽에 같은 가드가
@@ -162,9 +235,9 @@ def match(item: WatchItem, r: RecallRecord) -> Match | None:
     if watched_maker and recall_maker and watched_maker == recall_maker:
         overlap = tokenize_name(item.product_name) & tokenize_name(r.product_name)
         if len(overlap) >= _MIN_TOKEN_OVERLAP:
-            return Match(MatchStrength.WEAK, "maker+product")
+            offer(MatchStrength.WEAK, "maker+product")
 
-    return None
+    return best
 
 
 # ---------------------------------------------------------------------------
@@ -210,6 +283,7 @@ def sweep(
             m = match(item, r)
             if m is None or order[m.strength] < floor:
                 continue
+            label, url = recall_evidence(r.detail_url)
             alerts.append(
                 RecallAlert(
                     watch_item_id=item.id,
@@ -217,8 +291,8 @@ def sweep(
                     strength=m.strength,
                     matched_on=m.matched_on,
                     statement_ko=_statement(item, r, m),
-                    source_label="국가기술표준원 리콜정보",
-                    source_url=r.detail_url or "https://www.safetykorea.kr/",
+                    source_label=label,
+                    source_url=url,
                     announced_on=r.announced_on,
                     reason=r.reason,
                     detected_at=today,
@@ -236,10 +310,21 @@ def _fmt_date(yyyymmdd: str | None) -> str | None:
 
 
 def _statement(item: WatchItem, r: RecallRecord, m: Match) -> str:
+    """무엇이 어느 강도로 맞았는지를 문구에 담는다.
+
+    "리콜입니다" 가 아니라 "유사 일치하는 항목이 공표되었습니다, 원문 확인
+    필요" 로 쓴다 (CLAUDE.md R6). 무엇으로 맞았는지까지 있어야 셀러가 알림을
+    열고 1초 만에 자기 상품인지 가릴 수 있다 - 없으면 약한 일치가 반복될 때
+    알림 자체를 끄게 되고, 그러면 진짜 리콜도 못 본다.
+    """
     where = "국내" if r.scope == "domestic" else "해외"
     when = _fmt_date(r.announced_on) or "공표일 미상"
     subject = item.model_name or item.product_name or "등록하신 상품"
+    recalled = (r.product_name or "").strip()
+    what = f" ({matched_on_label(m.matched_on)} 기준)"
+    tail = f" 리콜된 제품은 '{recalled}' 입니다." if recalled else ""
     return (
         f"'{subject}' 과(와) {m.strength.label_ko}하는 항목이 "
-        f"{where} 리콜 공표({when})에 등록되었습니다. 원문에서 확인해 주세요."
+        f"{where} 리콜 공표({when})에 등록되었습니다{what}.{tail} "
+        "원문에서 확인해 주세요."
     )

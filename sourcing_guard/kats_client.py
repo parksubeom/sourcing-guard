@@ -20,6 +20,7 @@ import re
 import threading
 import time
 import unicodedata
+from urllib.parse import urlparse
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
@@ -708,6 +709,60 @@ def cert_evidence_url(cert_number: str) -> str:
 
 
 _ITEM_SEARCH_URL: str = _CFG.get("public_urls", {}).get("item_search", "")
+RECALL_BOARD_URL: str = _CFG.get("public_urls", {}).get("recall_board", "")
+
+# 근거로 쓸 수 없는 리콜 원문 주소.
+#
+# 정부 응답의 recallUrl 은 원출처(외국 기관) 주소라 그대로 믿을 수 없다.
+# 아래는 네트워크를 타지 않고 걸러낼 수 있는 것들이다:
+#
+#   · 빈 값 / 공백                     국내 리콜은 이 필드 자체가 없다
+#   · http(s) 가 아닌 스킴             javascript:, mailto:, 상대경로
+#   · 경로 없는 호스트 루트            "https://www.cpsc.gov/" 는 그 리콜을 가리키지
+#                                      않는다. 메인페이지는 근거가 아니다.
+#   · 알려진 메인페이지 경로           /index.html, /main, /home 등
+#
+# 살아 있는지는 여기서 재지 않는다. 스캔마다 외부로 HEAD 를 날리면 응답이
+# 그 사이트 지연에 묶이고, 정부·외국기관 서버에 우리 트래픽이 그대로 간다.
+# 만료 링크는 별도 계측(scripts/probe_recall_urls.py)으로 재고, 그 결과를
+# 아래 규칙에 반영한다.
+_DEAD_PATHS = {
+    "", "/", "/index.html", "/index.htm", "/index.jsp", "/index.php",
+    "/main", "/main.do", "/main.jsp", "/home", "/home.do", "/default.aspx",
+}
+
+
+def is_usable_recall_url(raw: str | None) -> bool:
+    """이 주소가 '그 리콜' 을 가리키는가.
+
+    셀러에게 보여줄 근거 링크는 눌렀을 때 해당 공표를 볼 수 있어야 한다.
+    메인페이지로 떨어지는 링크는 근거가 아니라 잡음이다 - 한 번 헛걸음하면
+    다음 링크도 안 누른다.
+    """
+    if not raw or not raw.strip():
+        return False
+    try:
+        parts = urlparse(raw.strip())
+    except ValueError:
+        return False
+    if parts.scheme not in ("http", "https") or not parts.netloc:
+        return False
+    path = (parts.path or "").rstrip("/").lower() or "/"
+    if path in _DEAD_PATHS and not parts.query:
+        return False
+    return True
+
+
+def recall_evidence(detail_url: str | None) -> tuple[str, str]:
+    """리콜 근거의 (라벨, 주소).
+
+    원문 주소를 쓸 수 있으면 그걸 쓰고, 아니면 국표원 리콜 공표 목록으로 보낸다.
+    라벨도 함께 바꾼다 - 같은 문구로 두면 셀러가 "리콜 원문" 을 눌렀다가 목록
+    화면을 보고, 우리가 링크를 잘못 준 것으로 읽는다.
+    """
+    if is_usable_recall_url(detail_url):
+        return "리콜 공표 원문", detail_url.strip()  # type: ignore[union-attr]
+    return "국가기술표준원 리콜정보에서 확인", RECALL_BOARD_URL
 
 
 def item_search_url(term: str | None = None) -> str:
