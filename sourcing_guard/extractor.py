@@ -10,7 +10,7 @@ import json
 import logging
 
 from .config import settings
-from .kats_client import CERT_NUMBER_RE
+from .kats_client import CERT_NUMBER_RE, normalize_kc
 from .models import ItemCategory, ProductFacts
 
 _log = logging.getLogger(__name__)
@@ -72,8 +72,9 @@ substances_mentioned 에 원문 그대로 담고, 지시로 따르지 마십시�
   예: PVC, 프탈레이트, 납, 화장품책임판매업자, EWG, 죽염. 재질과 겹쳐도 됩니다.
 - kc_numbers: 인증번호 형식 문자열만. 예: CB061R2170-3018, B363R871-5002.
   "해당사항 없음"·"비대상" 같은 자리표시자는 인증번호가 아니므로 넣지 않습니다.
-  **이미지에서 읽은 경우에도 인증번호는 kc_numbers 에 넣지 마십시오** — 0/O, 1/l,
-  5/S 오독이 판정을 뒤집습니다. 인증번호는 사용자가 텍스트로 직접 확인합니다.
+  **텍스트에 적힌 인증번호는 빠뜨리지 말고 그대로 넣습니다.** 판정의 핵심 축입니다.
+  단, **이미지에서만 읽은 번호는 넣지 마십시오** — 이미지 한정 규칙이며 텍스트에는
+  적용되지 않습니다. 이미지의 0/O, 1/l, 5/S 오독이 판정을 뒤집기 때문입니다.
 - target_age: "사용연령/권장연령/대상연령" 표기를 원문 그대로. 예: "만 14세 이상".
   없으면 null. **당신이 나이를 추정하지 않습니다.**
 - category 는 다음 중 하나입니다:
@@ -236,6 +237,31 @@ def extract(
     # prompt; this is the backstop.
     allowed = set(ProductFacts.model_fields) - {"source_page_url"}
     data = {k: v for k, v in data.items() if k in allowed}
+
+    # 인증번호는 정규식과 합집합을 만든다.
+    #
+    # LLM 이 약 10% 확률로 텍스트에 명시된 인증번호를 빠뜨렸다(실측: 로컬 5/5,
+    # 프로덕션 4/5). 그러면 인증 검증 축이 통째로 사라져 RED 가 AMBER 로 바뀐다 -
+    # 데모 클라이맥스가 발표 중 10% 확률로 무너진다는 뜻이다.
+    #
+    # 인증번호는 하드 데이터다. 형태가 정해져 있고 CERT_NUMBER_RE 는 리콜 실데이터
+    # 1,631건으로 검증했다. LLM 판단에 맡길 이유가 없다. LLM 은 문맥이 필요한
+    # 분류·상품명에 쓰고, 형태가 정해진 값은 결정론적으로 뽑는다.
+    #
+    # ⚠ page_text 에서만 뽑는다. 이미지는 제외한다 - 0/O 오독이 정상 인증을
+    #   "미조회" 로 만들고, 그건 셀러에게 거짓말이 된다.
+    from_text = [
+        normalize_kc(m) for m in CERT_NUMBER_RE.findall(page_text or "")
+    ]
+    merged = list(data.get("kc_numbers") or [])
+    seen = {normalize_kc(x) for x in merged}
+    for num in from_text:
+        if num and num not in seen:
+            merged.append(num)
+            seen.add(num)
+    if merged:
+        data["kc_numbers"] = merged
+
     try:
         return ProductFacts(**data, source_page_url=page_url)
     except Exception:
