@@ -273,3 +273,22 @@ def test_hazard_rule_alone_is_not_in_the_amber_set():
     amber_block = src.split("kinds & {")[1].split("}")[0]
     assert "HAZARD_RULE_APPLIES" not in amber_block
     assert "SUBSTANCE_MENTIONED" in amber_block
+
+
+def test_green_is_not_scored_to_zero_by_applicable_rules():
+    """룰마다 finding 이 하나씩 붙는다. 완구 14건, 아동섬유 17건이다.
+
+    가중치가 있으면 GREEN 이 무조건 0점이 된다 - "확인된 문제 없음" 과 "0점" 은
+    모순이다. 룰이 많다고 위험한 것이 아니라 그 품목군에 기준이 많은 것뿐이다.
+    """
+    findings = [
+        _finding(FindingKind.KC_VERIFIED, Signal.GREEN),
+        _finding(FindingKind.RECALL_CLEAR, Signal.GREEN),
+    ]
+    findings += [
+        _finding(FindingKind.HAZARD_RULE_APPLIES, Signal.UNKNOWN) for _ in range(17)
+    ]
+    result = score(REGULATED_FACTS, findings)
+
+    assert result.signal is Signal.GREEN
+    assert result.score == 100, "적용 룰 개수가 점수를 깎고 있습니다"

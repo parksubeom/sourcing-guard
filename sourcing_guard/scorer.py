@@ -18,7 +18,16 @@ _PENALTY: dict[FindingKind, int] = {
     FindingKind.KC_SUSPENDED: 100,
     FindingKind.KC_UNDER_ACTION: 40,
     FindingKind.KC_MISSING_BUT_REQUIRED: 45,
-    FindingKind.HAZARD_RULE_APPLIES: 20,
+    # 0 이다. 적용 범위 안내이지 문제 지적이 아니므로 신호를 가르지 않고
+    # (아래 _signal_for 참조) 점수도 깎지 않는다.
+    #
+    # 20 으로 뒀더니 GREEN 이 무조건 0점이 됐다. 룰마다 finding 이 하나씩
+    # 붙는데 완구·학용품에 14건, 아동섬유에 17건이 적용되기 때문이다
+    # (14 x 20 = 280점 감점). "확인된 문제 없음" 과 "0점" 은 모순이다.
+    #
+    # 애초에 룰이 많다고 위험한 것이 아니라 그 품목군에 기준이 많은 것뿐이다.
+    # 점수는 "확인이 얼마나 필요한가" 인데 적용 기준 개수는 그 척도가 아니다.
+    FindingKind.HAZARD_RULE_APPLIES: 0,
     FindingKind.SUBSTANCE_MENTIONED: 25,
     FindingKind.COVERAGE_GAP: 0,
     FindingKind.LOOKUP_FAILED: 0,
