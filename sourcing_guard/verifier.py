@@ -115,11 +115,17 @@ class RuleBook:
 _LOOKUP_FAILED_SOURCE = "https://www.safetykorea.kr/"
 
 
+def _fmt_date(yyyymmdd: str | None) -> str | None:
+    """YYYYMMDD -> '2026-08-28'. 원본 그대로 화면에 내보내면 읽히지 않는다."""
+    if not yyyymmdd or len(yyyymmdd) != 8 or not yyyymmdd.isdigit():
+        return None
+    return f"{yyyymmdd[:4]}-{yyyymmdd[4:6]}-{yyyymmdd[6:]}"
+
+
 def _as_of_label(yyyymmdd: str | None) -> str:
     """YYYYMMDD -> '2026-08-28 공표분까지'. 값이 없으면 그렇다고 말한다."""
-    if not yyyymmdd or len(yyyymmdd) != 8 or not yyyymmdd.isdigit():
-        return "기준일 미상"
-    return f"{yyyymmdd[:4]}-{yyyymmdd[4:6]}-{yyyymmdd[6:]} 공표분까지"
+    d = _fmt_date(yyyymmdd)
+    return f"{d} 공표분까지" if d else "기준일 미상"
 
 
 def _lookup_failed(what: str, today: date, code: str | None = None) -> Finding:
@@ -298,8 +304,9 @@ def verify(
                     signal=Signal.RED,
                     statement_ko=(
                         f"모델명/인증번호가 리콜 공표 목록과 {m.strength.label_ko}합니다 "
-                        f"({'국내' if r.scope == 'domestic' else '해외'}, "
-                        f"{r.announced_on or '일자 미상'}). 원문 확인이 필요합니다."
+                        f"({'국내' if r.scope == 'domestic' else '해외'} "
+                        f"{_fmt_date(r.announced_on) or '공표일 미상'} 공표). "
+                        "원문 확인이 필요합니다."
                     ),
                     source_label="국가기술표준원 리콜정보",
                     source_url=r.detail_url or "https://www.safetykorea.kr/",

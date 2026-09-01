@@ -8,7 +8,10 @@ from __future__ import annotations
 import asyncio
 from contextlib import asynccontextmanager, suppress
 
+from pathlib import Path
+
 from fastapi import FastAPI, Header, HTTPException
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
 from datetime import date
@@ -57,6 +60,19 @@ _rules = RuleBook()
 class ScanRequest(BaseModel):
     page_text: str = Field(min_length=1, max_length=200_000)
     page_url: str | None = None
+
+
+_STATIC = Path(__file__).parent / "static"
+
+
+@app.get("/", response_class=FileResponse, include_in_schema=False)
+def index() -> FileResponse:
+    """단일 페이지 프론트엔드.
+
+    빌드 단계를 두지 않는다. 정적 HTML 하나를 그대로 돌려주면 되고, 그 편이
+    투표 기간 18일 무중단에 유리하다 - 깨질 지점이 하나 줄어든다.
+    """
+    return FileResponse(_STATIC / "index.html", media_type="text/html; charset=utf-8")
 
 
 @app.get("/healthz")
