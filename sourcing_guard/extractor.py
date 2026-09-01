@@ -98,8 +98,18 @@ def _few_shot_messages() -> list[dict]:
     return out
 
 
-def extract(page_text: str, page_url: str | None = None) -> ProductFacts:
-    if settings.mock_mode or not settings.anthropic_api_key:
+def extract(
+    page_text: str,
+    page_url: str | None = None,
+    *,
+    allow_llm: bool = True,
+) -> ProductFacts:
+    """allow_llm=False 면 호출 없이 휴리스틱으로 간다.
+
+    일일 LLM 상한을 넘겼을 때 쓴다. 상한을 넘어도 서비스는 계속 돈다 -
+    멈추는 대신 정확도가 낮아지고, 그 사실을 화면이 말한다 (핸드오프 §8).
+    """
+    if not allow_llm or settings.mock_mode or not settings.anthropic_api_key:
         return _heuristic_fallback(page_text, page_url)
 
     from anthropic import Anthropic

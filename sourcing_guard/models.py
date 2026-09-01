@@ -131,6 +131,9 @@ class ScanResult(BaseModel):
     # 리콜 로컬 사본의 기준일 (YYYYMMDD). "리콜 이력 없음" 이라는 문장의
     # 유효기간이다. 로컬 사본이라 최대 하루 늦는 트레이드오프를 숨기지 않는다.
     recall_data_as_of: str | None = None
+    # 일일 분석 한도를 넘겨 간이 추출로 처리했을 때의 안내. 정확도가 낮아진
+    # 사실을 감추지 않는다 - 감추면 셀러가 덜 정확한 결과를 최신 분석으로 읽는다.
+    extraction_note: str | None = None
     disclaimer: str = (
         "본 결과는 공개된 정부 데이터에 기반한 참고 정보이며, "
         "법적 판단이나 안전 인증을 대체하지 않습니다."
