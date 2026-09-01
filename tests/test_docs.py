@@ -113,3 +113,36 @@ def test_no_rule_is_promoted_without_a_reviewer():
         if r.get("status") == "verified" and not (r.get("verified_by") and r.get("verified_at"))
     ]
     assert not bad, f"검수자 기록 없이 verified 로 승격된 룰: {bad}"
+
+
+def test_phthalate_rule_carries_all_seven_current_substances():
+    """현행 제2022-220호 3.1.3 은 7종이다 (p.3 표, 2026-09-01 원문 대조).
+
+    DIBP(CAS 84-69-5)는 2022-12-14 개정에서 추가됐다. 2020년판(6종)으로
+    되돌아가면 규제 물질 하나를 조용히 놓친다.
+    """
+    raw = yaml.safe_load(RULES.read_text(encoding="utf-8"))
+    pht = {r["id"]: r for r in raw["rules"]}["KC-COMMON-3.1.3-PHT"]
+
+    names = [m["name"] for m in pht["substances_covered"]]
+    assert names == ["DEHP", "DBP", "BBP", "DINP", "DIDP", "DnOP", "DIBP"]
+
+    dibp = next(m for m in pht["substances_covered"] if m["name"] == "DIBP")
+    assert dibp["cas"] == "84-69-5"
+    assert "substances_pending" not in pht, "원문 확인이 끝났으니 pending 은 비어야 한다"
+
+
+def test_rule_book_cites_the_current_gazette():
+    """모든 룰의 legal_basis 는 현행 고시(제2022-220호)를 인용해야 한다.
+
+    원문 텍스트 전체가 아니라 legal_basis 필드만 본다. "2020년판은 6종이었다"
+    같은 이력 주석은 정당하고, 금지 대상은 근거 인용이다.
+    """
+    raw = yaml.safe_load(RULES.read_text(encoding="utf-8"))
+    stale = [
+        r["id"]
+        for r in raw["rules"]
+        if "2019-201" in r.get("legal_basis", "") or "2019-0201" in r.get("legal_basis", "")
+    ]
+    assert not stale, f"폐지된 고시를 인용하는 룰: {stale}"
+    assert all("제2022-220호" in r.get("legal_basis", "") for r in raw["rules"])

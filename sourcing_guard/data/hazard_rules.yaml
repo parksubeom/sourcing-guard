@@ -19,9 +19,9 @@ meta:
   schema_version: 2
   note: "draft 룰은 scorer 에 반영되지 않습니다."
   sources:
-    - id: KC-COMMON-2019-0201
+    - id: KC-COMMON-2022-220
       title: "어린이제품 공통안전기준"
-      decree: "산업통상자원부고시 제2019-0201호(2019.12.3. 개정)"
+      decree: "산업통상자원부고시 제2022-220호 (2022.12.14. 일부개정, 2023.4.1. 시행)"
       effective: "2020-06-04"
       url: "https://www.law.go.kr/행정규칙/어린이제품공통안전기준"
       local_copy: "docs/어린이제품_공통안전기준_2020-06-04시행.pdf"
@@ -50,7 +50,7 @@ rules:
     source_page: 3
     condition: "입에 넣어 사용할 용도로 제작된 어린이제품, 또는 36개월 미만이 사용할 어린이제품 중 도장면(코팅 포함)·합성수지제·종이제"
     test_method: "KS G ISO 8124-3 (4.1.1)"
-    legal_basis: "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2019-0201호)"
+    legal_basis: "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)"
     source_url: "https://www.law.go.kr/행정규칙/어린이제품공통안전기준"
     status: draft
     verified_by: null
@@ -66,7 +66,7 @@ rules:
     source_page: 3
     condition: "입에 넣어 사용할 용도로 제작된 어린이제품, 또는 36개월 미만이 사용할 어린이제품 중 도장면(코팅 포함)·합성수지제·종이제"
     test_method: "KS G ISO 8124-3 (4.1.1)"
-    legal_basis: "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2019-0201호)"
+    legal_basis: "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)"
     source_url: "https://www.law.go.kr/행정규칙/어린이제품공통안전기준"
     status: draft
     verified_by: null
@@ -82,7 +82,7 @@ rules:
     source_page: 3
     condition: "입에 넣어 사용할 용도로 제작된 어린이제품, 또는 36개월 미만이 사용할 어린이제품 중 도장면(코팅 포함)·합성수지제·종이제"
     test_method: "KS G ISO 8124-3 (4.1.1)"
-    legal_basis: "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2019-0201호)"
+    legal_basis: "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)"
     source_url: "https://www.law.go.kr/행정규칙/어린이제품공통안전기준"
     status: draft
     verified_by: null
@@ -98,7 +98,7 @@ rules:
     source_page: 3
     condition: "입에 넣어 사용할 용도로 제작된 어린이제품, 또는 36개월 미만이 사용할 어린이제품 중 도장면(코팅 포함)·합성수지제·종이제"
     test_method: "KS G ISO 8124-3 (4.1.1)"
-    legal_basis: "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2019-0201호)"
+    legal_basis: "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)"
     source_url: "https://www.law.go.kr/행정규칙/어린이제품공통안전기준"
     status: draft
     verified_by: null
@@ -114,7 +114,7 @@ rules:
     source_page: 3
     condition: "입에 넣어 사용할 용도로 제작된 어린이제품, 또는 36개월 미만이 사용할 어린이제품 중 도장면(코팅 포함)·합성수지제·종이제"
     test_method: "KS G ISO 8124-3 (4.1.1)"
-    legal_basis: "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2019-0201호)"
+    legal_basis: "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)"
     source_url: "https://www.law.go.kr/행정규칙/어린이제품공통안전기준"
     status: draft
     verified_by: null
@@ -130,7 +130,7 @@ rules:
     source_page: 3
     condition: "입에 넣어 사용할 용도로 제작된 어린이제품, 또는 36개월 미만이 사용할 어린이제품 중 도장면(코팅 포함)·합성수지제·종이제"
     test_method: "KS G ISO 8124-3 (4.1.1)"
-    legal_basis: "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2019-0201호)"
+    legal_basis: "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)"
     source_url: "https://www.law.go.kr/행정규칙/어린이제품공통안전기준"
     status: draft
     verified_by: null
@@ -150,7 +150,7 @@ rules:
     source_page: 3
     condition: "입에 넣어 사용할 용도로 제작된 어린이제품, 또는 36개월 미만이 사용할 어린이제품 중 도장면(코팅 포함)·합성수지제·종이제"
     test_method: "KS G ISO 8124-3 (4.1.1)"
-    legal_basis: "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2019-0201호)"
+    legal_basis: "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)"
     source_url: "https://www.law.go.kr/행정규칙/어린이제품공통안전기준"
     status: draft
     verified_by: null
@@ -166,7 +166,7 @@ rules:
     source_page: 3
     condition: "입에 넣어 사용할 용도로 제작된 어린이제품, 또는 36개월 미만이 사용할 어린이제품 중 도장면(코팅 포함)·합성수지제·종이제"
     test_method: "KS G ISO 8124-3 (4.1.1)"
-    legal_basis: "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2019-0201호)"
+    legal_basis: "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)"
     source_url: "https://www.law.go.kr/행정규칙/어린이제품공통안전기준"
     status: draft
     verified_by: null
@@ -195,7 +195,7 @@ rules:
         applies: "페인트 및 표면코팅"
     exclusions: ["섬유원단", "전기·전자제품의 기능성 부품(전기연결용 소자 등)", "필기구의 금속 팁"]
     test_method: "부록 A(시료준비) + 부록 B (4.1.2)"
-    legal_basis: "어린이제품 공통안전기준 3.1.2 (산업통상자원부고시 제2019-0201호)"
+    legal_basis: "어린이제품 공통안전기준 3.1.2 (산업통상자원부고시 제2022-220호)"
     source_url: "https://www.law.go.kr/행정규칙/어린이제품공통안전기준"
     status: draft
     verified_by: null
@@ -212,7 +212,7 @@ rules:
     condition: "섬유원단에는 적용하지 않는다."
     exclusions: ["섬유원단"]
     test_method: "부록 A(시료준비) + 부록 B (4.1.2)"
-    legal_basis: "어린이제품 공통안전기준 3.1.2 (산업통상자원부고시 제2019-0201호)"
+    legal_basis: "어린이제품 공통안전기준 3.1.2 (산업통상자원부고시 제2022-220호)"
     source_url: "https://www.law.go.kr/행정규칙/어린이제품공통안전기준"
     status: draft
     verified_by: null
@@ -225,11 +225,11 @@ rules:
     substance: "프탈레이트계 가소제"
     aliases:
       ["phthalate", "프탈레이트", "가소제", "邻苯二甲酸酯",
-       "DEHP", "DBP", "BBP", "DINP", "DIDP", "DnOP", "PVC"]
+       "DEHP", "DBP", "BBP", "DINP", "DIDP", "DnOP", "DIBP", "PVC"]
     applies_to: [children_toy, children_stationery, children_textile]
     limit_value: 0.1
     unit: "%"
-    limit_basis: "6종의 총 합"
+    limit_basis: "7종의 총 합"
     clause: "3.1.3 프탈레이트계 가소제"
     source_page: 3
     condition: "합성수지제(섬유 또는 가죽 등에 코팅된 것을 포함)에 적용한다."
@@ -240,22 +240,19 @@ rules:
       - {name: "DINP", full: "Diisononyl phthalate",        cas: "28553-12-0 또는 68515-48-0"}
       - {name: "DIDP", full: "Diisodecyl phthalate",        cas: "26761-40-0 또는 68515-49-1"}
       - {name: "DnOP", full: "Di-n-octyl phthalate",        cas: "117-84-0"}
+      # DIBP 는 2022-12-14 개정에서 추가됐다. 현행 제2022-220호 p.3 표에서
+      # 원문 확인 완료 (2026-09-01). 2020년판(제2019-201호)은 6종이었다.
+      - {name: "DIBP", full: "Diisobutyl phthalate",         cas: "84-69-5"}
     test_method: "부록 C, GC-MS (4.1.3)"
-    legal_basis: "어린이제품 공통안전기준 3.1.3 (산업통상자원부고시 제2019-0201호)"
+    legal_basis: "어린이제품 공통안전기준 3.1.3 (산업통상자원부고시 제2022-220호)"
     source_url: "https://www.law.go.kr/행정규칙/어린이제품공통안전기준"
     status: draft
     verified_by: null
     verified_at: null
-    # 원문 미확인 물질. substances_covered 로 옮기기 전에는 총합 계산에 넣지 않는다.
-    # 확보한 원문(2020-06-04 시행)은 6종이다. DIBP 는 현행 제2022-0220호를 인용한
-    # 2차 자료에만 있고 원문 대조를 못 했다 (CLAUDE.md R5).
-    substances_pending:
-      - {name: "DIBP", full: "Diisobutyl phthalate", cas: "84-69-5",
-         reason: "2차 자료에만 등장. 제2022-0220호 원문에서 확인 필요"}
     note: >-
-      이전 draft 는 "DnOP·DINP·DIDP 는 입에 넣도록 의도된 완구에 한정" 이라고
-      적었으나, 이 고시 3.1.3 은 6종을 구분 없이 총합 0.1 % 로 규제한다.
-      해당 구분이 완구 부속서나 구버전에 있는지 확인 필요.
+      "DnOP·DINP·DIDP 는 입에 넣도록 의도된 완구에 한정" 은 옛 완구 부속서
+      조항이며 삭제됐다. 현행 3.1.3 은 7종을 구분 없이 총합 0.1 % 로 규제하고,
+      재질(합성수지제) 기준으로만 적용된다.
 
   # --- 3.1.4 니트로사민류 (원문 p.4) --------------------------------------
   # 한도가 적용대상에 따라 두 값으로 갈린다. 원문 각주 1)/2) 참조.
@@ -285,7 +282,7 @@ rules:
       - {name: "N-니트로소피롤리딘", cas: "930-55-2"}
       - {name: "N-니트로소몰폴린", cas: "59-89-2"}
     test_method: "식약처고시 「기구 및 용기·포장의 기준·규격」 Ⅳ. 2-51 (4.1.4)"
-    legal_basis: "어린이제품 공통안전기준 3.1.4 (산업통상자원부고시 제2019-0201호)"
+    legal_basis: "어린이제품 공통안전기준 3.1.4 (산업통상자원부고시 제2022-220호)"
     source_url: "https://www.law.go.kr/행정규칙/어린이제품공통안전기준"
     status: draft
     verified_by: null
@@ -309,7 +306,7 @@ rules:
         unit: "mg/kg"
         applies: "위에 해당하지 않는 36개월 미만 제품의 탄성중합체, 그리고 36개월 이상 제품 중 입에 넣거나 입으로 사용하는 제품의 탄성중합체"
     test_method: "식약처고시 「기구 및 용기·포장의 기준·규격」 Ⅳ. 2-51 (4.1.4)"
-    legal_basis: "어린이제품 공통안전기준 3.1.4 (산업통상자원부고시 제2019-0201호)"
+    legal_basis: "어린이제품 공통안전기준 3.1.4 (산업통상자원부고시 제2022-220호)"
     source_url: "https://www.law.go.kr/행정규칙/어린이제품공통안전기준"
     status: draft
     verified_by: null
@@ -327,7 +324,7 @@ rules:
     source_page: 4
     condition: "개별안전기준이 없는 섬유제품으로, 피부에 접촉하는 경우에 한해 적용"
     test_method: "KS K ISO 14184-1 (4.1.5)"
-    legal_basis: "어린이제품 공통안전기준 3.1.5 (산업통상자원부고시 제2019-0201호)"
+    legal_basis: "어린이제품 공통안전기준 3.1.5 (산업통상자원부고시 제2022-220호)"
     source_url: "https://www.law.go.kr/행정규칙/어린이제품공통안전기준"
     status: draft
     verified_by: null
@@ -344,7 +341,7 @@ rules:
     source_page: 4
     condition: "개별안전기준이 없는 섬유제품으로, 피부에 접촉하는 경우에 한하며 염색한 섬유 부분에만 적용. 대상물질은 KS K 0147, KS K 0739에 따른다."
     test_method: "KS K 0147, KS K 0739 (4.1.6)"
-    legal_basis: "어린이제품 공통안전기준 3.1.5 (산업통상자원부고시 제2019-0201호)"
+    legal_basis: "어린이제품 공통안전기준 3.1.5 (산업통상자원부고시 제2022-220호)"
     source_url: "https://www.law.go.kr/행정규칙/어린이제품공통안전기준"
     status: draft
     verified_by: null
@@ -361,7 +358,7 @@ rules:
     source_page: 4
     condition: "개별안전기준이 없는 섬유제품으로, 피부에 접촉하는 경우에 한해 적용"
     test_method: "KS K ISO 3071 (4.1.7)"
-    legal_basis: "어린이제품 공통안전기준 3.1.5 (산업통상자원부고시 제2019-0201호)"
+    legal_basis: "어린이제품 공통안전기준 3.1.5 (산업통상자원부고시 제2022-220호)"
     source_url: "https://www.law.go.kr/행정규칙/어린이제품공통안전기준"
     status: draft
     verified_by: null
@@ -379,7 +376,7 @@ rules:
     clause: "3.1.6 사용금지 물질"
     source_page: 4
     condition: "사용하거나 검출되어서는 안 된다(전면 금지)."
-    legal_basis: "어린이제품 공통안전기준 3.1.6 (산업통상자원부고시 제2019-0201호)"
+    legal_basis: "어린이제품 공통안전기준 3.1.6 (산업통상자원부고시 제2022-220호)"
     source_url: "https://www.law.go.kr/행정규칙/어린이제품공통안전기준"
     status: draft
     verified_by: null
