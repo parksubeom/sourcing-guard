@@ -470,9 +470,42 @@ REAL_CERT_NUMBERS = [
 
 
 @pytest.mark.parametrize("num", REAL_CERT_NUMBERS)
+def test_extractor_finds_every_real_cert_number(num):
+    """셀러가 붙여넣은 번호를 못 찾으면 조회 자체를 시도하지 않는다.
+
+    이전 정규식은 [A-Z]{2} 를 가정해 B 계열과 소문자 표기를 통째로 놓쳤다.
+    그러면 멀쩡한 인증번호가 '표기 없음' 으로 처리된다.
+    """
+    from sourcing_guard.extractor import extract
+
+    facts = extract(f"유아용 블록 완구 장난감 KC 인증번호 {num} 대상연령 3세", None)
+    assert num in facts.kc_numbers, f"추출 실패: {num}"
+
+
+@pytest.mark.parametrize("num", REAL_CERT_NUMBERS)
 def test_cert_number_survives_recall_field_extraction(num):
     """리콜 certNum 필드에 잡음이 섞여 와도 번호는 살아남아야 한다."""
     assert extract_cert_numbers(f"({num})") == [normalize_kc(num)]
+
+
+def test_extractor_and_client_share_one_pattern():
+    """두 곳에 정규식을 따로 두면 한쪽만 고쳐져 갈라진다."""
+    import inspect
+
+    from sourcing_guard import extractor
+    from sourcing_guard.kats_client import CERT_NUMBER_RE
+
+    assert extractor.CERT_NUMBER_RE is CERT_NUMBER_RE
+
+    # 주석이 아니라 코드 형태를 겨냥한다. 위 주석이 [A-Z]{2} 를 설명하느라
+    # 그 문자열을 담고 있어서, 문자열만 찾으면 스스로에게 걸린다.
+    src = "\n".join(
+        ln for ln in inspect.getsource(extractor).splitlines()
+        if not ln.lstrip().startswith("#")
+    )
+    assert "re.compile" not in src, "추출기에 자체 정규식이 되살아났습니다"
+    assert "[A-Z]{2}" not in src, "추출기에 자체 인증번호 패턴이 되살아났습니다"
+
 
 @pytest.mark.parametrize(
     "raw,numbers,models",

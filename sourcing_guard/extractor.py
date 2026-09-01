@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 
 from .config import settings
+from .kats_client import CERT_NUMBER_RE
 from .models import ItemCategory, ProductFacts
 
 SYSTEM_PROMPT = """\
@@ -72,10 +73,10 @@ def _heuristic_fallback(text: str, url: str | None) -> ProductFacts:
     # 실제 형식은 설계서 예시대로 하이픈이 들어간다: 'JU071047-12002C',
     # 'CB123A123-1234'. 하이픈 패턴을 먼저 두지 않으면 앞부분만 잘려 나가고,
     # 잘린 번호는 조회에 실패해 멀쩡한 인증에 RED 가 뜬다.
-    kc = re.findall(
-        r"[A-Z]{2}[A-Z0-9]{4,}-[A-Z0-9]{3,}|[A-Z]{2}\d{6,}|\bKC[- ]?\d{5,}",
-        unicodedata.normalize("NFKC", text).upper(),
-    )
+    # 인증번호 패턴은 kats_client 의 CERT_NUMBER_RE 하나만 쓴다. 두 곳에 따로
+    # 두면 한쪽만 고쳐져 갈라진다 — 실제로 이 자리의 [A-Z]{2} 가정 때문에
+    # B 계열(학용품 리콜의 36%)을 셀러가 붙여넣어도 조회를 시도조차 안 했다.
+    kc = CERT_NUMBER_RE.findall(unicodedata.normalize("NFKC", text))
     m = re.search(r"(?:모델명|모델|型号|model)\s*[:：]?\s*([A-Za-z0-9][A-Za-z0-9\-_]{2,})", text, re.I)
     cat = ItemCategory.UNCLASSIFIED
     if any(w in text for w in ("완구", "장난감", "블록", "toy")):
