@@ -292,3 +292,43 @@ def test_green_is_not_scored_to_zero_by_applicable_rules():
 
     assert result.signal is Signal.GREEN
     assert result.score == 100, "적용 룰 개수가 점수를 깎고 있습니다"
+
+
+# --- 셀러 관점 헤드라인 ----------------------------------------------------
+def test_every_signal_has_a_sourcing_headline():
+    """네 신호 모두 '소싱해도 되나?' 에 답하는 한 줄을 가져야 한다."""
+    from sourcing_guard.scorer import _HEADLINE
+    from sourcing_guard.models import Signal
+
+    for sig in Signal:
+        assert sig in _HEADLINE and _HEADLINE[sig].strip()
+
+
+def test_green_headline_never_promises_safety():
+    """GREEN 은 '판매자 제공 정보 기준' 을 명시해 안전 보증으로 읽히지 않는다 (§6.1).
+
+    이 단서가 사라지면 사후 리콜 책임이 우리에게 온다. 사업 모델의 전제다.
+    """
+    from sourcing_guard.scorer import _HEADLINE
+    from sourcing_guard.models import Signal
+
+    green = _HEADLINE[Signal.GREEN]
+    assert "판매자 제공 정보" in green
+    assert "시험성적서" in green
+    # 안전을 단정하는 표현이 없어야 한다
+    for word in ("안전합니다", "문제없습니다", "이상 없음", "합법"):
+        assert word not in green
+
+
+def test_out_of_scope_headline_points_to_the_right_authority():
+    """소관 밖은 '공급처 확인' 이 아니라 '다른 부처 소관' 이라고 말해야 한다."""
+    from sourcing_guard.models import ProductFacts
+    from sourcing_guard.kats_client import KatsClient
+    from sourcing_guard.verifier import RuleBook, verify
+
+    facts = ProductFacts(
+        product_name="약산성 클렌징폼", substances_mentioned=["화장품책임판매업자"]
+    )
+    result = score(facts, verify(facts, KatsClient(None, None, mock=True), RuleBook(), None))
+    assert "소관" in result.headline
+    assert "공급처에 아래 항목" not in result.headline
