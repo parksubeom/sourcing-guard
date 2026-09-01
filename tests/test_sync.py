@@ -368,3 +368,71 @@ def test_half_finished_load_is_not_marked_complete(store):
 
     assert store.get_sync_state("initial_load_at") is None
     assert store.recall_count() == 0
+
+
+# ---------------------------------------------------------------------------
+# 갱신 후 인덱스 무효화 — "처음 본 uid" 가 아니라 "무언가 썼는가"
+#
+# 제조사 필드를 바꾸고 전량 재적재했는데, 이미 알던 레코드라 new=0 이 나와
+# invalidate 가 안 불렸다. 디스크는 새 값인데 서빙 인덱스가 옛 값을 계속
+# 들고 있었다 - 프로덕션에서 '이케아' 조회가 옛 기준 28건을 돌려줬다.
+# ---------------------------------------------------------------------------
+
+
+def test_index_is_invalidated_when_known_records_are_rewritten(monkeypatch, tmp_path):
+    """새 uid 가 없어도 갱신했으면 인덱스를 다시 읽혀야 한다.
+
+    정부가 기존 공표 내용을 정정하면 uid 는 그대로다. new=0 을 조건으로 두면
+    정정된 내용이 앱 재시작 전까지 반영되지 않는다.
+    """
+    from sourcing_guard import sync as sync_mod
+
+    calls = []
+
+    class Store:
+        def get_sync_state(self, key):
+            return "2026-09-01T00:00:00+00:00" if key == "initial_load_at" else None
+
+        def set_sync_state(self, key, value):
+            pass
+
+        def recall_count(self):
+            return 37313
+
+        def known_recall_uids(self, scope):
+            return set()
+
+        def commit_full_load(self, batches, **kw):
+            # 전부 이미 알던 uid — 신규 0건
+            return {scope: 0 for scope in batches}
+
+    class Kats:
+        def recalls_all(self, *, overseas=False):
+            return [_rec(uid="1")]
+
+        def recalls_published_on(self, window, *, overseas=False):
+            return [_rec(uid="1")]
+
+    def _rec(uid):
+        from sourcing_guard.kats_client import RecallRecord
+
+        return RecallRecord(
+            product_name="완구", model_name="A-1", maker="이케아", reason="기준 초과",
+            announced_on="20260801", detail_url="https://www.safetykorea.kr/x",
+            scope="domestic", uid=uid,
+        )
+
+    report = sync_mod.run_sync(
+        Kats(), Store(), force_initial=True, on_updated=lambda: calls.append(1)
+    )
+    assert not any(report.new.values()), "이 시나리오는 신규 0건이어야 의미가 있다"
+    assert calls, "갱신했는데 인덱스 무효화가 호출되지 않았습니다"
+
+
+def test_invalidate_condition_is_not_based_on_new_uids():
+    """구현이 다시 report.new 기준으로 돌아가지 않게 고정한다."""
+    from pathlib import Path
+
+    src = Path("sourcing_guard/sync.py").read_text(encoding="utf-8")
+    body = "\n".join(l for l in src.splitlines() if not l.lstrip().startswith("#"))
+    assert "any(report.new.values())" not in body
