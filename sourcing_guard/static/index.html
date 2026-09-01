@@ -63,9 +63,10 @@
       <p class="kc-note">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
              stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 16.5v-5"/><path d="M12 8v.2"/></svg>
-        <span><b>인증번호는 이미지에서 읽지 않습니다.</b> 숫자 0 과 영문 O 를 잘못 읽으면 정상 인증이
-          &ldquo;조회 안 됨&rdquo;으로 뒤집히기 때문입니다. KC 인증번호는 위 입력란에 직접 적어 주세요.
-          이미지와 함께 보낼 수 있습니다.</span>
+        <span><b>이미지의 KC 마크에서 인증번호를 읽습니다. 다만 바로 조회하지는 않습니다.</b>
+          숫자 0 과 영문 O 를 잘못 읽으면 정상 인증이 &ldquo;조회 안 됨&rdquo;으로 뒤집히기 때문입니다.
+          읽은 번호를 결과 화면에 보여드리니 맞는지 확인한 뒤 조회해 주세요.
+          위 입력란에 직접 적으면 확인 없이 바로 조회합니다.</span>
       </p>
 
       <ul class="shots" id="shots" aria-live="polite" aria-label="붙여넣은 이미지"></ul>
@@ -277,12 +278,30 @@
     return '<div class="read"><h4>이 페이지에서 이렇게 읽었습니다</h4><dl>' + rows + "</dl></div>";
   }
 
+  // 이미지에서 읽은 인증번호는 셀러 확인 후에 조회한다. 번호를 입력란에 넣어
+  // 주면 (1) 눈으로 확인하고 (2) 잘못 읽힌 글자를 고칠 수 있고 (3) 검사를
+  // 누르면 텍스트 경로로 들어가 자동 조회된다 — 경로를 새로 만들지 않는다.
+  function confirmRow(f) {
+    var nums = (f.detail && f.detail.candidates) || [];
+    if (!nums.length) return "";
+    return '<p class="confirm">' +
+      nums.map(function (n) {
+        return '<button class="btn-t sm" type="button" data-kc="' + esc(n) + '">' +
+               "이 번호로 조회 · " + esc(n) + "</button>";
+      }).join("") +
+      '<span class="sub">번호가 다르면 위 입력란에서 고친 뒤 다시 검사해 주세요.</span></p>';
+  }
+
   function findingRow(f) {
     var basis = f.legal_basis ? '<span class="tag">' + esc(f.legal_basis) + "</span>" : "";
     // 같은 제조사의 다른 리콜은 이 상품의 위험이 아니라 공급처 참고 정보다.
     // 리콜 일치(빨강)와 같은 모양으로 그리면 셀러가 "이 상품이 리콜됐다" 로
     // 읽는다. 서버 문장에 단서가 붙어 있고, 화면에서도 표시를 달리 준다.
-    var aside = f.kind === "maker_other_recalls" ? " aside" : "";
+    // 약한 일치도 같은 취급이다. 제조사와 제품명 단어만 겹친 것이라 "이 상품이
+    // 리콜됐다" 가 아니다. 리콜 일치(빨강)와 같은 모양으로 그리면 문장을 읽기
+    // 전에 판단한다.
+    var aside = (f.kind === "maker_other_recalls" || f.kind === "recall_weak_match")
+      ? " aside" : "";
     // 인증번호가 없는 경우의 검색 링크는 셀러가 다음에 할 일이라 버튼으로 낸다.
     // 나머지 근거 링크는 읽을거리라 본문 링크로 둔다.
     var isAction = f.kind === "kc_missing_but_required";
@@ -292,9 +311,11 @@
         ? goLink(f.source_url, f.source_label || "정부 사이트에서 직접 검색")
         : '<a href="' + esc(f.source_url) + '" target="_blank" rel="noopener noreferrer">'
           + esc(f.source_label || "근거 원문") + " (새 창)</a>";
+    var confirm = f.kind === "kc_image_candidate" ? confirmRow(f) : "";
     return '<li class="' + esc(f.kind) + aside + '">' +
            '<span class="tick ' + esc(f.signal) + '" aria-hidden="true"></span>' +
            '<div class="f-body"><p class="f-text">' + esc(f.statement_ko) + "</p>" +
+           confirm +
            '<p class="f-meta">' + basis + link + "</p></div></li>";
   }
 
@@ -330,7 +351,26 @@
     if (data.extraction_note) html += '<p class="scope">' + esc(data.extraction_note) + "</p>";
     if (data.coverage_note) html += '<p class="scope">' + esc(data.coverage_note) + "</p>";
 
-    html += '<ul class="findings">' + main.map(findingRow).join("") + "</ul>";
+    // 서버가 셀러 관점 구획으로 묶어 보낸다 — 소싱하려면 확인할 것 / 확인된
+    // 문제 / 참고. "리콜 목록과 일치" 만 한 줄로 내면 셀러가 유사 일치와
+    // 확정 일치를 구분하지 못한다 ("펜인데 왜 블라인드?").
+    //
+    // 서버 순서를 그대로 쓴다. 프론트가 다시 정렬하면 판정 기준이 두 벌이 된다.
+    var groups = (data.grouped_findings || []).filter(function (g) {
+      return (g.findings || []).some(function (f) { return f.kind !== "hazard_rule_applies"; });
+    });
+    if (groups.length) {
+      html += groups.map(function (g) {
+        var rows = (g.findings || [])
+          .filter(function (f) { return f.kind !== "hazard_rule_applies"; })
+          .map(findingRow).join("");
+        return '<div class="fgroup ' + esc(g.group) + '">' +
+               '<h4>' + esc(g.header) + "</h4>" +
+               '<ul class="findings">' + rows + "</ul></div>";
+      }).join("");
+    } else {
+      html += '<ul class="findings">' + main.map(findingRow).join("") + "</ul>";
+    }
 
     if (rules.length) {
       html += '<details class="rules"><summary>' +
@@ -362,6 +402,21 @@
 
     var wb = document.getElementById("watch");
     if (wb) wb.addEventListener("click", registerWatch);
+
+    // 이미지에서 읽은 번호를 입력란에 넣고 다시 검사한다. 번호는 텍스트 경로로
+    // 들어가므로 그때부터는 다른 인증번호와 똑같이 자동 조회된다.
+    res.querySelectorAll("button[data-kc]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var num = b.getAttribute("data-kc");
+        if (pt.value.indexOf(num) < 0) {
+          pt.value = (pt.value ? pt.value.replace(/\s*$/, "") + "
+" : "") +
+                     "KC 인증번호 " + num;
+        }
+        updateCount();
+        scan();
+      });
+    });
   }
 
   function ctaMessage(html) {

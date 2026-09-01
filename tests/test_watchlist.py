@@ -4,7 +4,7 @@ from datetime import date
 
 import pytest
 
-from sourcing_guard.kats_client import RecallRecord, extract_model_hints
+from sourcing_guard.kats_client import RecallRecord, extract_model_hints, split_list_field
 from sourcing_guard.models import MatchStrength, RecallAlert, WatchItem, WatchStatus
 from sourcing_guard.watchlist import match, normalize_model, recall_fingerprint, sweep
 
@@ -283,3 +283,101 @@ def test_maker_gate_checks_both_sides_are_non_empty():
     )
     assert "if watched_maker and recall_maker and watched_maker == recall_maker:" in body
     assert "normalize_model(item.maker) == normalize_model(r.maker)" not in body
+
+
+# ---------------------------------------------------------------------------
+# 식별력 강등 — "펜을 검사했는데 블라인드가 뜬다"
+#
+# 프로덕션 실측(2026-09-01) 결과 오탐이 두 갈래였고, 둘 다 매칭 자체는 규칙대로
+# 동작한 것이었다. 문제는 맞은 문자열에 식별력이 없다는 것이다.
+#
+#   '153'   숫자만 3자      정확 일치 1건  2014 국외 'LED 전등'
+#   'M1000' 글자 1 + 숫자   포함 일치 6건  잔디깎이·전기냄비·유아용 드레스 …
+#
+# 임계값을 올려 없애지 않고 강도를 낮춘다. 없애면 진짜 '153' 리콜을 놓치고,
+# 놓친 알림은 이 서비스가 하는 유일한 약속을 깨뜨린다 (R6). 강등하면 알림은
+# 계속 나가되 빨간불만 꺼진다.
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("digits", ["153", "1000", "12345"])
+def test_digits_only_model_is_demoted_not_dropped(digits):
+    """숫자만인 짧은 모델명은 서로 다른 상품이 우연히 공유한다."""
+    m = match(item(model_name=digits), recall(model_name=digits))
+    assert m is not None, "버리면 진짜 일치를 놓친다 (R6)"
+    assert m.strength is MatchStrength.WEAK
+
+
+def test_long_digits_only_model_stays_exact():
+    """자릿수가 충분하면 숫자만이어도 우연 충돌이 아니다."""
+    m = match(item(model_name="123456"), recall(model_name="123456"))
+    assert m is not None and m.strength is MatchStrength.EXACT
+
+
+@pytest.mark.parametrize("model", ["BLK-100", "솔로-X", "GP500"])
+def test_models_with_letters_stay_exact(model):
+    m = match(item(model_name=model), recall(model_name=model))
+    assert m is not None and m.strength is MatchStrength.EXACT
+
+
+# 프로덕션 /api/v1/scan 이 실제로 돌려준 리콜 모델명 원문이다. 가공하지 않았다.
+@pytest.mark.parametrize("recalled", [
+    "TK-500, TK-1000, AM-1000PTK",                       # 휴대용 축전지
+    "1 HRM1000 MCJF1000031 - MCJF1005100 2 HRM1500",     # 로봇 잔디깎이
+    "HRM1000, HRM1500, HRM2500, HRM4000",                # 잔디깎이 로봇
+    "AJ-26LZ 26cm 1000W 220V~50Hz ",                     # 전기 냄비
+    '"3*2 LARGE CURTAIN LIGHTS-WARM WHITE BYC100M1000D"',  # 체인형 조명기구
+    "JM1000/1001/1002/1003",                             # 유아용 드레스
+])
+def test_single_letter_containment_is_demoted(recalled):
+    """'M1000' 은 다른 모델 코드 안에 우연히 들어간다.
+
+    중성펜 'M-1000' 하나로 저 여섯 건이 전부 빨간불이었다.
+    """
+    r = recall(model_name=recalled,
+               models=split_list_field(recalled) + extract_model_hints(recalled))
+    m = match(item(model_name="M-1000"), r)
+    assert m is not None, "버리지는 않는다"
+    assert m.strength is MatchStrength.WEAK
+
+
+def test_containment_with_real_signal_stays_strong():
+    """글자가 둘 이상이면 포함 일치를 그대로 인정한다."""
+    m = match(item(model_name="MB-120"), recall(model_name="MB-120S"))
+    assert m is not None and m.strength is MatchStrength.STRONG
+
+
+def test_cert_number_match_is_never_demoted():
+    """인증번호는 형태가 정해진 하드 데이터라 우연 충돌이 다르다."""
+    m = match(
+        item(model_name="153", kc_numbers=["CB061R2170-3018"]),
+        recall(model_name="153", cert_numbers=["CB061R2170-3018"]),
+    )
+    assert m is not None and m.strength is MatchStrength.EXACT
+    assert m.matched_on == "kc_number"
+
+
+def test_weak_model_match_does_not_hide_a_stronger_axis():
+    """축을 전부 재고 가장 강한 것을 낸다.
+
+    첫 히트에서 반환하던 구현이라면 모델명 약한 일치가 인증번호 정확 일치를
+    가렸다. 그러면 진짜 일치가 참고로 내려간다.
+    """
+    m = match(
+        item(model_name="1000", kc_numbers=["CB067R317-5002"]),
+        recall(model_name="1000", cert_numbers=["CB067R317-5002"]),
+    )
+    assert m is not None and m.strength is MatchStrength.EXACT
+
+
+def test_alerts_still_fire_for_demoted_matches():
+    """강등은 알림을 끄지 않는다. 강도만 바뀐다 (R6)."""
+    alerts = sweep(
+        [item(model_name="153")],
+        [recall(model_name="153", product_name="LED 전등", scope="overseas")],
+        today=TODAY,
+    )
+    assert len(alerts) == 1
+    assert alerts[0].strength is MatchStrength.WEAK
+    assert "LED 전등" in alerts[0].statement_ko
+    assert "모델명" in alerts[0].statement_ko

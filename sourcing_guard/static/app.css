@@ -217,8 +217,34 @@ textarea:focus{border-color:var(--primary-50); outline:2px solid var(--border-fo
 @media (max-width:640px){ .findings>li{padding:var(--s4) var(--s5)} }
 /* 공급처 참고 정보. 이 상품의 판정이 아니라는 것이 눈에 보여야 한다 -
  * 리콜 일치와 같은 모양으로 그리면 셀러가 '이 상품이 리콜됐다' 로 읽는다. */
+/* ── 셀러 관점 구획 ───────────────────────────────────────
+ *
+ * 소싱하려면 확인할 것 / 확인된 문제 / 참고. 순서와 제목은 서버가 준다.
+ * 확정 일치와 유사 일치가 같은 목록에 섞이면 셀러가 구분하지 못한다 -
+ * "펜을 검사했는데 왜 블라인드가 뜨나" 가 실제로 나온 질문이다.
+ */
+.fgroup{border-bottom:1px solid var(--border-default)}
+.fgroup:last-of-type{border-bottom:0}
+.fgroup>h4{
+  margin:0; padding:var(--s3) var(--s6) var(--s1);
+  font-size:13px; font-weight:700; letter-spacing:.01em; color:var(--fg-3);
+}
+.fgroup.action>h4{color:var(--primary-70)}
+.fgroup.finding>h4{color:var(--danger)}
+.fgroup.context{background:var(--gray-5)}
+@media (max-width:640px){ .fgroup>h4{padding:var(--s3) var(--s5) var(--s1)} }
+
 .findings>li.aside{background:var(--gray-5)}
 .findings>li.aside .f-text{color:var(--fg-2)}
+
+/* 이미지에서 읽은 인증번호 확인. 자동 조회하지 않는 이유는 문장에 있고,
+ * 여기서는 확인·수정 후 조회로 넘어가는 버튼만 준다. */
+.confirm{margin:var(--s3) 0 0; display:flex; flex-wrap:wrap; gap:var(--s2); align-items:center}
+.confirm .sub{font-size:13px; color:var(--fg-3)}
+.btn-t.sm{height:38px; padding:0 var(--s3); font-size:15px; font-weight:700;
+  border-color:var(--primary-50); color:var(--primary-60)}
+.btn-t.sm:hover{background:var(--primary-10); border-color:var(--primary-60)}
+
 
 .tick{width:8px; border-radius:999px; flex:none; margin:6px 0 auto; align-self:stretch; min-height:8px; max-height:8px}
 .tick.GREEN{background:var(--success)} .tick.AMBER{background:var(--warning)}

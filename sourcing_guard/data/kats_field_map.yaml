@@ -247,6 +247,16 @@ public_urls:
   # 그건 POST 전용이라 GET 으로 열면 405 다(아래 unusable_urls). 그래서 순수
   # 링크로 두고 검색어는 화면 문구로 안내한다.
   item_search: "https://www.safetykorea.kr/release/itemSearch"
+  # 리콜 공표 목록. 리콜 근거 링크의 대체 주소다.
+  #
+  # 국내 리콜 응답에는 상세 URL 필드가 아예 없고(recallUid 만 온다), 국외는
+  # recallUrl 이 오지만 원출처가 외국 기관이라 만료된 것이 섞인다. 지금까지는
+  # 둘 다 메인페이지(safetykorea.kr/)로 떨어뜨렸는데, 메인페이지는 근거가
+  # 아니다 - 셀러가 눌러도 해당 리콜을 찾을 수 없다 (R2 의 취지).
+  #
+  # 실측 2026-09-01: 200, 51,797 bytes. 메인페이지(52,437 bytes)와 다른 문서이고
+  # '공표일' 컬럼이 있어 리콜 목록 화면임을 확인했다.
+  recall_board: "https://www.safetykorea.kr/recall/recallBoard"
 
 # ⚠ 아래 두 주소는 근거 링크로 쓰지 않는다. 기록용으로만 남긴다.
 #

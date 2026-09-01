@@ -293,15 +293,49 @@ def test_image_types_match_the_server_allowlist(pages):
     assert "MAX_SHOTS = 4" in index
 
 
-def test_kc_number_is_not_read_from_images_and_the_screen_says_so(pages):
-    """추출기가 이미지에서 인증번호를 읽지 않는다. 화면이 그 사실과 이유를 적어야 한다.
+def test_screen_explains_the_two_paths_for_cert_numbers(pages):
+    """이미지에서 읽되 바로 조회하지 않는다는 것을 화면이 말해야 한다.
 
-    안 적으면 셀러는 캡처만 붙이고 "인증번호가 조회되지 않았습니다" 를 보게
-    되는데, 그건 상품 문제가 아니라 입력 방법 문제다.
+    이전에는 "이미지에서 읽지 않습니다" 였다. 그러면 KC 마크만 붙은 상세페이지가
+    "인증번호 없음" 으로 처리되는데, KC 마크 이미지는 규정상 유효한 기재라
+    실제로는 있는 인증을 안 본 것이다 (R3).
+
+    그렇다고 바로 조회하면 0/O 오독 하나가 정상 인증을 "조회 안 됨" 으로
+    뒤집는다. 그래서 경로가 둘이고, 화면이 그 차이를 설명해야 한다 - 안 적으면
+    셀러는 왜 어떤 번호는 바로 조회되고 어떤 번호는 확인을 요구하는지 모른다.
     """
     index = pages["index.html"]
-    assert "인증번호는 이미지에서 읽지 않습니다" in index
-    assert "직접 적어" in index
+    assert "바로 조회하지는 않습니다" in index
+    assert "확인한 뒤 조회" in index
+    # 텍스트 경로는 그대로 자동 조회라는 것도 남아 있어야 한다
+    assert "직접 적으면 확인 없이 바로 조회" in index
+
+
+def test_image_read_numbers_get_a_confirm_button(pages):
+    """이미지에서 읽은 번호는 확인 버튼으로 나가야 한다.
+
+    문장만 내면 셀러가 번호를 손으로 옮겨 적어야 하고, 그 자리에서 이탈한다.
+    버튼은 번호를 입력란에 넣고 다시 검사한다 - 그때부터는 텍스트 경로라
+    자동 조회된다. 조회 경로를 새로 만들지 않는 것이 요점이다.
+    """
+    index = pages["index.html"]
+    assert 'f.kind === "kc_image_candidate"' in index
+    assert "detail.candidates" in index
+    assert "data-kc" in index
+
+
+def test_findings_are_rendered_in_server_groups(pages):
+    """서버가 묶어준 구획을 그대로 그려야 한다.
+
+    확정 일치와 유사 일치가 한 목록에 섞이면 셀러가 구분하지 못한다 - 실제로
+    "펜을 검사했는데 왜 블라인드가 뜨나" 라는 질문이 나왔다. 프론트가 다시
+    정렬하면 판정 기준이 두 벌이 되므로 서버 순서를 그대로 쓴다.
+    """
+    index = pages["index.html"]
+    assert "grouped_findings" in index
+    assert 'class="fgroup ' in index
+    # 약한 일치는 리콜 일치와 같은 모양으로 그리지 않는다
+    assert 'f.kind === "recall_weak_match"' in index
 
 
 def test_pasting_plain_text_is_not_intercepted(pages):
