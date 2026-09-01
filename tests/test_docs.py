@@ -146,3 +146,59 @@ def test_rule_book_cites_the_current_gazette():
     ]
     assert not stale, f"폐지된 고시를 인용하는 룰: {stale}"
     assert all("제2022-220호" in r.get("legal_basis", "") for r in raw["rules"])
+
+
+# ---------------------------------------------------------------------------
+# 시험방법·쪽번호 — 기준치만 대조하면 이 필드들이 틀린 채로 verified 가 된다.
+#
+# 실제로 그럴 뻔했다. 첫 대조는 기준치와 CAS 만 봤고, 시험방법 3건과 쪽번호
+# 8건이 원문과 다른 채로 남아 있었다 (2026-09-02 원문 재확인으로 정정).
+# ---------------------------------------------------------------------------
+
+
+def _rules() -> dict:
+    raw = yaml.safe_load(RULES.read_text(encoding="utf-8"))
+    return {r["id"]: r for r in raw["rules"]}
+
+
+def test_nitrosamine_test_method_matches_the_decree():
+    """원문 p.8 4.1.4 는 부속서 6 을 가리킨다. 식약처고시가 아니다.
+
+    출처가 아예 다른 문서라, 셀러가 이걸 보고 엉뚱한 규격으로 시험을 의뢰하게
+    된다. 기준치가 맞다고 룰 전체가 맞는 것이 아니다.
+    """
+    by_id = _rules()
+    for rule_id in ("KC-COMMON-3.1.4-NITROSAMINE", "KC-COMMON-3.1.4-NITROSATABLE"):
+        method = by_id[rule_id]["test_method"]
+        assert "부속서 6" in method, f"{rule_id}: 원문 p.8 4.1.4 와 다릅니다"
+        assert "식약처" not in method, f"{rule_id}: 폐기된 출처가 되살아났습니다"
+
+
+def test_phthalate_test_method_does_not_invent_an_analysis_technique():
+    """원문 p.8 4.1.3 은 "부록 C에 따른다" 뿐이다.
+
+    부록 C 는 확보한 9쪽 PDF 에 없다. 분석기법을 적으려면 부록 확보 후에 한다 (R5).
+    """
+    method = _rules()["KC-COMMON-3.1.3-PHT"]["test_method"]
+    assert "부록 C" in method
+    assert "GC-MS" not in method, "원문에 없는 분석기법이 되살아났습니다 (R5)"
+
+
+def test_source_pages_match_the_current_decree():
+    """현행 제2022-220호의 쪽 배치. 2020년판과 다르다 (3.1.1 이 p.3 -> p.2)."""
+    expected_by_clause = {"3.1.1": 2, "3.1.2": 3, "3.1.3": 3,
+                          "3.1.4": 4, "3.1.5": 4, "3.1.6": 4}
+    for rule_id, rule in _rules().items():
+        clause = rule["clause"].split()[0]
+        want = expected_by_clause[clause]
+        assert rule["source_page"] == want, (
+            f"{rule_id}: source_page {rule['source_page']} != 원문 p.{want}"
+        )
+
+
+def test_promoted_rules_carry_the_current_decree_number():
+    """폐지된 고시 번호로 verified 를 달면 근거가 틀린 채로 프로덕션에 나간다."""
+    for rule_id, rule in _rules().items():
+        if rule.get("status") != "verified":
+            continue
+        assert "제2022-220호" in rule["legal_basis"], rule_id
