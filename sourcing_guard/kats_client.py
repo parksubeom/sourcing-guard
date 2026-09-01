@@ -16,6 +16,7 @@ pipeline is developable and testable on day 1.
 from __future__ import annotations
 
 import logging
+import re
 import unicodedata
 from dataclasses import dataclass, field
 from enum import Enum
@@ -124,24 +125,136 @@ def classify_cert_state(raw: str | None, states: dict[str, list[str]]) -> CertSt
 # 리콜 레코드의 certNum 에는 인증번호 대신 자리표시자 문자열이 오기도 한다.
 # 설계서 p.10 예시의 "공급자적합성" 이 그것이다. 인증번호로 취급해 매칭에 쓰면
 # 서로 다른 상품이 같은 자리표시자를 공유해 엉뚱하게 일치한다.
-CERT_PLACEHOLDERS = frozenset({"공급자적합성", "해당없음", "해당사항없음", "-", "없음", "N/A"})
+# 명시 목록은 로그 노이즈를 줄이는 용도다. 판별의 원칙은 아래 is_cert_number()
+# 에 있다 — 인증번호 패턴을 하나도 못 찾으면 자리표시자로 본다. 그래야
+# 미등록 신종("비대상" 54건, "공급자적합성대상" 19건이 그랬다)도 자동으로 걸린다.
+CERT_PLACEHOLDERS = frozenset({
+    "공급자적합성", "공급자적합성대상", "비대상",
+    "해당없음", "해당사항없음", "없음", "N/A", "-",
+    "(제품에 표시 없음)", "(인증모델: )",
+})
 
 
 def is_cert_number(value: str) -> bool:
-    """실제 인증번호처럼 보이는가. 자리표시자와 구분한다."""
+    """실제 인증번호처럼 보이는가. 자리표시자와 구분한다.
+
+    판별 원칙: CERT_NUMBER_RE 가 인증번호를 하나도 못 찾으면 자리표시자다.
+    완전 일치 목록만 쓰면 새 자리표시자가 나올 때마다 통과한다 — 실제로
+    "비대상"(54건), "공급자적합성대상"(19건)이 목록에 없어 통과하고 있었다.
+    전화번호로 보이는 "0505-502-0100" 도 이 원칙으로 자동으로 걸린다.
+
+    자리표시자를 인증번호로 취급하면 같은 값을 가진 서로 다른 상품이 전부
+    일치로 잡힌다.
+    """
     v = (value or "").strip()
-    return bool(v) and v not in CERT_PLACEHOLDERS
+    if not v or v in CERT_PLACEHOLDERS:
+        return False
+    return bool(CERT_NUMBER_RE.search(_denoise(v)))
+
+
+# 인증번호 패턴. 리콜 실데이터 약 1,700건(완구·학용품·아동섬유·전기용품,
+# 2026-09-01)으로 확정했다. 설계서에는 형태 규정이 없어 실측으로 정했다.
+#
+#   접두 1~2글자   B363R871-5002   ← B계열이 네 품목군 전부에 있고 학용품은 36%
+#   대소문자 무시   cb064a3166-2004chC
+#   하이픈 뒤 접미  -5003CH, -2004chC (1글자가 아니다)
+#
+# 접두 4·6·7글자가 각 1건 있으나(아동섬유) 1,700건 중 3건이라 버린다.
+# 놓쳐도 모델명 매칭이 남는다.
+CERT_NUMBER_RE = re.compile(r"(?i)\b[A-Z]{1,2}\d{2,}[A-Z]?\d*-\d+[A-Z0-9]{0,4}\b")
+
+# 실데이터에 HTML 조각이 그대로 들어온다(완구 certNum 96건). 구분자로 다루지 않고
+# 잡음으로 지운다 — 구분자를 열거해 자르는 방식은 새 구분자가 나오면 깨진다.
+_NOISE_RE = re.compile(r"<\s*br\s*/?\s*>?|[\r\n]+", re.I)
+# 한 겹 중첩까지 받는다. "(인증모델 : RC미니카(New 배틀미니 레이서))" 같은 값이
+# 실데이터에 9건 있고, [^)]* 로는 안쪽 괄호에서 끊겨 이름이 잘린다.
+_PAREN_RE = re.compile(r"\((?:([^()]*(?:\([^()]*\)[^()]*)*))\)")
+
+# 판매 채널 표시이지 모델명이 아니다(실데이터 9건). 모델 후보에 넣으면 서로 다른
+# 상품이 "온라인" 하나로 엮인다.
+_NOT_A_MODEL = {"온라인", "오프라인", "제품", "-", "–", "—"}
+# 괄호 안 라벨. "(인증모델 : 대왕버블건)" 에서 값만 남긴다.
+_MODEL_LABEL_RE = re.compile(r"^\s*(?:인증)?모델(?:명)?\s*[:：]?\s*", re.I)
+
+
+def _denoise(raw: Any) -> str:
+    return _NOISE_RE.sub(" ", str(raw)) if raw not in (None, "") else ""
+
+
+def extract_cert_numbers(raw: Any) -> list[str]:
+    """문자열에서 인증번호를 전부 찾아낸다 (화이트리스트 추출).
+
+    구분자로 자르지 않는다. 실데이터의 구분자는 콤마만이 아니라 슬래시·괄호·
+    <br>·줄바꿈·공백이 뒤섞여 있고, 새 형태가 계속 나온다. "어떻게 자를까"
+    대신 "무엇을 찾을까" 로 접근하면 구분자가 늘어도 깨지지 않는다.
+
+        '(배터리) ZU10282-19001, (충전기)SU07706-17003'
+            -> ['ZU10282-19001', 'SU07706-17003']
+
+    통짜 문자열로 비교하면 다중 인증번호 리콜을 전부 놓친다. 놓친 알림은 이
+    서비스가 하는 유일한 약속을 깨뜨린다 (CLAUDE.md R6).
+    """
+    seen: list[str] = []
+    for m in CERT_NUMBER_RE.findall(_denoise(raw)):
+        v = normalize_kc(m)
+        if v and v not in seen:
+            seen.append(v)
+    return seen
+
+
+def extract_model_hints(raw: Any) -> list[str]:
+    """인증번호를 걷어낸 나머지에서 모델명 후보를 꺼낸다.
+
+    certNum 필드에 "(인증모델 : 대왕버블건)" 처럼 모델명이 함께 오는 경우가
+    완구만 110건이다. 버리면 매칭 단서를 잃는다 (CLAUDE.md R6 — 알림은 놓치는
+    쪽이 훨씬 비싸다).
+
+    모델명과 인증번호를 쌍으로 묶지는 않는다. 각각을 후보 목록에 넣는 것만으로
+    매칭은 되고, 쌍 파싱은 정확도 대비 복잡도가 맞지 않는다 (v1 범위).
+    """
+    text = _denoise(raw)
+    hints: list[str] = []
+
+    def _add(v: str) -> None:
+        v = _MODEL_LABEL_RE.sub("", v).strip().strip("-–—:：<>").strip()
+        if not v or len(v) < 2 or v in _NOT_A_MODEL:
+            return
+        if CERT_NUMBER_RE.fullmatch(v) or v not in hints:
+            if not CERT_NUMBER_RE.fullmatch(v):
+                hints.append(v)
+
+    # ① 괄호 안 — "(인증모델 : 대왕버블건)" 형태 (완구만 110건)
+    for inner in _PAREN_RE.findall(text):
+        _add(inner)
+
+    # ② 괄호 밖 잔여 텍스트 — 인증번호와 괄호를 걷어낸 나머지.
+    #    "WF24A95** : HU072172-21013 / WF25B96** : HU072172-22017" 처럼
+    #    모델명이 괄호 없이 인증번호와 나란히 오는 형태를 잡는다.
+    #    쌍으로 묶지는 않는다 — 각각 후보에 넣는 것만으로 매칭은 되고,
+    #    쌍 파싱은 정확도 대비 복잡도가 맞지 않는다 (v1 범위).
+    residual = _PAREN_RE.sub(" ", text)
+    residual = CERT_NUMBER_RE.sub(" ", residual)
+    for token in re.split(r"[,/:：]", residual):
+        _add(token)
+
+    return hints
 
 
 def split_list_field(raw: Any) -> list[str]:
-    """recallModelName / certNum 은 콤마로 묶인 목록이다 (설계서 p.11, p.14).
+    """모델명 목록 분해. 인증번호와 달리 형태 규칙이 없어 구분자로 자른다.
 
-    통짜 문자열로 비교하면 다중 모델 리콜을 전부 놓친다. 놓친 알림은 이 서비스가
-    하는 유일한 약속을 깨뜨린다 (CLAUDE.md R6).
+    recallModelName 은 99.4% 가 인증번호 패턴이 아니라(2026-09-01 실측) 화이트
+    리스트 추출을 쓸 수 없다. 콤마·슬래시로 자르고, 괄호 안은 별도 후보로 남긴다.
     """
     if raw in (None, ""):
         return []
-    return [p.strip() for p in str(raw).split(",") if p.strip()]
+    text = _denoise(raw)
+    parts = [p.strip() for p in re.split(r"[,/]", text)]
+    out = [p for p in parts if p and p not in {"-", "–", "—"}]
+    for hint in extract_model_hints(raw):
+        if hint not in out:
+            out.append(hint)
+    return out
 
 
 @dataclass(frozen=True)
@@ -367,8 +480,13 @@ class KatsClient:
             announced_on=g("announced_on"),
             detail_url=g("detail_url"),
             scope=scope,
-            models=split_list_field(models_raw),
-            cert_numbers=split_list_field(g("cert_numbers")),
+            # certNum 필드에서 두 종류를 뽑는다 — 인증번호와, 함께 적힌 모델명.
+            # "(인증모델 : 대왕버블건)" 을 버리면 매칭 단서를 잃는다 (R6).
+            models=split_list_field(models_raw) + [
+                h for h in extract_model_hints(g("cert_numbers"))
+                if h not in split_list_field(models_raw)
+            ],
+            cert_numbers=extract_cert_numbers(g("cert_numbers")),
             brand_name=g("brand_name"),
             recall_type=g("recall_type"),
             action_guide=g("action_guide"),
