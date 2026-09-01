@@ -181,6 +181,16 @@ textarea:focus{border-color:var(--primary-50); outline:2px solid var(--border-fo
 }
 .scope{margin:0; padding:var(--s4) var(--s6); background:var(--bg-subtle); border-bottom:1px solid var(--border-default); font-size:15px; color:var(--fg-2)}
 
+/* 읽은 값이 하나도 없을 때. 판정이 아니라 입력 문제라 "이렇게 읽었습니다"
+ * 블록이 있어야 할 자리를 대신 차지한다. 경고색을 쓰지 않는다 - 상품에
+ * 문제가 있다는 뜻이 아니라 다시 붙여넣으면 되는 일이다. */
+.input-note{
+  margin:0; padding:var(--s5) var(--s6); background:#FFF8E6;
+  border-bottom:1px solid var(--border-default);
+  font-size:15px; color:var(--fg-1); line-height:1.6;
+}
+@media (max-width:640px){ .input-note{padding:var(--s4) var(--s5)} }
+
 /* ── "우리가 이렇게 읽었습니다" ─────────────────────────────
  *
  * 판정보다 위에 둔다. 셀러가 추출 결과를 눈으로 확인하면 두 가지가 된다 -

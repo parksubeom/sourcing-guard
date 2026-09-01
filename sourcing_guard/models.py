@@ -248,6 +248,12 @@ class ScanResult(BaseModel):
     # findings 를 셀러 관점 구획(확인할 것 / 확인된 문제 / 참고)으로 묶은 것.
     # findings 원본도 그대로 두어 하위호환을 유지한다. 프론트는 grouped 를 그린다.
     grouped_findings: list[dict] = Field(default_factory=list)
+    # 상품 정보를 하나도 읽지 못했을 때의 안내. 판정이 아니라 입력 문제다.
+    #
+    # 붙여넣은 것이 상세페이지가 아니면(URL 만, 리뷰만, 배송 안내만) 결과가
+    # "판단 보류" + 확인 항목 나열로 나가는데, 셀러는 그걸 상품 문제로 읽는다.
+    # 우리가 읽은 게 없다는 사실을 먼저 말해야 다시 붙여넣을 기회가 생긴다.
+    input_note: str | None = None
     # 일일 분석 한도를 넘겨 간이 추출로 처리했을 때의 안내. 정확도가 낮아진
     # 사실을 감추지 않는다 - 감추면 셀러가 덜 정확한 결과를 최신 분석으로 읽는다.
     extraction_note: str | None = None

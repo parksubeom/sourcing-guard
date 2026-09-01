@@ -455,3 +455,17 @@ def test_maker_other_recalls_is_visually_separated(pages):
     assert 'f.kind === "maker_other_recalls"' in index
     assert "aside" in index
     assert ".findings>li.aside" in (STATIC / "app.css").read_text(encoding="utf-8")
+
+
+def test_empty_extraction_is_explained_as_an_input_problem(pages):
+    """읽은 값이 없으면 원인을 말해야 한다.
+
+    안 말하면 화면은 "판단 보류 — 판매자 제공 정보만으로는 소싱 여부를 가릴 수
+    없습니다" 로 끝나는데, 셀러는 그걸 상품에 대한 판정으로 읽고 닫는다. 실제로는
+    URL 한 줄이나 배송 안내만 붙여넣은 것일 수 있고, 그건 다시 붙여넣으면 풀린다.
+    """
+    index = pages["index.html"]
+    assert "data.input_note" in index
+    assert 'class="input-note"' in index
+    # "이렇게 읽었습니다" 블록이 비는 자리를 대신한다 — 그 앞에 와야 한다
+    assert index.index("data.input_note") < index.index("readBlock(data.extracted)")
