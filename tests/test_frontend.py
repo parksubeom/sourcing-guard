@@ -15,21 +15,49 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
-INDEX = Path("sourcing_guard/static/index.html")
+STATIC = Path("sourcing_guard/static")
+PAGES = ["index.html", "watch.html"]
+ASSETS = PAGES + ["app.css", "owner.js"]
 
 
 @pytest.fixture(scope="module")
 def html() -> str:
-    return INDEX.read_text(encoding="utf-8")
+    """정적 자산 전체를 한 덩어리로 본다.
+
+    CSS 와 공용 스크립트를 별도 파일로 빼면서 index.html 만 보던 가드가
+    조용히 통과하기 시작했다. 페이지가 늘어도 규약은 같으므로 전부 합쳐 본다.
+    """
+    return "\n".join((STATIC / f).read_text(encoding="utf-8") for f in ASSETS)
 
 
-def test_index_is_served_at_root():
+@pytest.fixture(scope="module")
+def pages() -> dict[str, str]:
+    return {f: (STATIC / f).read_text(encoding="utf-8") for f in PAGES}
+
+
+@pytest.mark.parametrize("path", ["/", "/watch"])
+def test_pages_are_served(path):
     from sourcing_guard.main import app
 
     with TestClient(app) as client:
-        r = client.get("/")
+        r = client.get(path)
     assert r.status_code == 200
     assert "text/html" in r.headers["content-type"]
+
+
+@pytest.mark.parametrize("path", ["/static/app.css", "/static/owner.js"])
+def test_shared_assets_are_served(path):
+    from sourcing_guard.main import app
+
+    with TestClient(app) as client:
+        assert TestClient(app).get(path).status_code == 200
+
+
+def test_both_pages_use_the_same_stylesheet(pages):
+    """배지·색·톤이 두 화면에서 갈리면 같은 RED 를 다른 것으로 읽는다."""
+    for name, src in pages.items():
+        assert '/static/app.css' in src, name
+        assert "<style>" not in src, f"{name} 에 페이지 전용 스타일이 생겼습니다"
 
 
 def test_no_emoji_anywhere(html):
@@ -95,8 +123,11 @@ def test_source_links_open_in_a_new_tab_safely(html):
 
 def test_user_input_is_escaped_before_rendering(html):
     """스캔 응답을 innerHTML 로 그린다. 이스케이프가 빠지면 붙여넣은 본문이 실행된다."""
-    assert "function esc(" in html
+    assert "esc:" in html or "function esc(" in html
     assert "&amp;" in html and "&lt;" in html
+    for name, src in {"index.html": None, "watch.html": None}.items():
+        page = (STATIC / name).read_text(encoding="utf-8")
+        assert "window.SG.esc" in page or "SG.esc" in page, name
 
 
 def test_recall_cutoff_date_is_rendered_readably(html):
@@ -111,6 +142,62 @@ def test_scan_posts_page_text_not_a_url(html):
     입력은 사용자가 직접 복사한 본문이다. URL 을 보내면 서버가 그 페이지를
     가져와야 하고, 그건 ToS 위반이자 봇 차단으로 데모 중에 죽는 길이다.
     """
-    assert "page_text" in html
-    assert "page_url" not in html
-    assert "서버가 판매 사이트에 직접 접속하지 않습니다" in html
+    index = (STATIC / "index.html").read_text(encoding="utf-8")
+    assert "page_text" in index
+    assert "page_url" not in index
+    assert "서버가 판매 사이트에 직접 접속하지 않습니다" in index
+
+
+# ---------------------------------------------------------------------------
+# 감시 목록 — 이 서비스가 유일하게 보증하는 것 (기획서 §3-4단계, §6.1)
+# ---------------------------------------------------------------------------
+
+
+def test_watch_page_states_what_is_promised(pages):
+    """"지금 안전하다"는 보증할 수 없지만 "놓치지 않는다"는 보증할 수 있다.
+
+    그 경계가 화면에서 읽혀야 한다. 감시 목록은 우리가 유일하게 약속하는
+    것이라, 무엇을 약속하고 무엇을 못 하는지 감추면 안 된다.
+    """
+    w = pages["watch.html"]
+    assert "보증할 수 없습니다" in w
+    assert "놓치지 않는 것" in w
+
+
+def test_watch_page_does_not_promise_undelivered_notifications(pages):
+    """알림 발송은 v1 범위 밖이다. 없는 기능을 있는 것처럼 적으면 안 된다."""
+    w = pages["watch.html"]
+    assert "아직 준비 중입니다" in w
+    assert "이메일·카카오" in w
+
+
+def test_watch_page_discloses_how_the_list_is_identified(pages):
+    """로그인이 없다. 브라우저 저장소로 묶인다는 사실을 알려야 한다."""
+    assert "브라우저에 저장된 식별자" in pages["watch.html"]
+
+
+def test_scan_page_offers_registration(pages):
+    assert "이 상품 감시하기" in pages["index.html"]
+    assert "/api/v1/watch" in pages["index.html"]
+
+
+def test_matched_items_reuse_the_scan_red_treatment(html):
+    """스캔의 RED 와 같은 색·배지를 쓴다. 갈리면 같은 위험을 다르게 읽는다."""
+    assert ".item.hit" in html
+    assert "background:var(--danger)" in html.replace(" ", "").replace(
+        "background:var(--danger)", "background:var(--danger)"
+    ) or "var(--danger)" in html
+
+
+def test_matched_items_stay_marked_after_a_reload(pages):
+    """sweep 은 이미 알린 리콜을 다시 돌려주지 않는다.
+
+    새로고침하면 알림 목록이 비므로, 표시를 sweep 응답에만 의존하면 강조가
+    사라진다. seen_recall_fingerprints 로 이력을 유지한다.
+    """
+    assert "seen_recall_fingerprints" in pages["watch.html"]
+
+
+def test_watch_page_links_back_to_scan(pages):
+    assert 'href="/"' in pages["watch.html"]
+    assert 'href="/watch"' in pages["index.html"]

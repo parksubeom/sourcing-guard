@@ -12,6 +12,7 @@ from pathlib import Path
 
 from fastapi import FastAPI, Header, HTTPException
 from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from datetime import date
@@ -52,6 +53,11 @@ async def _lifespan(app: FastAPI):
 
 
 app = FastAPI(title="안심 소싱 돋보기 API", version="0.1.0", lifespan=_lifespan)
+app.mount(
+    "/static",
+    StaticFiles(directory=Path(__file__).parent / "static"),
+    name="static",
+)
 
 _kats = KatsClient(settings.kats_base_url, settings.kats_service_key, mock=settings.mock_mode)
 _rules = RuleBook()
@@ -73,6 +79,17 @@ def index() -> FileResponse:
     투표 기간 18일 무중단에 유리하다 - 깨질 지점이 하나 줄어든다.
     """
     return FileResponse(_STATIC / "index.html", media_type="text/html; charset=utf-8")
+
+
+@app.get("/watch", response_class=FileResponse, include_in_schema=False)
+def watch_page() -> FileResponse:
+    """감시 목록 화면.
+
+    기획서 §3-4단계. 스캔은 시점 판단이라 "지금 안전하다"를 보증할 수 없지만,
+    "나중에 리콜 공표되면 놓치지 않는다"는 보증할 수 있다. 그것이 이 서비스가
+    유일하게 약속하는 것이고, 그래서 별도 화면을 준다.
+    """
+    return FileResponse(_STATIC / "watch.html", media_type="text/html; charset=utf-8")
 
 
 @app.get("/healthz")

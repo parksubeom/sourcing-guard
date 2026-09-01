@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>감시 목록 · 안심 소싱 돋보기</title>
+<meta name="description" content="검사한 상품을 저장해두면 새 리콜 공표와 매일 대조합니다.">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+<a class="skip" href="#main">본문으로 건너뛰기</a>
+
+<header class="masthead">
+  <div class="container">
+    <svg class="mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/><path d="M7.8 10.6l1.9 1.9 3.5-3.6"/>
+    </svg>
+    <span class="wordmark">안심 소싱 돋보기</span>
+    <nav class="pages" aria-label="주요 화면">
+      <a href="/">상품 검사</a>
+      <a href="/watch" aria-current="page">감시 목록</a>
+    </nav>
+  </div>
+</header>
+
+<div class="intro">
+  <div class="container">
+    <h2>저장한 상품을 새 리콜과 대조합니다</h2>
+    <p>검사는 그 시점의 판단입니다. 오늘 문제가 없던 모델이 다음 공표에서 리콜 대상이 될 수 있습니다.
+       저장해두면 새로 공표되는 리콜과 매일 대조합니다.</p>
+  </div>
+</div>
+
+<main id="main">
+  <div class="container">
+
+    <div class="promise">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12 3l7.5 3v5.4c0 4.3-3 8.2-7.5 9.6-4.5-1.4-7.5-5.3-7.5-9.6V6z"/>
+        <path d="M9 12l2.2 2.2L15.4 10"/>
+      </svg>
+      <div>
+        <h4>이 서비스가 약속할 수 있는 것</h4>
+        <p>“지금 안전하다”는 보증할 수 없습니다. 우리는 상세페이지 글을 읽고, 단속은 실물을 수거해 시험합니다.
+           대신 <strong>나중에 리콜이 공표되면 그것을 놓치지 않는 것</strong>은 약속할 수 있습니다.</p>
+        <p>지금은 이 화면에서 확인하는 방식입니다. 이메일·카카오 알림 발송은 아직 준비 중입니다.
+           목록은 이 브라우저에 저장된 식별자로 관리되며, 브라우저 저장소를 지우면 목록을 다시 찾을 수 없습니다.</p>
+      </div>
+    </div>
+
+    <section aria-labelledby="list-h">
+      <h3 id="list-h">감시 중인 상품</h3>
+      <div class="watchbar">
+        <button class="btn-t" id="sweep" type="button">지금 대조하기</button>
+        <span class="counter" id="meta"></span>
+      </div>
+
+      <div class="alert danger" id="err" hidden>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+             stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5"/><path d="M12 16.2v.2"/></svg>
+        <div><h4>목록을 불러오지 못했습니다</h4><p id="err-p"></p></div>
+      </div>
+
+      <div id="skel" class="skel" hidden aria-hidden="true"><div></div><div></div><div></div><div></div></div>
+      <div id="list" role="status" aria-live="polite"></div>
+    </section>
+
+  </div>
+</main>
+
+<footer>
+  <div class="container">
+    <p>본 결과는 공개된 정부 데이터에 기반한 참고 정보이며, 법적 판단이나 안전 인증을 대체하지 않습니다.</p>
+    <p>출처 · 국가기술표준원 제품안전정보센터 공개 API, 어린이제품 공통안전기준(산업통상자원부고시 제2022-220호)</p>
+  </div>
+</footer>
+
+<script src="/static/owner.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  var $ = function (id) { return document.getElementById(id); };
+  var list = $("list"), skel = $("skel"), err = $("err"), errP = $("err-p"),
+      sweepBtn = $("sweep"), meta = $("meta");
+  var esc = window.SG.esc, owner = window.SG.ownerId();
+
+  // watch_item_id -> 이번 대조에서 새로 잡힌 알림
+  var freshAlerts = {};
+
+  function fmtDate(v) {
+    if (!v) return "기록 없음";
+    var d = String(v).slice(0, 10);
+    return /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : esc(v);
+  }
+
+  function itemRow(it) {
+    // 한 번이라도 리콜에 걸린 항목은 새로고침 뒤에도 계속 강조한다.
+    // seen_recall_fingerprints 는 "이미 알린 리콜" 기록이라 그 자체가 이력이다.
+    var seen = (it.seen_recall_fingerprints || []).length;
+    var fresh = freshAlerts[it.id] || [];
+    var hit = seen > 0 || fresh.length > 0;
+
+    var title = it.product_name || it.model_name || "이름 미상 상품";
+    var html = '<li class="item' + (hit ? " hit" : "") + '">';
+    html += '<div class="item-top">';
+    html += '<span class="badge' + (hit ? "" : " clear") + '">' +
+            (hit ? "위험" : "대조 완료") + "</span>";
+    html += "<div><h4>" + esc(title) + "</h4><dl>";
+    if (it.model_name) html += "<dt>모델명</dt><dd>" + esc(it.model_name) + "</dd>";
+    if (it.maker) html += "<dt>제조사</dt><dd>" + esc(it.maker) + "</dd>";
+    if ((it.kc_numbers || []).length)
+      html += "<dt>인증번호</dt><dd>" + esc(it.kc_numbers.join(", ")) + "</dd>";
+    html += "<dt>등록</dt><dd>" + fmtDate(it.registered_at) + "</dd>";
+    html += "<dt>마지막 대조</dt><dd>" + fmtDate(it.last_swept_at) + "</dd>";
+    html += "</dl></div></div>";
+
+    if (fresh.length) {
+      html += '<ul class="alerts">';
+      fresh.forEach(function (a) {
+        var link = a.source_url
+          ? ' <a href="' + esc(a.source_url) + '" target="_blank" rel="noopener noreferrer">'
+            + esc(a.source_label || "근거 원문") + " (새 창)</a>"
+          : "";
+        html += "<li>" + esc(a.statement_ko) + link + "</li>";
+      });
+      html += "</ul>";
+    } else if (hit) {
+      html += '<ul class="alerts"><li>이전 대조에서 리콜 공표 목록과 일치한 기록이 ' +
+              seen + '건 있습니다. 원문에서 직접 확인해 주세요.</li></ul>';
+    }
+
+    return html + "</li>";
+  }
+
+  function renderEmpty() {
+    list.innerHTML =
+      '<div class="empty">' +
+      '<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" ' +
+      'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+      '<path d="M12 3l7.5 3v5.4c0 4.3-3 8.2-7.5 9.6-4.5-1.4-7.5-5.3-7.5-9.6V6z"/></svg>' +
+      "<p>아직 감시 중인 상품이 없습니다.</p>" +
+      '<p class="sub">상품을 검사한 뒤 결과 화면에서 감시 목록에 추가할 수 있습니다.</p>' +
+      '<a href="/">상품 검사하러 가기</a></div>';
+    meta.textContent = "";
+  }
+
+  function render(items) {
+    if (!items.length) { renderEmpty(); return; }
+    var hits = items.filter(function (it) {
+      return (it.seen_recall_fingerprints || []).length > 0 || (freshAlerts[it.id] || []).length > 0;
+    }).length;
+    meta.textContent = "감시 " + items.length + "건" + (hits ? " · 리콜 일치 " + hits + "건" : "");
+    list.innerHTML = '<ul class="items">' + items.map(itemRow).join("") + "</ul>";
+  }
+
+  function fail(e) {
+    list.innerHTML = "";
+    errP.textContent = e.message + ". 잠시 후 다시 시도해 주세요.";
+    err.hidden = false;
+  }
+
+  function load() {
+    err.hidden = true;
+    skel.hidden = false;
+    return fetch("/api/v1/watch?owner_id=" + encodeURIComponent(owner))
+      .then(function (r) {
+        if (!r.ok) throw new Error("서버가 " + r.status + " 로 응답했습니다");
+        return r.json();
+      })
+      .then(render)
+      .catch(fail)
+      .finally(function () { skel.hidden = true; });
+  }
+
+  sweepBtn.addEventListener("click", function () {
+    sweepBtn.disabled = true;
+    err.hidden = true;
+    fetch("/api/v1/watch/sweep?owner_id=" + encodeURIComponent(owner), { method: "POST" })
+      .then(function (r) {
+        if (!r.ok) throw new Error("서버가 " + r.status + " 로 응답했습니다");
+        return r.json();
+      })
+      .then(function (alerts) {
+        freshAlerts = {};
+        (alerts || []).forEach(function (a) {
+          (freshAlerts[a.watch_item_id] = freshAlerts[a.watch_item_id] || []).push(a);
+        });
+        return load();
+      })
+      .catch(fail)
+      .finally(function () { sweepBtn.disabled = false; });
+  });
+
+  load();
+})();
+</script>
+</body>
+</html>

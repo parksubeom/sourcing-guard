@@ -193,9 +193,16 @@ def sweep(
     return alerts
 
 
+def _fmt_date(yyyymmdd: str | None) -> str | None:
+    """YYYYMMDD -> '2026-07-23'. 원본 그대로 화면에 내보내면 읽히지 않는다."""
+    if not yyyymmdd or len(yyyymmdd) != 8 or not yyyymmdd.isdigit():
+        return None
+    return f"{yyyymmdd[:4]}-{yyyymmdd[4:6]}-{yyyymmdd[6:]}"
+
+
 def _statement(item: WatchItem, r: RecallRecord, m: Match) -> str:
     where = "국내" if r.scope == "domestic" else "해외"
-    when = r.announced_on or "일자 미상"
+    when = _fmt_date(r.announced_on) or "공표일 미상"
     subject = item.model_name or item.product_name or "등록하신 상품"
     return (
         f"'{subject}' 과(와) {m.strength.label_ko}하는 항목이 "
