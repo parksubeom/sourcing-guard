@@ -117,6 +117,9 @@ class ScanResult(BaseModel):
     facts: ProductFacts
     findings: list[Finding]
     coverage_note: str | None = None
+    # 리콜 로컬 사본의 기준일 (YYYYMMDD). "리콜 이력 없음" 이라는 문장의
+    # 유효기간이다. 로컬 사본이라 최대 하루 늦는 트레이드오프를 숨기지 않는다.
+    recall_data_as_of: str | None = None
     disclaimer: str = (
         "본 결과는 공개된 정부 데이터에 기반한 참고 정보이며, "
         "법적 판단이나 안전 인증을 대체하지 않습니다."

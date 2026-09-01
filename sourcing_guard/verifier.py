@@ -10,6 +10,7 @@ from datetime import date
 from pathlib import Path
 
 import yaml
+from typing import TYPE_CHECKING
 
 from .kats_client import (
     CertState,
@@ -20,6 +21,9 @@ from .kats_client import (
     is_state_not_stated,
 )
 from .models import Finding, FindingKind, ItemCategory, ProductFacts, Signal
+
+if TYPE_CHECKING:  # 순환 import 방지 — recall_index 가 watchlist 를 쓴다
+    from .recall_index import RecallIndex
 
 _RULES_PATH = Path(__file__).parent / "data" / "hazard_rules.yaml"
 
@@ -111,6 +115,13 @@ class RuleBook:
 _LOOKUP_FAILED_SOURCE = "https://www.safetykorea.kr/"
 
 
+def _as_of_label(yyyymmdd: str | None) -> str:
+    """YYYYMMDD -> '2026-08-28 공표분까지'. 값이 없으면 그렇다고 말한다."""
+    if not yyyymmdd or len(yyyymmdd) != 8 or not yyyymmdd.isdigit():
+        return "기준일 미상"
+    return f"{yyyymmdd[:4]}-{yyyymmdd[4:6]}-{yyyymmdd[6:]} 공표분까지"
+
+
 def _lookup_failed(what: str, today: date, code: str | None = None) -> Finding:
     """조회를 못 했다는 사실 자체를 Finding 으로 남긴다.
 
@@ -141,7 +152,12 @@ def _lookup_failed(what: str, today: date, code: str | None = None) -> Finding:
     )
 
 
-def verify(facts: ProductFacts, kats: KatsClient, rules: RuleBook) -> list[Finding]:
+def verify(
+    facts: ProductFacts,
+    kats: KatsClient,
+    rules: RuleBook,
+    recalls: "RecallIndex | None" = None,
+) -> list[Finding]:
     today = date.today()
     findings: list[Finding] = []
 
@@ -149,10 +165,12 @@ def verify(facts: ProductFacts, kats: KatsClient, rules: RuleBook) -> list[Findi
     if facts.kc_numbers:
         for num in facts.kc_numbers:
             try:
-                rec = kats.lookup_certification(num)
+                lookup = kats.lookup_certification_cached(num)
             except KatsApiError as exc:
+                # 캐시조차 없어 답할 수 없는 경우다.
                 findings.append(_lookup_failed("인증", today, exc.code))
                 break
+            rec = lookup.record
             if rec is None:
                 findings.append(
                     Finding(
@@ -192,6 +210,12 @@ def verify(facts: ProductFacts, kats: KatsClient, rules: RuleBook) -> list[Findi
                     statement = (
                         f"인증번호 '{rec.cert_number}' 의 인증상태가 "
                         f"'{rec.status or '미표기'}' 로 조회되었습니다. {advice}"
+                    )
+                if lookup.stale:
+                    # 하루 묵은 답을 최신인 것처럼 말하지 않는다.
+                    statement += (
+                        f" (조회 서비스에 연결하지 못해 {lookup.fetched_at[:10]} 조회분으로 "
+                        "표시합니다. 최신 상태는 근거 링크에서 확인해 주세요.)"
                     )
                 findings.append(
                     Finding(
@@ -245,43 +269,65 @@ def verify(facts: ProductFacts, kats: KatsClient, rules: RuleBook) -> list[Findi
         )
 
     # --- (b) recall matching --------------------------------------------
-    try:
-        recalls = kats.search_recalls(
-            product_name=facts.product_name,
-            model_name=facts.model_name,
-            cert_number=facts.kc_numbers[0] if facts.kc_numbers else None,
-        )
-    except KatsApiError as exc:
-        # 리콜 조회가 실패하면 RECALL_CLEAR 를 붙이면 안 된다. "일치 항목을 찾지
-        # 못했다" 는 조회에 성공했을 때만 할 수 있는 말이다.
-        findings.append(_lookup_failed("리콜", today, exc.code))
-        recalls = []
+    #
+    # 로컬 사본으로 대조한다. 두 가지가 달라진다:
+    #
+    #   ① 공개 트래픽이 정부 API 를 건드리지 않는다 (핸드오프 §8). API 가 죽어도
+    #      리콜 대조는 계속된다.
+    #   ② 매칭이 정확해진다. API 의 recallModelName 검색은 서버가 통짜 문자열로
+    #      부분 매칭하는 것이라, 우리가 실데이터로 만든 콤마·슬래시·괄호 분해와
+    #      자리표시자 필터가 적용되지 않았다.
+    #
+    # 그리고 매칭 두뇌가 하나로 합쳐진다. 이전에는 스캔이 API 검색, 워치리스트
+    # 스윕이 로컬 watchlist.match() 로 서로 다른 방법을 썼다 — 같은 상품이
+    # 스캔에선 안 걸리고 스윕에선 걸릴 수 있는 상태였다. 이제 둘 다 match() 다.
+    hits: list = []
+    if recalls is not None and not recalls.is_empty():
+        hits = recalls.find(facts, today=today)
+    else:
+        # 로컬 사본이 아직 없다(초기 적재 전). 대조하지 않은 것을 대조했다고
+        # 말할 수 없으므로 조회 실패와 같이 다룬다 (R3).
+        findings.append(_lookup_failed("리콜", today))
         return findings
 
-    if recalls:
-        for r in recalls:
+    if hits:
+        for r, m in hits:
             findings.append(
                 Finding(
                     kind=FindingKind.RECALL_MATCH,
                     signal=Signal.RED,
                     statement_ko=(
-                        f"동일/유사 모델명이 리콜 공표 목록에 있습니다 "
-                        f"({'국내' if r.scope == 'domestic' else '해외'}, {r.announced_on or '일자 미상'})."
+                        f"모델명/인증번호가 리콜 공표 목록과 {m.strength.label_ko}합니다 "
+                        f"({'국내' if r.scope == 'domestic' else '해외'}, "
+                        f"{r.announced_on or '일자 미상'}). 원문 확인이 필요합니다."
                     ),
                     source_label="국가기술표준원 리콜정보",
                     source_url=r.detail_url or "https://www.safetykorea.kr/",
-                    detail={"reason": r.reason, "model": r.model_name, "maker": r.maker},
+                    detail={
+                        "reason": r.reason,
+                        "model": r.model_name,
+                        "maker": r.maker,
+                        "match_strength": m.strength.value,
+                        "matched_on": m.matched_on,
+                    },
                     checked_at=today,
                 )
             )
     elif facts.product_name or facts.model_name:
+        # "리콜 이력 없음" 에는 유효기간이 있다. 로컬 사본이라 오늘 공표된
+        # 리콜은 다음 동기화 전까지 안 잡힌다. 숨기면 안 되는 트레이드오프다.
+        as_of = _as_of_label(recalls.as_of)
         findings.append(
             Finding(
                 kind=FindingKind.RECALL_CLEAR,
                 signal=Signal.GREEN,
-                statement_ko="조회 시점 기준 리콜 공표 목록에서 일치 항목을 찾지 못했습니다.",
+                statement_ko=(
+                    f"리콜 공표 목록에서 일치 항목을 찾지 못했습니다. "
+                    f"리콜 대조 기준: {as_of} (매일 갱신)"
+                ),
                 source_label="국가기술표준원 리콜정보",
                 source_url="https://www.safetykorea.kr/",
+                detail={"recall_data_as_of": recalls.as_of},
                 checked_at=today,
             )
         )
