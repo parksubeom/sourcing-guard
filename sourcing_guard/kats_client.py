@@ -15,6 +15,7 @@ pipeline is developable and testable on day 1.
 
 from __future__ import annotations
 
+import logging
 import unicodedata
 from dataclasses import dataclass, field
 from enum import Enum
@@ -60,27 +61,63 @@ class KatsApiError(RuntimeError):
         super().__init__(f"SafetyKorea API 오류 {code}: {message} {hint}".strip())
 
 
+_log = logging.getLogger(__name__)
+
+
 class CertState(str, Enum):
     """certState 를 신호등 관점으로 분류한 것 (설계서 p.5, p.8)."""
 
     OK = "ok"                      # 적합
-    REVOKED = "revoked"            # 취소·효력상실·반납·기간만료
+    REVOKED = "revoked"            # 안전인증취소·안전확인신고 효력상실 (처벌)
+    # 기간만료·반납은 행정 사유다. 완구 인증의 67% 가 기간만료라 RED 로 두면
+    # 정상 상품에 빨간불이 반복된다 (CLAUDE.md R3-b, 2026-09-01 실측).
+    EXPIRED = "expired"            # 기간만료·반납
     SUSPENDED = "suspended"        # 표시 사용금지
     UNDER_ACTION = "under_action"  # 개선명령·청문실시
     UNKNOWN = "unknown"            # 매핑에 없는 값
+
+
+def is_state_not_stated(raw: str | None, states: dict[str, list[str]] | None = None) -> bool:
+    """상태가 '없다' 는 뜻인가 (값 미표기) — 해석 실패와 구분한다.
+
+    실데이터에 certState 가 "-" 인 레코드가 있다(완구 43건). 이건 상태가 아니라
+    값이 비어 있다는 뜻이다. 판정은 UNKNOWN 으로 같지만 문구는 갈라야 한다.
+    "해석하지 못했습니다" 는 우리 잘못처럼 들린다.
+    """
+    v = (raw or "").strip()
+    st = _CFG.get("cert_states", {}) if states is None else states
+    return v in set(st.get("cert_state_not_stated", ()))
 
 
 def classify_cert_state(raw: str | None, states: dict[str, list[str]]) -> CertState:
     """원문 상태 문자열 -> CertState.
 
     매핑에 없으면 UNKNOWN 이다. 임의로 '적합'으로 추측하지 않는다 (CLAUDE.md R3).
+
+    미분류 값은 로그에 남긴다. 설계서 열거값(10종) 밖의 상태가 실제로 존재하고
+    ("취소" 가 그랬다), 새 상태가 조용히 UNKNOWN 으로 떨어지면 진짜 취소된
+    인증을 놓치게 된다. 로그가 있어야 나중에 알아챌 수 있다.
     """
     if not raw:
         return CertState.UNKNOWN
     s = raw.strip()
-    for bucket in (CertState.OK, CertState.REVOKED, CertState.SUSPENDED, CertState.UNDER_ACTION):
+    for bucket in (
+        CertState.OK,
+        CertState.REVOKED,
+        CertState.EXPIRED,
+        CertState.SUSPENDED,
+        CertState.UNDER_ACTION,
+    ):
         if s in states.get(bucket.value, ()):
             return bucket
+
+    if not is_state_not_stated(s, states):
+        # 자리표시자는 이미 아는 값이라 로그를 남기지 않는다. 새 상태값만 남긴다.
+        _log.warning(
+            "미분류 certState: %r — cert_states 매핑에 추가할지 검토 필요 "
+            "(CLAUDE.md R3: 임의로 '적합'으로 추측하지 않음)",
+            s,
+        )
     return CertState.UNKNOWN
 
 

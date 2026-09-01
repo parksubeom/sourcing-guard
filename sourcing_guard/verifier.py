@@ -11,7 +11,7 @@ from pathlib import Path
 
 import yaml
 
-from .kats_client import CertState, KatsClient, cert_evidence_url
+from .kats_client import CertState, is_state_not_stated, KatsClient, cert_evidence_url
 from .models import Finding, FindingKind, ItemCategory, ProductFacts, Signal
 
 _RULES_PATH = Path(__file__).parent / "data" / "hazard_rules.yaml"
@@ -25,6 +25,11 @@ _CERT_STATE_FINDING: dict[CertState, tuple[FindingKind, Signal, str]] = {
     CertState.REVOKED: (
         FindingKind.KC_REVOKED, Signal.RED,
         "이 인증번호로는 판매 표시를 유지할 수 없습니다. 공급처에 유효한 인증을 요청하세요.",
+    ),
+    CertState.EXPIRED: (
+        FindingKind.KC_EXPIRED, Signal.AMBER,
+        "재인증되어 번호가 바뀌었을 수 있습니다. 공급처에 현재 유효한 인증번호를 "
+        "확인해 주세요.",
     ),
     CertState.SUSPENDED: (
         FindingKind.KC_SUSPENDED, Signal.RED,
@@ -131,6 +136,13 @@ def verify(facts: ProductFacts, kats: KatsClient, rules: RuleBook) -> list[Findi
                     statement = (
                         f"인증번호 '{rec.cert_number}' 이(가) 조회되었습니다"
                         f"(인증상태: {rec.status}). 등록 제품명: {rec.product_name or '-'}"
+                    )
+                elif is_state_not_stated(rec.status):
+                    # 값이 비어 있는 것("-")과 우리가 해석 못 한 것은 다르다.
+                    # "해석하지 못했습니다" 는 우리 잘못처럼 들린다 (완구 43건).
+                    statement = (
+                        f"인증번호 '{rec.cert_number}' 은(는) 조회되었으나 "
+                        "인증상태가 표기되지 않았습니다. 원문에서 직접 확인해 주세요."
                     )
                 else:
                     statement = (

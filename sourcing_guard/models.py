@@ -57,7 +57,10 @@ class FindingKind(str, Enum):
     KC_NOT_FOUND = "kc_not_found"
     KC_VERIFIED = "kc_verified"
     # 인증번호가 조회돼도 그 인증이 살아 있다는 뜻은 아니다 (설계서 p.5).
-    KC_REVOKED = "kc_revoked"            # 취소·효력상실·반납·기간만료
+    KC_REVOKED = "kc_revoked"            # 안전인증취소·안전확인신고 효력상실 (처벌)
+    # 기간만료·반납은 행정 사유이며 위반이 아니다. 완구 인증의 67% 가 기간만료라
+    # RED 로 두면 정상 상품에 빨간불이 반복된다 (CLAUDE.md R3-b).
+    KC_EXPIRED = "kc_expired"            # 기간만료·반납
     KC_SUSPENDED = "kc_suspended"        # 표시 사용금지
     KC_UNDER_ACTION = "kc_under_action"  # 개선명령·청문실시
     KC_MISSING_BUT_REQUIRED = "kc_missing_but_required"

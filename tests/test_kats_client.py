@@ -204,6 +204,7 @@ def test_normalize_kc_collapses_variants(raw):
 from sourcing_guard.kats_client import (  # noqa: E402
     CertState,
     classify_cert_state,
+    is_state_not_stated,
     split_list_field,
 )
 import yaml  # noqa: E402
@@ -216,7 +217,14 @@ _STATES = _CFG["cert_states"]
 
 
 def test_cert_states_cover_all_ten_spec_values():
-    """설계서 3.2.1 의 certState 열거값은 10가지다. 누락되면 UNKNOWN 으로 떨어진다."""
+    """설계서 3.2.1 의 certState 열거값 10가지를 빠짐없이 덮는다.
+
+    누락되면 UNKNOWN 으로 떨어져 진짜 취소된 인증을 놓친다.
+
+    실데이터에는 설계서에 없는 값도 있다("취소" — 2026-09-01 실측, 20만건 중 3건).
+    그래서 '정확히 10개' 가 아니라 '10개를 모두 포함' 으로 검증한다. 설계서 밖의
+    값을 추가하는 것은 막지 않되, 설계서 값이 빠지는 것은 막는다.
+    """
     spec = {
         "적합",
         "안전인증취소",
@@ -229,9 +237,11 @@ def test_cert_states_cover_all_ten_spec_values():
         "청문실시",
         "기간만료",
     }
-    mapped = {v for values in _STATES.values() for v in values}
-    assert mapped == spec, f"차이: {spec ^ mapped}"
-    assert len(mapped) == 10
+    # 자리표시자 목록은 상태가 아니므로 제외한다.
+    buckets = {k: v for k, v in _STATES.items() if k != "cert_state_not_stated"}
+    mapped = {v for values in buckets.values() for v in values}
+    missing = spec - mapped
+    assert not missing, f"설계서 상태값이 매핑에서 빠졌습니다: {missing}"
 
 
 @pytest.mark.parametrize(
@@ -240,8 +250,11 @@ def test_cert_states_cover_all_ten_spec_values():
         ("적합", CertState.OK),
         ("안전인증취소", CertState.REVOKED),
         ("안전확인신고 효력상실", CertState.REVOKED),
-        ("기간만료", CertState.REVOKED),
-        ("반납", CertState.REVOKED),
+        # 기간만료·반납은 행정 사유라 REVOKED 가 아니다. 완구 인증 144,738건 중
+        # 96,275건(67%)이 기간만료여서 RED 로 두면 정상 상품 대부분에 빨간불이
+        # 뜬다 (2026-09-01 실연동 실측, CLAUDE.md R3-b).
+        ("기간만료", CertState.EXPIRED),
+        ("반납", CertState.EXPIRED),
         ("안전인증표시 사용금지 2개월", CertState.SUSPENDED),
         ("안전인증표시 사용금지 4개월", CertState.SUSPENDED),
         ("안전확인신고표시 사용금지 2개월", CertState.SUSPENDED),
@@ -251,6 +264,80 @@ def test_cert_states_cover_all_ten_spec_values():
 )
 def test_classify_each_spec_state(raw, expected):
     assert classify_cert_state(raw, _STATES) is expected
+
+
+def test_expired_and_returned_are_not_red():
+    """기간만료·반납에 RED 를 주면 정상 상품에 빨간불이 반복된다 (CLAUDE.md R3-b).
+
+    RED 는 정부 DB 가 문제를 적어둔 경우에만 준다. 실제 사유를 보면 갈린다 —
+    처벌은 법 조항이 적히고("어린이제품법 21조1항2호_시판품 부적합"),
+    반납은 "반납_인증기관은 FITI 시험연구원으로 변경됨" 같은 행정 사유다.
+
+    셀러가 오탐 RED 에 익숙해지면 진짜 취소된 인증도 안 보게 되어,
+    애초에 고치려던 문제로 돌아간다.
+    """
+    from sourcing_guard.models import FindingKind
+    from sourcing_guard.scorer import _HARD_RED
+
+    assert FindingKind.KC_EXPIRED not in _HARD_RED
+    for raw in ("기간만료", "반납"):
+        assert classify_cert_state(raw, _STATES) is CertState.EXPIRED
+        assert classify_cert_state(raw, _STATES) is not CertState.REVOKED
+
+
+def test_punitive_states_stay_red():
+    """행정 사유를 내리는 것이 처벌까지 무르게 하면 안 된다."""
+    from sourcing_guard.models import FindingKind
+    from sourcing_guard.scorer import _HARD_RED
+
+    assert FindingKind.KC_REVOKED in _HARD_RED
+    assert FindingKind.KC_SUSPENDED in _HARD_RED
+    for raw in ("안전인증취소", "안전확인신고 효력상실"):
+        assert classify_cert_state(raw, _STATES) is CertState.REVOKED
+
+
+def test_bare_cancel_is_revoked_not_unknown():
+    """설계서에 없지만 실재하는 "취소" 를 UNKNOWN 으로 두면 조용히 통과한다.
+
+    certChgReason 이 None 이라 안전인증취소와 같은지 확답은 못 한다. 그러나
+    셀러가 "취소" 를 보고 확인하는 것은 손해가 아닌 반면, 놓치는 것은 이
+    프로젝트가 가장 비싸다고 규정한 오류다 (2026-09-01 실측: 20만건 중 3건).
+    """
+    from sourcing_guard.models import FindingKind
+    from sourcing_guard.scorer import _HARD_RED
+
+    assert classify_cert_state("취소", _STATES) is CertState.REVOKED
+    assert FindingKind.KC_REVOKED in _HARD_RED
+
+
+@pytest.mark.parametrize("raw", ["-", "없음", "해당없음", "해당사항없음", "N/A"])
+def test_placeholder_state_is_not_stated(raw):
+    """certState 가 "-" 인 것은 상태가 아니라 값이 비었다는 뜻이다 (완구 43건)."""
+    assert is_state_not_stated(raw, _STATES) is True
+    assert classify_cert_state(raw, _STATES) is CertState.UNKNOWN
+
+
+@pytest.mark.parametrize("raw", ["적합", "안전인증취소", "기간만료", "알수없는상태"])
+def test_real_states_are_not_treated_as_missing(raw):
+    assert is_state_not_stated(raw, _STATES) is False
+
+
+def test_unmapped_state_is_logged_but_placeholder_is_not(caplog):
+    """새 상태값이 조용히 UNKNOWN 으로 떨어지면 나중에 알아챌 수 없다.
+
+    자리표시자는 이미 아는 값이라 로그를 남기지 않는다 — 43건이 매번 경고를
+    찍으면 진짜 새 상태값이 묻힌다.
+    """
+    import logging
+
+    with caplog.at_level(logging.WARNING, logger="sourcing_guard.kats_client"):
+        classify_cert_state("듣도보도못한상태", _STATES)
+    assert "듣도보도못한상태" in caplog.text
+
+    caplog.clear()
+    with caplog.at_level(logging.WARNING, logger="sourcing_guard.kats_client"):
+        classify_cert_state("-", _STATES)
+    assert caplog.text == ""
 
 
 @pytest.mark.parametrize("raw", [None, "", "적 합", "적합 ", "알수없는상태"])
@@ -358,3 +445,4 @@ def test_get_hostile_search_url_is_not_used_as_evidence():
     assert "cert_search_405_on_get" in _CFG.get("unusable_urls", {})
     offenders = _py_files_containing("safetykorea.kr/release/certificationsearch")
     assert not offenders, f"405 주소를 근거 링크로 쓰는 파일: {offenders}"
+
