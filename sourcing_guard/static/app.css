@@ -181,6 +181,36 @@ textarea:focus{border-color:var(--primary-50); outline:2px solid var(--border-fo
 }
 .scope{margin:0; padding:var(--s4) var(--s6); background:var(--bg-subtle); border-bottom:1px solid var(--border-default); font-size:15px; color:var(--fg-2)}
 
+/* ── "우리가 이렇게 읽었습니다" ─────────────────────────────
+ *
+ * 판정보다 위에 둔다. 셀러가 추출 결과를 눈으로 확인하면 두 가지가 된다 -
+ * "제대로 읽었구나" 라는 신뢰, 그리고 잘못 읽었을 때 바로 잡아낼 기회.
+ */
+.read{padding:var(--s5) var(--s6); border-bottom:1px solid var(--border-default); background:var(--gray-5)}
+.read h4{margin:0 0 var(--s3); font-size:15px; color:var(--fg-2); font-weight:700}
+.read dl{margin:0; display:grid; grid-template-columns:auto 1fr; gap:var(--s2) var(--s4); align-items:baseline}
+.read dt{font-size:13px; color:var(--fg-3); white-space:nowrap}
+.read dd{margin:0; font-size:15px; color:var(--fg-1); overflow-wrap:anywhere}
+@media (max-width:640px){
+  .read{padding:var(--s4) var(--s5)}
+  .read dl{grid-template-columns:1fr; gap:0}
+  .read dt{margin-top:var(--s3)}
+}
+
+/* 정부 조회로 나가는 링크. 모양은 버튼이지만 요소는 a 로 둔다 - 실제로
+ * 페이지를 이동하므로, button 으로 쓰면 스크린리더가 동작을 잘못 알린다. */
+.golink{
+  display:inline-flex; align-items:center; gap:var(--s1);
+  height:34px; padding:0 var(--s3); margin-left:var(--s2);
+  border:1px solid var(--primary-50); border-radius:var(--r-xs);
+  background:var(--bg-canvas); color:var(--primary-60);
+  font-size:13px; font-weight:700; text-decoration:none; white-space:nowrap;
+  vertical-align:middle;
+}
+.golink:hover{background:var(--primary-10); color:var(--primary-70); border-color:var(--primary-60)}
+.golink svg{width:14px; height:14px; flex:none}
+.f-meta .golink{margin:var(--s1) 0 0}
+
 .findings{list-style:none; margin:0; padding:0}
 .findings>li{padding:var(--s5) var(--s6); border-bottom:1px solid var(--gray-20); display:flex; gap:var(--s3)}
 .findings>li:last-child{border-bottom:0}
@@ -290,6 +320,15 @@ nav.pages a[aria-current="page"]{color:var(--primary-60); background:var(--prima
 /* 스캔 결과의 감시 등록 */
 .watch-cta{padding:var(--s5) var(--s6); border-top:1px solid var(--gray-20); display:flex; align-items:center; gap:var(--s4); flex-wrap:wrap}
 .watch-cta p{margin:0; font-size:15px; color:var(--fg-3); flex:1; min-width:200px}
+/* GREEN 일 때 감시 제안을 강조한다. GREEN 은 "조회 시점 기준" 이라 가장 약한
+ * 신호인데, 셀러가 '안전'으로 읽으면 우리가 가장 크게 빗나간다 (기획서 §6.1).
+ * 감시 목록이 그 시점 판단의 유효기간을 이어받는다. */
+.watch-cta.lead{background:var(--primary-10); border-top:1px solid var(--primary-50)}
+.watch-cta.lead p{color:var(--fg-1)}
+.watch-cta.lead .btn-t{border-color:var(--primary-50); color:var(--primary-60); font-weight:700}
+.watch-cta.lead .btn-t:hover{background:var(--bg-canvas); border-color:var(--primary-60)}
+.watch-cta.off p{flex:1 1 100%}
+
 .saved{display:flex; align-items:center; gap:var(--s2); font-size:15px; font-weight:700; color:var(--success)}
 .saved svg{flex:none}
 @media (max-width:640px){ .watch-cta{padding:var(--s4) var(--s5)} }

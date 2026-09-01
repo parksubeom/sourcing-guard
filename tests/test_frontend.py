@@ -325,3 +325,87 @@ def test_demo_buttons_clear_pasted_images(pages):
     demo_click = demo_click[: demo_click.index('$("demos").appendChild(b)')]
     assert "shots = []" in demo_click
     assert "scan();" in demo_click
+
+
+# ---------------------------------------------------------------------------
+# "우리가 이렇게 읽었습니다" — 판정 위의 신뢰 (허점 1)
+# ---------------------------------------------------------------------------
+
+
+def test_extracted_is_rendered_above_the_verdict(pages):
+    """판정보다 위에 둔다.
+
+    우리가 잘못 읽었으면 셀러가 여기서 바로 알아채야 하고, 제대로 읽었으면
+    아래 판정을 믿는다. 순서가 뒤집히면 이미 판정을 본 뒤에 근거를 보게 된다.
+    """
+    index = pages["index.html"]
+    assert "이 페이지에서 이렇게 읽었습니다" in index
+    body = index[index.index("function render(data)"):]
+    read_at = body.index("readBlock(data.extracted)")
+    verdict_at = body.index('<div class="verdict ')
+    assert read_at < verdict_at, "읽은 값이 신호등보다 아래에 그려집니다"
+
+
+def test_government_lookup_links_are_buttons_but_stay_anchors(pages):
+    """모양은 버튼, 요소는 a.
+
+    실제로 페이지를 이동하므로 button 으로 만들면 스크린리더가 동작을 잘못
+    알린다. 새 창으로 열되 opener 는 넘기지 않는다.
+    """
+    index = pages["index.html"]
+    go = index[index.index("function goLink("):]
+    go = go[: go.index("\n  }")]
+    assert "<a class=\\\"golink\\\"" in go or "'<a class=\"golink\"" in go
+    assert 'target="_blank"' in go
+    assert "noopener noreferrer" in go
+    assert "<button" not in go
+
+
+def test_cert_number_carries_its_lookup_link(pages):
+    """화면의 인증번호에 정부 조회를 붙인다. 셀러가 그 번호가 맞는지 직접 확인한다."""
+    index = pages["index.html"]
+    read = index[index.index("function readBlock("):]
+    read = read[: read.index("\n  }")]
+    assert "f.link" in read and "goLink(" in read
+
+
+def test_missing_cert_search_link_is_an_action_button(pages):
+    """인증번호가 없을 때의 검색 링크는 셀러가 다음에 할 일이라 버튼으로 낸다."""
+    index = pages["index.html"]
+    row = index[index.index("function findingRow("):]
+    row = row[: row.index("\n  }")]
+    assert "kc_missing_but_required" in row
+    assert "goLink(f.source_url" in row
+
+
+# ---------------------------------------------------------------------------
+# 감시 제안 — GREEN 의 유효기간을 넘김 (허점 2)
+# ---------------------------------------------------------------------------
+
+
+def test_watch_reason_comes_from_the_server(pages):
+    """프론트가 문구를 다시 쓰면 GREEN 의 "조회 시점 기준" 한계가 조용히 사라진다."""
+    index = pages["index.html"]
+    assert "data.watch_suggestion" in index
+    assert "ws.reason" in index
+
+
+def test_green_watch_suggestion_is_emphasised(pages):
+    """GREEN 은 가장 약한 신호다. 셀러가 '안전'으로 읽으면 우리가 가장 크게 빗나간다."""
+    index = pages["index.html"]
+    assert 'sig === "GREEN"' in index
+    assert "watch-cta.lead" in (STATIC / "app.css").read_text(encoding="utf-8")
+
+
+def test_no_watch_button_when_the_server_says_it_cannot_be_watched(pages):
+    """지킬 수 없는 약속은 권하지 않는다.
+
+    감시할 단서가 없으면 스캔에서 버튼을 감춘다 — 누르게 해두고 등록에서
+    거절하면 사용자를 배신한다.
+    """
+    index = pages["index.html"]
+    assert "ws.can_watch" in index
+    assert "canWatch" in index
+    block = index[index.index("var ws = data.watch_suggestion"):]
+    block = block[: block.index('if (data.disclaimer)')]
+    assert 'id="watch"' in block and "canWatch" in block

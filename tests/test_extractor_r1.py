@@ -147,3 +147,29 @@ def test_llm_failure_is_counted_separately_from_a_deliberate_skip(monkeypatch):
     assert snap["llm_failures"] == 1
     assert snap["heuristic"] == 2
     ex.stats.reset()
+
+
+def test_product_name_prompt_makes_null_the_exception():
+    """제품명 지시가 "표시된 값만" 으로 좁혀지면 안 된다.
+
+    이전 문구는 두 문장이 서로 당겼다 - "페이지 첫 줄이나 광고 문구가 아닙니다"
+    라는 금지가 뒤의 "없으면 가장 근접한 제목 한 줄만" 을 덮어써서, 라벨 없이
+    제목만 있는 페이지에서 LLM 이 null 을 냈다. 실측 8회 중 3회(37.5%).
+
+    이건 화면에 바로 드러난다 - "이 페이지에서 이렇게 읽었습니다" 에서 제품명이
+    사라지면 셀러가 "내 상품이 맞나" 부터 의심한다. 게다가 product_name 은
+    리콜 약한 일치(제조사+제품명 토큰)의 재료라, 비면 매칭도 조용히 약해진다.
+
+    ⚠ 첫 줄을 무조건 쓰는 결정론적 보강은 하지 않았다. 인증번호와 달리 제품명은
+      "광고 문구인가 상품 이름인가" 를 가리는 판단이라 첫 줄 규칙이 LLM 보다
+      나쁘다 - '무료배송 특가!!' 가 제품명이 되면 그게 리콜 오탐의 재료로 들어간다.
+      문구를 고친 뒤 실측 10/10, 광고 문구뿐인 페이지는 계속 null 이었다.
+    """
+    from sourcing_guard.extractor import SYSTEM_PROMPT as prompt
+
+    assert "null 은 예외입니다" in prompt, "null 이 기본값처럼 읽히면 제품명이 사라진다"
+    assert '"상품명/품명/제품명" 으로 표시된 값만' not in prompt, (
+        "지시가 라벨 있는 값으로만 좁혀졌습니다 - 제목만 있는 페이지에서 null 이 됩니다"
+    )
+    # 광고 문구 가드는 유지돼야 한다. 없으면 '무료배송 특가' 가 제품명이 된다.
+    assert "광고 문구" in prompt

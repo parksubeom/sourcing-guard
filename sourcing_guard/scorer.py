@@ -6,7 +6,7 @@ CLAUDE.md R3: absence of data yields UNKNOWN, never GREEN.
 
 from __future__ import annotations
 
-from .models import Finding, FindingKind, ProductFacts, ScanResult, Signal, ItemCategory
+from .models import Finding, FindingKind, ProductFacts, ScanResult, Signal, ItemCategory, WatchSuggestion, ExtractedField
 
 # Weights are intentionally boring and auditable. Any change must be
 # accompanied by a test case explaining the new behaviour.
@@ -75,6 +75,72 @@ _HEADLINE: dict[Signal, str] = {
 }
 
 
+# 신호마다 워치리스트를 권하는 이유가 다르다. 핵심은 GREEN 이다 - 부재의
+# 증명이라 가장 약한 신호이므로, "지금 괜찮음" 의 유효기간을 워치리스트가
+# 이어받는다. OUT_OF_SCOPE 는 우리 소관이 아니므로 감시를 권하지 않는다.
+_WATCH_REASON: dict[Signal, str] = {
+    Signal.GREEN: (
+        "지금은 리콜·인증 문제가 없지만, 이는 조회 시점 기준입니다. "
+        "이 상품을 감시 목록에 넣으면 나중에 리콜이 공표될 때 가장 먼저 알려드립니다."
+    ),
+    Signal.AMBER: (
+        "공급처에 확인하는 동안 이 상품을 감시 목록에 넣어두면, "
+        "그 사이 리콜이 공표되어도 놓치지 않습니다."
+    ),
+    Signal.RED: (
+        "이미 문제가 확인된 상품이지만, 감시 목록에 넣으면 이후 추가 리콜도 알려드립니다."
+    ),
+    Signal.UNKNOWN: (
+        "판단에 필요한 정보가 부족합니다. 감시 목록에 넣으면 이후 리콜 공표 시 알려드립니다."
+    ),
+}
+
+
+def _extracted_fields(facts: ProductFacts) -> list[ExtractedField]:
+    """페이지에서 읽은 값을 화면 표시용으로 정리한다.
+
+    판정 위에 이걸 먼저 보여줘야 셀러가 "제대로 읽었네" 를 믿는다. 인증번호는
+    정부 조회 링크를 붙여, 그 번호가 맞는지 직접 확인할 수 있게 한다. 빈 값은
+    넣지 않는다 - 못 읽은 것을 읽은 것처럼 채우지 않는다.
+    """
+    from .kats_client import cert_evidence_url
+
+    out: list[ExtractedField] = []
+    if facts.product_name:
+        out.append(ExtractedField(label="제품명", value=facts.product_name))
+    if facts.model_name:
+        out.append(ExtractedField(label="모델명", value=facts.model_name))
+    if facts.maker:
+        out.append(ExtractedField(label="제조사", value=facts.maker))
+    for num in facts.kc_numbers:
+        out.append(ExtractedField(label="인증번호", value=num, link=cert_evidence_url(num)))
+    if facts.target_age:
+        out.append(ExtractedField(label="사용연령", value=facts.target_age))
+    if facts.materials:
+        out.append(ExtractedField(label="재질", value=", ".join(facts.materials)))
+    if facts.category is not ItemCategory.UNCLASSIFIED:
+        out.append(ExtractedField(label="품목 구분", value=facts.category.label_ko))
+    return out
+
+
+def _watch_suggestion(facts: ProductFacts, signal: Signal, kinds: set[FindingKind]) -> WatchSuggestion:
+    # 감시할 단서가 있어야 약속을 지킬 수 있다. WatchItem.is_matchable 과 같은 기준.
+    can_watch = bool(
+        facts.model_name
+        or facts.kc_numbers
+        or (facts.maker and facts.product_name)
+    )
+    # 소관 밖은 우리가 리콜을 대조하지 않으므로 감시를 권하지 않는다.
+    if FindingKind.OUT_OF_SCOPE in kinds:
+        can_watch = False
+        reason = "이 품목은 본 서비스가 리콜을 대조하는 범위 밖입니다."
+    elif not can_watch:
+        reason = "감시할 단서(모델명·인증번호·제조사)가 부족해 리콜 감시를 걸 수 없습니다."
+    else:
+        reason = _WATCH_REASON[signal]
+    return WatchSuggestion(can_watch=can_watch, reason=reason)
+
+
 def score(
     facts: ProductFacts,
     findings: list[Finding],
@@ -110,6 +176,8 @@ def score(
         facts=facts,
         findings=findings,
         coverage_note=_coverage_note(facts, kinds),
+        watch_suggestion=_watch_suggestion(facts, signal, kinds),
+        extracted=_extracted_fields(facts),
         recall_data_as_of=recall_data_as_of,
     )
 
