@@ -433,6 +433,49 @@ def verify(
             )
         )
 
+    # --- (b-2) 같은 제조사의 다른 리콜 ----------------------------------------
+    #
+    # 셀러가 소싱 단계에서 실제로 판단하는 것은 "이 공급처를 믿을 수 있나" 다.
+    # 같은 업체에 리콜이 쌓여 있으면 그건 이 상품의 결함은 아니지만 공급처를
+    # 다시 볼 이유는 된다. 그래서 참고 정보로만 낸다.
+    #
+    # ⚠ 정확 일치만 쓴다. 로컬 사본 실측(2026-09-01)에서 축 세 개를 재보니:
+    #     제조사 정확 일치  13~63건    ← 셀러에게 보여줄 만한 숫자
+    #     제조사 포함 일치   1,600건+   어떤 질의에도. 일반 접미사가 폭발한다
+    #     품목군            671~1,370건 버킷이 11종뿐이다
+    #     재질              2,181건     또는 2건. 어휘가 서로 다르다
+    #   그래서 품목군·재질 축은 버렸고 제조사도 포함 매칭을 쓰지 않는다.
+    if recall_available and facts.maker:
+        seen_uids = {r.uid for r, _ in hits if r.uid}
+        others = recalls.by_maker_exact(facts.maker, exclude_uids=seen_uids)
+        if others:
+            latest = _fmt_date(others[0].announced_on) or "공표일 미상"
+            findings.append(
+                Finding(
+                    kind=FindingKind.MAKER_OTHER_RECALLS,
+                    # 신호를 매기지 않는다. 이 상품에 대해 확인된 것이 없다.
+                    signal=Signal.UNKNOWN,
+                    statement_ko=(
+                        f"같은 제조사 '{facts.maker}' 의 다른 리콜이 "
+                        f"{len(others)}건 있습니다 (최근 {latest} 공표). "
+                        "이 상품이 리콜 대상이라는 뜻은 아닙니다 — "
+                        "업체명이 같은 다른 제품의 이력이며, 공급처를 확인할 때 참고하세요."
+                    ),
+                    source_label="국가기술표준원 리콜정보",
+                    source_url="https://www.safetykorea.kr/",
+                    detail={
+                        "maker": facts.maker,
+                        "count": len(others),
+                        "match": "maker_exact",
+                        "latest_announced_on": others[0].announced_on,
+                        "products": [
+                            r.product_name for r in others[:5] if r.product_name
+                        ],
+                    },
+                    checked_at=today,
+                )
+            )
+
     # --- (b-3) 공급처에 물어야 할 것 ----------------------------------------
     # "모르겠습니다" 로 끝내지 않는다. 소싱 단계에서 셀러가 실제로 할 수 있는
     # 행동은 공급처에 묻는 것뿐이고, 무엇을 물어야 하는지가 실질 가치다.

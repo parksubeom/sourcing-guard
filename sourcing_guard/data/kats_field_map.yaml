@@ -134,7 +134,19 @@ operations:
     fields:                      # p.11, p.14 응답 메시지 명세
       product_name: "recallProductName"
       model_name: "recallModelName"   # 콤마 구분 목록
-      maker: "makerName"
+      # ⚠ 국내는 recallCmpnyName 을 쓴다. makerName 이 아니다.
+      #
+      # 실측 (2026-09-01, 국내 4,243건):
+      #   recallCmpnyName  4,243/4,243 = 100.0%   ← 리콜 시행 업체(제조·수입·판매)
+      #   makerName        2,851/4,243 =  67.2%   ← 제조공장. 국외 공장이면 비어 있다
+      #   makerName 만 있는 레코드는 0건 → 교체로 잃는 것이 없다.
+      #
+      # 두 값이 다른 경우 739건인데, 한국 상세페이지에는 보통 수입원·판매원이
+      # 적힌다 ('(주)스텝케어' vs 'JOEY IND E COMERCIO'). 셀러가 페이지에서
+      # 읽는 이름과 맞춰야 매칭이 성립하므로 recallCmpnyName 이 맞다.
+      #
+      # 국외에는 recallCmpnyName 이 없다(응답 키 19개). 그래서 국외만 makerName.
+      maker: "recallCmpnyName"
       reason: "harmDscr"              # 제품 결함
       announced_on: "publishDate"     # yyyyMMdd
       detail_url: ""                  # 응답에 없다. recallUid 로 상세 조회 가능

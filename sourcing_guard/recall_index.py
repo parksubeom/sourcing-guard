@@ -30,7 +30,7 @@ from datetime import date
 from .kats_client import RecallRecord
 from .models import MatchStrength, ProductFacts, WatchItem
 from .storage import SqliteWatchStore
-from .watchlist import Match, match
+from .watchlist import Match, match, normalize_model
 
 _log = logging.getLogger(__name__)
 
@@ -128,3 +128,37 @@ class RecallIndex:
 
         hits.sort(key=lambda pair: (-order[pair[1].strength], pair[0].uid or ""))
         return hits
+
+    def by_maker_exact(
+        self, maker: str | None, *, exclude_uids: set[str] | None = None
+    ) -> list[RecallRecord]:
+        """같은 제조사의 다른 리콜. 정확 일치만.
+
+        ⚠ 포함 매칭을 쓰지 않는다. 로컬 사본 실측(2026-09-01)에서 포함 매칭은
+          어떤 질의에도 1,600건 이상을 돌려줬고, 일반 접미사는 그 자체로
+          폭발했다 - '코리아' 303건, '산업' 131건, '무역' 54건. 셀러에게
+          수백 건을 보여주면 그건 경고가 아니라 소음이다.
+
+        ⚠ 품목군·재질 축은 쓰지 않는다. 같은 실측에서 품목군은 버킷이 11종뿐이라
+          완구 671건·전기용품 1,370건이 한 번에 뜨고, 재질은 셀러가 쓰는 어휘
+          (ABS 2건·PVC 40건)와 리콜 사유에 적히는 검출 물질(프탈레이트 3,259건·
+          납 1,980건)이 서로 달라 쓸 수 있는 중간 지점이 없었다.
+
+        ⚠ 정규화 결과가 빈 문자열이면 빈 목록을 돌려준다. 중국어·그리스문자만인
+          업체명과 '-' 가 모두 "" 가 되고(사본의 42.7%), 그걸 비교에 쓰면 서로
+          무관한 업체가 전부 같은 업체가 된다.
+
+        exclude_uids 로 이미 직접 일치로 보고한 리콜을 뺀다 - 같은 리콜을
+        "일치" 와 "같은 제조사" 두 곳에서 세면 건수가 부풀려진다.
+        """
+        key = normalize_model(maker)
+        if not key:
+            return []
+        skip = exclude_uids or set()
+        out = [
+            r
+            for r in self._load()
+            if r.uid not in skip and r.maker and normalize_model(r.maker) == key
+        ]
+        out.sort(key=lambda r: (r.announced_on or "", r.uid or ""), reverse=True)
+        return out

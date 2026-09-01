@@ -439,3 +439,53 @@ def test_extracted_number_matches_what_was_looked_up():
     facts = ProductFacts(product_name="x", kc_numbers=["B363R871-5002"])
     cert = next(f for f in _extracted_fields(facts) if f.label == "인증번호")
     assert "B363R871-5002" in cert.link
+
+
+# --- 셀러 관점 그룹 정렬 (소싱 판단을 앞으로) ------------------------------
+def test_action_group_comes_before_findings_and_context():
+    """'소싱하려면 확인할 것' 이 리콜·유해물질 결과보다 앞에 온다.
+
+    소싱 셀러는 리콜 조회기가 아니라 '이거 팔려면 뭘 준비하나' 를 먼저 알고 싶다.
+    """
+    from sourcing_guard.models import ProductFacts, ItemCategory
+    from sourcing_guard.kats_client import KatsClient
+    from sourcing_guard.verifier import RuleBook, verify
+
+    facts = ProductFacts(
+        product_name="colourmotor 마커", maker="colourmotor",
+        category=ItemCategory.CHILDREN_STATIONERY,
+    )
+    result = score(facts, verify(facts, KatsClient(None, None, mock=True), RuleBook(), None))
+    groups = [g["group"] for g in result.grouped_findings]
+    assert groups[0] == "action", f"확인할 것이 맨 위가 아님: {groups}"
+    # 순서가 action -> finding -> context 를 지키는가
+    order = {"action": 0, "finding": 1, "context": 2}
+    assert groups == sorted(groups, key=lambda g: order[g])
+
+
+def test_revoked_cert_lands_in_confirmed_problems():
+    """취소된 인증은 '확인된 문제' 로. '확인할 것' 이나 '참고' 가 아니다."""
+    from sourcing_guard.models import ProductFacts, ItemCategory, FindingKind
+    from sourcing_guard.kats_client import KatsClient
+    from sourcing_guard.verifier import RuleBook, verify
+
+    facts = ProductFacts(
+        product_name="완구", model_name="BLK-1", kc_numbers=["CB123A123-1234"],
+        category=ItemCategory.CHILDREN_TOY,
+    )
+    result = score(facts, verify(facts, KatsClient(None, None, mock=True), RuleBook(), None))
+    problem_group = next(g for g in result.grouped_findings if g["group"] == "finding")
+    kinds = {f.kind for f in problem_group["findings"]}
+    assert FindingKind.KC_REVOKED in kinds
+
+
+def test_empty_groups_are_omitted():
+    """빈 구획은 화면에 넣지 않는다."""
+    from sourcing_guard.models import ProductFacts
+    from sourcing_guard.kats_client import KatsClient
+    from sourcing_guard.verifier import RuleBook, verify
+
+    facts = ProductFacts(product_name="이름만 있는 상품")
+    result = score(facts, verify(facts, KatsClient(None, None, mock=True), RuleBook(), None))
+    for g in result.grouped_findings:
+        assert g["findings"], f"빈 구획이 들어감: {g['group']}"

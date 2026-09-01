@@ -409,3 +409,15 @@ def test_no_watch_button_when_the_server_says_it_cannot_be_watched(pages):
     block = index[index.index("var ws = data.watch_suggestion"):]
     block = block[: block.index('if (data.disclaimer)')]
     assert 'id="watch"' in block and "canWatch" in block
+
+
+def test_maker_other_recalls_is_visually_separated(pages):
+    """같은 제조사의 다른 리콜을 리콜 일치와 같은 모양으로 그리면 안 된다.
+
+    셀러가 "이 상품이 리콜됐다" 로 읽는다. 서버 문장에 단서가 붙어 있지만
+    화면 표시도 달라야 한다 - 색과 배지가 같으면 문장을 읽기 전에 판단한다.
+    """
+    index = pages["index.html"]
+    assert 'f.kind === "maker_other_recalls"' in index
+    assert "aside" in index
+    assert ".findings>li.aside" in (STATIC / "app.css").read_text(encoding="utf-8")

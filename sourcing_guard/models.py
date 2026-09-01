@@ -87,12 +87,54 @@ class FindingKind(str, Enum):
     INFO_REQUEST = "info_request"          # 공급처에 물어야 할 것
     RECALL_MATCH = "recall_match"
     RECALL_CLEAR = "recall_clear"
+    # 같은 제조사의 다른 리콜. 이 상품의 위험이 아니라 공급처를 보는 참고 정보다.
+    # 정확 일치만 쓴다 - 포함 매칭은 실측에서 어떤 질의에도 1,600건 이상을 냈다.
+    MAKER_OTHER_RECALLS = "maker_other_recalls"
     HAZARD_RULE_APPLIES = "hazard_rule_applies"
     SUBSTANCE_MENTIONED = "substance_mentioned"
     COVERAGE_GAP = "coverage_gap"
     # "조회했는데 없음" 과 "조회를 못 함" 은 셀러에게 완전히 다른 정보다.
     # 후자를 전자로 표시하면 확인하지 못한 것을 확인한 것처럼 말하게 된다.
     LOOKUP_FAILED = "lookup_failed"
+
+
+class FindingGroup(str, Enum):
+    """셀러 관점 화면 구획. 판정 결과가 아니라 '무엇부터 봐야 하나' 의 순서다.
+
+    소싱 셀러의 질문 순서: (1) 이거 팔려면 뭘 준비해야 하나 → (2) 문제가
+    확인된 게 있나 → (3) 참고 정보. 리콜 조회기가 아니라 소싱 판단 도구로
+    보이게 하려면, 리콜·인증 결과보다 '확인할 것' 이 앞에 와야 한다.
+    """
+
+    ACTION = "action"        # 소싱하려면 확인·준비할 것 (맨 위)
+    FINDING = "finding"      # 문제가 확인된 것 (인증 취소, 리콜 일치)
+    CONTEXT = "context"      # 참고 (적용 기준, 조회 상태)
+
+
+# FindingKind -> 화면 구획. 셀러가 먼저 볼 것일수록 ACTION.
+_FINDING_GROUP: dict[str, FindingGroup] = {
+    # 소싱 전에 확인·준비할 것
+    "kc_missing_but_required": FindingGroup.ACTION,
+    "kc_tier_unknown": FindingGroup.ACTION,
+    "info_request": FindingGroup.ACTION,
+    "substance_mentioned": FindingGroup.ACTION,
+    # 문제가 확인된 것
+    "kc_not_found": FindingGroup.FINDING,
+    "kc_revoked": FindingGroup.FINDING,
+    "kc_expired": FindingGroup.FINDING,
+    "kc_suspended": FindingGroup.FINDING,
+    "kc_under_action": FindingGroup.FINDING,
+    "recall_match": FindingGroup.FINDING,
+    # 참고 / 상태
+    "kc_verified": FindingGroup.CONTEXT,
+    "recall_clear": FindingGroup.CONTEXT,
+    "maker_other_recalls": FindingGroup.CONTEXT,
+    "hazard_rule_applies": FindingGroup.CONTEXT,
+    "coverage_gap": FindingGroup.CONTEXT,
+    "out_of_scope": FindingGroup.CONTEXT,
+    "age_out_of_child_range": FindingGroup.CONTEXT,
+    "lookup_failed": FindingGroup.CONTEXT,
+}
 
 
 class Finding(BaseModel):
@@ -106,6 +148,10 @@ class Finding(BaseModel):
     legal_basis: str | None = None
     detail: dict = Field(default_factory=dict)
     checked_at: date | None = None
+
+    @property
+    def group(self) -> "FindingGroup":
+        return _FINDING_GROUP.get(self.kind.value, FindingGroup.CONTEXT)
 
     @field_validator("source_url", "source_label")
     @classmethod
@@ -179,6 +225,9 @@ class ScanResult(BaseModel):
     # "우리가 페이지에서 이렇게 읽었습니다." 판정 위에 입력을 먼저 보여줘야
     # 셀러가 "제대로 봤구나" 를 믿는다. 잘못 읽었으면 여기서 바로 잡아낸다.
     extracted: list["ExtractedField"] = Field(default_factory=list)
+    # findings 를 셀러 관점 구획(확인할 것 / 확인된 문제 / 참고)으로 묶은 것.
+    # findings 원본도 그대로 두어 하위호환을 유지한다. 프론트는 grouped 를 그린다.
+    grouped_findings: list[dict] = Field(default_factory=list)
     # 일일 분석 한도를 넘겨 간이 추출로 처리했을 때의 안내. 정확도가 낮아진
     # 사실을 감추지 않는다 - 감추면 셀러가 덜 정확한 결과를 최신 분석으로 읽는다.
     extraction_note: str | None = None
