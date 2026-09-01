@@ -155,9 +155,13 @@
     var sig = data.signal || "UNKNOWN";
 
     var html = '<div class="result">';
+    // 셀러의 질문은 "이거 소싱해도 돼?" 다. 헤드라인이 그 질문에 직접 답한다.
+    // 서버가 내려주는 문장을 그대로 쓴다 — 프론트가 다시 쓰면 §6.1 한계 문구가
+    // 조용히 사라진다.
+    var head = data.headline || SIGNAL_LABEL[sig] || sig;
     html += '<div class="verdict ' + esc(sig) + '">' +
               '<span class="badge">' + esc(SIGNAL_SHORT[sig] || sig) + "</span>" +
-              '<span class="meta"><strong>' + esc(SIGNAL_LABEL[sig] || sig) + "</strong>" +
+              '<span class="meta"><strong>' + esc(head) + "</strong>" +
               "<span>" + esc(asOfLabel(data.recall_data_as_of)) + "</span></span></div>";
 
     if (data.coverage_note) html += '<p class="scope">' + esc(data.coverage_note) + "</p>";

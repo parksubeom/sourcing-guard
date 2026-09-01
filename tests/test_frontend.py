@@ -201,3 +201,14 @@ def test_matched_items_stay_marked_after_a_reload(pages):
 def test_watch_page_links_back_to_scan(pages):
     assert 'href="/"' in pages["watch.html"]
     assert 'href="/watch"' in pages["index.html"]
+
+
+def test_scan_page_shows_the_server_headline(pages):
+    """셀러의 질문은 "이거 소싱해도 돼?" 다. 헤드라인이 거기에 직접 답한다.
+
+    서버 문장을 그대로 써야 한다. 프론트가 다시 쓰면 GREEN 의 "판매자 제공
+    정보 기준으로" 같은 §6.1 한계 문구가 조용히 사라진다.
+    """
+    index = pages["index.html"]
+    assert "data.headline" in index
+    assert "esc(head)" in index

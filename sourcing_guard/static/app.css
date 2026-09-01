@@ -125,7 +125,8 @@ textarea:focus{border-color:var(--primary-50); outline:2px solid var(--border-fo
 .verdict.RED    .badge{background:var(--danger)}
 .verdict.UNKNOWN .badge{background:var(--gray-60)}
 .verdict .meta{min-width:0}
-.verdict .meta strong{display:block; font-size:19px; line-height:1.3}
+.verdict .meta strong{display:block; font-size:19px; line-height:1.4;
+  font-weight:700; overflow-wrap:anywhere}
 .verdict .meta span{display:block; font-size:13px; color:var(--fg-3); margin-top:var(--s1); font-variant-numeric:tabular-nums}
 @media (max-width:640px){
   .verdict{flex-direction:column; align-items:flex-start; gap:var(--s3); padding:var(--s5)}
