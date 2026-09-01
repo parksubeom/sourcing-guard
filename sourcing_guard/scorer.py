@@ -105,9 +105,20 @@ def _signal_for(facts: ProductFacts, kinds: set[FindingKind]) -> Signal:
         FindingKind.KC_UNDER_ACTION,
         FindingKind.KC_MISSING_BUT_REQUIRED,
         FindingKind.SUBSTANCE_MENTIONED,
-        FindingKind.HAZARD_RULE_APPLIES,
     }:
         return Signal.AMBER
+
+    # HAZARD_RULE_APPLIES 는 여기 없다. "이 품목군에 납 기준이 걸린다" 는 적용
+    # 범위 안내이지 문제 지적이 아니다 (R3-b 와 같은 논리). 이걸 AMBER 로 두면
+    # 완구·학용품·아동섬유가 무엇을 해도 노란불이 되고, 그러면 셀러가 노란불을
+    # 무시하게 된다 — SCoC 오탐(7a6fd70) 때 세운 논리 그대로다. 항상 켜지는
+    # 경고는 꺼진 경고와 같다.
+    #
+    # 대신 상세페이지에 규제 물질이 실제로 적혀 있으면(SUBSTANCE_MENTIONED)
+    # 확인해볼 이유가 생긴 것이므로 AMBER 다. 기획서 §3 의 AMBER 정의
+    # ("규제 물질 언급 감지")와 일치한다.
+    #
+    # 초록불에는 점검 범위를 반드시 병기한다 (_coverage_note, 기획서 §6.1).
 
     # GREEN requires positive evidence on BOTH axes. Silence is not evidence.
     if {FindingKind.KC_VERIFIED, FindingKind.RECALL_CLEAR} <= kinds:
@@ -126,4 +137,11 @@ def _coverage_note(facts: ProductFacts, kinds: set[FindingKind]) -> str | None:
         )
     if facts.category not in _REGULATED:
         return "안전인증 의무 대상 여부는 별도 확인이 필요합니다."
+    if FindingKind.HAZARD_RULE_APPLIES in kinds:
+        # 초록불은 "안 걸린다"는 보증이 아니다 (기획서 §6.1). 우리는 상세페이지
+        # 텍스트를 읽고 단속은 실물을 수거해 시험한다. 그 간극을 화면이 말해야 한다.
+        return (
+            "이 품목군에는 유해물질 기준이 적용됩니다. 실제 함유량은 시험성적서로만 "
+            "확인되며, 인증번호 도용·상표권·수입요건은 확인 대상이 아닙니다."
+        )
     return None

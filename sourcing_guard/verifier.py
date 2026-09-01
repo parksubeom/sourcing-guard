@@ -350,7 +350,10 @@ def verify(
             findings.append(
                 Finding(
                     kind=FindingKind.HAZARD_RULE_APPLIES,
-                    signal=Signal.AMBER,
+                    # 적용 범위 안내다. 문제를 지적하는 것이 아니므로 노란불을
+                    # 달지 않는다 — 이 finding 하나로 신호가 갈리면 규제 품목군이
+                    # 전부 AMBER 가 된다.
+                    signal=Signal.UNKNOWN,
                     statement_ko=(
                         f"이 품목군에는 '{rule.substance}' 기준"
                         + (f" ({rule.limit_value}{rule.unit})" if rule.limit_value else "")
