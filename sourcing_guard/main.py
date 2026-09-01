@@ -9,11 +9,12 @@ import asyncio
 from contextlib import asynccontextmanager, suppress
 
 from pathlib import Path
+from typing import Literal
 
 from fastapi import FastAPI, Header, HTTPException, Request
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from datetime import date
 from uuid import uuid4
@@ -65,9 +66,25 @@ _kats = KatsClient(settings.kats_base_url, settings.kats_service_key, mock=setti
 _rules = RuleBook()
 
 
+class ScanImage(BaseModel):
+    # 중국 도매 상세페이지는 상품정보 표가 통짜 이미지인 경우가 많다.
+    # media_type 은 허용 목록으로 제한하고, 개수·크기 상한으로 LLM 비용을 막는다.
+    media_type: Literal["image/jpeg", "image/png", "image/webp", "image/gif"]
+    data: str = Field(min_length=1, max_length=8_000_000)  # base64, 원본 약 6MB
+
+
 class ScanRequest(BaseModel):
-    page_text: str = Field(min_length=1, max_length=200_000)
+    # page_text 와 images 중 하나 이상 있으면 된다. 이미지만 있는 경우
+    # (통짜 이미지 페이지)도 스캔할 수 있어야 한다.
+    page_text: str = Field(default="", max_length=200_000)
     page_url: str | None = None
+    images: list[ScanImage] = Field(default_factory=list, max_length=4)
+
+    @model_validator(mode="after")
+    def _need_some_input(self) -> "ScanRequest":
+        if not self.page_text.strip() and not self.images:
+            raise ValueError("page_text 또는 images 중 하나는 있어야 합니다.")
+        return self
 
 
 _STATIC = Path(__file__).parent / "static"
@@ -162,7 +179,8 @@ def scan(req: ScanRequest, request: Request) -> ScanResult:
 
     # 상한을 넘겨도 멈추지 않는다. LLM 대신 휴리스틱으로 내리고 그 사실을 적는다.
     allow_llm = _limiter.take_llm_budget(fingerprint=fp)
-    facts = extract(req.page_text, req.page_url, allow_llm=allow_llm)
+    imgs = [{"media_type": i.media_type, "data": i.data} for i in req.images]
+    facts = extract(req.page_text, req.page_url, images=imgs, allow_llm=allow_llm)
     findings = verify(facts, _kats, _rules, _recalls)
     result = score(facts, findings, recall_data_as_of=_recalls.as_of)
     if not allow_llm:
