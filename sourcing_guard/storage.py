@@ -175,6 +175,63 @@ class SqliteWatchStore:
                 )
         return new
 
+    def commit_full_load(
+        self,
+        batches: dict[str, list[dict]],
+        *,
+        fetched_at: str,
+        completed_at: str,
+        minimum: int,
+    ) -> dict[str, int]:
+        """전량 적재와 완료 표시를 한 트랜잭션으로 쓴다.
+
+        둘을 따로 쓰면 사이에서 죽었을 때 상태가 갈린다. 특히 위험한 방향은
+        "표시는 있는데 데이터가 없는" 쪽이다 - 그러면 다음 실행이 증분으로
+        넘어가 과거 구간이 영원히 안 들어오고, 스캔은 조용히 "리콜 이력 없음"
+        을 돌려준다 (CLAUDE.md R6).
+
+        minimum 미만이면 완료로 찍지 않고 ValueError 를 던진다. 정부 API 가
+        2004(No Data)나 빈 resultData 를 돌려줘도 그건 오류가 아니라서 호출부가
+        성공으로 읽는다 - 실제로 그렇게 0건 적재가 완료로 기록됐다.
+        """
+        counts: dict[str, int] = {}
+        with self._conn:
+            for scope, rows in batches.items():
+                known = self.known_recall_uids(scope)
+                new = 0
+                for row in rows:
+                    uid = row.get("uid")
+                    if not uid:
+                        continue
+                    if uid not in known:
+                        new += 1
+                    self._conn.execute(
+                        "INSERT INTO recalls (uid, scope, published_on, payload, fetched_at) "
+                        "VALUES (?, ?, ?, ?, ?) "
+                        "ON CONFLICT(uid, scope) DO UPDATE SET "
+                        "  published_on = excluded.published_on, "
+                        "  payload = excluded.payload, "
+                        "  fetched_at = excluded.fetched_at",
+                        (uid, scope, row.get("published_on"), row["payload"], fetched_at),
+                    )
+                counts[scope] = new
+
+            total = self._conn.execute(
+                "SELECT COUNT(*) AS n FROM recalls"
+            ).fetchone()["n"]
+            if total < minimum:
+                # 롤백된다. 적재도 표시도 남지 않는다.
+                raise ValueError(
+                    f"전량 적재 결과가 {total}건뿐이라 완료로 기록하지 않습니다 "
+                    f"(기대 {minimum}건 이상). 정부 API 가 빈 응답을 돌려줬을 수 있습니다."
+                )
+            self._conn.execute(
+                "INSERT INTO sync_state (key, value) VALUES ('initial_load_at', ?) "
+                "ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+                (completed_at,),
+            )
+        return counts
+
     def recall_payloads(self, *, scope: str | None = None) -> list[str]:
         if scope:
             rows = self._conn.execute(

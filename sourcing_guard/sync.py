@@ -74,18 +74,22 @@ def month_windows(today: date | None = None) -> list[str]:
     return [cur, f"{py:04d}{pm:02d}"]
 
 
-def _persist(store: SqliteWatchStore, records, *, scope: str, fetched_at: str) -> int:
-    rows = []
+def _rows(records) -> list[dict]:
+    out = []
     for r in records:
         if not r.uid:
             # uid 가 없으면 신규 판정을 할 수 없다. 저장하면 매번 새 것으로 보인다.
             continue
-        rows.append({
+        out.append({
             "uid": r.uid,
             "published_on": r.announced_on,
             "payload": json.dumps(asdict(r), ensure_ascii=False),
         })
-    return store.upsert_recalls(rows, scope=scope, fetched_at=fetched_at)
+    return out
+
+
+def _persist(store: SqliteWatchStore, records, *, scope: str, fetched_at: str) -> int:
+    return store.upsert_recalls(_rows(records), scope=scope, fetched_at=fetched_at)
 
 
 def run_sync(
@@ -123,6 +127,12 @@ def run_sync(
     report = SyncReport(mode=mode, started_at=_now())
     fetched_at = report.started_at
 
+    # 초기 적재는 두 스코프를 다 모은 뒤 한 트랜잭션으로 쓴다. 스코프마다
+    # 따로 커밋하고 마지막에 완료를 찍으면, 중간에 죽었을 때 "표시는 있는데
+    # 데이터는 반쪽" 인 상태가 남는다. 그 상태는 다음 실행이 증분으로 넘어가
+    # 영원히 복구되지 않는다.
+    batches: dict[str, list[dict]] = {}
+
     for scope in SCOPES:
         overseas = scope == "overseas"
         records = []
@@ -143,6 +153,9 @@ def run_sync(
             continue
 
         report.fetched[scope] = len(records)
+        if mode == "initial":
+            batches[scope] = _rows(records)
+            continue
         try:
             report.new[scope] = _persist(store, records, scope=scope, fetched_at=fetched_at)
         except Exception as exc:  # noqa: BLE001
@@ -151,10 +164,29 @@ def run_sync(
 
     report.finished_at = _now()
 
-    # 초기 적재는 두 스코프가 모두 성공했을 때만 완료로 친다. 반쪽 적재를
-    # 완료로 기록하면 다음 실행이 증분으로 넘어가 빈 구간이 영구히 남는다.
-    if mode == "initial" and report.ok and len(report.fetched) == len(SCOPES):
-        store.set_sync_state("initial_load_at", report.finished_at)
+    if mode == "initial":
+        # 두 스코프가 모두 성공했을 때만 쓴다. 반쪽 적재를 완료로 기록하면
+        # 다음 실행이 증분으로 넘어가 빈 구간이 영구히 남는다.
+        if report.ok and len(batches) == len(SCOPES):
+            try:
+                report.new = store.commit_full_load(
+                    batches,
+                    fetched_at=fetched_at,
+                    completed_at=report.finished_at,
+                    minimum=min_plausible,
+                )
+            except ValueError as exc:
+                # 빈 응답이 성공으로 읽힌 경우. 적재도 표시도 롤백된다.
+                report.errors.append(str(exc))
+                _log.error("전량 적재를 완료로 기록하지 않았습니다: %s", exc)
+            except Exception as exc:  # noqa: BLE001
+                report.errors.append(f"전량 저장: {type(exc).__name__}: {exc}")
+                _log.exception("전량 적재 저장 실패")
+        else:
+            _log.warning(
+                "전량 적재가 반쪽입니다(성공 스코프 %s). 완료로 기록하지 않습니다.",
+                sorted(batches),
+            )
 
     store.set_sync_state("last_sync_at", report.finished_at)
     store.set_sync_state("last_sync_error", "; ".join(report.errors) if report.errors else "")
