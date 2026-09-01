@@ -119,6 +119,11 @@ class Finding(BaseModel):
 
 class ScanResult(BaseModel):
     signal: Signal
+    # 셀러의 질문은 "이거 소싱해도 돼?" 다. 신호(RED/AMBER/GREEN)와 개별 근거만으로는
+    # 그 질문에 한 번 더 번역해서 답해야 한다. headline 이 소싱 판단 언어로 직접
+    # 답한다. GREEN 문구에 "판매자 제공 정보 기준으로" 를 박아, 과대 약속이
+    # 구조적으로 불가능하게 한다 (§6.1). 이 문장은 판정이 아니라 신호의 번역이다.
+    headline: str = ""
     score: int = Field(ge=0, le=100)   # 낮을수록 확인 필요. 표시용일 뿐 판정 아님
     facts: ProductFacts
     findings: list[Finding]

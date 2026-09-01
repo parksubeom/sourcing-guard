@@ -64,6 +64,17 @@ _REGULATED = {
 }
 
 
+# 신호를 셀러의 소싱 판단 언어로 옮긴 한 줄. 시스템 상태가 아니라 "그래서
+# 소싱해도 되나?" 에 답한다. GREEN 은 "판매자 제공 정보 기준" 을 명시해
+# 안전 보증으로 읽히지 않게 한다 (§6.1).
+_HEADLINE: dict[Signal, str] = {
+    Signal.GREEN: "소싱 가능 — 판매자 제공 정보 기준으로 리콜·인증 문제가 확인되지 않습니다. 실제 검증은 시험성적서로 이루어집니다.",
+    Signal.AMBER: "확인 후 소싱 — 공급처에 아래 항목을 확인한 뒤 판단하세요.",
+    Signal.RED: "소싱 보류 — 리콜 또는 인증 문제가 확인되었습니다. 아래 근거를 확인하세요.",
+    Signal.UNKNOWN: "판단 보류 — 판매자 제공 정보만으로는 소싱 여부를 가릴 수 없습니다. 아래 확인 항목을 공급처에 요청하세요.",
+}
+
+
 def score(
     facts: ProductFacts,
     findings: list[Finding],
@@ -85,8 +96,16 @@ def score(
         # Do not present a reassuring number next to "we don't know".
         value = 0
 
+    headline = _HEADLINE[signal]
+    if FindingKind.OUT_OF_SCOPE in kinds:
+        headline = (
+            "본 서비스 범위 밖 — 식품·화장품 등은 식약처 등 다른 부처 소관입니다. "
+            "해당 기준으로 확인하세요."
+        )
+
     return ScanResult(
         signal=signal,
+        headline=headline,
         score=value,
         facts=facts,
         findings=findings,
