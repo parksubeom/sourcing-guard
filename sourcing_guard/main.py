@@ -5,7 +5,10 @@ CLAUDE.md R4: the server never fetches commerce pages itself.
 
 from __future__ import annotations
 
-from fastapi import FastAPI, HTTPException
+import asyncio
+from contextlib import asynccontextmanager, suppress
+
+from fastapi import FastAPI, Header, HTTPException
 from pydantic import BaseModel, Field
 
 from datetime import date
@@ -17,10 +20,32 @@ from .kats_client import KatsClient, health
 from .models import RecallAlert, ScanResult, WatchItem
 from .scorer import score
 from .storage import SqliteWatchStore
+from .sync import run_sync, sync_loop
 from .verifier import RuleBook, verify
 from .watchlist import sweep
 
-app = FastAPI(title="안심 소싱 돋보기 API", version="0.1.0")
+@asynccontextmanager
+async def _lifespan(app: FastAPI):
+    """리콜 동기화 백그라운드 루프.
+
+    시작 시 1회 실행하고 이후 하루 한 번 돈다. 재배포하면 몇 시간 공백이
+    생기는데 뜨자마자 한 번 돌면 그 공백이 사라진다 (증분은 400KB 다).
+
+    루프가 죽어도 앱은 계속 뜬다. 정부 API 장애로 스캔까지 멈추면 안 된다.
+    """
+    task = None
+    if settings.sync_enabled:
+        task = asyncio.create_task(sync_loop(_kats, _store))
+    try:
+        yield
+    finally:
+        if task:
+            task.cancel()
+            with suppress(asyncio.CancelledError):
+                await task
+
+
+app = FastAPI(title="안심 소싱 돋보기 API", version="0.1.0", lifespan=_lifespan)
 
 _kats = KatsClient(settings.kats_base_url, settings.kats_service_key, mock=settings.mock_mode)
 _rules = RuleBook()
@@ -46,7 +71,26 @@ def healthz() -> dict:
         "draft_rules": len(_rules.drafts),
         "watched_items": _store.count(),
         "kats": health.snapshot(),
+        "sync": {"enabled": settings.sync_enabled, **_store.sync_snapshot()},
     }
+
+
+@app.post("/api/v1/sync")
+def trigger_sync(
+    force_initial: bool = False,
+    x_sync_token: str | None = Header(default=None),
+) -> dict:
+    """리콜 동기화 수동 실행.
+
+    백그라운드 루프의 보조다. 데모 직전에 강제로 최신화하거나, 문제가 생겼을 때
+    로그를 보며 돌리기 위해 남긴다.
+
+    토큰이 설정되지 않았으면 403 이다. 미설정을 "인증 없음" 으로 해석하면
+    공개된 배포에서 아무나 부를 수 있고, 그러면 정부 API 로 트래픽이 그대로 간다.
+    """
+    if not settings.sync_token or x_sync_token != settings.sync_token:
+        raise HTTPException(status_code=403, detail="유효한 X-Sync-Token 이 필요합니다.")
+    return run_sync(_kats, _store, force_initial=force_initial).to_dict()
 
 
 @app.post("/api/v1/scan", response_model=ScanResult)

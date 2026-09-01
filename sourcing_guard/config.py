@@ -46,6 +46,8 @@ class Settings:
     kats_base_url: str | None
     kats_service_key: str | None
     watchlist_db_path: str
+    sync_enabled: bool
+    sync_token: str | None
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -59,6 +61,12 @@ class Settings:
             # 배포 시 반드시 영구 볼륨 경로를 지정한다. 컨테이너 기본 파일시스템에
             # 두면 재배포마다 워치리스트가 사라진다 (기획서 §6.1).
             watchlist_db_path=os.getenv("WATCHLIST_DB_PATH", "data/watchlist.db"),
+            # 목 모드에서는 돌 이유가 없다(수집할 실데이터가 없다). 테스트도
+            # 백그라운드 태스크 없이 뜨게 된다.
+            sync_enabled=_flag("SYNC_ENABLED", not _flag("MOCK_MODE", True)),
+            # 수동 트리거 인증. 비어 있으면 엔드포인트가 403 을 돌려준다 —
+            # 토큰 미설정을 "인증 없음" 으로 해석하면 아무나 부를 수 있다.
+            sync_token=os.getenv("SYNC_TOKEN") or None,
         )
 
 

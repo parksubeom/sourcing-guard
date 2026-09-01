@@ -31,6 +31,29 @@ CREATE TABLE IF NOT EXISTS watch_items (
 );
 CREATE INDEX IF NOT EXISTS idx_watch_owner  ON watch_items(owner_id);
 CREATE INDEX IF NOT EXISTS idx_watch_status ON watch_items(status);
+
+-- 리콜 로컬 사본. 투표 기간에 공개 트래픽이 정부 API 를 직접 때리지 않게 하고
+-- (핸드오프 §8 인프라 리스크), API 가 죽어도 워치리스트 스윕이 계속 돌게 한다.
+--
+-- 신규 판정은 publishDate 가 아니라 uid 로 한다. 국내 응답은 정렬 보장이 없고
+-- 소량 공표(1건짜리)가 매달 여러 번 끼어들어서, 날짜 비교로는 놓친다.
+CREATE TABLE IF NOT EXISTS recalls (
+    uid          TEXT NOT NULL,
+    scope        TEXT NOT NULL,   -- domestic | overseas
+    published_on TEXT,            -- YYYYMMDD
+    payload      TEXT NOT NULL,   -- RecallRecord 전체 (JSON)
+    fetched_at   TEXT NOT NULL,
+    PRIMARY KEY (uid, scope)
+);
+CREATE INDEX IF NOT EXISTS idx_recall_published ON recalls(published_on);
+CREATE INDEX IF NOT EXISTS idx_recall_scope     ON recalls(scope);
+
+-- 동기화 진행 상태. 재배포 후 "초기 적재를 다시 해야 하나" 를 판단하고,
+-- 캐시 기준일 표시에도 같은 값을 쓴다.
+CREATE TABLE IF NOT EXISTS sync_state (
+    key   TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+);
 """
 
 
@@ -113,3 +136,95 @@ class SqliteWatchStore:
 
     def close(self) -> None:
         self._conn.close()
+
+    # -- recalls -----------------------------------------------------------
+    #
+    # 신규 판정은 uid 로 한다. publishDate 로 하면 놓친다 — 국내 응답은 정렬
+    # 보장이 없고, 대량 공표(50건+) 사이에 1건짜리 소량 공표가 매달 여러 번
+    # 끼어든다 (2026-09-01 실측). 놓친 알림은 이 서비스가 하는 유일한 약속을
+    # 깨뜨린다 (CLAUDE.md R6).
+
+    def known_recall_uids(self, scope: str) -> set[str]:
+        rows = self._conn.execute(
+            "SELECT uid FROM recalls WHERE scope = ?", (scope,)
+        ).fetchall()
+        return {r["uid"] for r in rows}
+
+    def upsert_recalls(self, rows: Iterable[dict], *, scope: str, fetched_at: str) -> int:
+        """리콜 레코드를 저장하고 '새로 들어온' 건수를 돌려준다.
+
+        rows 는 {uid, published_on, payload} 형태. payload 는 직렬화된 JSON 문자열.
+        """
+        known = self.known_recall_uids(scope)
+        new = 0
+        with self._conn:
+            for row in rows:
+                uid = row.get("uid")
+                if not uid:
+                    continue
+                if uid not in known:
+                    new += 1
+                self._conn.execute(
+                    "INSERT INTO recalls (uid, scope, published_on, payload, fetched_at) "
+                    "VALUES (?, ?, ?, ?, ?) "
+                    "ON CONFLICT(uid, scope) DO UPDATE SET "
+                    "  published_on = excluded.published_on, "
+                    "  payload = excluded.payload, "
+                    "  fetched_at = excluded.fetched_at",
+                    (uid, scope, row.get("published_on"), row["payload"], fetched_at),
+                )
+        return new
+
+    def recall_payloads(self, *, scope: str | None = None) -> list[str]:
+        if scope:
+            rows = self._conn.execute(
+                "SELECT payload FROM recalls WHERE scope = ? ORDER BY uid", (scope,)
+            ).fetchall()
+        else:
+            rows = self._conn.execute(
+                "SELECT payload FROM recalls ORDER BY scope, uid"
+            ).fetchall()
+        return [r["payload"] for r in rows]
+
+    def recall_count(self, scope: str | None = None) -> int:
+        if scope:
+            row = self._conn.execute(
+                "SELECT COUNT(*) AS n FROM recalls WHERE scope = ?", (scope,)
+            ).fetchone()
+        else:
+            row = self._conn.execute("SELECT COUNT(*) AS n FROM recalls").fetchone()
+        return row["n"]
+
+    def latest_published_on(self) -> str | None:
+        row = self._conn.execute(
+            "SELECT MAX(published_on) AS d FROM recalls"
+        ).fetchone()
+        return row["d"] if row and row["d"] else None
+
+    # -- sync state --------------------------------------------------------
+
+    def get_sync_state(self, key: str) -> str | None:
+        row = self._conn.execute(
+            "SELECT value FROM sync_state WHERE key = ?", (key,)
+        ).fetchone()
+        return row["value"] if row else None
+
+    def set_sync_state(self, key: str, value: str) -> None:
+        with self._conn:
+            self._conn.execute(
+                "INSERT INTO sync_state (key, value) VALUES (?, ?) "
+                "ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+                (key, value),
+            )
+
+    def sync_snapshot(self) -> dict:
+        return {
+            "initial_load_at": self.get_sync_state("initial_load_at"),
+            "last_sync_at": self.get_sync_state("last_sync_at"),
+            "last_sync_error": self.get_sync_state("last_sync_error"),
+            "recalls": {
+                "domestic": self.recall_count("domestic"),
+                "overseas": self.recall_count("overseas"),
+            },
+            "latest_published_on": self.latest_published_on(),
+        }
