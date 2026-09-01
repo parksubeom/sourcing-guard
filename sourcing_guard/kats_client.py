@@ -412,16 +412,47 @@ class KatsClient:
                 out.extend(self._to_recall(r, scope) for r in rows)
         return out
 
-    def recalls_published_on(self, yyyymmdd: str, *, overseas: bool = False) -> list[RecallRecord]:
-        """공표일자로 하루치를 받는다. 로컬 동기화용.
+    def recalls_published_on(self, date_prefix: str, *, overseas: bool = False) -> list[RecallRecord]:
+        """공표일자로 받는다. 로컬 동기화용.
 
-        목록은 최대 1,000줄이고 페이징 파라미터가 없다 (설계서 p.2). 그래서 `all`
-        로 통째로 긁는 대신 날짜로 잘라서 받는다. 하루치는 1,000줄을 넘지 않는다.
+        conditionValue 는 접두 부분 매칭이 된다 (2026-09-01 실측):
+            "20260723"  그 날짜         국내 53건
+            "202607"    그 달 전체       국내 55건 79KB / 국외 239건 353KB, 0.2초
+            "2026"      그 해 전체       국내 116건 / 국외 2,406건
+
+        범위 문법(~ - ,)은 통하지 않는다.
+
+        ⚠ 접두 매칭은 설계서에 없는 동작이다. 막히면 날짜 하나씩 도는 방식으로
+          후퇴해야 한다 (핸드오프 §7). 동기화가 갑자기 0건을 반환하면 이걸 의심할 것.
+
+        설계서 p.2 의 "최대 1,000줄" 은 실측과 다르다. 국외 전량 33,070건이 단일
+        응답으로 왔다. 상한 때문에 날짜를 자르는 것이 아니라, 매일 38MB 를 받지
+        않기 위해 자른다.
         """
         if self._mock:
             return []
         op = "recall_overseas" if overseas else "recall_domestic"
-        rows = self._call(op, self._query(op, "published_on", yyyymmdd))
+        rows = self._call(op, self._query(op, "published_on", date_prefix))
+        scope = "overseas" if overseas else "domestic"
+        return [self._to_recall(r, scope) for r in rows]
+
+    def recalls_all(self, *, overseas: bool = False) -> list[RecallRecord]:
+        """전량을 한 번에 받는다. 초기 적재 전용.
+
+        국내 4,243건 5.42MB 2.0초 / 국외 33,070건 32.84MB 5.7초 (2026-09-01 실측).
+
+        ⚠ conditionKey=all & conditionValue=% 는 설계서에 명시된 사용법이 아니다.
+          conditionValue 는 검색어 자리인데 와일드카드로 전량을 받는 것이다.
+          신청서 안내문에 "개발 명세서 포맷을 어길 시 별도 통보 없이 인증이
+          취소될 수 있다" 고 되어 있으므로 **초기 적재 1회에만** 쓴다.
+          반복 호출에는 recalls_published_on 의 월 단위 접두 조회를 쓸 것.
+
+        ⚠ conditionValue 를 비우면 전량이 아니라 4005 다. % 를 넣어야 한다.
+        """
+        if self._mock:
+            return []
+        op = "recall_overseas" if overseas else "recall_domestic"
+        rows = self._call(op, self._query(op, "all", "%"))
         scope = "overseas" if overseas else "domestic"
         return [self._to_recall(r, scope) for r in rows]
 
