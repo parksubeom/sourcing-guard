@@ -151,15 +151,22 @@ def list_watch(owner_id: str) -> list[WatchItem]:
 
 @app.post("/api/v1/watch/sweep", response_model=list[RecallAlert])
 def run_sweep(owner_id: str) -> list[RecallAlert]:
-    """Compare this owner's watched items against current recall records."""
+    """이 사용자의 워치 항목을 리콜 로컬 사본과 대조한다.
+
+    이전에는 항목마다 _kats.search_recalls() 를 불렀다. 문제가 두 개였다.
+
+      ① 워치 항목 N개면 정부 API 호출이 N회다. 매일 도는 흐름에서 그대로 부담이
+         된다. 로컬 사본을 쓰면 0회다.
+      ② 모델명으로 검색한 결과에만 매칭해서, 인증번호로만 일치하는 리콜을
+         구조적으로 놓쳤다. match() 가 인증번호를 봐도 그 레코드가 애초에
+         응답에 없으면 소용이 없다. 놓친 알림은 이 서비스가 하는 유일한
+         약속을 깨뜨린다 (CLAUDE.md R6).
+
+    이제 스캔과 스윕이 같은 로컬 사본 위에서 같은 match() 를 쓴다.
+    """
     today = date.today()
     items = _store.for_owner(owner_id)
-    recalls = []
-    for i in items:
-        recalls.extend(
-            _kats.search_recalls(product_name=i.product_name, model_name=i.model_name)
-        )
-    alerts = sweep(items, recalls, today=today)
+    alerts = sweep(items, _recalls.all_records(), today=today)
 
     # 지문을 남겨 다음 스윕에서 같은 리콜을 다시 알리지 않는다. 알림이 없었어도
     # 스윕 일자는 기록한다 — "언제까지 확인했다"가 셀러에게 보이는 정보다.
