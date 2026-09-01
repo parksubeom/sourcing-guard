@@ -83,10 +83,26 @@ def _heuristic_fallback(text: str, url: str | None) -> ProductFacts:
         cat = ItemCategory.CHILDREN_TOY
     elif any(w in text for w in ("학용품", "크레파스", "필통")):
         cat = ItemCategory.CHILDREN_STATIONERY
+
+    # 소관 밖(식품·화장품 등)을 알리는 표지를 substances_mentioned 에 흘려보낸다.
+    # verify 의 (0) 단계가 이 근거로 OUT_OF_SCOPE 를 판정한다. 휴리스틱은 정확도
+    # 목적이 아니라 배선 목적이므로, 대표 키워드만 저비용으로 잡는다.
+    scope_markers = [
+        w for w in (
+            "화장품책임판매업자", "화장품제조업자", "EWG", "클렌징", "앰플", "토너",
+            "죽염", "소금", "통후추", "원두", "드립백", "咖啡",
+        )
+        if w in text
+    ]
+
+    upper = text.upper()
+    mats = [mt for mt in ("PVC", "PP", "TPE", "ABS", "PC") if mt in upper]
+
     return ProductFacts(
         product_name=text.strip().splitlines()[0][:80] if text.strip() else None,
         model_name=m.group(1) if m else None,
-        materials=[m for m in ("PVC", "PP", "TPE", "ABS") if m in text.upper()],
+        materials=mats,
+        substances_mentioned=scope_markers,
         kc_numbers=list(dict.fromkeys(kc)),
         category=cat,
         category_confidence=0.3 if cat is not ItemCategory.UNCLASSIFIED else 0.0,

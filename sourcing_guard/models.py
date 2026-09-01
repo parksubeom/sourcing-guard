@@ -29,6 +29,9 @@ class ItemCategory(str, Enum):
     CHILDREN_TEXTILE = "children_textile"    # 아동용 섬유제품
     ELECTRICAL = "electrical"                # 전기용품
     HOUSEHOLD = "household"                  # 생활용품
+    # 공통안전기준 1항이 명시적으로 제외하는 물품. 식약처 등 다른 부처 소관이다.
+    # "판별 못 함"(UNCLASSIFIED)과 "우리 소관 아님"은 셀러에게 전혀 다른 정보다.
+    OUT_OF_SCOPE = "out_of_scope"
     UNCLASSIFIED = "unclassified"
 
 
@@ -67,6 +70,9 @@ class FindingKind(str, Enum):
     # 공급자적합성확인(SCoC) 대상은 제조·수입자가 스스로 시험해 확인하므로
     # 정부 조회 DB 에 인증번호가 없는 것이 정상이다. 부재를 위반으로 읽으면 안 된다.
     KC_TIER_UNKNOWN = "kc_tier_unknown"
+    OUT_OF_SCOPE = "out_of_scope"          # 우리 소관 밖 품목
+    AGE_OUT_OF_CHILD_RANGE = "age_out_of_child_range"  # 14세 이상 표기
+    INFO_REQUEST = "info_request"          # 공급처에 물어야 할 것
     RECALL_MATCH = "recall_match"
     RECALL_CLEAR = "recall_clear"
     HAZARD_RULE_APPLIES = "hazard_rule_applies"
