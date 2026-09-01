@@ -193,8 +193,43 @@ class SqliteWatchStore:
         minimum 미만이면 완료로 찍지 않고 ValueError 를 던진다. 정부 API 가
         2004(No Data)나 빈 resultData 를 돌려줘도 그건 오류가 아니라서 호출부가
         성공으로 읽는다 - 실제로 그렇게 0건 적재가 완료로 기록됐다.
+
+        ⚠ 최소치는 "이번 배치가 몇 건인가" 로 잰다. 테이블 전체 건수로 재면
+          빈 배치가 기존 데이터에 업혀서 통과한다 - 37,313건이 이미 있는 상태에서
+          정부 API 가 두 스코프 모두 빈 응답을 주면, 아무것도 안 쓰고도 total 이
+          37,313 이라 검사를 통과하고 initial_load_at 이 새로 찍힌다. 그러면
+          "이 시각에 전량을 다시 받았다"는 거짓 기록이 남고, 다음 실행은 증분으로
+          넘어가 그 구간이 영원히 비어 있게 된다. 반쪽 적재가 완료로 기록되던
+          것(e886e36 / f997ad1)과 같은 유형이다.
+
+          스코프별로도 비어 있으면 안 된다. run_sync 의 `len(batches) == len(SCOPES)`
+          는 두 스코프가 예외 없이 끝났는지만 보지, 행이 왔는지는 보지 않는다.
+          국내가 0건이어도 국외 33,070건에 묻혀 합계는 통과한다.
         """
         counts: dict[str, int] = {}
+        # 쓰기 전에 배치부터 잰다. 트랜잭션 안에서 재도 결과는 같지만, 검사가
+        # 저장소 상태와 무관하다는 것이 코드에서 바로 보이는 편이 낫다.
+        sizes = {
+            scope: sum(1 for row in rows if row.get("uid"))
+            for scope, rows in batches.items()
+        }
+        batch_total = sum(sizes.values())
+        # minimum <= 0 은 "타당성 검사를 걸지 않는다" 는 명시적 옵트아웃이다
+        # (스텁으로 두세 건만 넣는 테스트가 쓴다). 프로덕션 기본값은 1000 이다.
+        if minimum > 0:
+            empty = sorted(scope for scope, n in sizes.items() if n == 0)
+            if empty:
+                raise ValueError(
+                    f"전량 적재 배치에 {', '.join(empty)} 스코프가 비어 있어 완료로 "
+                    "기록하지 않습니다. 정부 API 가 빈 응답을 돌려줬을 수 있습니다."
+                )
+            if batch_total < minimum:
+                raise ValueError(
+                    f"전량 적재 배치가 {batch_total}건뿐이라 완료로 기록하지 않습니다 "
+                    f"(기대 {minimum}건 이상, 스코프별 {sizes}). "
+                    "정부 API 가 빈 응답을 돌려줬을 수 있습니다."
+                )
+
         with self._conn:
             for scope, rows in batches.items():
                 known = self.known_recall_uids(scope)
@@ -216,15 +251,6 @@ class SqliteWatchStore:
                     )
                 counts[scope] = new
 
-            total = self._conn.execute(
-                "SELECT COUNT(*) AS n FROM recalls"
-            ).fetchone()["n"]
-            if total < minimum:
-                # 롤백된다. 적재도 표시도 남지 않는다.
-                raise ValueError(
-                    f"전량 적재 결과가 {total}건뿐이라 완료로 기록하지 않습니다 "
-                    f"(기대 {minimum}건 이상). 정부 API 가 빈 응답을 돌려줬을 수 있습니다."
-                )
             self._conn.execute(
                 "INSERT INTO sync_state (key, value) VALUES ('initial_load_at', ?) "
                 "ON CONFLICT(key) DO UPDATE SET value = excluded.value",
