@@ -261,6 +261,8 @@ async def sync_loop(
     *,
     interval: int = SYNC_INTERVAL_SECONDS,
     on_updated=None,
+    rra=None,
+    on_noncompliant_updated=None,
 ) -> None:
     """앱 수명 동안 도는 백그라운드 루프.
 
@@ -269,6 +271,12 @@ async def sync_loop(
 
     cron 머신을 따로 두지 않는 이유: 머신 하나에 볼륨 하나인데 cron 머신을
     붙이면 볼륨 공유 설정이 늘고, 그게 투표 기간에 깨질 지점을 하나 더 만든다.
+
+    부적합 방송통신기자재 현황도 여기서 함께 받는다. rra 를 주지 않으면 건너뛴다.
+
+    ⚠ 리콜 다음에 돌린다. 275페이지 순차 수집이라 실측 약 5분(페이지당 1.1초)
+      걸리는데, 리콜 대조가 그동안 막히면 안 된다. sync_noncompliant 는 예외를
+      밖으로 던지지 않으므로 실패해도 루프가 죽지 않는다.
     """
     while True:
         try:
@@ -277,6 +285,17 @@ async def sync_loop(
             raise
         except Exception:  # noqa: BLE001 — 루프가 죽으면 동기화가 조용히 멈춘다
             _log.exception("동기화 루프에서 예상치 못한 오류. 다음 주기에 재시도한다")
+
+        if rra is not None:
+            try:
+                report = await asyncio.to_thread(
+                    sync_noncompliant, rra, store, on_updated=on_noncompliant_updated
+                )
+                _log.info("부적합 현황 동기화: %s", report)
+            except asyncio.CancelledError:
+                raise
+            except Exception:  # noqa: BLE001
+                _log.exception("부적합 현황 동기화에서 예상치 못한 오류")
         try:
             await asyncio.sleep(interval)
         except asyncio.CancelledError:

@@ -24,14 +24,14 @@ from .extractor import extract
 from .kats_client import KatsClient, health
 from .noncompliant_index import NoncompliantIndex
 from .rra_client import RraClient
-from .models import RecallAlert, ScanResult, WatchItem
+from .models import Finding, RecallAlert, ScanResult, WatchItem
 from .scorer import score
 from .demos import DEMOS, DEMO_TEXTS
 from .ratelimit import RateLimiter, text_fingerprint
 from .recall_index import RecallIndex
 from .storage import SqliteWatchStore
 from .sync import run_sync, sync_loop
-from .verifier import RuleBook, verify
+from .verifier import RuleBook, verify, verify_rf_by_model
 from .watchlist import sweep
 
 @asynccontextmanager
@@ -46,7 +46,16 @@ async def _lifespan(app: FastAPI):
     task = None
     if settings.sync_enabled:
         task = asyncio.create_task(
-            sync_loop(_kats, _store, on_updated=_recalls.invalidate)
+            sync_loop(
+                _kats,
+                _store,
+                on_updated=_recalls.invalidate,
+                # 부적합 방송통신기자재 현황. 전파인증 축의 유일한 RED 소스라
+                # 여기 안 붙이면 rf_noncompliant 테이블이 영구히 비고
+                # RF_NONCOMPLIANT 이 한 번도 뜨지 않는다.
+                rra=_rra,
+                on_noncompliant_updated=_noncompliant.invalidate,
+            )
         )
     try:
         yield
@@ -165,14 +174,51 @@ def demos() -> list[dict]:
     return DEMOS
 
 
+def _client_ip(request: Request) -> str:
+    """Fly 는 원 IP 를 헤더로 넘긴다. 없으면 프록시 IP 하나로 뭉쳐 전원이 막힌다."""
+    forwarded = request.headers.get("fly-client-ip") or request.headers.get("x-forwarded-for")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    return request.client.host if request.client else "unknown"
+
+
+class RfLookupRequest(BaseModel):
+    model_name: str = Field(min_length=1, max_length=120)
+
+
+class RfLookupResult(BaseModel):
+    model_name: str
+    findings: list[Finding]
+
+
+@app.post("/api/v1/rf-lookup", response_model=RfLookupResult)
+def rf_lookup(req: RfLookupRequest, request: Request) -> RfLookupResult:
+    """모델명으로 적합성평가(전파인증)를 조회한다. 화면 버튼이 부르는 경로다.
+
+    스캔에서 분리한 이유는 속도다. RRA 검색은 결과가 있으면 실측 12초라
+    스캔에 넣으면 무선 상품마다 13초가 되고, 기획서 §8 의 "캐시 히트 3초 이내"
+    가 깨진다. ⑦ 의 KC 이미지 확인 버튼과 같은 패턴으로, 셀러가 소요 시간을
+    인지한 상태에서 누르게 한다.
+
+    ⚠ 호출 상한 대상이다. 12초짜리 요청이라 반복 호출이 스캔보다 비싸다.
+    """
+    client_ip = _client_ip(request)
+    if not _limiter.allow_request(client_ip):
+        raise HTTPException(
+            status_code=429,
+            detail="요청이 잠시 많습니다. 1분 뒤에 다시 시도해 주세요.",
+            headers={"Retry-After": str(_limiter.retry_after_seconds(client_ip))},
+        )
+    return RfLookupResult(
+        model_name=req.model_name,
+        findings=verify_rf_by_model(req.model_name, _rra),
+    )
+
+
 @app.post("/api/v1/scan", response_model=ScanResult)
 def scan(req: ScanRequest, request: Request) -> ScanResult:
     fp = text_fingerprint(req.page_text)
-    client_ip = (request.client.host if request.client else "unknown")
-    # Fly 는 원 IP 를 이 헤더로 넘긴다. 없으면 프록시 IP 하나로 뭉쳐 전원이 막힌다.
-    forwarded = request.headers.get("fly-client-ip") or request.headers.get("x-forwarded-for")
-    if forwarded:
-        client_ip = forwarded.split(",")[0].strip()
+    client_ip = _client_ip(request)
 
     if not _limiter.allow_request(client_ip, fingerprint=fp):
         raise HTTPException(

@@ -310,7 +310,49 @@ def _rf_run(text: str, rra=None):
                          rra if rra is not None else RraClient(mock=True))
 
 
-def test_model_search_reports_how_it_matched():
+def _lookup(model: str, rra=None):
+    """버튼이 부르는 경로. 스캔이 아니라 POST /api/v1/rf-lookup 이 이걸 부른다."""
+    from sourcing_guard.verifier import verify_rf_by_model
+
+    return verify_rf_by_model(model, rra if rra is not None else RraClient(mock=True))
+
+
+def test_scan_does_not_search_rra():
+    """스캔 경로에서 12초짜리 검색을 부르면 안 된다.
+
+    실측 12초(결과 있는 질의)라 무선 상품마다 스캔이 13초가 되고, 기획서 §8 의
+    "캐시 히트 3초 이내" 가 깨진다. 검색은 버튼(POST /api/v1/rf-lookup)이 부른다.
+    """
+
+    class Tripwire(RraClient):
+        def search_certs_by_model(self, model):
+            raise AssertionError("스캔 경로에서 RRA 검색을 불렀습니다")
+
+        def search_by_model(self, model, **kw):
+            raise AssertionError("스캔 경로에서 RRA 검색을 불렀습니다")
+
+    _rf_run("블루투스 무선 이어폰\n모델명: A05418", rra=Tripwire(mock=True))
+
+
+def test_advisory_carries_the_button_trigger():
+    """식별력 있는 모델명이면 프론트가 버튼을 낼 수 있어야 한다."""
+    from sourcing_guard.models import FindingKind
+
+    _, findings = _rf_run("블루투스 무선 이어폰\n모델명: A05418")
+    rf = next(f for f in findings if f.kind is FindingKind.RF_WIRELESS_UNVERIFIED)
+    assert rf.detail["searchable_model"] == "A05418"
+
+
+def test_advisory_gives_no_button_for_unsearchable_model():
+    """'A1' 은 1,579페이지를 문다. 눌러도 답이 안 나오니 버튼을 주면 안 된다."""
+    from sourcing_guard.models import FindingKind
+
+    _, findings = _rf_run("블루투스 이어폰\n모델명: A1")
+    rf = next(f for f in findings if f.kind is FindingKind.RF_WIRELESS_UNVERIFIED)
+    assert rf.detail["searchable_model"] is None
+
+
+def test_button_lookup_reports_how_it_matched():
     """번호로 찾았는지 모델명으로 찾았는지를 문장에 적는다.
 
     모델명 검색은 부분일치 목록을 재대조한 결과라, 셀러가 어느 축으로 걸렸는지
@@ -318,42 +360,36 @@ def test_model_search_reports_how_it_matched():
     """
     from sourcing_guard.models import FindingKind
 
-    _, findings = _rf_run("블루투스 무선 기기\n모델명: A05418")
-    rf = next(f for f in findings if f.kind is FindingKind.RF_CERT_VERIFIED)
+    rf = next(f for f in _lookup("A05418") if f.kind is FindingKind.RF_CERT_VERIFIED)
     assert rf.detail["matched_on"] == "model"
     assert "모델명으로 조회" in rf.statement_ko
 
 
-def test_derived_model_is_found_by_search():
+def test_button_lookup_finds_a_derived_model():
     """셀러가 적은 것이 파생모델이어도 잡아야 한다."""
     from sourcing_guard.models import FindingKind
 
-    _, findings = _rf_run("무선 기기 블루투스\n모델명: MITS3002GN1-S")
-    assert any(f.kind is FindingKind.RF_CERT_VERIFIED for f in findings)
+    assert any(f.kind is FindingKind.RF_CERT_VERIFIED for f in _lookup("MITS3002GN1-S"))
 
 
-def test_searched_but_not_found_is_amber():
+def test_button_lookup_not_found_is_amber():
     """0건이면 미조회(AMBER)다 - 자기적합확인 여지가 있어 RED 가 아니다 (R3-b)."""
     from sourcing_guard.models import FindingKind, Signal
 
-    _, findings = _rf_run("블루투스 무선 스피커\n모델명: ZZZ9999X")
-    rf = next(f for f in findings if f.kind is FindingKind.RF_CERT_NOT_FOUND)
+    rf = next(f for f in _lookup("ZZZ9999X") if f.kind is FindingKind.RF_CERT_NOT_FOUND)
     assert rf.signal is Signal.AMBER
     assert "자기적합확인" in rf.statement_ko
 
 
-def test_unsearchable_model_falls_back_to_the_advisory():
-    """식별력이 없으면 질의를 던지지 않고 안내로 남는다."""
-    from sourcing_guard.models import FindingKind
+def test_button_lookup_failure_is_lookup_failed_not_no_cert():
+    """못 연 것과 없는 것은 다르다 (R3).
 
-    _, findings = _rf_run("블루투스 이어폰\n모델명: A1")
-    kinds = {f.kind for f in findings}
-    assert FindingKind.RF_WIRELESS_UNVERIFIED in kinds
-    assert FindingKind.RF_CERT_NOT_FOUND not in kinds
+    12초짜리 요청이라 타임아웃이 흔하다. 조용히 "인증 없음" 으로 흘리면
+    확인하지 못한 것을 확인한 것처럼 말하게 된다.
 
-
-def test_search_failure_is_lookup_failed_not_no_cert():
-    """못 연 것과 없는 것은 다르다 (R3). 조용히 '인증 없음' 으로 흘리면 안 된다."""
+    ⚠ 스캔 결과로 이걸 재면 안 된다. 리콜 인덱스가 없을 때도 LOOKUP_FAILED 가
+      붙어서, 전파인증과 무관하게 통과해버린다(실제로 그렇게 통과하고 있었다).
+    """
     from sourcing_guard.models import FindingKind
     from sourcing_guard.rra_client import RraApiError
 
@@ -361,10 +397,19 @@ def test_search_failure_is_lookup_failed_not_no_cert():
         def search_certs_by_model(self, model):
             raise RraApiError("network", "ReadTimeout")
 
-    _, findings = _rf_run("블루투스 무선 기기\n모델명: A05418", rra=Failing(mock=True))
-    kinds = {f.kind for f in findings}
+    kinds = {f.kind for f in _lookup("A05418", rra=Failing(mock=True))}
     assert FindingKind.LOOKUP_FAILED in kinds
     assert FindingKind.RF_CERT_NOT_FOUND not in kinds
+
+
+def test_button_lookup_refuses_unsearchable_models():
+    """버튼이 안 나오는 문자열이라 직접 호출뿐인데, 그때도 질의를 던지지 않는다."""
+
+    class Tripwire(RraClient):
+        def search_certs_by_model(self, model):
+            raise AssertionError("식별력 없는 질의를 던졌습니다")
+
+    assert _lookup("A1", rra=Tripwire(mock=True)) == []
 
 
 def test_number_takes_priority_over_model_search():
