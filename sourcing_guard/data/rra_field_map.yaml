@@ -1,0 +1,98 @@
+# 방송통신기자재 적합성평가(전파인증) 조회 매핑
+#
+# 출처: 국립전파연구원 적합성평가 OPEN API 명세 (rra.go.kr/ko/notice/go_7_2.do)
+#       + 실측 (RRA 공개 검색 A_c_search / 부적합 현황 A_d_list)
+#
+# ⚠ KC 안전인증(전안법)과 완전히 별개 제도입니다. KC 마크가 있어도 전파인증이
+#    없으면 위반이며, 셀러가 가장 자주 놓치는 지점입니다.
+verified: true
+verified_source: "적합성평가 OPEN API 명세 + 2026-09 실측"
+
+# ---------------------------------------------------------------------------
+# 실측으로 확인된 함정 셋. 코드가 이걸 어기면 조용히 0건이 나옵니다.
+#
+#   1. 인코딩이 페이지마다 다르다 — 검색 목록은 EUC-KR, 팝업은 UTF-8.
+#   2. 한글 질의는 EUC-KR 퍼센트 인코딩이어야 한다(폼이 accept-charset=euc-kr).
+#      UTF-8 로 보내면 에러가 아니라 0건이 온다. firm=삼성전자: UTF-8 0건 / EUC-KR 10건.
+#   3. 파생모델은 콤마가 아니라 공백 구분이다. 다만 기본모델에 공백이 든 것이
+#      실재하므로(HDO3.0 Rev2) 단순 split 이 아니라 토큰 추출을 쓴다.
+# ---------------------------------------------------------------------------
+
+# emsit Open API — 인증키 불필요. 인증번호로만 조회된다(모델명·상호는 0001).
+open_api:
+  base_url: "https://emsit.go.kr/openapi/service/AuthenticationInfoService"
+  operations:
+    auth_status:
+      path: "getAuthStatus.do"
+      param: "mtlCefNo"
+    auth_info:
+      path: "getAuthInfo.do"
+      param: "mtlCefNo"
+  hyphen_insensitive: true
+  fields:
+    company: "bsmNm"
+    equipment: "mtlNm"
+    base_model: "matlBscMdlNm"
+    derived_models: "matlDerivMdlNm"
+    cert_number: "mtlCefNo"
+    maker: "matlMfrNm"
+    country: "dtlInfCdNm"
+    cert_date: "cvaPcsYmd"
+    etc: "matlEtcMtr"
+  result_codes:
+    "0000": success
+    "0001": no_data
+    "0098": bad_param
+
+# RRA 공개 검색 — 모델명·상호로 조회되는 유일한 경로.
+# 구매대행 상품은 대부분 인증번호가 없으므로 이쪽이 주력이다.
+public_search:
+  base_url: "https://www.rra.go.kr/ko/license"
+  requires_referer: true
+  encoding: "euc-kr"
+  operations:
+    search:
+      path: "A_c_search_view.do"
+      params:
+        category: "category"
+        model: "model_no"
+        company: "firm"
+        cert_number: "app_no"
+        equipment: "equip"
+    detail_popup:
+      path: "A_b_popup.do"
+      param: "app_no"
+      encoding: "utf-8"
+  substring_match: true
+  no_result_marker: "없습니다"
+
+# 부적합 방송통신기자재 현황 — RED 자격이 있는 유일한 소스.
+noncompliant:
+  base_url: "https://www.rra.go.kr/ko/license"
+  path: "A_d_list.do"
+  detail_path: "A_d_list_view.do"
+  detail_param: "nb_seq"
+  encoding: "euc-kr"
+  paging:
+    param: "cpage"
+    extra: {"nb_type": "5"}
+    per_page: 10
+  search:
+    param: "searchTxt"
+    condition_param: "searchCon"
+    conditions:
+      company: "nb_name"
+      cert_number: "nb_serial"
+      model: "nb_model"
+  list_columns: [번호, 상호, 인증번호, 모델명, 처분일자, 조치결과, 첨부, 소비자고지]
+
+# 자기적합확인 레지스트리 — R- 번호가 아예 없는 등급. 전안법 SCoC 와 같은 구조.
+self_conformity:
+  base_url: "https://www.rra.go.kr/ko/license"
+  path: "S_c_search_view.do"
+  detail_path: "S_c_search_view2.do"
+  encoding: "euc-kr"
+
+public_urls:
+  search: "https://www.rra.go.kr/ko/license/A_c_search.do"
+  noncompliant_list: "https://www.rra.go.kr/ko/license/A_d_list.do"
