@@ -100,6 +100,57 @@ _HEADLINE: dict[Signal, str] = {
 }
 
 
+# UNKNOWN 은 이유가 여럿인데 문구가 하나면 셀러가 "아무것도 못 하는 서비스" 로
+# 읽는다. 실제로 프로덕션에 실입력을 넣으면 같은 "판단 보류" 가 반복해서 나온다.
+#
+# 특히 연령 표기로 대상이 아닌 경우는 우리가 판단을 **한** 것이다. 그걸
+# "가릴 수 없습니다" 라고 말하면 한 판단을 안 한 것처럼 스스로 깎아내린다.
+#
+# 순서가 곧 우선순위다. 위에서 먼저 걸리는 사유가 헤드라인을 가져간다.
+_UNKNOWN_HEADLINE: list[tuple[FindingKind, str]] = [
+    (
+        FindingKind.OUT_OF_SCOPE,
+        "본 서비스 범위 밖 — 식품·화장품 등은 식약처 등 다른 부처 소관입니다. "
+        "해당 기준으로 확인하세요.",
+    ),
+    (
+        FindingKind.AGE_OUT_OF_CHILD_RANGE,
+        "대상 아님 — 표기된 사용연령 기준으로는 어린이제품 안전기준 적용 대상이 "
+        "아닙니다. 실사용 연령이 13세 이하이면 대상이 될 수 있으니 표기 근거를 확인하세요.",
+    ),
+    (
+        FindingKind.COVERAGE_GAP,
+        "일부만 확인 — 인증·리콜은 대조했으나, 이 품목군의 유해물질 기준은 아직 "
+        "수록되지 않았습니다. 확인된 범위는 아래를 보세요.",
+    ),
+    # 조회 실패는 맨 뒤다. 축 하나가 빠진 것이지 품목 판단 자체를 못 한 것이
+    # 아니라서, "대상 아님" 같이 확정된 판단이 있으면 그쪽을 먼저 말해야 한다.
+    (
+        FindingKind.LOOKUP_FAILED,
+        "확인 미완료 — 정부 조회 서비스에 연결하지 못했습니다. 잠시 후 다시 시도해 주세요.",
+    ),
+]
+
+_UNKNOWN_NO_INPUT = (
+    "입력 확인 — 상품 정보를 읽지 못했습니다. 상품 상세페이지의 '상품정보' 표를 "
+    "붙여넣으면 확인해 드립니다."
+)
+
+
+def _unknown_headline(kinds: set[FindingKind], has_extracted: bool) -> str:
+    """UNKNOWN 의 사유를 헤드라인으로 옮긴다.
+
+    같은 회색불이라도 "대상이 아니다" 와 "정보가 부족하다" 와 "우리 범위 밖이다"
+    는 셀러에게 전혀 다른 정보다. 뭉뚱그리면 전부 실패로 읽힌다.
+    """
+    if not has_extracted:
+        return _UNKNOWN_NO_INPUT
+    for kind, text in _UNKNOWN_HEADLINE:
+        if kind in kinds:
+            return text
+    return _HEADLINE[Signal.UNKNOWN]
+
+
 # 신호마다 워치리스트를 권하는 이유가 다르다. 핵심은 GREEN 이다 - 부재의
 # 증명이라 가장 약한 신호이므로, "지금 괜찮음" 의 유효기간을 워치리스트가
 # 이어받는다. OUT_OF_SCOPE 는 우리 소관이 아니므로 감시를 권하지 않는다.
@@ -236,14 +287,20 @@ def score(
         # Do not present a reassuring number next to "we don't know".
         value = 0
 
-    headline = _HEADLINE[signal]
+    # 헤드라인이 추출 결과를 참조하므로 먼저 만든다 — 읽은 게 하나도 없으면
+    # "판단 보류" 가 아니라 "입력 확인" 이라고 말해야 한다.
+    extracted = _extracted_fields(facts)
+
+    if signal is Signal.UNKNOWN:
+        headline = _unknown_headline(kinds, has_extracted=bool(extracted))
+    else:
+        headline = _HEADLINE[signal]
     if FindingKind.OUT_OF_SCOPE in kinds:
         headline = (
             "본 서비스 범위 밖 — 식품·화장품 등은 식약처 등 다른 부처 소관입니다. "
             "해당 기준으로 확인하세요."
         )
 
-    extracted = _extracted_fields(facts)
     return ScanResult(
         signal=signal,
         headline=headline,
