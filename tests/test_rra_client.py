@@ -113,3 +113,72 @@ def test_referer_header_is_always_sent():
     """RRA 공개 검색의 게이트는 Referer 헤더의 존재 하나다 (실측)."""
     client = RraClient(mock=True)
     assert client._client.headers.get("Referer", "").startswith("https://www.rra.go.kr")
+
+
+# --- verifier 배선 ---------------------------------------------------------
+def _run(text: str):
+    from sourcing_guard.extractor import extract
+    from sourcing_guard.kats_client import KatsClient
+    from sourcing_guard.scorer import score
+    from sourcing_guard.verifier import RuleBook, verify
+
+    facts = extract(text)
+    findings = verify(facts, KatsClient(None, None, mock=True), RuleBook(), None,
+                      RraClient(mock=True))
+    return facts, findings, score(facts, findings)
+
+
+def test_wireless_without_number_asks_for_confirmation():
+    """무선 표기만 있고 번호가 없는 것이 구매대행 상품의 가장 흔한 경우다."""
+    from sourcing_guard.models import FindingKind
+
+    facts, findings, _ = _run("블루투스 무선 이어폰\n제조사: 하마하마무역")
+    assert facts.wireless_hints
+    kinds = {f.kind for f in findings}
+    assert FindingKind.RF_WIRELESS_UNVERIFIED in kinds
+
+
+def test_wireless_finding_states_a_fact_not_a_verdict():
+    """'무선 표기가 있다' 는 사실이고 '전파인증 대상이다' 는 판정이다 (R1).
+
+    대상 여부는 고시 별표 1 이 정하며 우리가 판별하지 않는다.
+    """
+    from sourcing_guard.models import FindingKind
+
+    _, findings, _ = _run("블루투스 무선 이어폰")
+    rf = next(f for f in findings if f.kind is FindingKind.RF_WIRELESS_UNVERIFIED)
+    assert "무선 기능 표기" in rf.statement_ko
+    assert "대상입니다" not in rf.statement_ko
+
+
+def test_rf_number_is_looked_up():
+    from sourcing_guard.models import FindingKind
+
+    facts, findings, _ = _run("무선 기기\n전파인증: KCC-REM-MJT-MJT\n블루투스")
+    assert facts.rf_numbers == ["KCC-REM-MJT-MJT"]
+    rf = next(f for f in findings if f.kind is FindingKind.RF_CERT_VERIFIED)
+    assert "SSD" in rf.statement_ko          # 기자재명칭이 화면에 나온다
+    assert "rra.go.kr" in rf.source_url      # 근거 링크(R2)
+
+
+def test_non_wireless_product_gets_no_rf_finding():
+    """무선이 아닌 상품에 전파인증을 요구하면 오탐이다."""
+    _, findings, _ = _run("어린이 블록 완구\n재질: ABS\n대상연령: 3세 이상")
+    assert not [f for f in findings if f.kind.value.startswith("rf_")]
+
+
+def test_rf_not_found_is_amber_not_red():
+    """미조회를 RED 로 두면 자기적합확인 대상에 오탐이 난다 (R3-b).
+
+    전안법 SCoC 에서 겪은 것과 같은 구조다.
+    """
+    from sourcing_guard.models import FindingKind, Signal
+    from sourcing_guard.scorer import _HARD_RED
+
+    assert FindingKind.RF_CERT_NOT_FOUND not in _HARD_RED
+    assert FindingKind.RF_WIRELESS_UNVERIFIED not in _HARD_RED
+
+    _, findings, _ = _run("무선 기기\n전파인증: R-C-ZZZ-NOTREAL999\n블루투스")
+    rf = next(f for f in findings if f.kind is FindingKind.RF_CERT_NOT_FOUND)
+    assert rf.signal is Signal.AMBER
+    assert "자기적합확인" in rf.statement_ko

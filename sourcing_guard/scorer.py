@@ -27,6 +27,10 @@ _PENALTY: dict[FindingKind, int] = {
     #
     # 애초에 룰이 많다고 위험한 것이 아니라 그 품목군에 기준이 많은 것뿐이다.
     # 점수는 "확인이 얼마나 필요한가" 인데 적용 기준 개수는 그 척도가 아니다.
+    # 전파인증. 조회됨은 감점 없음, 미조회·미확인은 확인 사유라 AMBER 쪽.
+    FindingKind.RF_CERT_VERIFIED: 0,
+    FindingKind.RF_CERT_NOT_FOUND: 30,
+    FindingKind.RF_WIRELESS_UNVERIFIED: 30,
     FindingKind.HAZARD_RULE_APPLIES: 0,
     FindingKind.SUBSTANCE_MENTIONED: 25,
     FindingKind.COVERAGE_GAP: 0,
@@ -273,6 +277,8 @@ def _signal_for(facts: ProductFacts, kinds: set[FindingKind]) -> Signal:
         return Signal.UNKNOWN
 
     if kinds & {
+        FindingKind.RF_CERT_NOT_FOUND,
+        FindingKind.RF_WIRELESS_UNVERIFIED,
         FindingKind.KC_NOT_FOUND,
         FindingKind.KC_EXPIRED,
         FindingKind.KC_UNDER_ACTION,

@@ -70,6 +70,15 @@ class ProductFacts(BaseModel):
     #   (1) 여기 따로 담고            (2) CERT_NUMBER_RE 로 형식 검증
     # 그리고 화면에서 셀러가 확인·수정한 뒤에야 조회 경로로 들어간다.
     kc_numbers_from_image: list[str] = Field(default_factory=list)
+    # 전파인증(적합성평가) 번호. KC 와 완전히 별개 제도라 따로 담는다 -
+    # 형식도 다르고(R-C-.../KCC-...) 조회처도 다르다(emsit/RRA).
+    rf_numbers: list[str] = Field(default_factory=list)
+    # 무선 기능 표기(블루투스·Wi-Fi·무선). 이것이 전파인증 축을 켜는 방아쇠다.
+    #
+    # ⚠ "무선 표기가 있다" 는 사실이고 "전파인증 대상이다" 는 판정이다. 대상
+    #    여부는 고시 별표 1 이 정하며 우리가 판별하지 않는다 (R1). 화면 문구도
+    #    "무선 기능 표기가 있습니다" 여야 한다.
+    wireless_hints: list[str] = Field(default_factory=list)
     target_age: str | None = None
     category: ItemCategory = ItemCategory.UNCLASSIFIED
     category_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
@@ -108,6 +117,10 @@ class FindingKind(str, Enum):
     # 같은 제조사의 다른 리콜. 이 상품의 위험이 아니라 공급처를 보는 참고 정보다.
     # 정확 일치만 쓴다 - 포함 매칭은 실측에서 어떤 질의에도 1,600건 이상을 냈다.
     MAKER_OTHER_RECALLS = "maker_other_recalls"
+    # 전파인증(적합성평가). KC 와 별개 제도이므로 kind 도 분리한다.
+    RF_CERT_VERIFIED = "rf_cert_verified"      # 조회됨
+    RF_CERT_NOT_FOUND = "rf_cert_not_found"    # 미조회. 자기적합확인 여지 (R3-b)
+    RF_WIRELESS_UNVERIFIED = "rf_wireless_unverified"  # 무선 표기는 있는데 번호가 없음
     HAZARD_RULE_APPLIES = "hazard_rule_applies"
     SUBSTANCE_MENTIONED = "substance_mentioned"
     COVERAGE_GAP = "coverage_gap"
@@ -150,6 +163,9 @@ _FINDING_GROUP: dict[str, FindingGroup] = {
     "maker_other_recalls": FindingGroup.CONTEXT,
     "recall_weak_match": FindingGroup.CONTEXT,
     "hazard_rule_applies": FindingGroup.CONTEXT,
+    "rf_cert_verified": FindingGroup.CONTEXT,
+    "rf_cert_not_found": FindingGroup.ACTION,       # 확인할 것
+    "rf_wireless_unverified": FindingGroup.ACTION,  # 확인할 것
     "coverage_gap": FindingGroup.CONTEXT,
     "out_of_scope": FindingGroup.CONTEXT,
     "age_out_of_child_range": FindingGroup.CONTEXT,
