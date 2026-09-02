@@ -247,6 +247,11 @@ textarea:focus{border-color:var(--primary-50); outline:2px solid var(--border-fo
 .findings>li.aside{background:var(--gray-5)}
 .findings>li.aside .f-text{color:var(--fg-2)}
 
+/* 전파인증 조회 중 표시. 성공하면 안내 줄(li) 자체가 결과로 교체되므로
+ * 여기 남는 것은 진행 중·실패 메시지뿐이다. */
+.rf-result{margin:var(--s3) 0 0}
+.rf-result .scope{padding:var(--s3) 0; background:none; border:0}
+
 /* 이미지에서 읽은 인증번호 확인. 자동 조회하지 않는 이유는 문장에 있고,
  * 여기서는 확인·수정 후 조회로 넘어가는 버튼만 준다. */
 .confirm{margin:var(--s3) 0 0; display:flex; flex-wrap:wrap; gap:var(--s2); align-items:center}
