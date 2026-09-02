@@ -50,3 +50,57 @@ def test_item_search_link_carries_no_query_string():
         url = item_search_url(term)
         assert "?" not in url, f"검색어가 링크에 붙었습니다: {url}"
         assert url == item_search_url(), "검색어에 따라 링크가 달라지면 안 됩니다"
+
+
+# ---------------------------------------------------------------------------
+# 공통안전기준 값을 최종 적용값처럼 말하지 않는다
+#
+# 규칙 DB 에 지금 들어 있는 17건은 전부 공통안전기준이다. 품목별 부속서(완구 6·
+# 학용품 11·유아용 섬유제품 1)가 같은 물질에 더 엄격한 값을 정하는 경우가 있어,
+# 공통기준 값만 보여주면 셀러에게 실제보다 느슨한 수치를 준다. "모른다" 가
+# 아니라 "틀렸다" 라서 문장으로 한계를 밝힌다.
+#
+# 부속서가 수록되면 이 테스트가 먼저 실패한다 - 그때 문구를 다시 볼 것.
+# ---------------------------------------------------------------------------
+
+
+def test_common_standard_is_not_presented_as_the_final_limit():
+    from sourcing_guard.kats_client import KatsClient
+    from sourcing_guard.models import FindingKind, ItemCategory, ProductFacts
+    from sourcing_guard.verifier import RuleBook, verify
+
+    facts = ProductFacts(
+        product_name="유아 순면 배냇저고리",
+        category=ItemCategory.CHILDREN_TEXTILE,
+        target_age="0~6개월",
+    )
+    hits = [
+        f for f in verify(facts, KatsClient(None, None, mock=True), RuleBook())
+        if f.kind is FindingKind.HAZARD_RULE_APPLIES
+    ]
+    assert hits, "유아용 섬유제품에 유해물질 기준 안내가 하나도 없다"
+    for f in hits:
+        assert "공통안전기준" in f.statement_ko
+        assert "부속서" in f.statement_ko
+
+
+def test_rule_db_holds_only_common_standards_for_now():
+    """부속서가 들어오면 여기가 먼저 실패한다.
+
+    그때 할 일: status: draft 로 넣고(§5), 사람 검수 후 verified 로 승격하고,
+    verifier 의 "품목별 부속서가 더 엄격한 값을" 문구를 다시 볼 것.
+    """
+    from pathlib import Path
+
+    import yaml
+
+    import sourcing_guard
+
+    path = Path(sourcing_guard.__file__).parent / "data" / "hazard_rules.yaml"
+    doc = yaml.safe_load(path.read_text(encoding="utf-8"))
+    rules = doc["rules"] if isinstance(doc, dict) and "rules" in doc else doc
+    bases = {r.get("legal_basis", "") for r in rules}
+    assert all("공통안전기준" in b for b in bases), (
+        f"부속서 근거가 들어왔다: {sorted(b for b in bases if '공통안전기준' not in b)}. "
+        "verifier 의 부속서 단서 문구와 이 테스트를 갱신할 것."
+    )
