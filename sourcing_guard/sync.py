@@ -92,6 +92,41 @@ def _persist(store: SqliteWatchStore, records, *, scope: str, fetched_at: str) -
     return store.upsert_recalls(_rows(records), scope=scope, fetched_at=fetched_at)
 
 
+def sync_noncompliant(
+    rra, store: SqliteWatchStore, *, on_updated=None, min_plausible: int = 100
+) -> dict:
+    """부적합 방송통신기자재 현황을 전량 교체한다. 예외를 밖으로 던지지 않는다.
+
+    리콜과 분리한 이유: 소스가 다르고(전파법 vs 전안법), 실패해도 서로에게
+    영향을 주면 안 된다. 275페이지 순차 수집이라 리콜(2회 호출)보다 오래 걸린다.
+
+    빈 목록으로는 덮어쓰지 않는다 - 수집이 실패했는데 테이블을 비우면 RED 소스가
+    조용히 사라진다 (반쪽 적재를 완료로 기록하던 것과 같은 함정).
+    """
+    report = {"ok": True, "count": 0, "error": None, "finished_at": _now()}
+    try:
+        rows = rra.fetch_noncompliant()
+    except Exception as exc:  # noqa: BLE001
+        report.update(ok=False, error=f"{type(exc).__name__}: {exc}")
+        _log.warning("부적합 현황 수집 실패: %s", exc)
+        return report
+
+    if len(rows) < min_plausible:
+        report.update(ok=False, error=f"수집 {len(rows)}건 — 최소치 미만이라 반영하지 않음")
+        _log.error("부적합 현황이 %d건뿐이라 덮어쓰지 않습니다", len(rows))
+        return report
+
+    try:
+        report["count"] = store.replace_rf_noncompliant(rows, fetched_at=_now())
+        store.set_sync_state("rf_noncompliant_synced_at", report["finished_at"])
+        if on_updated is not None:
+            on_updated()
+    except Exception as exc:  # noqa: BLE001
+        report.update(ok=False, error=f"{type(exc).__name__}: {exc}")
+        _log.exception("부적합 현황 저장 실패")
+    return report
+
+
 def run_sync(
     kats: KatsClient,
     store: SqliteWatchStore,

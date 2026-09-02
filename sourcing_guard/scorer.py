@@ -31,6 +31,7 @@ _PENALTY: dict[FindingKind, int] = {
     FindingKind.RF_CERT_VERIFIED: 0,
     FindingKind.RF_CERT_NOT_FOUND: 30,
     FindingKind.RF_WIRELESS_UNVERIFIED: 30,
+    FindingKind.RF_NONCOMPLIANT: 100,
     FindingKind.HAZARD_RULE_APPLIES: 0,
     FindingKind.SUBSTANCE_MENTIONED: 25,
     FindingKind.COVERAGE_GAP: 0,
@@ -75,6 +76,9 @@ _HARD_RED = {
     FindingKind.RECALL_MATCH,
     FindingKind.KC_REVOKED,
     FindingKind.KC_SUSPENDED,
+    # 부적합 방송통신기자재 현황. 전파인증 축에서 유일하게 정부가 문제를
+    # 적어둔 소스다 (R3-b).
+    FindingKind.RF_NONCOMPLIANT,
 }
 
 _REGULATED = {

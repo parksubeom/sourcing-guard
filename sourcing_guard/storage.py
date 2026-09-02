@@ -48,6 +48,20 @@ CREATE TABLE IF NOT EXISTS recalls (
 CREATE INDEX IF NOT EXISTS idx_recall_published ON recalls(published_on);
 CREATE INDEX IF NOT EXISTS idx_recall_scope     ON recalls(scope);
 
+-- 부적합 방송통신기자재 현황 (전파법). 전파인증 축에서 RED 자격이 있는 유일한
+-- 소스다 - 부적합사유·행정처분이 명시되어 "정부 DB 가 문제를 적어둔" 조건을
+-- 만족한다 (CLAUDE.md R3-b). 리콜 사본과 같은 방식으로 로컬에 둔다.
+CREATE TABLE IF NOT EXISTS rf_noncompliant (
+    seq          TEXT PRIMARY KEY,  -- 목록 번호
+    company      TEXT,
+    cert_number  TEXT,              -- R- 번호와 자기적합확인 관리번호가 섞여 있다
+    model        TEXT,
+    acted_on     TEXT,              -- 처분일자
+    fetched_at   TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_rf_nc_cert  ON rf_noncompliant(cert_number);
+CREATE INDEX IF NOT EXISTS idx_rf_nc_model ON rf_noncompliant(model);
+
 -- 동기화 진행 상태. 재배포 후 "초기 적재를 다시 해야 하나" 를 판단하고,
 -- 캐시 기준일 표시에도 같은 값을 쓴다.
 CREATE TABLE IF NOT EXISTS sync_state (
@@ -268,6 +282,42 @@ class SqliteWatchStore:
                 "SELECT payload FROM recalls ORDER BY scope, uid"
             ).fetchall()
         return [r["payload"] for r in rows]
+
+    def replace_rf_noncompliant(self, rows: list[dict], *, fetched_at: str) -> int:
+        """부적합 현황을 통째로 교체한다.
+
+        증분이 아니라 전량 교체인 이유: 목록에 안정적인 uid 가 없고(번호가 최신
+        기준 역순이라 새 건이 들어오면 밀린다), 2,748건이라 전량이 가볍다.
+
+        빈 목록으로 덮어쓰지 않는다 - 수집이 실패했는데 테이블을 비우면 RED
+        소스가 조용히 사라진다 (반쪽 적재를 완료로 기록하던 것과 같은 함정).
+        """
+        if not rows:
+            raise ValueError("빈 목록으로 부적합 현황을 덮어쓸 수 없습니다")
+        with self._conn:
+            self._conn.execute("DELETE FROM rf_noncompliant")
+            self._conn.executemany(
+                "INSERT OR REPLACE INTO rf_noncompliant"
+                " (seq, company, cert_number, model, acted_on, fetched_at)"
+                " VALUES (?, ?, ?, ?, ?, ?)",
+                [
+                    (r["seq"], r.get("company"), r.get("cert_number"),
+                     r.get("model"), r.get("acted_on"), fetched_at)
+                    for r in rows
+                ],
+            )
+        return len(rows)
+
+    def rf_noncompliant_rows(self) -> list[dict]:
+        rows = self._conn.execute(
+            "SELECT seq, company, cert_number, model, acted_on FROM rf_noncompliant"
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+    def rf_noncompliant_count(self) -> int:
+        return self._conn.execute(
+            "SELECT COUNT(*) AS n FROM rf_noncompliant"
+        ).fetchone()["n"]
 
     def recall_count(self, scope: str | None = None) -> int:
         if scope:
