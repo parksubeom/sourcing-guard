@@ -445,7 +445,8 @@
     res.querySelectorAll("button[data-rf]").forEach(function (b) {
       b.addEventListener("click", function () {
         var model = b.getAttribute("data-rf");
-        var box = b.parentNode.parentNode.querySelector(".rf-result");
+        var li = b.closest("li");
+        var box = li ? li.querySelector(".rf-result") : null;
         b.disabled = true;
         b.textContent = "조회 중… (최대 30초)";
         if (box) { box.hidden = false; box.innerHTML = '<p class="scope">국립전파연구원에 조회하고 있습니다…</p>'; }
@@ -466,13 +467,24 @@
           })
           .then(function (data) {
             var rows = (data.findings || []).map(findingRow).join("");
-            if (!box) return;
-            // 서버가 준 finding 을 스캔 결과와 같은 렌더러로 그린다.
-            // 근거 링크(R2)와 단정 금지(§9) 검증이 같은 자리에서 걸린다.
-            box.innerHTML = rows
-              ? '<ul class="findings">' + rows + "</ul>"
-              : '<p class="scope">조회 결과를 받지 못했습니다. 아래 링크에서 직접 검색해 주세요.</p>';
-            b.remove();
+            if (!rows) {
+              if (box) box.innerHTML = '<p class="scope">조회 결과를 받지 못했습니다. 아래 링크에서 직접 검색해 주세요.</p>';
+              b.remove();
+              return;
+            }
+            // 안내 줄을 결과로 갈아끼운다. 남겨두면 "번호를 찾지 못했습니다"
+            // 바로 아래에 "조회되었습니다" 가 붙어 서로 모순된다 - 그 안내는
+            // "아직 확인 못 했으니 눌러라" 였고, 누른 순간 수명이 끝난다.
+            //
+            // 중첩하지 않고 li 자체를 교체하는 이유는 CSS 다. .findings>li 는
+            // 자체 여백과 구분선을 갖는데, li 안에 또 .findings 를 넣으면
+            // 여백이 두 겹이 되고 엉뚱한 구분선이 생긴다.
+            //
+            // 주의: 구획은 서버가 정한다는 원칙에서 한 칸 벗어난다. 조회 결과가
+            //   rf_cert_verified(원래 '참고')여도 셀러가 방금 누른 자리에
+            //   그대로 뜬다. 다시 스캔하면 서버 구획으로 돌아간다.
+            if (li) li.outerHTML = rows;
+            else if (box) box.innerHTML = '<ul class="findings">' + rows + "</ul>";
           })
           .catch(function (e) {
             if (box) box.innerHTML = '<p class="scope">' + esc(e.message) + "</p>";

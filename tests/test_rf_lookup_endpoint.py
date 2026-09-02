@@ -88,6 +88,42 @@ def test_button_only_appears_for_searchable_models():
     assert "searchable_model" in index
 
 
+def test_result_replaces_the_advisory_line():
+    """안내 줄을 남겨두면 결과와 모순된다.
+
+    "전파인증 번호를 찾지 못했습니다" 바로 아래에 "조회되었습니다" 가 붙는다.
+    그 안내는 "아직 확인 못 했으니 눌러라" 였고 누른 순간 수명이 끝난다.
+
+    중첩하지 않고 li 를 교체하는 이유는 CSS 다 - .findings>li 가 자체 여백과
+    구분선을 갖는데 li 안에 또 .findings 를 넣으면 여백이 두 겹이 된다.
+    """
+    index = (_STATIC / "index.html").read_text(encoding="utf-8")
+    assert "li.outerHTML = rows" in index
+
+
+def test_rf_finding_kinds_are_four_not_five():
+    """화면이 다뤄야 할 전파인증 finding 은 넷이다.
+
+    verified(참고) / not_found(확인할 것) / wireless_unverified(확인할 것) /
+    noncompliant(확인된 문제). rf_mismatch 같은 종류는 없다 - 모델명 재대조
+    실패는 finding 이 아니라 조회 단계에서 걸러진다(models_match).
+    """
+    from sourcing_guard.models import FindingKind, _FINDING_GROUP
+
+    rf_kinds = {k.value for k in FindingKind if k.value.startswith("rf_")}
+    assert rf_kinds == {
+        "rf_cert_verified",
+        "rf_cert_not_found",
+        "rf_wireless_unverified",
+        "rf_noncompliant",
+    }
+    # 셀러가 먼저 볼 것일수록 앞 구획이다.
+    assert _FINDING_GROUP["rf_noncompliant"].value == "finding"
+    assert _FINDING_GROUP["rf_cert_not_found"].value == "action"
+    assert _FINDING_GROUP["rf_wireless_unverified"].value == "action"
+    assert _FINDING_GROUP["rf_cert_verified"].value == "context"
+
+
 # ---------------------------------------------------------------------------
 # 인라인 스크립트가 문법적으로 살아 있는가
 #
