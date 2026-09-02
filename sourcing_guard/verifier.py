@@ -827,6 +827,24 @@ def verify(
     else:
         haystack = " ".join(facts.materials + facts.substances_mentioned).lower()
         for rule in rules.for_category(facts.category):
+            # 지금 규칙 DB 에는 공통안전기준만 들어 있다(17건 전부). 품목별
+            # 부속서 - 완구 6 · 학용품 11 · 유아용 섬유제품 1 - 가 같은 물질에
+            # 더 엄격한 값을 정하는 경우가 있어서, 공통기준 값을 최종 적용값처럼
+            # 말하면 셀러에게 실제보다 느슨한 수치를 보여주게 된다. 이건 "모른다"
+            # 가 아니라 "틀렸다" 라서, 부속서를 수록할 때까지 그 한계를 문장에
+            # 적어둔다. 값을 지어내지 않고 단정만 걷어내는 것이다 (R5·§1).
+            limit = f" ({rule.limit_value}{rule.unit})" if rule.limit_value else ""
+            if "공통안전기준" in (rule.legal_basis or ""):
+                statement = (
+                    f"이 품목군에는 '{rule.substance}' 공통안전기준{limit}이 적용됩니다. "
+                    "품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, "
+                    "시험성적서로 확인이 필요합니다."
+                )
+            else:
+                statement = (
+                    f"이 품목군에는 '{rule.substance}' 기준{limit}이 적용됩니다. "
+                    "시험성적서로 확인이 필요합니다."
+                )
             findings.append(
                 Finding(
                     kind=FindingKind.HAZARD_RULE_APPLIES,
@@ -834,11 +852,7 @@ def verify(
                     # 달지 않는다 — 이 finding 하나로 신호가 갈리면 규제 품목군이
                     # 전부 AMBER 가 된다.
                     signal=Signal.UNKNOWN,
-                    statement_ko=(
-                        f"이 품목군에는 '{rule.substance}' 기준"
-                        + (f" ({rule.limit_value}{rule.unit})" if rule.limit_value else "")
-                        + "이 적용됩니다. 시험성적서로 확인이 필요합니다."
-                    ),
+                    statement_ko=statement,
                     source_label=rule.legal_basis,
                     source_url=rule.source_url,
                     legal_basis=rule.legal_basis,
