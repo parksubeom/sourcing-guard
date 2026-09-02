@@ -524,3 +524,68 @@ def test_no_input_note_when_something_was_read(facts):
     from sourcing_guard.scorer import score
 
     assert score(facts, []).input_note is None
+
+
+# --- UNKNOWN 헤드라인을 사유별로 (회색불이 다 같아 보이는 문제) --------------
+def _headline_for(facts):
+    from sourcing_guard.kats_client import KatsClient
+    from sourcing_guard.rra_client import RraClient
+    from sourcing_guard.verifier import RuleBook, verify
+
+    findings = verify(facts, KatsClient(None, None, mock=True), RuleBook(), None,
+                      RraClient(mock=True), None)
+    return score(facts, findings).headline
+
+
+def test_age_out_of_range_says_not_applicable_not_undecided():
+    """연령 표기로 대상이 아닌 것은 우리가 판단을 '한' 것이다.
+
+    '가릴 수 없습니다' 라고 말하면 한 판단을 안 한 것처럼 깎아내린다.
+    """
+    headline = _headline_for(ProductFacts(
+        product_name="다꾸 스티커", target_age="만 14세 이상",
+        maker="스티조은", category=ItemCategory.CHILDREN_STATIONERY,
+    ))
+    assert "대상 아님" in headline
+    assert "가릴 수 없습니다" not in headline
+
+
+def test_coverage_gap_says_partially_checked():
+    """인증·리콜은 대조했는데 '아무것도 못 했다' 처럼 말하면 안 된다."""
+    headline = _headline_for(ProductFacts(
+        product_name="LED 펜라이트", maker="colourmotor", category=ItemCategory.ELECTRICAL,
+    ))
+    assert "일부만 확인" in headline
+
+
+def test_no_extracted_field_asks_about_the_input():
+    assert "입력 확인" in _headline_for(ProductFacts())
+
+
+def test_lookup_failure_is_the_lowest_priority_reason():
+    """조회 실패는 축 하나가 빠진 것이지 품목 판단을 못 한 것이 아니다.
+
+    확정된 판단('대상 아님')이 있으면 그쪽을 먼저 말해야 한다.
+    """
+    from sourcing_guard.scorer import _UNKNOWN_HEADLINE
+
+    kinds = [k for k, _ in _UNKNOWN_HEADLINE]
+    assert kinds[-1] is FindingKind.LOOKUP_FAILED
+
+
+def test_unknown_reasons_produce_different_headlines():
+    """같은 회색불이라도 이유가 다르면 다르게 말해야 한다.
+
+    실입력을 넣었을 때 같은 문구가 세 번 나오면 셀러는 '아무것도 안 되는
+    서비스' 로 읽는다.
+    """
+    headlines = {
+        _headline_for(ProductFacts(product_name="스티커", target_age="만 14세 이상",
+                                   maker="a", category=ItemCategory.CHILDREN_STATIONERY)),
+        _headline_for(ProductFacts(product_name="펜라이트", maker="b",
+                                   category=ItemCategory.ELECTRICAL)),
+        _headline_for(ProductFacts(product_name="클렌징폼",
+                                   substances_mentioned=["화장품책임판매업자"])),
+        _headline_for(ProductFacts()),
+    }
+    assert len(headlines) == 4
