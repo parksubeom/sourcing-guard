@@ -292,6 +292,23 @@
       '<span class="sub">번호가 다르면 위 입력란에서 고친 뒤 다시 검사해 주세요.</span></p>';
   }
 
+  // 전파인증 조회 버튼. 스캔에 넣지 않고 여기서 부르는 이유는 속도다 —
+  // 국립전파연구원 검색은 결과가 있으면 실측 12초라, 스캔에 넣으면 무선 상품마다
+  // 13초가 되고 "캐시 히트 3초 이내" 가 깨진다.
+  //
+  // 소요 시간을 버튼 옆에 미리 적는다. 안 적으면 누르고 멈춘 줄 안다.
+  function rfLookupRow(f) {
+    var model = (f.detail && f.detail.searchable_model) || "";
+    // 식별력 없는 모델명('A1' 은 1,579페이지)에는 서버가 null 을 준다.
+    // 눌러도 답이 안 나오는 버튼은 주지 않는다.
+    if (!model) return "";
+    return '<p class="confirm">' +
+      '<button class="btn-t sm" type="button" data-rf="' + esc(model) + '">' +
+      "전파인증 조회하기 · " + esc(model) + "</button>" +
+      '<span class="sub">국립전파연구원 검색은 10~20초 걸립니다.</span></p>' +
+      '<div class="rf-result" hidden></div>';
+  }
+
   function findingRow(f) {
     var basis = f.legal_basis ? '<span class="tag">' + esc(f.legal_basis) + "</span>" : "";
     // 같은 제조사의 다른 리콜은 이 상품의 위험이 아니라 공급처 참고 정보다.
@@ -312,10 +329,11 @@
         : '<a href="' + esc(f.source_url) + '" target="_blank" rel="noopener noreferrer">'
           + esc(f.source_label || "근거 원문") + " (새 창)</a>";
     var confirm = f.kind === "kc_image_candidate" ? confirmRow(f) : "";
+    var rf = f.kind === "rf_wireless_unverified" ? rfLookupRow(f) : "";
     return '<li class="' + esc(f.kind) + aside + '">' +
            '<span class="tick ' + esc(f.signal) + '" aria-hidden="true"></span>' +
            '<div class="f-body"><p class="f-text">' + esc(f.statement_ko) + "</p>" +
-           confirm +
+           confirm + rf +
            '<p class="f-meta">' + basis + link + "</p></div></li>";
   }
 
@@ -413,12 +431,54 @@
       b.addEventListener("click", function () {
         var num = b.getAttribute("data-kc");
         if (pt.value.indexOf(num) < 0) {
-          pt.value = (pt.value ? pt.value.replace(/\s*$/, "") + "
-" : "") +
+          pt.value = (pt.value ? pt.value.replace(/\s*$/, "") + "\n" : "") +
                      "KC 인증번호 " + num;
         }
         updateCount();
         scan();
+      });
+    });
+
+    // 전파인증 조회. 스캔과 분리한 이유는 속도다 - 국립전파연구원 검색은
+    // 결과가 있으면 실측 12초라 스캔에 넣으면 무선 상품마다 13초가 된다.
+    // 누른 뒤 멈춘 것처럼 보이지 않게 로딩 표시를 그 자리에 남긴다.
+    res.querySelectorAll("button[data-rf]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var model = b.getAttribute("data-rf");
+        var box = b.parentNode.parentNode.querySelector(".rf-result");
+        b.disabled = true;
+        b.textContent = "조회 중… (최대 30초)";
+        if (box) { box.hidden = false; box.innerHTML = '<p class="scope">국립전파연구원에 조회하고 있습니다…</p>'; }
+
+        fetch("/api/v1/rf-lookup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ model_name: model })
+        })
+          .then(function (r) {
+            if (r.status === 429) {
+              return r.json().then(function (x) {
+                throw new Error(x.detail || "요청이 잠시 많습니다. 1분 뒤에 다시 시도해 주세요");
+              });
+            }
+            if (!r.ok) throw new Error("서버가 " + r.status + " 로 응답했습니다");
+            return r.json();
+          })
+          .then(function (data) {
+            var rows = (data.findings || []).map(findingRow).join("");
+            if (!box) return;
+            // 서버가 준 finding 을 스캔 결과와 같은 렌더러로 그린다.
+            // 근거 링크(R2)와 단정 금지(§9) 검증이 같은 자리에서 걸린다.
+            box.innerHTML = rows
+              ? '<ul class="findings">' + rows + "</ul>"
+              : '<p class="scope">조회 결과를 받지 못했습니다. 아래 링크에서 직접 검색해 주세요.</p>';
+            b.remove();
+          })
+          .catch(function (e) {
+            if (box) box.innerHTML = '<p class="scope">' + esc(e.message) + "</p>";
+            b.disabled = false;
+            b.textContent = "전파인증 조회하기 · " + model;
+          });
       });
     });
   }

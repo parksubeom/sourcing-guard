@@ -195,7 +195,9 @@ def _as_of_label(yyyymmdd: str | None) -> str:
     return f"{d} 공표분까지" if d else "기준일 미상"
 
 
-def _lookup_failed(what: str, today: date, code: str | None = None) -> Finding:
+def _lookup_failed(
+    what: str, today: date, code: str | None = None, *, agency: str = "국가기술표준원"
+) -> Finding:
     """조회를 못 했다는 사실 자체를 Finding 으로 남긴다.
 
     "조회했는데 없음" 과 "조회를 못 함" 은 셀러에게 완전히 다른 정보다. 후자를
@@ -215,7 +217,7 @@ def _lookup_failed(what: str, today: date, code: str | None = None) -> Finding:
         kind=FindingKind.LOOKUP_FAILED,
         signal=Signal.UNKNOWN,
         statement_ko=(
-            f"국가기술표준원 {what} 조회 서비스에 일시적으로 연결하지 못했습니다. "
+            f"{agency} {what} 조회 서비스에 일시적으로 연결하지 못했습니다. "
             f"{what} 확인이 완료되지 않았으니 {tail}"
         ),
         source_label="국가기술표준원",
@@ -315,7 +317,7 @@ def _verify_rf(
             try:
                 record = rra.lookup_number(number)
             except RraApiError:
-                out.append(_lookup_failed("전파인증", today))
+                out.append(_lookup_failed("전파인증", today, agency="국립전파연구원"))
                 continue
         if record is not None:
             out.append(_rf_verified(record, today, via="number"))
@@ -339,45 +341,20 @@ def _verify_rf(
 
     # 무선 표기는 있는데 번호가 없다 - 가장 흔한 경우(구매대행 상품).
     #
-    # emsit 은 mtlCefNo 만 받으므로 여기서는 쓸 수 없다. 모델명으로 답할 수
-    # 있는 경로는 RRA 공개 검색뿐이라, 그쪽을 태운다.
+    # ⚠ 여기서 RRA 를 조회하지 않는다. 실측 12초짜리 요청이라(결과 있는 질의)
+    #   스캔에 넣으면 무선 상품마다 13초가 되고, 기획서 §8 의 "캐시 히트 3초
+    #   이내" 약속이 깨진다. 투표 기간에 무선 상품을 넣은 심사위원이 기다리다
+    #   닫으면 그걸로 끝이다.
+    #
+    #   대신 화면에 "전파인증 조회하기" 버튼을 주고, 누르면
+    #   POST /api/v1/rf-lookup 이 verify_rf_by_model 을 부른다. ⑦ 의 KC 이미지
+    #   확인 버튼과 같은 패턴이다 - 오래 걸리는 조회는 셀러가 인지한 상태로
+    #   누르게 한다.
+    #
+    #   detail.searchable_model 이 그 버튼의 방아쇠다. 식별력이 없는 모델명
+    #   ('A1' 은 1,579페이지)에는 버튼을 주지 않는다 - 눌러도 답이 안 나온다.
     if facts.wireless_hints and not facts.rf_numbers:
-        searched = False
-        records: list = []
-        if rra is not None and is_searchable_model(facts.model_name):
-            try:
-                records = rra.search_certs_by_model(facts.model_name)
-                searched = True
-            except RraApiError:
-                # 못 연 것과 없는 것은 다르다 (R3). 조용히 "인증 없음" 으로
-                # 흘리면 확인하지 못한 것을 확인한 것처럼 말하게 된다.
-                out.append(_lookup_failed("전파인증", today))
-
-        if records:
-            for record in records:
-                out.append(_rf_verified(record, today, via="model"))
-            return out
-        if searched:
-            out.append(
-                Finding(
-                    kind=FindingKind.RF_CERT_NOT_FOUND,
-                    signal=Signal.AMBER,
-                    statement_ko=(
-                        f"모델명 '{facts.model_name}' 으로 적합성평가 현황을 조회했으나 "
-                        "일치하는 항목을 찾지 못했습니다. 자기적합확인 대상은 이 DB에 "
-                        "번호가 없는 것이 정상이므로, 공급처에 적합성평가 구분을 "
-                        "확인해 주세요."
-                    ),
-                    source_label="국립전파연구원 적합성평가 현황 검색",
-                    source_url=rf_evidence_url(),
-                    legal_basis="전파법 제58조의2 (적합성평가)",
-                    detail={"searched_model": facts.model_name},
-                    checked_at=today,
-                )
-            )
-            return out
-
-        # 검색할 단서가 없거나(모델명 없음·식별력 미달) 조회에 실패했다.
+        searchable = facts.model_name if is_searchable_model(facts.model_name) else None
         out.append(
             Finding(
                 kind=FindingKind.RF_WIRELESS_UNVERIFIED,
@@ -391,11 +368,62 @@ def _verify_rf(
                 source_label="국립전파연구원에서 적합성평가 직접 검색",
                 source_url=rf_evidence_url(),
                 legal_basis="전파법 제58조의2 (적합성평가)",
-                detail={"wireless_hints": list(facts.wireless_hints)},
+                detail={
+                    "wireless_hints": list(facts.wireless_hints),
+                    # 프론트가 이 값으로 "전파인증 조회하기" 버튼을 낸다.
+                    # None 이면 버튼을 주지 않는다 (식별력 미달 모델명).
+                    "searchable_model": searchable,
+                },
                 checked_at=today,
             )
         )
     return out
+
+
+def verify_rf_by_model(
+    model: str, rra: "RraClient | None", *, today: date | None = None
+) -> list[Finding]:
+    """모델명 하나로 적합성평가를 조회한다. 버튼이 부르는 경로다.
+
+    스캔에서는 부르지 않는다 - 실측 12초라 응답 시간을 통째로 잡아먹는다.
+    셀러가 "전파인증 조회하기" 를 눌렀을 때만 돈다.
+
+    반환은 Finding 목록이다. 프론트가 스캔 결과와 같은 렌더러로 그리고,
+    R2(근거 필수)·R1(판정 금지) 검증도 같은 자리에서 걸린다.
+    """
+    today = today or date.today()
+    if not is_searchable_model(model):
+        # 질의 자체를 던지면 안 되는 문자열이다. 버튼이 안 나오는 것이 정상이라
+        # 여기 오는 것은 직접 호출뿐이다.
+        return []
+    if rra is None:
+        return [_lookup_failed("전파인증", today, agency="국립전파연구원")]
+
+    try:
+        records = rra.search_certs_by_model(model)
+    except RraApiError:
+        # 못 연 것과 없는 것은 다르다 (R3). 조용히 "인증 없음" 으로 흘리면
+        # 확인하지 못한 것을 확인한 것처럼 말하게 된다.
+        return [_lookup_failed("전파인증", today, agency="국립전파연구원")]
+
+    if records:
+        return [_rf_verified(r, today, via="model") for r in records]
+    return [
+        Finding(
+            kind=FindingKind.RF_CERT_NOT_FOUND,
+            signal=Signal.AMBER,
+            statement_ko=(
+                f"모델명 '{model}' 으로 적합성평가 현황을 조회했으나 일치하는 항목을 "
+                "찾지 못했습니다. 자기적합확인 대상은 이 DB에 번호가 없는 것이 "
+                "정상이므로, 공급처에 적합성평가 구분을 확인해 주세요."
+            ),
+            source_label="국립전파연구원 적합성평가 현황 검색",
+            source_url=rf_evidence_url(),
+            legal_basis="전파법 제58조의2 (적합성평가)",
+            detail={"searched_model": model},
+            checked_at=today,
+        )
+    ]
 
 
 def verify(

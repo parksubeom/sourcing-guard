@@ -123,3 +123,97 @@ def test_unrelated_wireless_product_is_not_red(index):
                RraClient(mock=True), index),
     )
     assert result.signal is not Signal.RED
+
+
+# ---------------------------------------------------------------------------
+# 동기화 배선 — 안 부르면 RED 소스가 영구히 빈다
+#
+# sync_noncompliant 가 정의만 되고 호출되는 곳이 없었다. 그러면 rf_noncompliant
+# 테이블이 계속 0건이고, NoncompliantIndex.is_empty() 가 참이라 verifier 가
+# 부적합 블록을 통째로 건너뛴다 - RF_NONCOMPLIANT 이 한 번도 안 뜬다.
+# 테스트는 인덱스를 직접 채워서 통과하니 이 구멍을 못 잡았다.
+# ---------------------------------------------------------------------------
+
+
+def test_sync_loop_syncs_noncompliant_when_rra_is_given():
+    import asyncio
+
+    from sourcing_guard import sync as sync_mod
+
+    called = {"recalls": 0, "noncompliant": 0}
+
+    def fake_run_sync(*a, **kw):
+        called["recalls"] += 1
+
+    def fake_sync_noncompliant(rra, store, *, on_updated=None, **kw):
+        called["noncompliant"] += 1
+        if on_updated:
+            on_updated()
+        return {"ok": True, "count": 2748}
+
+    async def drive(monkey):
+        task = asyncio.create_task(
+            sync_mod.sync_loop(object(), object(), interval=3600,
+                               rra=object(), on_noncompliant_updated=lambda: None)
+        )
+        await asyncio.sleep(0.05)
+        task.cancel()
+        try:
+            await task
+        except asyncio.CancelledError:
+            pass
+
+    import pytest as _pytest
+
+    mp = _pytest.MonkeyPatch()
+    mp.setattr(sync_mod, "run_sync", fake_run_sync)
+    mp.setattr(sync_mod, "sync_noncompliant", fake_sync_noncompliant)
+    try:
+        asyncio.run(drive(mp))
+    finally:
+        mp.undo()
+
+    assert called["recalls"] == 1
+    assert called["noncompliant"] == 1, "부적합 현황이 동기화되지 않으면 RED 소스가 빈다"
+
+
+def test_sync_loop_skips_noncompliant_without_rra():
+    """rra 를 안 주면 건너뛴다 - 리콜만 돌리는 기존 호출부가 깨지면 안 된다."""
+    import asyncio
+
+    from sourcing_guard import sync as sync_mod
+
+    called = {"noncompliant": 0}
+
+    async def drive():
+        task = asyncio.create_task(sync_mod.sync_loop(object(), object(), interval=3600))
+        await asyncio.sleep(0.05)
+        task.cancel()
+        try:
+            await task
+        except asyncio.CancelledError:
+            pass
+
+    import pytest as _pytest
+
+    mp = _pytest.MonkeyPatch()
+    mp.setattr(sync_mod, "run_sync", lambda *a, **kw: None)
+    mp.setattr(sync_mod, "sync_noncompliant",
+               lambda *a, **kw: called.__setitem__("noncompliant", called["noncompliant"] + 1))
+    try:
+        asyncio.run(drive())
+    finally:
+        mp.undo()
+
+    assert called["noncompliant"] == 0
+
+
+def test_healthz_exposes_the_noncompliant_count():
+    """0 이면 RED 가 한 번도 안 뜬다. 조용히 비어 있는 걸 healthz 가 말해야 한다."""
+    from fastapi.testclient import TestClient
+
+    from sourcing_guard import main as main_mod
+
+    body = TestClient(main_mod.app).get("/healthz").json()
+    rf = body["sync"]["rf_noncompliant"]
+    assert "count" in rf and "synced_at" in rf

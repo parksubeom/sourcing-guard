@@ -360,4 +360,10 @@ class SqliteWatchStore:
                 "overseas": self.recall_count("overseas"),
             },
             "latest_published_on": self.latest_published_on(),
+            # 전파인증 축의 유일한 RED 소스다. 0 이면 RED 가 한 번도 안 뜬다 -
+            # 조용히 비어 있는 것을 healthz 가 말해줘야 한다.
+            "rf_noncompliant": {
+                "count": self.rf_noncompliant_count(),
+                "synced_at": self.get_sync_state("rf_noncompliant_synced_at"),
+            },
         }
