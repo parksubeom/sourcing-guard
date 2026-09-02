@@ -7,6 +7,12 @@ KC 인증번호가 없다 — 구매대행 소싱 상품은 인증정보가 없�
 이 테스트는 리콜 인덱스 없이 돈다(추출·분류·범위 판정은 리콜과 독립적이다).
 리콜 매칭 자체는 test_recall_index / test_watchlist 가 따로 검증한다.
 
+⛔ 통과 수를 커버리지로 읽지 말 것. 11건 전부 기대 신호가 unknown 이고,
+KC 번호·이미지·무선 케이스가 각각 0건이다. 즉 데모 3종이 쓰는 KC 번호 경로와
+전파인증 축은 이 셋이 전혀 덮지 않는다. 무엇이 비었고 왜 지금 채우지 않는지는
+golden/golden_set.yaml 머리말의 ⛔ 블록에 적어뒀다. 아래
+test_gap_note_still_matches_the_data 가 그 노트를 데이터와 맞춰 지킨다.
+
 ────────────────────────────────────────────────────────────────
 기본은 목 모드다 (CLAUDE.md §7: 테스트가 네트워크에 의존하면 안 된다)
 ────────────────────────────────────────────────────────────────
@@ -259,3 +265,51 @@ def test_golden_categories_document_the_llm_answer():
     assert by_id["zabara-chair"] == "household"
     assert by_id["slim-bin"] == "household"
     assert by_id["led-penlight"] == "electrical"
+
+
+# ---------------------------------------------------------------------------
+# 커버리지 구멍을 적어둔 노트가 낡지 않게
+#
+# golden_set.yaml 머리말에 "이 셋이 덮지 않는 경로" 를 적어뒀다. 누군가 구멍을
+# 채우면 그 노트가 거짓이 되는데, 노트는 주석이라 아무도 고쳐주지 않는다.
+# 그래서 노트의 수치를 여기서 다시 재고 어긋나면 실패시킨다.
+# ---------------------------------------------------------------------------
+
+
+def test_gap_note_still_matches_the_data():
+    """머리말의 "이미지 0건 · KC 0건 · 무선 0건 · 전부 unknown" 을 재측정한다.
+
+    실패하면 골든셋이 좋아졌다는 뜻이다. 케이스를 되돌리지 말고
+    golden_set.yaml 머리말의 ⛔ 블록을 갱신할 것.
+    """
+    import re
+
+    from sourcing_guard.kats_client import CERT_NUMBER_RE
+
+    wireless = ("무선", "블루투스", "bluetooth", "wifi", "와이파이", "페어링")
+    n_img = sum(
+        1 for c in _GOLDEN
+        if {"image", "images", "image_b64"} & set(c)
+        or re.search(r"(?i)\.(png|jpg|jpeg)", c["text"])
+    )
+    n_kc = sum(1 for c in _GOLDEN if CERT_NUMBER_RE.findall(c["text"]))
+    n_rf = sum(
+        1 for c in _GOLDEN
+        if any(w in c["text"].lower() for w in wireless)
+    )
+    signals = {c["expect"]["signal"] for c in _GOLDEN}
+
+    assert (n_img, n_kc, n_rf) == (0, 0, 0), (
+        f"골든셋이 넓어졌다 (이미지 {n_img} · KC {n_kc} · 무선 {n_rf}). "
+        "golden_set.yaml 머리말의 ⛔ 블록을 갱신할 것."
+    )
+    assert signals == {"unknown"}, (
+        f"기대 신호가 늘었다: {sorted(signals)}. 머리말의 ⛔ 블록을 갱신할 것."
+    )
+
+
+def test_gap_note_is_present_in_the_yaml():
+    """노트 자체가 지워지면 통과 수를 커버리지로 오독하게 된다."""
+    text = (Path(__file__).parent / "golden" / "golden_set.yaml").read_text(encoding="utf-8")
+    assert "이 회귀 셋이 덮지 않는 경로" in text
+    assert "1523955" in text          # 통과 수가 커버리지가 아니라는 실례

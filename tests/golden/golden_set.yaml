@@ -40,6 +40,58 @@
 #   must_find     이 FindingKind 들이 결과에 있어야 한다
 #   note          왜 이 정답인지 (사람용)
 
+#
+# ⛔ 이 회귀 셋이 덮지 않는 경로 (2026-09-03 실측)
+#
+#   11건이 통과하는 것을 "다 검증됐다" 로 읽으면 안 된다. 표본이 한쪽으로
+#   심하게 쏠려 있다. 프론트 인라인 JS 가 SyntaxError 로 죽어 데모·검사·감시
+#   버튼이 전부 먹통이었는데 551개 테스트가 못 잡은 것(1523955)과 같은
+#   종류의 편중이다 — 통과 수가 커버리지를 뜻하지 않는다.
+#
+#   기대 신호가 11건 전부 unknown 이다. GREEN·AMBER·RED 케이스가 하나도 없다.
+#   must_find 에 등장하는 kind 는 3종뿐이고(out_of_scope·info_request·
+#   coverage_gap), FindingKind 24종 중 21종이 한 번도 기대되지 않는다:
+#
+#     KC 인증    kc_verified · kc_not_found · kc_expired · kc_revoked
+#                kc_suspended · kc_under_action · kc_tier_unknown
+#                kc_missing_but_required · kc_image_candidate
+#     리콜       recall_match · recall_weak_match · recall_clear
+#                maker_other_recalls
+#     전파인증    rf_cert_verified · rf_cert_not_found · rf_wireless_unverified
+#                rf_noncompliant
+#     유해물질    hazard_rule_applies · substance_mentioned
+#     그 외      age_out_of_child_range · lookup_failed
+#
+#   특히 아픈 곳 넷:
+#
+#   1. 데모 3종이 전부 KC 번호 기반인데(CB061R2170-3018 두 건,
+#      CB067R317-5002 한 건) 이 셋에는 번호가 있는 케이스가 0건이다.
+#      심사위원과 셀러가 가장 먼저 보는 경로에 실데이터 회귀가 없다.
+#      CLAUDE.md §8 이 "어떤 상황에서도 유지" 라고 못박은 두 축이 바로
+#      KC 번호 검증과 리콜 대조인데, 그 둘이 이 셋에서 비어 있다.
+#   2. 이미지 케이스 0건. ⑦(KC 마크 이미지에서 번호 읽기)은
+#      test_kc_from_image 의 단위 테스트만 있고 실캡처 회귀가 없다.
+#   3. 무선 케이스 0건. 게다가 러너가 verify(facts, _KATS, _RULES, None) 로
+#      부르므로 rra 가 None 이고, 전파인증 축은 이 셋에서 아예 돌지 않는다.
+#      test_rf_lookup_endpoint · test_wireless_hints 로만 덮인다.
+#   4. UNKNOWN 헤드라인이 사유별로 갈렸는데(edbafdd) 11건이 전부 UNKNOWN
+#      이면서 헤드라인을 단정하지 않는다. 문구 회귀가 없다.
+#
+#   지금 채우지 않는 이유: 원본 캡처 11장이 저장소에 없고(위 ⚠ 참조), KC
+#   케이스는 실제 상품의 실제 인증번호 표기가 필요하다. 텍스트를 지어내면
+#   R5 위반이다.
+#
+#   채울 때의 순서와 조건:
+#
+#     (1) 실캡처 확보가 선행 조건이다. 이것 없이는 어느 항목도 시작할 수 없다.
+#     (2) KC 케이스는 실번호와 **그때의 실제 API 응답을 함께** 고정해야
+#         회귀가 된다. 목 KatsClient 가 아는 번호는 3개뿐이고
+#         (JU071047-12002C · CB123A123-1234 · XU07012345) 데모 번호는
+#         거기 없다. 목이 아는 번호로 케이스를 만들면 목 픽스처를 자기가
+#         자기에게 확인하는 동어반복이 된다 — 회귀가 아니다.
+#     (3) 전파인증 케이스는 러너가 rra=None 으로 부르는 것부터 고쳐야 한다.
+#         케이스만 넣으면 조용히 통과한다.
+
 cases:
   - id: cleansing-foam
     text: |
