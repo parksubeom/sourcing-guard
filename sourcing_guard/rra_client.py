@@ -22,7 +22,10 @@ from __future__ import annotations
 
 import logging
 import re
+import threading
+import time
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
 from typing import Any
@@ -30,6 +33,8 @@ from xml.etree import ElementTree
 
 import httpx
 import yaml
+
+from .watchlist import normalize_model
 
 _log = logging.getLogger(__name__)
 
@@ -46,6 +51,116 @@ RF_NUMBER_RE = re.compile(r"(?i)\b(?:R-[CRI]-[A-Za-z0-9_]+-[A-Za-z0-9._-]+|KCC-[
 
 # 요청 파라미터 누락. 우리 잘못이라 셀러에게 "다시 시도" 를 권하면 안 된다.
 OPERATOR_FAULT_CODES = {"0098"}
+
+
+# 모델명 검색 비용 - 실측 (2026-09-02, 반복 측정)
+#
+#   검색, 결과 있음   category 빈값  12.0초   99KB
+#                    category=C      7.3초   (결과 없는 경우였다)
+#                    category=R     22.5초
+#   검색, 결과 0건                    1.3초   98KB
+#   팝업                             0.1초    3.5KB   ← 사실상 공짜
+#
+# ⚠ 비용은 전부 검색에 있다. 팝업이 비쌀 것이라 보고 POPUP_LIMIT 을 조였는데
+#   실측은 반대였다 - 팝업은 0.1초고 검색이 12초다.
+#
+# ⚠ 타임아웃을 8초로 뒀더니 "결과가 있는 질의만" 타임아웃됐다. 0건은 1.3초라
+#   통과하고 1건 이상이면 12초라 실패하니, 인증이 있는 상품일수록 조회에
+#   실패하는 최악의 편향이 된다. 실측보다 넉넉하게 잡는다.
+SEARCH_TIMEOUT_SECONDS = 15.0
+SEARCH_RESULT_LIMIT = 10   # 목록 1페이지가 10건이다
+POPUP_LIMIT = 3            # 0.1초라 비용은 거의 없다. 재대조 대상 상한이다
+MODEL_CACHE_TTL_SECONDS = 24 * 60 * 60
+
+
+def is_searchable_model(model: str | None) -> bool:
+    """이 모델명으로 RRA 를 검색해도 되는가.
+
+    목록이 부분문자열 매칭이라 식별력이 낮은 문자열은 수천 페이지를 문다.
+    실측 (2026-09-02, category 비움, model_no 축):
+
+        모델명      글자  길이   총 페이지
+        100          0    3     6,491     ← 숫자만
+        1000         0    4     1,747
+        A1           1    2     1,579
+        AB           2    2       906
+        Q1           1    2       250
+        ABC          3    3        41
+        M-1000       1    5        66     ← 길이 5인데 글자가 하나
+        GP-500       2    5         3
+        TS183        2    5         1
+        A05418       1    6         1     ← 글자 하나여도 길면 괜찮다
+        SM-R900      3    6         1
+        WU922MS      4    7         1
+        DECKTS183    6    9         1
+
+    갈라지는 선이 "길이 5 이상 + 글자 1개 이상 + (글자 2개 이상 또는 길이 6
+    이상)" 에서 정확히 맞는다. 숫자만인 문자열은 길이와 무관하게 뺀다.
+
+    ⚠ watchlist 의 식별력 규칙(④)보다 엄격하다. 거기서는 강등이라는 중간
+      단계가 있어 '100' 도 참고로 남길 수 있지만, 여기서는 질의 자체가
+      6,491페이지를 물어 아예 던지면 안 된다.
+    """
+    key = normalize_model(model)
+    n = len(key)
+    if n < 5:
+        return False
+    alpha = sum(1 for c in key if c.isalpha())
+    if alpha == 0:
+        return False
+    return alpha >= 2 or n >= 6
+
+
+def models_match(ours: str | None, record: "RfCertRecord") -> bool:
+    """검색 결과가 정말 이 상품인가.
+
+    목록이 부분문자열 매칭이라 재대조 없이 쓰면 남의 인증을 이 상품 것으로
+    말하게 된다 - "인증이 있다" 는 안심시키는 방향이라 가장 비싼 오류다.
+
+    기본모델과 파생모델을 모두 본다. 셀러가 적은 것이 파생모델일 수 있다
+    (실측: R-R-LGE-WU922M2604 의 파생 "WU922MC WU922MN WU922MW WU922MB").
+
+    포함 매칭은 쓰지 않는다. 정확 일치에서 빠지면 미조회(AMBER)로 가는데,
+    그건 확인을 권하는 방향이라 안전한 실패다.
+    """
+    key = normalize_model(ours)
+    if not key:
+        return False
+    return any(normalize_model(m) == key for m in record.all_models)
+
+
+class ModelSearchCache:
+    """모델명 -> 조회 결과 TTL 캐시. kats_client.CertCache 와 같은 방식이다.
+
+    검색 한 번이 요청 4회(목록 1 + 팝업 3)까지 가므로 캐시가 없으면 같은
+    상품을 여러 셀러가 볼 때마다 RRA 를 그만큼 두드린다.
+    """
+
+    def __init__(self, ttl_seconds: int = MODEL_CACHE_TTL_SECONDS) -> None:
+        self._ttl = ttl_seconds
+        self._lock = threading.Lock()
+        self._entries: dict[str, tuple[float, str, list]] = {}
+
+    def get(self, key: str) -> tuple[str, list] | None:
+        with self._lock:
+            hit = self._entries.get(key)
+        if hit is None:
+            return None
+        stored_at, fetched_at, records = hit
+        if (time.monotonic() - stored_at) > self._ttl:
+            return None
+        return fetched_at, records
+
+    def put(self, key: str, records: list, fetched_at: str) -> None:
+        with self._lock:
+            self._entries[key] = (time.monotonic(), fetched_at, list(records))
+
+    def clear(self) -> None:
+        with self._lock:
+            self._entries.clear()
+
+    def __len__(self) -> int:
+        return len(self._entries)
 
 
 class RraApiError(RuntimeError):
@@ -116,6 +231,7 @@ class RraClient:
 
     def __init__(self, *, mock: bool = False, timeout: float = 20.0) -> None:
         self._mock = mock
+        self._model_cache = ModelSearchCache()
         # RRA 공개 검색은 응답이 100KB 대이고 느리다. emsit(XML 0.5KB)보다
         # 넉넉히 잡지 않으면 연속 호출에서 타임아웃이 난다 (실측).
         self._client = httpx.Client(
@@ -154,14 +270,24 @@ class RraClient:
         return _parse_auth_info(body, number)
 
     # -- 번호가 없을 때: RRA 공개 검색 --------------------------------------
-    def search_by_model(self, model: str, *, limit: int = 10) -> list[str]:
+    def search_by_model(self, model: str, *, limit: int = SEARCH_RESULT_LIMIT) -> list[str]:
         """모델명으로 검색해 내부키 목록을 돌려준다.
 
-        부분문자열 매칭이다 (model_no=100 이 10건). 호출측이 반환값을 반드시
-        재대조해야 하며, 짧은 모델명은 watchlist 식별력 규칙으로 걸러야 한다.
+        부분문자열 매칭이다. 호출측이 반환값을 반드시 재대조해야 하며
+        (models_match), 짧은 모델명은 is_searchable_model 로 먼저 걸러야 한다.
 
         목록에는 인증번호가 없어 18자리 내부키만 나온다. 실제 번호는
         detail(내부키) 로 팝업을 한 번 더 열어야 한다.
+
+        ⚠ category 는 빈 값으로 '존재' 해야 한다. 실측:
+
+            category=C&model_no=WU922MS   0건   ← 적합등록(R-R-)을 통째로 놓친다
+            category=R&model_no=WU922MS   1건
+            category= &model_no=WU922MS   1건   ← 채택
+            (category 파라미터 자체를 빼면)  0건
+
+          소비자 무선기기 주류가 적합등록이라 C 로 고정하면 주력 경로가
+          조용히 0건이 된다.
         """
         term = (model or "").strip()
         if not term or self._mock:
@@ -173,8 +299,8 @@ class RraClient:
             # 한글 질의는 EUC-KR 퍼센트 인코딩이어야 한다. 폼이
             # accept-charset=euc-kr 이고, UTF-8 로 보내면 에러가 아니라 0건이
             # 돌아온다 (firm=삼성전자: UTF-8 0건 / EUC-KR 10건).
-            query = _euc_kr_query({op["params"]["model"]: term, "category": "C"})
-            resp = self._client.get(f"{url}?{query}")
+            query = _euc_kr_query({op["params"]["model"]: term, "category": ""})
+            resp = self._client.get(f"{url}?{query}", timeout=SEARCH_TIMEOUT_SECONDS)
             resp.raise_for_status()
             # 검색 목록은 EUC-KR. 팝업은 UTF-8 - 페이지마다 다르다.
             body = resp.content.decode(_PUBLIC.get("encoding", "euc-kr"), "replace")
@@ -187,23 +313,59 @@ class RraClient:
         return list(dict.fromkeys(keys))[:limit]
 
     def detail(self, internal_key: str) -> RfCertRecord | None:
-        """내부키로 팝업을 열어 실제 인증번호를 얻는다.
+        """내부키로 팝업을 열어 레코드를 만든다.
 
         팝업은 UTF-8 이다. 검색 목록(EUC-KR)과 다르므로 갈라 처리한다.
+        모델명·파생모델명까지 읽는다 - 재대조(models_match)에 둘 다 필요하다.
         """
         if self._mock or not internal_key:
             return None
         op = _PUBLIC["operations"]["detail_popup"]
         url = f"{_PUBLIC['base_url'].rstrip('/')}/{op['path']}"
         try:
-            resp = self._client.get(url, params={op["param"]: internal_key})
+            resp = self._client.get(
+                url, params={op["param"]: internal_key}, timeout=SEARCH_TIMEOUT_SECONDS
+            )
             resp.raise_for_status()
             body = resp.content.decode(op.get("encoding", "utf-8"), "replace")
         except httpx.HTTPError as exc:
             raise RraApiError("network", type(exc).__name__) from exc
+        return _parse_popup(body)
 
-        found = RF_NUMBER_RE.search(_strip_tags(body))
-        return RfCertRecord(cert_number=found.group(0)) if found else None
+    def search_certs_by_model(self, model: str) -> list[RfCertRecord]:
+        """모델명 -> (검색 -> 팝업) -> 재대조까지 끝낸 레코드 목록.
+
+        번호가 없는 상품(구매대행 대부분)의 유일한 조회 경로다. emsit 은
+        mtlCefNo 만 받으므로 여기서는 쓸 수 없다.
+
+        비용이 크다 - 목록 1회 + 팝업 N회이고 RRA 응답은 100KB에 2초쯤 걸린다.
+        그래서 세 겹으로 조인다:
+          ① is_searchable_model 로 폭발하는 질의를 아예 안 던진다
+          ② 팝업은 POPUP_LIMIT 건까지만 연다
+          ③ 모델명 기준 TTL 캐시 (인증 조회 캐시와 같은 방식)
+        """
+        key = normalize_model(model)
+        if not key or not is_searchable_model(model):
+            return []
+        if self._mock:
+            return [r for r in _MOCK.values() if models_match(model, r)]
+
+        cached = self._model_cache.get(key)
+        if cached is not None:
+            return list(cached[1])
+
+        records: list[RfCertRecord] = []
+        for internal_key in self.search_by_model(model)[:POPUP_LIMIT]:
+            record = self.detail(internal_key)
+            # 부분일치로 온 무관한 건을 여기서 떨어뜨린다. 목록이 부분문자열
+            # 매칭이라 재대조 없이 쓰면 남의 인증을 이 상품 것으로 말하게 된다.
+            if record is not None and models_match(model, record):
+                records.append(record)
+
+        self._model_cache.put(
+            key, records, datetime.now(timezone.utc).isoformat(timespec="seconds")
+        )
+        return records
 
 
     # -- 부적합 현황 --------------------------------------------------------
@@ -265,6 +427,40 @@ def _parse_noncompliant_page(html: str) -> list[dict]:
             "acted_on": cells[4] or None,
         })
     return out
+
+
+def _parse_popup(html: str) -> "RfCertRecord | None":
+    """팝업(UTF-8)에서 레코드를 만든다.
+
+    항목: 상호 / 기기명칭 / 모델명 / 파생모델명 / 인증번호 / 제조자 / 제조국가 /
+    인증연월일. 목록에는 인증번호가 없어 이 팝업이 유일한 출처다.
+    """
+    fields: dict[str, str] = {}
+    for row in re.findall(r"(?is)<tr[^>]*>(.*?)</tr>", html):
+        cells = [
+            re.sub(r"\s+", " ", re.sub(r"(?is)<[^>]+>", " ", c)).strip()
+            for c in re.findall(r"(?is)<t[dh][^>]*>(.*?)</t[dh]>", row)
+        ]
+        cells = [c for c in cells if c]
+        for i in range(0, len(cells) - 1, 2):
+            fields.setdefault(cells[i], cells[i + 1])
+
+    number = fields.get("인증번호") or ""
+    if not number:
+        found = RF_NUMBER_RE.search(_strip_tags(html))
+        number = found.group(0) if found else ""
+    if not number:
+        return None
+    return RfCertRecord(
+        cert_number=number,
+        company=fields.get("상호") or None,
+        equipment=fields.get("기기명칭") or None,
+        base_model=fields.get("모델명") or None,
+        derived_models=tuple(split_derived_models(fields.get("파생모델명"))),
+        maker=fields.get("제조자") or None,
+        country=fields.get("제조국가") or None,
+        cert_date=fields.get("인증연월일") or None,
+    )
 
 
 def _euc_kr_query(params: dict[str, str]) -> str:

@@ -32,7 +32,7 @@ from .scoping import (
     out_of_scope_reason,
 )
 from .noncompliant_index import NoncompliantIndex
-from .rra_client import RraApiError, RraClient, rf_evidence_url
+from .rra_client import RraApiError, RraClient, is_searchable_model, rf_evidence_url
 
 _NONCOMPLIANT_URL = "https://www.rra.go.kr/ko/license/A_d_list.do"
 from .models import (
@@ -225,6 +225,37 @@ def _lookup_failed(what: str, today: date, code: str | None = None) -> Finding:
     )
 
 
+def _rf_verified(record, today: date, *, via: str) -> Finding:
+    """조회된 적합성평가 레코드를 finding 으로.
+
+    번호로 찾았는지 모델명으로 찾았는지를 문장에 적는다. 모델명 검색은 부분
+    일치 목록을 재대조(models_match)한 결과라, 셀러가 어느 축으로 걸렸는지
+    알아야 스스로 가릴 수 있다 (리콜에서 matched_on 을 실은 것과 같은 이유).
+    """
+    models = ", ".join(record.all_models[:4]) or "-"
+    how = "모델명으로 조회한 결과" if via == "model" else "번호로 조회한 결과"
+    return Finding(
+        kind=FindingKind.RF_CERT_VERIFIED,
+        signal=Signal.GREEN,
+        statement_ko=(
+            f"전파인증 번호 '{record.cert_number}' 이(가) 조회되었습니다({how}). "
+            f"업체: {record.company or '-'} / 기자재: {record.equipment or '-'} / "
+            f"모델: {models}"
+        ),
+        source_label="국립전파연구원 적합성평가 현황 검색",
+        source_url=rf_evidence_url(record.cert_number),
+        legal_basis="전파법 제58조의2 (적합성평가)",
+        detail={
+            "rf_cert_number": record.cert_number,
+            "company": record.company,
+            "equipment": record.equipment,
+            "models": list(record.all_models),
+            "matched_on": via,
+        },
+        checked_at=today,
+    )
+
+
 def _verify_rf(
     facts: ProductFacts,
     rra: "RraClient | None",
@@ -287,28 +318,7 @@ def _verify_rf(
                 out.append(_lookup_failed("전파인증", today))
                 continue
         if record is not None:
-            models = ", ".join(record.all_models[:4]) or "-"
-            out.append(
-                Finding(
-                    kind=FindingKind.RF_CERT_VERIFIED,
-                    signal=Signal.GREEN,
-                    statement_ko=(
-                        f"전파인증 번호 '{record.cert_number}' 이(가) 조회되었습니다. "
-                        f"업체: {record.company or '-'} / 기자재: {record.equipment or '-'} / "
-                        f"모델: {models}"
-                    ),
-                    source_label="국립전파연구원 적합성평가 현황 검색",
-                    source_url=rf_evidence_url(record.cert_number),
-                    legal_basis="전파법 제58조의2 (적합성평가)",
-                    detail={
-                        "rf_cert_number": record.cert_number,
-                        "company": record.company,
-                        "equipment": record.equipment,
-                        "models": list(record.all_models),
-                    },
-                    checked_at=today,
-                )
-            )
+            out.append(_rf_verified(record, today, via="number"))
         else:
             out.append(
                 Finding(
@@ -328,7 +338,46 @@ def _verify_rf(
             )
 
     # 무선 표기는 있는데 번호가 없다 - 가장 흔한 경우(구매대행 상품).
+    #
+    # emsit 은 mtlCefNo 만 받으므로 여기서는 쓸 수 없다. 모델명으로 답할 수
+    # 있는 경로는 RRA 공개 검색뿐이라, 그쪽을 태운다.
     if facts.wireless_hints and not facts.rf_numbers:
+        searched = False
+        records: list = []
+        if rra is not None and is_searchable_model(facts.model_name):
+            try:
+                records = rra.search_certs_by_model(facts.model_name)
+                searched = True
+            except RraApiError:
+                # 못 연 것과 없는 것은 다르다 (R3). 조용히 "인증 없음" 으로
+                # 흘리면 확인하지 못한 것을 확인한 것처럼 말하게 된다.
+                out.append(_lookup_failed("전파인증", today))
+
+        if records:
+            for record in records:
+                out.append(_rf_verified(record, today, via="model"))
+            return out
+        if searched:
+            out.append(
+                Finding(
+                    kind=FindingKind.RF_CERT_NOT_FOUND,
+                    signal=Signal.AMBER,
+                    statement_ko=(
+                        f"모델명 '{facts.model_name}' 으로 적합성평가 현황을 조회했으나 "
+                        "일치하는 항목을 찾지 못했습니다. 자기적합확인 대상은 이 DB에 "
+                        "번호가 없는 것이 정상이므로, 공급처에 적합성평가 구분을 "
+                        "확인해 주세요."
+                    ),
+                    source_label="국립전파연구원 적합성평가 현황 검색",
+                    source_url=rf_evidence_url(),
+                    legal_basis="전파법 제58조의2 (적합성평가)",
+                    detail={"searched_model": facts.model_name},
+                    checked_at=today,
+                )
+            )
+            return out
+
+        # 검색할 단서가 없거나(모델명 없음·식별력 미달) 조회에 실패했다.
         out.append(
             Finding(
                 kind=FindingKind.RF_WIRELESS_UNVERIFIED,
