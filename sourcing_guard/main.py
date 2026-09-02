@@ -22,6 +22,7 @@ from uuid import uuid4
 from .config import settings
 from .extractor import extract
 from .kats_client import KatsClient, health
+from .rra_client import RraClient
 from .models import RecallAlert, ScanResult, WatchItem
 from .scorer import score
 from .demos import DEMOS, DEMO_TEXTS
@@ -63,6 +64,8 @@ app.mount(
 )
 
 _kats = KatsClient(settings.kats_base_url, settings.kats_service_key, mock=settings.mock_mode)
+# 전파인증 조회. 인증키가 필요 없어 MOCK_MODE 만 따른다.
+_rra = RraClient(mock=settings.mock_mode)
 _rules = RuleBook()
 
 
@@ -181,7 +184,7 @@ def scan(req: ScanRequest, request: Request) -> ScanResult:
     allow_llm = _limiter.take_llm_budget(fingerprint=fp)
     imgs = [{"media_type": i.media_type, "data": i.data} for i in req.images]
     facts = extract(req.page_text, req.page_url, images=imgs, allow_llm=allow_llm)
-    findings = verify(facts, _kats, _rules, _recalls)
+    findings = verify(facts, _kats, _rules, _recalls, _rra)
     result = score(facts, findings, recall_data_as_of=_recalls.as_of)
     if not allow_llm:
         result.extraction_note = (

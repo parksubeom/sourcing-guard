@@ -31,6 +31,7 @@ from .scoping import (
     missing_inputs,
     out_of_scope_reason,
 )
+from .rra_client import RraApiError, RraClient, rf_evidence_url
 from .models import (
     Finding,
     FindingKind,
@@ -221,11 +222,104 @@ def _lookup_failed(what: str, today: date, code: str | None = None) -> Finding:
     )
 
 
+def _verify_rf(
+    facts: ProductFacts, rra: "RraClient | None", today: date
+) -> list[Finding]:
+    """전파인증 축.
+
+    무선 표기가 없으면 아무것도 하지 않는다 - 대상이 아닌 상품에 전파인증을
+    요구하면 오탐이다.
+
+    ⚠ 문구는 "무선 기능 표기가 있습니다" 여야지 "전파인증 대상입니다" 면 안
+      된다. 대상 여부는 고시 별표 1 이 정하며 우리가 판별하지 않는다 (R1).
+
+    R3-b: 미조회를 RED 로 두지 않는다. 자기적합확인 대상은 R- 번호가 아예 없고
+    별도 레지스트리에 자체 관리번호로 공개된다 - 전안법 SCoC 와 같은 구조다.
+    """
+    if not facts.wireless_hints and not facts.rf_numbers:
+        return []
+
+    out: list[Finding] = []
+    hint = ", ".join(facts.wireless_hints[:3]) if facts.wireless_hints else None
+
+    # 번호가 있으면 유효성을 조회한다.
+    for number in facts.rf_numbers:
+        record = None
+        if rra is not None:
+            try:
+                record = rra.lookup_number(number)
+            except RraApiError:
+                out.append(_lookup_failed("전파인증", today))
+                continue
+        if record is not None:
+            models = ", ".join(record.all_models[:4]) or "-"
+            out.append(
+                Finding(
+                    kind=FindingKind.RF_CERT_VERIFIED,
+                    signal=Signal.GREEN,
+                    statement_ko=(
+                        f"전파인증 번호 '{record.cert_number}' 이(가) 조회되었습니다. "
+                        f"업체: {record.company or '-'} / 기자재: {record.equipment or '-'} / "
+                        f"모델: {models}"
+                    ),
+                    source_label="국립전파연구원 적합성평가 현황 검색",
+                    source_url=rf_evidence_url(record.cert_number),
+                    legal_basis="전파법 제58조의2 (적합성평가)",
+                    detail={
+                        "rf_cert_number": record.cert_number,
+                        "company": record.company,
+                        "equipment": record.equipment,
+                        "models": list(record.all_models),
+                    },
+                    checked_at=today,
+                )
+            )
+        else:
+            out.append(
+                Finding(
+                    kind=FindingKind.RF_CERT_NOT_FOUND,
+                    signal=Signal.AMBER,
+                    statement_ko=(
+                        f"전파인증 번호 '{number}' 이(가) 적합성평가 현황에서 조회되지 "
+                        "않습니다. 자기적합확인 대상은 이 DB에 번호가 없는 것이 정상이므로, "
+                        "공급처에 적합성평가 구분을 확인해 주세요."
+                    ),
+                    source_label="국립전파연구원 적합성평가 현황 검색",
+                    source_url=rf_evidence_url(number),
+                    legal_basis="전파법 제58조의2 (적합성평가)",
+                    detail={"rf_cert_number": number},
+                    checked_at=today,
+                )
+            )
+
+    # 무선 표기는 있는데 번호가 없다 - 가장 흔한 경우(구매대행 상품).
+    if facts.wireless_hints and not facts.rf_numbers:
+        out.append(
+            Finding(
+                kind=FindingKind.RF_WIRELESS_UNVERIFIED,
+                signal=Signal.AMBER,
+                statement_ko=(
+                    f"상세페이지에 무선 기능 표기({hint})가 있으나 전파인증 번호를 찾지 "
+                    "못했습니다. 무선 기자재는 KC 안전인증과 별개로 전파법 적합성평가를 "
+                    "받아야 할 수 있습니다. 아래에서 모델명·업체명으로 직접 검색하거나 "
+                    "공급처에 확인해 주세요."
+                ),
+                source_label="국립전파연구원에서 적합성평가 직접 검색",
+                source_url=rf_evidence_url(),
+                legal_basis="전파법 제58조의2 (적합성평가)",
+                detail={"wireless_hints": list(facts.wireless_hints)},
+                checked_at=today,
+            )
+        )
+    return out
+
+
 def verify(
     facts: ProductFacts,
     kats: KatsClient,
     rules: RuleBook,
     recalls: "RecallIndex | None" = None,
+    rra: "RraClient | None" = None,
 ) -> list[Finding]:
     today = date.today()
     findings: list[Finding] = []
@@ -579,6 +673,11 @@ def verify(
                     checked_at=today,
                 )
             )
+
+    # --- (b-2) 전파인증 (적합성평가) ----------------------------------------
+    # KC 와 완전히 별개 제도다. KC 마크가 있어도 전파인증이 없으면 위반이라,
+    # 셀러가 가장 자주 놓치는 지점이다.
+    findings.extend(_verify_rf(facts, rra, today))
 
     # --- (b-3) 공급처에 물어야 할 것 ----------------------------------------
     # "모르겠습니다" 로 끝내지 않는다. 소싱 단계에서 셀러가 실제로 할 수 있는
