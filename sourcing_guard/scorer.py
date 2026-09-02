@@ -115,7 +115,7 @@ _UNKNOWN_HEADLINE: list[tuple[FindingKind, str]] = [
     ),
     (
         FindingKind.AGE_OUT_OF_CHILD_RANGE,
-        "대상 아님 — 표기된 사용연령 기준으로는 어린이제품 안전기준 적용 대상이 "
+        "대상 아님 — 표기된 사용연령 기준으로는 어린이제품 안전기준 대상이 "
         "아닙니다. 실사용 연령이 13세 이하이면 대상이 될 수 있으니 표기 근거를 확인하세요.",
     ),
     (
