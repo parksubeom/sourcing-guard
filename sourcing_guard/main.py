@@ -22,6 +22,7 @@ from uuid import uuid4
 from .config import settings
 from .extractor import extract
 from .kats_client import KatsClient, health
+from .noncompliant_index import NoncompliantIndex
 from .rra_client import RraClient
 from .models import RecallAlert, ScanResult, WatchItem
 from .scorer import score
@@ -184,7 +185,7 @@ def scan(req: ScanRequest, request: Request) -> ScanResult:
     allow_llm = _limiter.take_llm_budget(fingerprint=fp)
     imgs = [{"media_type": i.media_type, "data": i.data} for i in req.images]
     facts = extract(req.page_text, req.page_url, images=imgs, allow_llm=allow_llm)
-    findings = verify(facts, _kats, _rules, _recalls, _rra)
+    findings = verify(facts, _kats, _rules, _recalls, _rra, _noncompliant)
     result = score(facts, findings, recall_data_as_of=_recalls.as_of)
     if not allow_llm:
         result.extraction_note = (
@@ -204,6 +205,8 @@ def scan(req: ScanRequest, request: Request) -> ScanResult:
 # 감시되지 않는다 (기획서 §6.1). 배포 시 WATCHLIST_DB_PATH 를 영구 볼륨으로.
 # ---------------------------------------------------------------------------
 _store = SqliteWatchStore(settings.watchlist_db_path)
+# 부적합 현황 로컬 사본 위의 매칭. 전파인증 축의 유일한 RED 소스다.
+_noncompliant = NoncompliantIndex(_store)
 
 # 리콜 로컬 사본 위의 매칭. 스캔과 워치리스트 스윕이 같은 watchlist.match() 를
 # 쓰게 하는 지점이다 (이전에는 스캔만 API 검색이라 결과가 갈릴 수 있었다).

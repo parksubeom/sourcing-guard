@@ -121,6 +121,9 @@ class FindingKind(str, Enum):
     RF_CERT_VERIFIED = "rf_cert_verified"      # 조회됨
     RF_CERT_NOT_FOUND = "rf_cert_not_found"    # 미조회. 자기적합확인 여지 (R3-b)
     RF_WIRELESS_UNVERIFIED = "rf_wireless_unverified"  # 무선 표기는 있는데 번호가 없음
+    # 부적합 방송통신기자재 현황에 일치. 전파인증 축에서 유일한 RED 자격 -
+    # 부적합사유·행정처분이 명시되어 "정부 DB 가 문제를 적어둔" 조건을 만족한다.
+    RF_NONCOMPLIANT = "rf_noncompliant"
     HAZARD_RULE_APPLIES = "hazard_rule_applies"
     SUBSTANCE_MENTIONED = "substance_mentioned"
     COVERAGE_GAP = "coverage_gap"
@@ -166,6 +169,7 @@ _FINDING_GROUP: dict[str, FindingGroup] = {
     "rf_cert_verified": FindingGroup.CONTEXT,
     "rf_cert_not_found": FindingGroup.ACTION,       # 확인할 것
     "rf_wireless_unverified": FindingGroup.ACTION,  # 확인할 것
+    "rf_noncompliant": FindingGroup.FINDING,        # 확인된 문제
     "coverage_gap": FindingGroup.CONTEXT,
     "out_of_scope": FindingGroup.CONTEXT,
     "age_out_of_child_range": FindingGroup.CONTEXT,

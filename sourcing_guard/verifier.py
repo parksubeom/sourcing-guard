@@ -31,7 +31,10 @@ from .scoping import (
     missing_inputs,
     out_of_scope_reason,
 )
+from .noncompliant_index import NoncompliantIndex
 from .rra_client import RraApiError, RraClient, rf_evidence_url
+
+_NONCOMPLIANT_URL = "https://www.rra.go.kr/ko/license/A_d_list.do"
 from .models import (
     Finding,
     FindingKind,
@@ -223,7 +226,10 @@ def _lookup_failed(what: str, today: date, code: str | None = None) -> Finding:
 
 
 def _verify_rf(
-    facts: ProductFacts, rra: "RraClient | None", today: date
+    facts: ProductFacts,
+    rra: "RraClient | None",
+    noncompliant: "NoncompliantIndex | None",
+    today: date,
 ) -> list[Finding]:
     """전파인증 축.
 
@@ -241,6 +247,35 @@ def _verify_rf(
 
     out: list[Finding] = []
     hint = ", ".join(facts.wireless_hints[:3]) if facts.wireless_hints else None
+
+    # 부적합 현황이 먼저다. 전파인증 축에서 유일하게 RED 자격이 있는 소스이며,
+    # 여기 걸리면 "인증이 있느냐" 보다 앞선 사실이다.
+    if noncompliant is not None and not noncompliant.is_empty():
+        models = [m for m in (facts.model_name, facts.product_name) if m]
+        for hit in noncompliant.find(rf_numbers=facts.rf_numbers, models=models):
+            axis = "인증번호" if hit.matched_on == "cert_number" else "모델명"
+            out.append(
+                Finding(
+                    kind=FindingKind.RF_NONCOMPLIANT,
+                    signal=Signal.RED,
+                    statement_ko=(
+                        f"부적합 방송통신기자재 현황에 {axis}이(가) 일치하는 항목이 "
+                        f"있습니다. 업체: {hit.company or '-'} / 모델: {hit.model or '-'} / "
+                        f"처분일자: {hit.acted_on or '-'}"
+                    ),
+                    source_label="국립전파연구원 부적합 방송통신기자재 현황",
+                    source_url=_NONCOMPLIANT_URL,
+                    legal_basis="전파법 제58조의2 (적합성평가)",
+                    detail={
+                        "matched_on": hit.matched_on,
+                        "company": hit.company,
+                        "cert_number": hit.cert_number,
+                        "model": hit.model,
+                        "acted_on": hit.acted_on,
+                    },
+                    checked_at=today,
+                )
+            )
 
     # 번호가 있으면 유효성을 조회한다.
     for number in facts.rf_numbers:
@@ -320,6 +355,7 @@ def verify(
     rules: RuleBook,
     recalls: "RecallIndex | None" = None,
     rra: "RraClient | None" = None,
+    noncompliant: "NoncompliantIndex | None" = None,
 ) -> list[Finding]:
     today = date.today()
     findings: list[Finding] = []
@@ -677,7 +713,7 @@ def verify(
     # --- (b-2) 전파인증 (적합성평가) ----------------------------------------
     # KC 와 완전히 별개 제도다. KC 마크가 있어도 전파인증이 없으면 위반이라,
     # 셀러가 가장 자주 놓치는 지점이다.
-    findings.extend(_verify_rf(facts, rra, today))
+    findings.extend(_verify_rf(facts, rra, noncompliant, today))
 
     # --- (b-3) 공급처에 물어야 할 것 ----------------------------------------
     # "모르겠습니다" 로 끝내지 않는다. 소싱 단계에서 셀러가 실제로 할 수 있는

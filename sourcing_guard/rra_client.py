@@ -206,6 +206,67 @@ class RraClient:
         return RfCertRecord(cert_number=found.group(0)) if found else None
 
 
+    # -- 부적합 현황 --------------------------------------------------------
+    def fetch_noncompliant(self, *, max_pages: int = 300) -> list[dict]:
+        """부적합 방송통신기자재 현황을 전량 수집한다.
+
+        전파인증 축에서 **RED 자격이 있는 유일한 소스**다. 부적합사유·행정처분이
+        명시되어 "정부 DB 가 적극적으로 문제를 적어둔" 조건을 만족한다 (R3-b).
+
+        실측: 2,748건 / 275페이지 / 10건씩. 페이징은 cpage 만 먹고 page·pageNo·
+        pageIndex 는 조용히 무시된다.
+
+        인증번호 칸에 두 제도가 섞여 있다 - R-R-msg-DECKTS183(적합성평가)과
+        PLCL-YK-006·CCMS-Q1(자기적합확인 관리번호). 목록 하나로 둘 다 대조된다.
+        """
+        if self._mock:
+            return list(_MOCK_NONCOMPLIANT)
+
+        cfg = _CFG.get("noncompliant", {})
+        url = f"{cfg['base_url'].rstrip('/')}/{cfg['path']}"
+        paging = cfg.get("paging", {})
+        out: list[dict] = []
+        for page in range(1, max_pages + 1):
+            params = {**paging.get("extra", {}), paging.get("param", "cpage"): str(page)}
+            try:
+                resp = self._client.get(url, params=params)
+                resp.raise_for_status()
+                body = resp.content.decode(cfg.get("encoding", "euc-kr"), "replace")
+            except httpx.HTTPError as exc:
+                raise RraApiError("network", type(exc).__name__) from exc
+
+            rows = _parse_noncompliant_page(body)
+            if not rows:
+                break  # 빈 페이지 = 끝
+            out.extend(rows)
+        return out
+
+
+def _parse_noncompliant_page(html: str) -> list[dict]:
+    """목록 페이지의 표를 파싱한다.
+
+    컬럼: 번호 / 상호 / 인증번호 / 모델명 / 처분일자 / 조치결과.
+    매칭에 필요한 축이 목록에 다 있어 상세 2,748건을 열 필요가 없다.
+    """
+    out: list[dict] = []
+    for row in re.findall(r"(?is)<tr[^>]*>(.*?)</tr>", html):
+        cells = [
+            re.sub(r"\s+", " ", re.sub(r"(?is)<[^>]+>", "", c)).strip()
+            for c in re.findall(r"(?is)<td[^>]*>(.*?)</td>", row)
+        ]
+        if len(cells) < 5 or not cells[0].isdigit():
+            continue
+        out.append({
+            "seq": cells[0],
+            # 목록에 HTML 주석 잔재(-->)가 섞여 나온다. 실측 확인.
+            "company": cells[1].replace("-->", "").strip() or None,
+            "cert_number": cells[2] or None,
+            "model": cells[3] or None,
+            "acted_on": cells[4] or None,
+        })
+    return out
+
+
 def _euc_kr_query(params: dict[str, str]) -> str:
     from urllib.parse import quote
 
@@ -255,6 +316,14 @@ def _parse_auth_info(body: str, asked: str) -> RfCertRecord | None:
 def rf_evidence_url(cert_number: str | None = None) -> str:
     """근거 링크(R2). 인증키가 필요 없는 공개 검색 페이지."""
     return _URLS.get("search", "https://www.rra.go.kr/ko/license/A_c_search.do")
+
+
+_MOCK_NONCOMPLIANT = [
+    {"seq": "2748", "company": "[MOCK] 주식회사 퓨어엘코스",
+     "cert_number": "PLCL-YK-006", "model": "YK-006", "acted_on": "2026-08-31"},
+    {"seq": "2747", "company": "[MOCK] 주식회사 코어커머스",
+     "cert_number": "CCMS-Q1", "model": "Q1", "acted_on": "2026-08-31"},
+]
 
 
 _MOCK = {

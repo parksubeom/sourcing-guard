@@ -57,6 +57,8 @@ def test_red_requires_positive_evidence_from_the_government_db():
         FindingKind.RECALL_MATCH,
         FindingKind.KC_REVOKED,
         FindingKind.KC_SUSPENDED,
+        # 전파법 부적합 현황. 부적합사유·행정처분이 명시된 유일한 전파인증 소스다.
+        FindingKind.RF_NONCOMPLIANT,
     }
     assert FindingKind.KC_NOT_FOUND not in _HARD_RED
     assert FindingKind.KC_MISSING_BUT_REQUIRED not in _HARD_RED
