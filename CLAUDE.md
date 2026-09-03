@@ -59,8 +59,13 @@ LLM의 역할은 **추출(extraction)**, **분류(classification)**, **설명(ex
 | `safetykorea.kr` | KC 인증 조회, 리콜 공표 (Open API) | `kats_client.py` |
 | `emsit.go.kr` | 전파인증 번호 조회 (Open API, 인증키 불필요) | 예정 `rra_client.py` |
 | `rra.go.kr` | 전파인증 모델명 검색·부적합 현황 (HTML) | 예정 `rra_client.py` |
+| `law.go.kr` | 고시·별표·부속서 원문 (DRF OpenAPI, `OC=test`) | `verifier.py` 근거 URL · `scripts/` 자료 수집 |
 
 전부 정부 도메인이며 상거래 사이트가 아니다. 도메인을 추가하려면 이 표에 먼저 적는다.
+
+`law.go.kr` 은 런타임 조회가 아니다. 고시 원문을 받아 `data/` 로 옮기는 자료
+수집 경로이고, `verifier.py` 가 근거 URL 로 표시한다. 기준치·조항 번호를 기억으로
+쓰지 않기 위한 통로다 (R5).
 
 ⚠ 이 목록은 문서에만 있고 코드가 강제하지 않는다. 현재 서버가 외부로 나가는
 경로는 `kats_client.py` 하나뿐이라 어댑터 계층이 사실상 게이트 역할을 한다.
