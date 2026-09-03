@@ -105,6 +105,14 @@ class FindingKind(str, Enum):
     # 공급자적합성확인(SCoC) 대상은 제조·수입자가 스스로 시험해 확인하므로
     # 정부 조회 DB 에 인증번호가 없는 것이 정상이다. 부재를 위반으로 읽으면 안 된다.
     KC_TIER_UNKNOWN = "kc_tier_unknown"
+    # 세부품목 등급표(운용요령 별표 1~7)에서 품목을 찾은 경우. 등급이
+    # 하나로 모이면 MATCHED, 후보의 등급이 다르면 SPLIT 이다.
+    #
+    # ⚠ 갈릴 때 한쪽을 골라 단정하지 않는다 (R3). 특히 느슨한 쪽
+    #   (공급자적합성확인)을 골라 "번호 없어도 됩니다" 라고 하면
+    #   위법을 권하는 셈이다.
+    ITEM_GRADE_MATCHED = "item_grade_matched"
+    ITEM_GRADE_SPLIT = "item_grade_split"
     OUT_OF_SCOPE = "out_of_scope"          # 우리 소관 밖 품목
     AGE_OUT_OF_CHILD_RANGE = "age_out_of_child_range"  # 14세 이상 표기
     INFO_REQUEST = "info_request"          # 공급처에 물어야 할 것
@@ -150,6 +158,8 @@ _FINDING_GROUP: dict[str, FindingGroup] = {
     # 소싱 전에 확인·준비할 것
     "kc_missing_but_required": FindingGroup.ACTION,
     "kc_tier_unknown": FindingGroup.ACTION,
+    "item_grade_matched": FindingGroup.ACTION,
+    "item_grade_split": FindingGroup.ACTION,
     "info_request": FindingGroup.ACTION,
     "kc_image_candidate": FindingGroup.ACTION,
     "substance_mentioned": FindingGroup.ACTION,

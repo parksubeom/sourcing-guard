@@ -32,6 +32,7 @@ from .scoping import (
     missing_inputs,
     out_of_scope_reason,
 )
+from .item_grades import ItemGradeBook
 from .noncompliant_index import NoncompliantIndex
 from .rra_client import RraApiError, RraClient, is_searchable_model, rf_evidence_url
 
@@ -773,19 +774,26 @@ def verify(
             # 어느 위해도 단계(안전인증 / 안전확인 / 공급자적합성확인)인지 모르면
             # 인증번호 부재를 해석할 수 없다. 모른다는 사실을 감추지 않는다 (R3).
             #
-            # 다만 세부품목을 못 맞춰도 품목군은 안다. "판별하지 못했습니다" 로
-            # 끝내면 셀러가 할 수 있는 일이 없지만, "전기용품은 세 등급으로
-            # 나뉜다"까지 알려주면 공급처에 무엇을 물어야 하는지가 정해진다.
-            findings.append(
-                Finding(
-                    kind=FindingKind.KC_TIER_UNKNOWN,
-                    signal=Signal.UNKNOWN,
-                    statement_ko=_tier_unknown_statement(facts.category),
-                    source_label="제품안전정보센터 대상 품목 안내",
-                    source_url="https://www.safetykorea.kr/policy/targetsSafetyCheck3",
-                    checked_at=today,
+            # 먼저 세부품목 등급표(운용요령 별표 1~7)에서 찾아본다. 찾으면
+            # 부재의 의미를 정확히 말할 수 있다 - 안전인증이면 "있어야 한다",
+            # 공급자적합성확인이면 "없는 것이 정상" 이라 정반대다.
+            graded = _item_grade_findings(facts.product_name, today)
+            if graded:
+                findings.extend(graded)
+            else:
+                # 세부품목을 못 맞춰도 품목군은 안다. "판별하지 못했습니다" 로
+                # 끝내면 셀러가 할 수 있는 일이 없지만, "전기용품은 세 등급으로
+                # 나뉜다"까지 알려주면 공급처에 무엇을 물어야 하는지가 정해진다.
+                findings.append(
+                    Finding(
+                        kind=FindingKind.KC_TIER_UNKNOWN,
+                        signal=Signal.UNKNOWN,
+                        statement_ko=_tier_unknown_statement(facts.category),
+                        source_label="제품안전정보센터 대상 품목 안내",
+                        source_url="https://www.safetykorea.kr/policy/targetsSafetyCheck3",
+                        checked_at=today,
+                    )
                 )
-            )
 
     # --- (b) recall matching --------------------------------------------
     #
@@ -1109,6 +1117,128 @@ def _kc_missing_finding(facts: ProductFacts, today: date) -> Finding:
         detail={"search_term": search_hint},
         checked_at=today,
     )
+
+
+# 등급이 뜻하는 바. 인증번호 부재의 의미가 여기서 갈린다 (CLAUDE.md R3-b).
+#
+# ⚠ 앞의 둘과 뒤의 둘이 정반대다. 안전인증·안전확인은 번호가 있어야 하고,
+#   공급자적합성확인·안전기준준수는 조회 DB 에 없는 것이 정상이다. 문구를
+#   잘못 쓰면 셀러가 위법 상태로 팔거나 정상 상품을 포기한다.
+# 등급표는 561건 yaml 이라 매 스캔마다 다시 읽지 않는다.
+_GRADE_BOOK: "ItemGradeBook | None" = None
+_GRADE_BOOK_TRIED = False
+
+
+def _grade_book() -> "ItemGradeBook | None":
+    global _GRADE_BOOK, _GRADE_BOOK_TRIED
+    if not _GRADE_BOOK_TRIED:
+        _GRADE_BOOK_TRIED = True
+        try:
+            _GRADE_BOOK = ItemGradeBook()
+        except Exception:                      # noqa: BLE001
+            # 등급표를 못 읽어도 스캔은 계속된다. 등급을 모르면 기존
+            # KC_TIER_UNKNOWN 경로로 돌아간다 - 모르는 것을 감추지 않는다.
+            _GRADE_BOOK = None
+    return _GRADE_BOOK
+
+
+_GRADE_MEANING: dict[str, str] = {
+    "안전인증": "안전인증 대상이면 인증번호가 반드시 있어야 합니다",
+    "안전확인": "안전확인 대상이면 안전확인신고번호가 반드시 있어야 합니다",
+    "공급자적합성확인": (
+        "공급자적합성확인 대상이면 제조·수입자가 스스로 시험해 확인하므로 "
+        "정부 조회 DB 에 번호가 없는 것이 정상입니다"
+    ),
+    "안전기준준수": (
+        "안전기준준수 대상이면 인증·신고 절차가 없어 "
+        "정부 조회 DB 에 번호가 없는 것이 정상입니다"
+    ),
+}
+
+_GRADE_SOURCE = (
+    "전기용품 및 생활용품 안전관리 운용요령 별표 1~7 (세부품목)",
+    "https://www.law.go.kr/행정규칙/전기용품및생활용품안전관리운용요령",
+)
+
+
+def _item_grade_findings(product_name: str | None, today: date) -> list[Finding]:
+    """세부품목 등급표에서 품목을 찾아 인증번호 부재의 의미를 말해 준다.
+
+    셋으로 갈린다:
+
+      후보 없음   빈 목록. 부르는 쪽이 KC_TIER_UNKNOWN 으로 넘어간다.
+      등급 합의   그대로 말한다 - 후보가 셋이어도 다 안전인증이면 확실하다.
+      등급 갈림   후보를 **다 내고** 각 등급의 뜻을 함께 적는다.
+
+    ⚠ 갈릴 때 한쪽을 골라 단정하지 않는다 (R3). 특히 느슨한 쪽
+      (공급자적합성확인)을 골라 "번호 없어도 됩니다" 라고 하면 위법을
+      권하는 셈이다. 실측에서 도매 상품명 239건 중 37건이 갈렸다 - 15% 다.
+    """
+    book = _grade_book()
+    if book is None:
+        return []
+    found = book.lookup_all(product_name)
+    if not found:
+        return []
+
+    label, url = _GRADE_SOURCE
+    # 서버가 준 순서를 그대로 쓴다. 강한 순(정확 일치 → 포함 → 확장 → 별칭)
+    # 이고, 화면도 이 순서로 같은 모양으로 그린다 - 느슨한 등급을 앞으로
+    # 끌어올리면 셀러가 "번호 없어도 되는구나" 로 읽는다.
+    names = [
+        {"item": g.item, "grade": g.grade,
+         "scope_note": g.scope_note, "matched_by": g.matched_by}
+        for g in found
+    ]
+    agreed = ItemGradeBook.grades_agree(found)
+
+    if agreed:
+        head = found[0]
+        # 후보가 여럿이어도 등급이 같으면 오히려 확실해진다 - 어느 품목이든
+        # 같은 의무가 붙는다.
+        which = (
+            f"'{head.item}'{topic_particle(head.item)}"
+            if len(found) == 1
+            else "여러 품목으로 보이나 등급은 모두 같습니다"
+        )
+        scope = f" (범위 한정: {head.scope_note})" if head.scope_note else ""
+        return [
+            Finding(
+                kind=FindingKind.ITEM_GRADE_MATCHED,
+                signal=Signal.UNKNOWN,
+                statement_ko=(
+                    f"세부품목 등급표에서 {which} {agreed} 대상으로 조회됩니다{scope}. "
+                    f"{_GRADE_MEANING.get(agreed, '')}. "
+                    "품목이 맞는지 확인하고, 공급처에 인증 구분을 요청하세요."
+                ),
+                source_label=label,
+                source_url=url,
+                detail={"grade": agreed, "candidates": names},
+                checked_at=today,
+            )
+        ]
+
+    lines = " / ".join(f"{n['item']} — {n['grade']}" for n in names)
+    meanings = ". ".join(
+        _GRADE_MEANING[g] for g in dict.fromkeys(n["grade"] for n in names)
+        if g in _GRADE_MEANING
+    )
+    return [
+        Finding(
+            kind=FindingKind.ITEM_GRADE_SPLIT,
+            signal=Signal.UNKNOWN,
+            statement_ko=(
+                f"상품명만으로는 어느 세부품목인지 갈리지 않습니다 ({lines}). "
+                f"{meanings}. "
+                "어느 쪽인지 공급처에 확인하세요. "
+                "저희가 한쪽으로 단정하지 않습니다."
+            ),
+            source_label=label,
+            source_url=url,
+            detail={"grades": sorted({n["grade"] for n in names}), "candidates": names},
+            checked_at=today,
+        )
+    ]
 
 
 def _image_candidate_finding(candidates: list[str], today: date) -> Finding:

@@ -37,6 +37,11 @@ _PENALTY: dict[FindingKind, int] = {
     FindingKind.COVERAGE_GAP: 0,
     FindingKind.LOOKUP_FAILED: 0,
     FindingKind.KC_TIER_UNKNOWN: 0,
+    # 등급을 알아낸 것은 사실 확인이지 위험이 아니다. 점수를 깎지 않고,
+    # 신호(_HARD_RED · AMBER 집합)에도 넣지 않는다 - 인증번호 부재의
+    # 의미를 셀러에게 설명하는 역할만 한다.
+    FindingKind.ITEM_GRADE_MATCHED: 0,
+    FindingKind.ITEM_GRADE_SPLIT: 0,
     FindingKind.OUT_OF_SCOPE: 0,
     FindingKind.AGE_OUT_OF_CHILD_RANGE: 0,
     FindingKind.INFO_REQUEST: 0,

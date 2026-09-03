@@ -309,6 +309,37 @@
       '<div class="rf-result" hidden></div>';
   }
 
+  // 등급 후보를 목록으로 그린다. 문장 안에 괄호로 넣으면 후보가 셋일 때
+  // 읽히지 않는다 - 셀러가 봐야 하는 건 "어느 품목이고 등급이 무엇인가" 다.
+  //
+  // 주의: 갈릴 때 한쪽을 강조하지 않는다. 특히 느슨한 쪽(공급자적합성확인)을
+  //   먼저·크게 그리면 "번호 없어도 되는구나" 로 읽고 위법 상태로 판다.
+  //   서버가 준 순서 그대로, 같은 모양으로 그린다.
+  function gradeRow(f) {
+    var cands = (f.detail && f.detail.candidates) || [];
+    if (!cands.length) return "";
+    return '<ul class="grades">' + cands.map(function (c) {
+      return "<li><b>" + esc(c.item) + "</b>" +
+             '<span class="g">' + esc(c.grade) + "</span>" +
+             (c.scope_note ? '<span class="sub">' + esc(c.scope_note) + "</span>" : "") +
+             "</li>";
+    }).join("") + "</ul>";
+  }
+
+  // 부속품 확인. 남은 오답은 전부 "부속품이 본체 품목명을 그대로 달고 있는"
+  // 모양이고(제습제·거치대·커버·리필팩), 상품명 밖의 정보가 없으면 가릴 수
+  // 없다. 그래서 셀러에게 한 번 묻는다 - 판정하지 않고 답을 받는다.
+  function partRow(f) {
+    var cands = (f.detail && f.detail.candidates) || [];
+    if (!cands.length) return "";
+    return '<p class="confirm part">' +
+      '<span class="sub">이 상품이 ' + esc(cands[0].item) +
+      ' 본체인가요, 부속품(거치대·커버·필터 등)인가요?</span>' +
+      '<button class="btn-t sm" type="button" data-part="main">본체입니다</button>' +
+      '<button class="btn-t sm" type="button" data-part="accessory">부속품입니다</button>' +
+      "</p>";
+  }
+
   function findingRow(f) {
     var basis = f.legal_basis ? '<span class="tag">' + esc(f.legal_basis) + "</span>" : "";
     // 같은 제조사의 다른 리콜은 이 상품의 위험이 아니라 공급처 참고 정보다.
@@ -330,10 +361,12 @@
           + esc(f.source_label || "근거 원문") + " (새 창)</a>";
     var confirm = f.kind === "kc_image_candidate" ? confirmRow(f) : "";
     var rf = f.kind === "rf_wireless_unverified" ? rfLookupRow(f) : "";
+    var isGrade = f.kind === "item_grade_matched" || f.kind === "item_grade_split";
+    var grades = isGrade ? gradeRow(f) + partRow(f) : "";
     return '<li class="' + esc(f.kind) + aside + '">' +
            '<span class="tick ' + esc(f.signal) + '" aria-hidden="true"></span>' +
            '<div class="f-body"><p class="f-text">' + esc(f.statement_ko) + "</p>" +
-           confirm + rf +
+           grades + confirm + rf +
            '<p class="f-meta">' + basis + link + "</p></div></li>";
   }
 
@@ -436,6 +469,31 @@
         }
         updateCount();
         scan();
+      });
+    });
+
+    // 부속품 확인 답을 그 자리에 남긴다. 서버로 되돌아가지 않는다 - 우리가
+    // 판정을 바꾸는 게 아니라 셀러의 답을 기록하고 다음에 볼 것을 알려준다.
+    //
+    // 주의: "부속품이면 대상이 아닙니다" 라고 쓰지 않는다. 어린이제품법 제2조
+    //   1호가 "부분품이나 부속품" 을 어린이제품에 포함한다.
+    res.querySelectorAll("button[data-part]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var li = b.closest("li");
+        var row = b.closest("p.part");
+        if (!li || !row) return;
+        var item = (li.querySelector(".grades b") || {}).textContent || "이 품목";
+        if (b.getAttribute("data-part") === "main") {
+          row.innerHTML = '<span class="sub">본체로 확인하셨습니다. ' +
+            "위 등급이 이 상품에 적용됩니다.</span>";
+        } else {
+          row.innerHTML = '<span class="sub">부속품으로 확인하셨습니다. ' +
+            esc(item) + "의 등급은 이 상품에 적용되지 않습니다. " +
+            "다만 부속품 자체가 별도 품목일 수 있고(합성수지제품·섬유제품 등), " +
+            "어린이용이면 「어린이제품 안전 특별법」 제2조 1호가 부분품·부속품도 " +
+            "어린이제품에 포함합니다.</span>";
+          li.classList.add("aside");
+        }
       });
     });
 
