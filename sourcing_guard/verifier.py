@@ -86,12 +86,35 @@ _CERT_STATE_FINDING: dict[CertState, tuple[FindingKind, Signal, str]] = {
     ),
 }
 
+# 인증번호 표기를 기대하는 품목군. 번호가 없을 때 그 부재를 해석해 주는
+# 경로(_kc_missing_finding · 등급 조회)가 이 집합으로 열린다.
+#
+# 생활용품이 뒤늦게 들어왔다. 등급표 561건 중 140건이 생활용품인데, 이
+# 집합에 없어서 우산·의자 셀러는 등급 finding 조차 못 받고 리콜 대조만
+# 받았다 - 표를 만들고 절반을 안 쓰는 셈이었다.
+#
+# 생활용품 4등급 중 상당수가 안전기준준수라 대부분 "부재가 정상" 으로
+# 나간다. 그게 정확한 답이다 - 우산에 "인증번호가 없습니다" 라고 하는 것이
+# 틀리고, "안전기준준수 대상이라 인증·신고 절차 자체가 없습니다" 가 맞다.
 _CERT_REQUIRED = {
     ItemCategory.CHILDREN_TOY,
     ItemCategory.CHILDREN_STATIONERY,
     ItemCategory.CHILDREN_TEXTILE,
     ItemCategory.ELECTRICAL,
 }
+
+# 생활용품은 **등급을 알아냈을 때만** 인증 경로에 넣는다.
+#
+# 전기용품은 3등급 중 둘이 번호 필수라 "규제 품목군인데 번호가 없다" 가
+# 그 자체로 의미 있는 경고다. 생활용품은 4등급이고 안전기준준수(번호 없음이
+# 정상)가 많아, 등급을 모르는 채로 "인증번호를 찾지 못했습니다" 를 내면
+# 대부분 틀린 경고가 된다.
+#
+# 실측으로 확인했다. HOUSEHOLD 를 _CERT_REQUIRED 에 그냥 넣었더니
+# "휴대용 폴딩 접이식 캠핑 의자" 가 등급 미매칭('의자' 는 식별력이 없어
+# 포함 키에서 뺐다) 상태로 AMBER 를 받았다 - 우산에 "인증번호가 없습니다"
+# 라고 하는 것과 같은 틀린 경고다.
+_CERT_REQUIRED_IF_GRADED = {ItemCategory.HOUSEHOLD}
 
 
 @dataclass(frozen=True)
@@ -671,6 +694,17 @@ def verify(
         age is AgeScope.DECLARED_NOT_CHILD and facts.category in CHILDREN_CATEGORIES
     )
 
+    # 세부품목 등급을 먼저 알아본다. 생활용품은 이 결과가 인증 경로 진입
+    # 여부를 정한다 - 등급을 모르면 부재를 해석할 수 없고, 해석 못 하는
+    # 부재를 경고로 내보내면 정상 상품에 노란불이 반복된다 (R3-b).
+    _graded = (
+        _item_grade_findings(facts.product_name, today)
+        if facts.category in (_CERT_REQUIRED | _CERT_REQUIRED_IF_GRADED)
+        else []
+    )
+    if facts.category in _CERT_REQUIRED_IF_GRADED and _graded:
+        _cert_required_here = True
+
     # --- (a) KC certification -------------------------------------------
     #
     # 이미지(KC 마크)에서 읽은 번호는 텍스트 번호와 경로가 다르다. 텍스트는
@@ -763,13 +797,10 @@ def verify(
                     )
                 )
     elif image_candidates or _cert_required_here:
-        # 등급을 먼저 알아낸다. 알아냈으면 "안전인증이면 있어야 하고
+        # 등급은 위에서 이미 알아냈다. 알아냈으면 "안전인증이면 있어야 하고
         # 공급자적합성확인이면 없는 게 정상" 이라는 일반론을 위에서 빼야
         # 한다 - 특정된 답이 바로 아래 붙는데 일반론을 먼저 두면 묻힌다.
-        graded = (
-            _item_grade_findings(facts.product_name, today)
-            if _cert_required_here else []
-        )
+        graded = _graded if _cert_required_here else []
 
         if image_candidates:
             # "찾지 못했습니다" 가 아니다. 읽었고, 형식 검증도 통과했다.
