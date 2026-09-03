@@ -11,7 +11,13 @@
 
 import pytest
 
-from sourcing_guard.item_grades import ALIASES, ItemGradeBook, normalize, strip_modifiers
+from sourcing_guard.item_grades import (
+    ALIASES,
+    _SHORT_KEY_EXCEPTIONS,
+    ItemGradeBook,
+    normalize,
+    strip_modifiers,
+)
 from sourcing_guard.models import ItemCategory
 from sourcing_guard.verifier import _tier_unknown_statement
 
@@ -105,10 +111,24 @@ def test_alias_keys_are_not_short_common_words():
     'LED' 나 '전등' 을 키로 넣으면 LED조명·LED램프·백열등기구가 전부 걸려
     등급이 뒤집힌다. 리콜 오탐에서 배운 기준을 그대로 적용한다.
     """
-    banned = {"LED", "전등", "가방", "의자", "충전", "전기", "무선", "조명"}
+    banned = {"LED", "전등", "가방", "의자", "충전", "전기", "무선", "조명", "매트"}
     for key in ALIASES:
         assert normalize(key) not in {normalize(b) for b in banned}, f"흔한 키: {key}"
-        assert len(normalize(key)) >= 3, f"너무 짧은 키: {key}"
+        if len(normalize(key)) < 3:
+            # 짧아도 그 물건에만 쓰이는 말은 허용한다. 기준은 "짧다" 가 아니라
+            # "흔하다" 이고, 리콜 37,313건으로 실측해 예외 목록에 넣었다.
+            assert key in _SHORT_KEY_EXCEPTIONS, f"근거 없는 짧은 키: {key}"
+
+
+def test_short_key_exceptions_are_documented():
+    """2글자 키 예외는 실측 근거가 코드에 남아 있어야 한다."""
+    from pathlib import Path
+
+    src = Path("sourcing_guard/item_grades.py").read_text(encoding="utf-8")
+    for key in _SHORT_KEY_EXCEPTIONS:
+        assert key in src
+    # 위험하다고 측정된 것은 예외에 들어가면 안 된다
+    assert not _SHORT_KEY_EXCEPTIONS & {"매트", "의자", "조명", "전등"}
 
 
 def test_alias_dictionary_stays_small():
@@ -162,3 +182,69 @@ def test_tier_statement_falls_back_when_the_category_is_unknown():
     text = _tier_unknown_statement(ItemCategory.UNCLASSIFIED)
     assert "판별하지 못했습니다" in text
     assert "보입니다" not in text
+
+
+# ---------------------------------------------------------------------------
+# 사람이 검수해서 잡은 오답들 (실상품 표본 30건)
+#
+# 매칭률만 보면 안 된다. 40% -> 45% 로 올라도 그중 3건이 오답이면 손해다.
+# 아래는 시피님이 검수표를 눈으로 훑어 짚어준 것들이다.
+# ---------------------------------------------------------------------------
+
+
+def test_alias_never_beats_the_decree(book):
+    """표는 법령 원문이고 별칭은 우리 추정이다. 추정이 원문을 이기면 안 된다.
+
+    '미니 무선 탁상용 무드등 선풍기 가습기' 가 LED등기구로 갔었다 - '무드등'
+    별칭이 표에 그대로 있는 '선풍기'·'가습기' 를 이겼기 때문이다.
+    """
+    found = book.lookup_all("미니 무선 탁상용 무드등 선풍기 가습기 화이트 에어쿨러")
+    items = [g.item for g in found]
+    assert "선풍기" in items and "가습기" in items
+    assert found[0].matched_by in ("exact", "contains")
+    assert ItemGradeBook.grades_agree(found) == "안전인증"
+
+
+@pytest.mark.parametrize(
+    "name,want_item,want_grade",
+    [
+        # 조명은 원문 정의로 갈린다. 등급이 안전인증 vs 안전확인으로 뒤집히면
+        # 셀러에게 잘못된 의무를 말하게 된다.
+        ("캠핑용 LED 랜턴 충전식 방수 텐트등", "충전식 휴대전등", "안전확인"),
+        ("캠핑랜턴 감성 캠핑 LED 충전식 텐트 랜턴", "충전식 휴대전등", "안전확인"),
+        ("스노우맨 줄조명 알전구 LED 앵두전구", "체인형 조명기구", "안전확인"),
+        ("앵두 자두전구 20구 USB 알조명 텐트장식", "체인형 조명기구", "안전확인"),
+        # 벽·천장 고정은 LED등기구다
+        ("LED 센서등 인체감지 무선 현관 계단", "LED등기구", "안전인증"),
+    ],
+)
+def test_lighting_items_resolve_by_the_decree_definition(book, name, want_item, want_grade):
+    """LED등기구는 천장·벽 설치용이다. 손에 드는 랜턴은 충전식 휴대전등이다."""
+    g = book.lookup(name)
+    assert g is not None, f"{name} 를 못 맞춘다"
+    assert g.item == want_item, f"{name} → {g.item} (기대 {want_item})"
+    assert g.grade == want_grade
+
+
+def test_multiple_candidates_are_all_returned(book):
+    """도매 상품명은 연관 검색어를 다 붙인다. 하나를 고르면 틀릴 수 있다 (R3)."""
+    found = book.lookup_all("미니 무선 탁상용 무드등 선풍기 가습기")
+    assert len(found) >= 2
+
+
+def test_agreeing_grades_make_it_certain(book):
+    """후보가 여럿이어도 등급이 같으면 오히려 확실해진다."""
+    found = book.lookup_all("미니 무선 탁상용 무드등 선풍기 가습기")
+    assert ItemGradeBook.grades_agree(found) == "안전인증"
+
+
+def test_modifier_stripping_does_not_break_table_names(book):
+    """수식어가 품목명의 일부인 경우를 놓치면 안 된다.
+
+    표에 '헤드셋' 은 없고 '무선 헤드셋' 만 있다. '무선' 을 떼는 순간 못 찾게
+    되므로, 원본과 제거본을 둘 다 본다.
+    """
+    for name in ("무선 헤드셋", "휴대용 레이저용품", "실내용 바닥재",
+                 "가정용 압력냄비", "충전식 휴대전등"):
+        g = book.lookup(name)
+        assert g is not None and g.matched_by == "exact", f"{name} 가 깨졌다"
