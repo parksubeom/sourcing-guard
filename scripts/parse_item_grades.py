@@ -34,11 +34,19 @@ import re
 
 CIRCLED = "①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳"
 
-# 별표 번호 -> (등급, 우리 품목 분류)
+# 파일 접두 + 별표 번호 -> (등급, 우리 품목 분류)
+#
+# 전기용품과 생활용품이 별개 별표다. 전기용품만 넣었을 때 골든셋·데모 19건 중
+# 3건만 대상이었다 - 휴지통·토트백·키링처럼 셀러가 실제로 소싱하는 것이 전부
+# 생활용품이라 빠졌다.
 TABLES = {
-    "1": ("안전인증", "electrical"),
-    "2": ("안전확인", "electrical"),
-    "3": ("공급자적합성확인", "electrical"),
+    ("별표", "1"): ("안전인증", "electrical"),
+    ("별표", "2"): ("안전확인", "electrical"),
+    ("별표", "3"): ("공급자적합성확인", "electrical"),
+    ("생활별표", "4"): ("안전인증", "household"),
+    ("생활별표", "5"): ("안전확인", "household"),
+    ("생활별표", "6"): ("공급자적합성확인", "household"),
+    ("생활별표", "7"): ("안전기준준수", "household"),
 }
 
 _DIV = re.compile(r"^(\d{1,2})\.\s*(.*)$")
@@ -122,8 +130,8 @@ def main() -> None:
 
     src = pathlib.Path(args.scratch)
     out: list[dict] = []
-    for no, (grade, category) in TABLES.items():
-        text = (src / f"별표{no}_hwp.txt").read_text(encoding="utf-8", errors="replace")
+    for (prefix, no), (grade, category) in TABLES.items():
+        text = (src / f"{prefix}{no}_hwp.txt").read_text(encoding="utf-8", errors="replace")
         for row in parse(text.splitlines()):
             out.append(
                 {
@@ -139,7 +147,8 @@ def main() -> None:
     lines = [
         "# 전기용품 세부품목 등급표.",
         "#",
-        "# 「전기용품 및 생활용품 안전관리 운용요령」 별표 1~3 을 그대로 옮긴 것이다.",
+        "# 「전기용품 및 생활용품 안전관리 운용요령」 별표 1~7 을 그대로 옮긴 것이다.",
+        "# 별표 1~3 이 전기용품, 4~7 이 생활용품이다.",
         "# 셀러가 \"이 품목이 안전인증 대상인가\" 를 알아야 인증번호 부재의 의미가",
         "# 정해진다 - 안전인증·안전확인 대상이면 번호가 있어야 하고, 공급자적합성확인",
         "# 대상이면 없는 것이 정상이다 (CLAUDE.md R3-b).",

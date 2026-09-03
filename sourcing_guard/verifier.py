@@ -552,6 +552,42 @@ def verify_rf_by_model(
     ]
 
 
+# 품목군별 등급 체계 안내. 세부품목을 못 맞춰도 여기까지는 말할 수 있다.
+#
+# 등급 수와 이름은 「전기용품 및 생활용품 안전관리 운용요령」 별표 1~7 에서
+# 왔다 - 전기용품은 3등급(별표 1~3), 생활용품은 4등급(별표 4~7)이다.
+_TIER_SYSTEMS: dict[ItemCategory, tuple[str, str]] = {
+    ItemCategory.ELECTRICAL: (
+        "전기용품",
+        "안전인증 / 안전확인 / 공급자적합성확인 세 등급",
+    ),
+    ItemCategory.HOUSEHOLD: (
+        "생활용품",
+        "안전인증 / 안전확인 / 공급자적합성확인 / 안전기준준수 네 등급",
+    ),
+}
+
+
+def _tier_unknown_statement(category: ItemCategory) -> str:
+    """인증 구분을 못 가렸을 때의 문구.
+
+    품목군까지는 아는 경우와 아예 모르는 경우를 갈라준다. "판별하지 못했습니다"
+    만 내보내면 셀러가 다음에 할 일이 없다.
+    """
+    known = _TIER_SYSTEMS.get(category)
+    if known:
+        label, tiers = known
+        return (
+            f"이 상품은 {label}으로 보입니다. {label}은 {tiers}으로 나뉘며 "
+            "세부품목에 따라 다릅니다. 등급에 따라 인증번호가 있어야 하는지, "
+            "없는 것이 정상인지가 달라지므로 공급처에 어느 등급인지 확인하세요."
+        )
+    return (
+        "이 품목의 인증 구분(안전인증 / 안전확인 / 공급자적합성확인)을 "
+        "판별하지 못했습니다. 구분에 따라 인증번호 유무의 의미가 달라집니다."
+    )
+
+
 def verify(
     facts: ProductFacts,
     kats: KatsClient,
@@ -736,14 +772,15 @@ def verify(
         if _cert_required_here:
             # 어느 위해도 단계(안전인증 / 안전확인 / 공급자적합성확인)인지 모르면
             # 인증번호 부재를 해석할 수 없다. 모른다는 사실을 감추지 않는다 (R3).
+            #
+            # 다만 세부품목을 못 맞춰도 품목군은 안다. "판별하지 못했습니다" 로
+            # 끝내면 셀러가 할 수 있는 일이 없지만, "전기용품은 세 등급으로
+            # 나뉜다"까지 알려주면 공급처에 무엇을 물어야 하는지가 정해진다.
             findings.append(
                 Finding(
                     kind=FindingKind.KC_TIER_UNKNOWN,
                     signal=Signal.UNKNOWN,
-                    statement_ko=(
-                        "이 품목의 인증 구분(안전인증 / 안전확인 / 공급자적합성확인)을 "
-                        "판별하지 못했습니다. 구분에 따라 인증번호 유무의 의미가 달라집니다."
-                    ),
+                    statement_ko=_tier_unknown_statement(facts.category),
                     source_label="제품안전정보센터 대상 품목 안내",
                     source_url="https://www.safetykorea.kr/policy/targetsSafetyCheck3",
                     checked_at=today,
