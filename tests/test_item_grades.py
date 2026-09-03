@@ -9,6 +9,8 @@
   이 볼펜과 LED 전등을 잇던 것과 같은 뿌리다.
 """
 
+from pathlib import Path
+
 import pytest
 
 from sourcing_guard.item_grades import (
@@ -320,3 +322,42 @@ def test_lighting_words_the_decree_does_not_split_are_left_undecided():
         items = {g.item for g in found}
         assert {"LED등기구", "충전식 휴대전등"} <= items, items
         assert ItemGradeBook.grades_agree(found) is None
+
+
+# ---------------------------------------------------------------------------
+# "표에 없음" 을 "대상 아님" 으로 말하지 않는다
+# ---------------------------------------------------------------------------
+
+
+def test_unmatched_copy_never_claims_the_product_is_out_of_scope():
+    """561건에 이름이 없어도 대상일 수 있다. 근거는 docs 에 적어 두었다.
+
+    (1) 어린이제품은 열거되지 않아도 대상이다 - 「어린이제품 안전 특별법」
+        제2조 12호가 공급자적합성확인대상을 "안전인증·안전확인 대상을 제외한
+        어린이제품" 으로 정하고, 제25조 3항이 "고시된 안전기준이 없는"
+        어린이제품도 국제기준을 준용해 확인하게 한다.
+    (2) 별표 7 에 포괄 품목이 있다 - 부속서 1 기타 제품류(쿠션류·방석류·덮개),
+        부속서 24 기타류("및 이와 유사한 용도의 제품"), 기타 가구류.
+
+    그래서 등급을 못 가렸을 때의 문구가 면제를 말하면 안 된다. 실제로 이
+    문구를 "안전관리 대상이 아닙니다" 로 바꾸려다 원문을 읽고 취소했다.
+    """
+    forbidden = ("대상이 아닙", "대상 아님", "필요 없습니다", "필요없습니다",
+                 "해당하지 않습니다", "면제")
+    for category in ItemCategory:
+        copy = _tier_unknown_statement(category)
+        for bad in forbidden:
+            assert bad not in copy, f"{category}: '{bad}' 가 들어 있다 - {copy}"
+
+
+def test_the_original_text_evidence_is_written_down():
+    """근거를 코드 밖에 두면 다음 세션이 같은 판단을 다시 한다.
+
+    이 저장소의 반복 결함이 문서와 코드가 어긋나는 것이었다. 정정 근거를
+    문서에 묶고, 문서가 사라지면 검사가 깨지게 한다.
+    """
+    doc = Path(__file__).resolve().parents[1] / "docs" / "표에_없음은_비대상이_아니다.md"
+    text = doc.read_text(encoding="utf-8")
+    for cite in ("제2조 12호", "제25조 3항", "부속서 1", "부속서 5",
+                 "부속서 6", "부속서 24", "식품위생법"):
+        assert cite in text, f"{cite} 인용이 사라졌다"
