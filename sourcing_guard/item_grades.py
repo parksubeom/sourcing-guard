@@ -100,6 +100,18 @@ def normalize(name: str) -> str:
 #
 # ⚠ 키는 4글자 이상이거나, 짧더라도 그 도메인에서만 쓰이는 말이어야 한다.
 #   'LED' 나 '전등' 같은 짧고 흔한 키를 넣으면 등급이 뒤집힌다.
+# 2글자 별칭 키 예외. 짧지만 그 물건에만 쓰이는 말이라 허용한다.
+#
+# 기준은 "짧다" 가 아니라 "흔하다" 다. 리콜 실데이터 37,313건으로 실측했다:
+#
+#   랜턴  28건 - 스카이랜턴 · LED랜턴 · 랜턴 스틱. 전부 진짜 랜턴  ✅
+#   헬멧 164건 - 자전거 헬멧 · 스케이트 헬멧. 전부 진짜 헬멧      ✅
+#   매트 369건 - **매트리스**가 섞인다. 침대와 전기매트는 다른 물건  ❌
+#   의자 613건 - 유아용 식탁의자 등. 표에 의자 항목이 5개나 있다     ❌
+#   조명 1,412건 - 너무 넓다                                  ❌
+_SHORT_KEY_EXCEPTIONS = {"랜턴", "헬멧"}
+
+
 ALIASES: dict[str, str] = {
     # 조명 - 손에 드는 것과 천장에 다는 것은 등급이 다르다
     "펜라이트": "충전식 휴대전등",
@@ -114,6 +126,47 @@ ALIASES: dict[str, str] = {
     "충전기": "직류전원장치",
     "어댑터": "직류전원장치",
     "전원어댑터": "직류전원장치",
+    "adaptor": "직류전원장치",
+    "adapter": "직류전원장치",
+    # --- 아래는 실상품 표본 30건에서 실제로 못 맞춘 것만 추가했다 --------
+    # 561건 중 절반이 B2B 부품이라, 안 쓰일 항목에 별칭을 붙이면 시간만 든다.
+    #
+    # ⚠ 조명은 원문 정의로 갈랐다. 표의 분류가 셋이다:
+    #     LED등기구(안전인증)      천장·벽에 설치하는 조명기구
+    #     충전식 휴대전등(안전확인)  손에 드는 것. 펜라이트·랜턴·손전등
+    #     체인형 조명기구(안전확인)  줄조명·앵두전구·트리 장식
+    #   등급이 안전인증 vs 안전확인으로 갈리므로 뒤집히면 셀러에게 잘못된
+    #   의무를 말한다. 처음에 랜턴·줄조명을 LED등기구로 보낸 것이 오답이었다.
+    "랜턴": "충전식 휴대전등",
+    "줄조명": "체인형 조명기구",
+    "앵두전구": "체인형 조명기구",
+    "알전구": "체인형 조명기구",
+    "트리조명": "체인형 조명기구",
+    "텐트장식": "체인형 조명기구",
+    "자두전구": "체인형 조명기구",
+    "알조명": "체인형 조명기구",
+    # 센서등·현관등은 벽·천장 고정이라 LED등기구다 (휴대전등과 갈린다)
+    "센서등": "LED등기구",
+    "현관등": "LED등기구",
+    # ⚠ '무드등' 은 별칭에 넣지 않는다. 체인형·충전식·LED등기구 어느 것이든
+    #   될 수 있고, 도매 상품명이 연관 검색어로 붙이는 대표적인 말이다.
+    #   실제로 이것 때문에 선풍기·가습기 상품이 LED등기구로 갔다(오답 3건).
+    # 난방·온열
+    "온풍기": "전기온풍기",
+    "손난로": "전기손난로",
+    # 주방
+    "전기포트": "전기주전자",
+    "무선주전자": "전기주전자",
+    # 생활
+    "물놀이": "공기주입물놀이기구",
+    "수영링": "공기주입물놀이기구",
+    "헬멧": "자전거용 안전모",
+    "미끄럼방지매트": "미끄럼 방지 타일",
+    "자동우산": "우산",
+    "접이식우산": "우산",
+    "양우산": "우산",
+    "스탠드조명": "전기스탠드",
+    "책상조명": "전기스탠드",
 }
 
 
@@ -242,53 +295,86 @@ class ItemGradeBook:
     def __len__(self) -> int:
         return len(self._rows)
 
-    def lookup(self, product_name: str | None) -> ItemGrade | None:
-        """상품명으로 세부품목을 찾는다. 못 찾으면 None.
+    def lookup_all(self, product_name: str | None) -> list[ItemGrade]:
+        """상품명에서 보이는 품목 후보를 **전부** 돌려준다. 강한 순.
 
-        못 찾는 것을 억지로 맞추지 않는다 - 틀린 등급을 말하는 것보다 모른다고
-        하는 편이 낫다 (R3). 호출부는 None 을 받으면 품목군까지만 안내한다.
+        도매 상품명은 연관 검색어를 다 붙이는 것이 전형이다 - "미니 무선 탁상용
+        무드등 선풍기 가습기" 하나에 세 품목이 들어 있다. 하나를 고르면 어느
+        것이든 틀릴 수 있으므로 모르면 단정하지 않는다 (CLAUDE.md R3).
+
+        단계 순서:
+          (1) 정확 일치 - 표의 이름과 그대로 같다
+          (2) 역방향 포함 - 표의 이름이 상품명 안에 있다
+          (3) 접두 확장 - 상품명이 표 이름의 수식어 빠진 형태다
+          (4) 별칭 - 우리가 만든 대응표
+
+        ⚠ 별칭이 마지막이다. 표는 법령 원문이고 별칭은 우리 추정이다.
+          추정이 원문을 이기면 안 된다 - 처음에 별칭을 먼저 봤더니 '무드등'
+          별칭이 표에 그대로 있는 '선풍기'·'가습기' 를 이겨 오답이 났다.
         """
         if not product_name:
-            return None
+            return []
 
         stripped = strip_modifiers(product_name)
+        forms = [normalize(product_name)]
+        if normalize(stripped) != forms[0]:
+            forms.append(normalize(stripped))
+
+        found: list[ItemGrade] = []
+        seen: set[str] = set()
+
+        def offer(row: dict, how: str) -> None:
+            if row["item"] not in seen:
+                seen.add(row["item"])
+                found.append(self._to_grade(row, how))
+
+        # (1) 정확 일치
         for base in (product_name, stripped):
             for candidate in prefix_variants(base):
                 row = self._by_name.get(normalize(candidate))
                 if row:
-                    return self._to_grade(row, "exact")
+                    offer(row, "exact")
 
-        # 별칭. 상품명(수식어 제거본)에 키가 들어 있으면 그 법령 어휘로 바꾼다.
-        target = normalize(stripped or product_name)
-        for key, legal in ALIASES.items():
-            if normalize(key) in target:
-                row = self._by_name.get(normalize(legal))
-                if row:
-                    return self._to_grade(row, "alias")
+        # (2) 역방향 포함. 긴 품목명이 먼저 - '자전거용 안전모' 가 '안전모'
+        #     보다 앞서야 등급이 정확해진다.
+        for target in forms:
+            for key, row in self._contain_keys:
+                if key in target:
+                    offer(row, "contains")
 
-        # 접두 확장. 상품명이 품목명의 수식어 빠진 형태인가.
-        #
-        # 포함 매칭보다 먼저 본다 - '냉온정수기' 는 '정수기' 로 줄면 '전기정수기'
-        # 와 접두 확장 관계이고, 이게 포함 매칭보다 정확하다.
-        for base in (stripped, product_name):
-            nb = normalize(base)
+        # (3) 접두 확장
+        for nb in forms:
             if not is_usable_contain_key(nb):
                 continue
             for key, row in self._contain_keys:
                 if is_prefix_expansion(nb, key):
-                    return self._to_grade(row, "expand")
+                    offer(row, "expand")
 
-        # 역방향 포함. 품목명이 상품명 안에 들어 있는가.
-        #
-        # 셀러는 "신일 BLDC 무선 선풍기 써큘레이터" 처럼 브랜드와 수식어를
-        # 붙인다. 표의 '선풍기' 가 그 안에 들어 있으면 찾아준다.
-        #
-        # 긴 것부터 본다 - '자전거용 안전모' 가 '안전모' 보다 먼저 걸려야 한다.
-        # 키 자체의 식별력은 is_usable_contain_key 가 거른다.
-        for key, row in self._contain_keys:
-            if key in target:
-                return self._to_grade(row, "contains")
-        return None
+        # (4) 별칭 - 우리 추정이므로 마지막이다
+        for target in forms:
+            for key, legal in ALIASES.items():
+                if normalize(key) in target:
+                    row = self._by_name.get(normalize(legal))
+                    if row:
+                        offer(row, "alias")
+
+        return found
+
+    def lookup(self, product_name: str | None) -> ItemGrade | None:
+        """가장 강한 후보 하나. 후보가 여럿이면 lookup_all 을 쓸 것."""
+        found = self.lookup_all(product_name)
+        return found[0] if found else None
+
+    @staticmethod
+    def grades_agree(candidates: list[ItemGrade]) -> str | None:
+        """후보들의 등급이 하나로 모이면 그 등급, 갈리면 None.
+
+        셋 다 같은 등급이면 오히려 확실해진다 - 상품명에 무드등·선풍기·가습기가
+        다 들어 있어도 전부 안전인증이면 "무엇이든 안전인증 대상" 이라고 말할
+        수 있다. 등급이 갈릴 때만 확인을 요청한다.
+        """
+        grades = {c.grade for c in candidates}
+        return grades.pop() if len(grades) == 1 else None
 
     @staticmethod
     def _to_grade(row: dict, how: str) -> ItemGrade:
