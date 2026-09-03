@@ -122,6 +122,10 @@ class FindingKind(str, Enum):
     #   위법을 권하는 셈이다.
     ITEM_GRADE_MATCHED = "item_grade_matched"
     ITEM_GRADE_SPLIT = "item_grade_split"
+    # 셀러가 "부속품입니다" 라고 답해 본체 품목의 등급을 적용하지 않은 경우.
+    # 우리 판정이 아니라 셀러가 준 사실이므로 kind 를 분리해 화면이
+    # 근거를 밝힐 수 있게 한다.
+    ITEM_GRADE_NOT_APPLIED = "item_grade_not_applied"
     OUT_OF_SCOPE = "out_of_scope"          # 우리 소관 밖 품목
     AGE_OUT_OF_CHILD_RANGE = "age_out_of_child_range"  # 14세 이상 표기
     INFO_REQUEST = "info_request"          # 공급처에 물어야 할 것
@@ -171,6 +175,10 @@ _FINDING_GROUP: dict[str, FindingGroup] = {
     "kc_tier_unknown": FindingGroup.ACTION,
     "item_grade_matched": FindingGroup.ACTION,
     "item_grade_split": FindingGroup.ACTION,
+    # 부속품이라 등급을 적용하지 않았어도 확인할 것이 남는다 - 부속품
+    # 자체가 별도 품목일 수 있고, 어린이용이면 부분품·부속품도 대상이다.
+    # CONTEXT 로 내리면 유일한 인증 관련 문장이 화면 아래로 묻힌다.
+    "item_grade_not_applied": FindingGroup.ACTION,
     "info_request": FindingGroup.ACTION,
     "kc_image_candidate": FindingGroup.ACTION,
     "substance_mentioned": FindingGroup.ACTION,
@@ -197,6 +205,37 @@ _FINDING_GROUP: dict[str, FindingGroup] = {
     "lookup_failed": FindingGroup.CONTEXT,
 }
 
+
+class SellerHints(BaseModel):
+    """셀러가 화면에서 답해 준 사실. **우리 판정이 아니다.**
+
+    상품명만으로 못 가리는 것이 있고, 그건 규칙을 더 밀어붙여 풀리지 않는다.
+    실측으로 확인했다 - 부속어가 품목명에서 떨어져 있으면("무타공 전기면도기
+    스테인레스 거치대 면도기 홀더") 인접 가드가 못 잡고, 느슨하게 넓히면
+    정답 3건이 함께 죽는다. 상품명 밖의 정보가 필요하다.
+
+    ⚠ 힌트는 **추가 정보이지 필수 입력이 아니다.** 아무 힌트도 없으면 동작이
+      힌트 도입 전과 완전히 같아야 한다. 검사가 이를 강제한다.
+
+    ⚠ 힌트로 판단이 바뀌면 그 근거를 화면에 남긴다. "셀러가 부속품으로
+      확인하셨습니다" 처럼 누가 말한 것인지 밝힌다 - 우리가 판정한 것처럼
+      보이면 셀러가 자기 답을 우리 결론으로 착각한다.
+
+    자리를 넓게 잡아 둔다. 다음에 올 것은 power_source 다 - 조명 등급이
+    갈리는 이유가 전원 방식이라(별표 1 일반조명기구 vs 별표 2 그밖의
+    조명기구), 셀러가 "배터리·충전식" 이라고 답하면 후보가 하나로 좁혀진다.
+    지금은 받지 않는다. 한 번에 둘을 넣으면 어느 쪽이 깨졌는지 못 가린다.
+    """
+
+    # True 면 부속품(거치대·커버·필터 등), False 면 본체. None 은 안 물어봤다.
+    is_accessory: bool | None = None
+
+    # TODO(예정) power_source: Literal["mains", "battery", "solar"] | None
+    #   조명 등급 갈림(실측 37건 중 다수)을 셀러 한 번의 답으로 좁힌다.
+    #   스키마 자리만 남긴다 - 이번 회차에서 구현하지 않는다.
+
+    def says_accessory(self) -> bool:
+        return self.is_accessory is True
 
 class Finding(BaseModel):
     """One verifiable statement. Never a conclusion, always a fact + its source."""

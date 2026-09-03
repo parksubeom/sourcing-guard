@@ -46,6 +46,7 @@ from .models import (
     ItemCategory,
     MatchStrength,
     ProductFacts,
+    SellerHints,
     Signal,
     matched_on_label,
 )
@@ -619,7 +620,11 @@ def verify(
     recalls: "RecallIndex | None" = None,
     rra: "RraClient | None" = None,
     noncompliant: "NoncompliantIndex | None" = None,
+    hints: SellerHints | None = None,
 ) -> list[Finding]:
+    # 힌트는 셀러가 답해 준 사실이지 필수 입력이 아니다. 없으면 힌트 도입
+    # 전과 완전히 같이 동작한다 (tests/test_seller_hints.py 가 강제한다).
+    hints = hints or SellerHints()
     today = date.today()
     findings: list[Finding] = []
 
@@ -698,12 +703,31 @@ def verify(
     # 여부를 정한다 - 등급을 모르면 부재를 해석할 수 없고, 해석 못 하는
     # 부재를 경고로 내보내면 정상 상품에 노란불이 반복된다 (R3-b).
     _graded = (
-        _item_grade_findings(facts.product_name, today)
+        _item_grade_findings(facts.product_name, today, hints=hints)
         if facts.category in (_CERT_REQUIRED | _CERT_REQUIRED_IF_GRADED)
         else []
     )
     if facts.category in _CERT_REQUIRED_IF_GRADED and _graded:
         _cert_required_here = True
+
+    # 셀러가 부속품이라고 답했고 우리가 품목을 특정했으면, 본체 품목의 인증
+    # 의무를 이 상품에 묻지 않는다.
+    #
+    # 이게 남은 오답의 해법이다. "무타공 전기면도기 스테인레스 거치대 면도기
+    # 홀더" 는 거치대인데 '전기면도기' 가 상품명에 있어 AMBER 를 받았다.
+    # 부속어가 품목명에서 떨어져 있어 인접 가드가 못 잡고, 느슨하게 넓히면
+    # 정답 3건이 함께 죽는다 - 상품명 밖의 정보가 필요했다.
+    #
+    # ⚠ "문제 없음" 이 아니다. ITEM_GRADE_NOT_APPLIED 가 그 자리에 남아
+    #   누가 그렇게 말했는지, 그리고 부속품 자체가 별도 품목일 수 있고
+    #   어린이용 부속품은 여전히 대상이라는 것을 말한다.
+    #
+    # ⚠ 품목을 못 특정했으면 힌트를 쓰지 않는다. 화면은 등급 finding 위에만
+    #   질문을 띄우므로 그런 힌트는 정상 흐름에서 오지 않지만, 들어와도
+    #   근거 없이 경고를 지우지는 않는다 (R3).
+    _grade_declined = hints.says_accessory() and bool(_graded)
+    if _grade_declined:
+        _cert_required_here = False
 
     # --- (a) KC certification -------------------------------------------
     #
@@ -796,6 +820,9 @@ def verify(
                         checked_at=today,
                     )
                 )
+    elif _grade_declined:
+        # 인증 경로는 타지 않지만 셀러의 답과 남은 확인 사항은 남긴다.
+        findings.extend(_graded)
     elif image_candidates or _cert_required_here:
         # 등급은 위에서 이미 알아냈다. 알아냈으면 "안전인증이면 있어야 하고
         # 공급자적합성확인이면 없는 게 정상" 이라는 일반론을 위에서 빼야
@@ -810,6 +837,9 @@ def verify(
             # 합의 등급만 넘긴다. 갈릴 때(ITEM_GRADE_SPLIT)는 None 이 되어
             # 기존 AMBER 경로로 간다 - 느슨한 쪽을 골라 감점을 빼면 화면에서
             # 막은 "한쪽 단정" 을 신호등에서 하는 셈이다.
+            # ITEM_GRADE_NOT_APPLIED 는 등급으로 세지 않는다 - 셀러가
+            # 적용하지 말라고 답한 등급을 근거로 부재를 해석하면 앞뒤가 맞지
+            # 않는다.
             agreed = next(
                 (
                     g.detail.get("grade")
@@ -1278,7 +1308,9 @@ _GRADE_SOURCE = (
 )
 
 
-def _item_grade_findings(product_name: str | None, today: date) -> list[Finding]:
+def _item_grade_findings(
+    product_name: str | None, today: date, *, hints: SellerHints | None = None
+) -> list[Finding]:
     """세부품목 등급표에서 품목을 찾아 인증번호 부재의 의미를 말해 준다.
 
     셋으로 갈린다:
@@ -1299,6 +1331,40 @@ def _item_grade_findings(product_name: str | None, today: date) -> list[Finding]
         return []
 
     label, url = _GRADE_SOURCE
+
+    # 셀러가 부속품이라고 답했으면 본체 품목의 등급을 적용하지 않는다.
+    #
+    # ⚠ 이건 우리 판정이 아니다. 셀러가 준 사실이므로 누가 말한 것인지
+    #   밝힌다 - 밝히지 않으면 셀러가 자기 답을 우리 결론으로 착각한다.
+    #
+    # ⚠ "대상이 아닙니다" 로 끝내지 않는다. 「어린이제품 안전 특별법」
+    #   제2조 1호가 "물품 또는 그 부분품이나 부속품" 을 어린이제품에
+    #   포함하므로, 어린이용 부속품은 여전히 대상이다. 화면에 이미 있던
+    #   문구이고 서버로 올린 뒤에도 잃지 않는다.
+    if hints and hints.says_accessory():
+        head = found[0]
+        return [
+            Finding(
+                kind=FindingKind.ITEM_GRADE_NOT_APPLIED,
+                signal=Signal.UNKNOWN,
+                statement_ko=(
+                    f"셀러가 부속품으로 확인하셨습니다. '{head.item}'의 등급"
+                    f"({head.grade})은 이 상품에 적용하지 않았습니다. "
+                    "다만 부속품 자체가 별도 품목일 수 있고(합성수지제품·"
+                    "섬유제품 등), 만 13세 이하 어린이용이면 「어린이제품 "
+                    "안전 특별법」 제2조 1호가 부분품·부속품도 어린이제품에 "
+                    "포함합니다."
+                ),
+                source_label=label,
+                source_url=url,
+                detail={
+                    "declined_item": head.item,
+                    "declined_grade": head.grade,
+                    "declared_by": "seller",
+                },
+                checked_at=today,
+            )
+        ]
     # 서버가 준 순서를 그대로 쓴다. 강한 순(정확 일치 → 포함 → 확장 → 별칭)
     # 이고, 화면도 이 순서로 같은 모양으로 그린다 - 느슨한 등급을 앞으로
     # 끌어올리면 셀러가 "번호 없어도 되는구나" 로 읽는다.
