@@ -1,6 +1,7 @@
 # 전기용품 세부품목 등급표.
 #
-# 「전기용품 및 생활용품 안전관리 운용요령」 별표 1~3 을 그대로 옮긴 것이다.
+# 「전기용품 및 생활용품 안전관리 운용요령」 별표 1~7 을 그대로 옮긴 것이다.
+# 별표 1~3 이 전기용품, 4~7 이 생활용품이다.
 # 셀러가 "이 품목이 안전인증 대상인가" 를 알아야 인증번호 부재의 의미가
 # 정해진다 - 안전인증·안전확인 대상이면 번호가 있어야 하고, 공급자적합성확인
 # 대상이면 없는 것이 정상이다 (CLAUDE.md R3-b).
@@ -2275,3 +2276,703 @@ items:
     category: electrical
     division: "조명기기"
     source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "자동차용 재생타이어"
+    grade: 안전인증
+    category: household
+    division: "화학 자동차용 재생타이어"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 4"
+  - item: "타이어 재생용 트레드고무"
+    grade: 안전인증
+    category: household
+    division: "화학 자동차용 재생타이어"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 4"
+  - item: "가스라이터"
+    grade: 안전인증
+    category: household
+    division: "생활용품"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 4"
+  - item: "공기주입물놀이기구"
+    grade: 안전인증
+    category: household
+    division: "생활용품"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 4"
+  - item: "공기주입보우트"
+    grade: 안전인증
+    category: household
+    division: "생활용품"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 4"
+  - item: "수영보조용품(착용형)"
+    grade: 안전인증
+    category: household
+    division: "생활용품"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 4"
+  - item: "수영보조용품(비착용형)"
+    grade: 안전인증
+    category: household
+    division: "생활용품"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 4"
+  - item: "청소년용 비비탄 총"
+    grade: 안전인증
+    category: household
+    division: "생활용품"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 4"
+  - item: "성인용 비비탄 총"
+    grade: 안전인증
+    category: household
+    division: "생활용품"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 4"
+  - item: "가정용 압력냄비"
+    grade: 안전인증
+    category: household
+    division: "기계금속"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 4"
+  - item: "압력솥"
+    grade: 안전인증
+    category: household
+    division: "기계금속"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 4"
+  - item: "망간 건전지"
+    grade: 안전확인
+    category: household
+    division: "화학"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 5"
+  - item: "알칼리ㆍ망간 전지(L)"
+    grade: 안전확인
+    category: household
+    division: "화학"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 5"
+  - item: "자동차용 브레이크액"
+    grade: 안전확인
+    category: household
+    division: "화학"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 5"
+  - item: "승용차용 타이어"
+    grade: 안전확인
+    category: household
+    division: "화학"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 5"
+  - item: "소형 트럭용 타이어"
+    grade: 안전확인
+    category: household
+    division: "화학"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 5"
+  - item: "트럭 및 버스용 타이어"
+    grade: 안전확인
+    category: household
+    division: "화학"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 5"
+  - item: "고령자용 보행보조차"
+    grade: 안전확인
+    category: household
+    division: "생활용품"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 5"
+  - item: "고령자용 보조차"
+    grade: 안전확인
+    category: household
+    division: "생활용품"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 5"
+  - item: "디지털도어록"
+    grade: 안전확인
+    category: household
+    division: "생활용품"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 5"
+  - item: "롤러스포츠 보호장구"
+    grade: 안전확인
+    category: household
+    division: "생활용품"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 5"
+  - item: "스노보드"
+    grade: 안전확인
+    category: household
+    division: "생활용품"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 5"
+  - item: "부츠"
+    grade: 안전확인
+    category: household
+    division: "생활용품"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 5"
+  - item: "바인딩"
+    grade: 안전확인
+    category: household
+    division: "생활용품"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 5"
+  - item: "스케이트보드"
+    grade: 안전확인
+    category: household
+    division: "생활용품"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 5"
+  - item: "전동스케이트보드"
+    grade: 안전확인
+    category: household
+    division: "생활용품"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 5"
+  - item: "전동킥보드"
+    grade: 안전확인
+    category: household
+    division: "생활용품"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 5"
+  - item: "전동이륜평행차"
+    grade: 안전확인
+    category: household
+    division: "생활용품"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 5"
+  - item: "전동보드류"
+    grade: 안전확인
+    category: household
+    division: "생활용품"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 5"
+  - item: "스키(알파인용)"
+    grade: 안전확인
+    category: household
+    division: "생활용품"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 5"
+  - item: "스키화(알파인용)"
+    grade: 안전확인
+    category: household
+    division: "생활용품"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 5"
+  - item: "스키바인딩(알파인용)"
+    grade: 안전확인
+    category: household
+    division: "생활용품"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 5"
+  - item: "일반용자전거"
+    grade: 안전확인
+    category: household
+    division: "생활용품"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 5"
+  - item: "산악용자전거"
+    grade: 안전확인
+    category: household
+    division: "생활용품"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 5"
+  - item: "전기자전거"
+    grade: 안전확인
+    category: household
+    division: "생활용품"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 5"
+  - item: "기타 이와 유사한 제품"
+    grade: 안전확인
+    category: household
+    division: "생활용품"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 5"
+  - item: "고정식운동기구"
+    grade: 안전확인
+    category: household
+    division: "생활용품"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 5"
+  - item: "벤치 프레스"
+    grade: 안전확인
+    category: household
+    division: "생활용품"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 5"
+  - item: "러닝머신"
+    grade: 안전확인
+    category: household
+    division: "생활용품"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 5"
+  - item: "고정식자전거"
+    grade: 안전확인
+    category: household
+    division: "생활용품"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 5"
+  - item: "스텝퍼"
+    grade: 안전확인
+    category: household
+    division: "생활용품"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 5"
+  - item: "로잉 머신"
+    grade: 안전확인
+    category: household
+    division: "생활용품"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 5"
+  - item: "운동용슬라이더"
+    grade: 안전확인
+    category: household
+    division: "생활용품"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 5"
+  - item: "기타 이와 유사한 제품"
+    grade: 안전확인
+    category: household
+    division: "생활용품"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 5"
+  - item: "야외운동기구"
+    grade: 안전확인
+    category: household
+    division: "생활용품"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 5"
+  - item: "휴대용 레이저용품"
+    grade: 안전확인
+    category: household
+    division: "생활용품"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 5"
+  - item: "승차용 안전모"
+    grade: 안전확인
+    category: household
+    division: "생활용품"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 5"
+  - item: "승차용 눈보호구"
+    grade: 안전확인
+    category: household
+    division: "생활용품"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 5"
+  - item: "자전거용 안전모"
+    grade: 안전확인
+    category: household
+    division: "생활용품"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 5"
+  - item: "롤러스포츠용 안전모"
+    grade: 안전확인
+    category: household
+    division: "생활용품"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 5"
+  - item: "등산용 안전모"
+    grade: 안전확인
+    category: household
+    division: "생활용품"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 5"
+  - item: "스키용 안전모"
+    grade: 안전확인
+    category: household
+    division: "생활용품"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 5"
+  - item: "야구용 안전모"
+    grade: 안전확인
+    category: household
+    division: "생활용품"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 5"
+  - item: "기타 이와 유사한 제품"
+    grade: 안전확인
+    category: household
+    division: "생활용품"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 5"
+  - item: "온열팩"
+    grade: 안전확인
+    category: household
+    division: "생활용품"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 5"
+  - item: "수유패드"
+    grade: 안전확인
+    category: household
+    division: "생활용품"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 5"
+  - item: "기름난로"
+    grade: 안전확인
+    category: household
+    division: "생활용품"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 5"
+  - item: "야외 운동기구"
+    grade: 안전확인
+    category: household
+    division: "생활용품"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 5"
+  - item: "LED마스크"
+    grade: 안전확인
+    category: household
+    division: "생활용품"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 5"
+  - item: "두피관리기"
+    grade: 안전확인
+    category: household
+    division: "생활용품"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 5"
+  - item: "눈마사지기"
+    grade: 안전확인
+    category: household
+    division: "생활용품"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 5"
+  - item: "플라즈마 미용기기"
+    grade: 안전확인
+    category: household
+    division: "생활용품"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 5"
+  - item: "휴대용 예초기의 날"
+    grade: 안전확인
+    category: household
+    division: "기계금속"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 5"
+  - item: "휴대용 예초기 보호덮개"
+    grade: 안전확인
+    category: household
+    division: "기계금속"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 5"
+  - item: "등산용로프"
+    grade: 안전확인
+    category: household
+    division: "섬유"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 5"
+  - item: "스포츠용 구명복"
+    grade: 안전확인
+    category: household
+    division: "섬유"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 5"
+  - item: "부력 보조복"
+    grade: 안전확인
+    category: household
+    division: "섬유"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 5"
+  - item: "미끄럼 방지 타일"
+    grade: 안전확인
+    category: household
+    division: "건축"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 5"
+  - item: "실내용 바닥재"
+    grade: 안전확인
+    category: household
+    division: "건축"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 5"
+  - item: "연질염화비닐호스"
+    grade: 공급자적합성확인
+    category: household
+    division: "화학"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 6"
+  - item: "폴리염화비닐관"
+    grade: 공급자적합성확인
+    category: household
+    division: "화학"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 6"
+  - item: "높이 762mm 이상의 가정용 서랍장 및 사무용 파일링 캐비넷"
+    grade: 공급자적합성확인
+    category: household
+    division: "생활"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 6"
+  - item: "롤러스케이트"
+    grade: 공급자적합성확인
+    category: household
+    division: "생활"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 6"
+  - item: "바퀴 달린 운동화"
+    grade: 공급자적합성확인
+    category: household
+    division: "생활"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 6"
+  - item: "창문 블라인드"
+    grade: 공급자적합성확인
+    category: household
+    division: "생활"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 6"
+  - item: "쌍꺼풀용 테이프"
+    grade: 공급자적합성확인
+    category: household
+    division: "생활"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 6"
+  - item: "속눈썹 열 성형기"
+    grade: 공급자적합성확인
+    category: household
+    division: "생활"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 6"
+  - item: "가(假) 속눈썹(인조 속눈썹)"
+    grade: 공급자적합성확인
+    category: household
+    division: "생활"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 6"
+  - item: "쇼핑카트"
+    grade: 공급자적합성확인
+    category: household
+    division: "생활"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 6"
+  - item: "주택용 사다리"
+    grade: 공급자적합성확인
+    category: household
+    division: "생활"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 6"
+  - item: "도배용 사다리"
+    grade: 공급자적합성확인
+    category: household
+    division: "생활"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 6"
+  - item: "원예용 사다리"
+    grade: 공급자적합성확인
+    category: household
+    division: "생활"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 6"
+  - item: "계단식 소형 사다리"
+    grade: 공급자적합성확인
+    category: household
+    division: "생활"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 6"
+  - item: "인라인롤러스케이트"
+    grade: 공급자적합성확인
+    category: household
+    division: "생활"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 6"
+  - item: "킥보드"
+    grade: 공급자적합성확인
+    category: household
+    division: "생활"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 6"
+  - item: "자동차용 유압식 잭"
+    grade: 공급자적합성확인
+    category: household
+    division: "기계금속"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 6"
+  - item: "자동차용 나사식 잭"
+    grade: 공급자적합성확인
+    category: household
+    division: "기계금속"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 6"
+  - item: "빙삭기"
+    grade: 공급자적합성확인
+    category: household
+    division: "기계금속"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 6"
+  - item: "물탱크"
+    grade: 공급자적합성확인
+    category: household
+    division: "건축"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 6"
+  - item: "가죽제품"
+    grade: 안전기준준수
+    category: household
+    division: "화학"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 7"
+  - item: "매트류"
+    grade: 안전기준준수
+    category: household
+    division: "화학"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 7"
+  - item: "신발류"
+    grade: 안전기준준수
+    category: household
+    division: "화학"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 7"
+  - item: "기타류"
+    grade: 안전기준준수
+    category: household
+    division: "화학"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 7"
+  - item: "책상 및 테이블"
+    grade: 안전기준준수
+    category: household
+    division: "생활"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 7"
+  - item: "의자"
+    grade: 안전기준준수
+    category: household
+    division: "생활"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 7"
+  - item: "수납가구"
+    grade: 안전기준준수
+    category: household
+    division: "생활"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 7"
+  - item: "침대"
+    grade: 안전기준준수
+    category: household
+    division: "생활"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 7"
+  - item: "씽크대"
+    grade: 안전기준준수
+    category: household
+    division: "생활"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 7"
+  - item: "소파"
+    grade: 안전기준준수
+    category: household
+    division: "생활"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 7"
+  - item: "기타 가구류"
+    grade: 안전기준준수
+    category: household
+    division: "생활"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 7"
+  - item: "간이 빨래걸이"
+    grade: 안전기준준수
+    category: household
+    division: "생활"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 7"
+  - item: "선글라스"
+    grade: 안전기준준수
+    category: household
+    division: "생활"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 7"
+  - item: "안경테"
+    grade: 안전기준준수
+    category: household
+    division: "생활"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 7"
+  - item: "텐트"
+    grade: 안전기준준수
+    category: household
+    division: "생활"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 7"
+  - item: "난방용 텐트"
+    grade: 안전기준준수
+    category: household
+    division: "생활"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 7"
+  - item: "고령자용 고무신발"
+    grade: 안전기준준수
+    category: household
+    division: "생활"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 7"
+  - item: "고령자용 염화비닐신발"
+    grade: 안전기준준수
+    category: household
+    division: "생활"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 7"
+  - item: "고령자용 가죽신발"
+    grade: 안전기준준수
+    category: household
+    division: "생활"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 7"
+  - item: "고령자용 발포신발"
+    grade: 안전기준준수
+    category: household
+    division: "생활"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 7"
+  - item: "고령자용 일자형지팡이"
+    grade: 안전기준준수
+    category: household
+    division: "생활"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 7"
+  - item: "고령자용 조절식지팡이"
+    grade: 안전기준준수
+    category: household
+    division: "생활"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 7"
+  - item: "고령자용 접이식지팡이"
+    grade: 안전기준준수
+    category: household
+    division: "생활"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 7"
+  - item: "고령자용 조립식지팡이"
+    grade: 안전기준준수
+    category: household
+    division: "생활"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 7"
+  - item: "고령자용 다족지팡이"
+    grade: 안전기준준수
+    category: household
+    division: "생활"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 7"
+  - item: "기타 이와 유사한 제품"
+    grade: 안전기준준수
+    category: household
+    division: "생활"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 7"
+  - item: "고령자용 휠체어테이블"
+    grade: 안전기준준수
+    category: household
+    division: "생활"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 7"
+  - item: "고령자용 목욕의자"
+    grade: 안전기준준수
+    category: household
+    division: "생활"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 7"
+  - item: "고령자 위치추적기"
+    grade: 안전기준준수
+    category: household
+    division: "생활"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 7"
+  - item: "물안경"
+    grade: 안전기준준수
+    category: household
+    division: "생활"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 7"
+  - item: "반사 안전조끼"
+    grade: 안전기준준수
+    category: household
+    division: "생활"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 7"
+  - item: "스테인레스 수세미"
+    grade: 안전기준준수
+    category: household
+    division: "생활"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 7"
+  - item: "시각장애인용 일자형지팡이"
+    grade: 안전기준준수
+    category: household
+    division: "생활"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 7"
+  - item: "시각장애인용 접이식지팡이"
+    grade: 안전기준준수
+    category: household
+    division: "생활"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 7"
+  - item: "시각장애인용 안테나형지팡이"
+    grade: 안전기준준수
+    category: household
+    division: "생활"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 7"
+  - item: "기타 이와 유사한 제품"
+    grade: 안전기준준수
+    category: household
+    division: "생활"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 7"
+  - item: "침대 매트리스"
+    grade: 안전기준준수
+    category: household
+    division: "생활"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 7"
+  - item: "우산"
+    grade: 안전기준준수
+    category: household
+    division: "생활"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 7"
+  - item: "양산"
+    grade: 안전기준준수
+    category: household
+    division: "생활"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 7"
+  - item: "우산 겸용 양산"
+    grade: 안전기준준수
+    category: household
+    division: "생활"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 7"
+  - item: "휴대용 경보기"
+    grade: 안전기준준수
+    category: household
+    division: "생활"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 7"
+  - item: "접촉성 금속 장신구"
+    grade: 안전기준준수
+    category: household
+    division: "생활"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 7"
+  - item: "벽지"
+    grade: 안전기준준수
+    category: household
+    division: "생활"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 7"
+  - item: "종이장판지"
+    grade: 안전기준준수
+    category: household
+    division: "생활"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 7"
+  - item: "감열지"
+    grade: 안전기준준수
+    category: household
+    division: "생활"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 7"
+  - item: "모터 달린 보드"
+    grade: 안전기준준수
+    category: household
+    division: "생활"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 7"
+  - item: "휴대용 에탄올 화로"
+    grade: 안전기준준수
+    category: household
+    division: "생활"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 7"
+  - item: "무시동 히터"
+    grade: 안전기준준수
+    category: household
+    division: "기계금속"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 7"
+  - item: "의류"
+    grade: 안전기준준수
+    category: household
+    division: "섬유"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 7"
+  - item: "의류 이외의 섬유제품"
+    grade: 안전기준준수
+    category: household
+    division: "섬유"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 7"
+  - item: "양탄자"
+    grade: 안전기준준수
+    category: household
+    division: "섬유"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 7"
