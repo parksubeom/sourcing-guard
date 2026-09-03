@@ -18,6 +18,9 @@ _PENALTY: dict[FindingKind, int] = {
     FindingKind.KC_SUSPENDED: 100,
     FindingKind.KC_UNDER_ACTION: 40,
     FindingKind.KC_MISSING_BUT_REQUIRED: 45,
+    # 부재가 정상인 등급(공급자적합성확인·안전기준준수)으로 확정된 경우는
+    # 깎지 않는다. 조회할 번호가 애초에 없는 제도다 (R3-b).
+    FindingKind.KC_ABSENCE_EXPECTED: 0,
     # 0 이다. 적용 범위 안내이지 문제 지적이 아니므로 신호를 가르지 않고
     # (아래 _signal_for 참조) 점수도 깎지 않는다.
     #
@@ -112,7 +115,10 @@ _HEADLINE: dict[Signal, str] = {
 # "가릴 수 없습니다" 라고 말하면 한 판단을 안 한 것처럼 스스로 깎아내린다.
 #
 # 순서가 곧 우선순위다. 위에서 먼저 걸리는 사유가 헤드라인을 가져간다.
-_UNKNOWN_HEADLINE: list[tuple[FindingKind, str]] = [
+# "우리 소관이 아니다" · "연령 기준으로 대상이 아니다" 는 품목 자체에 대한
+# 확정된 판단이라 무엇보다 먼저 말한다. 그 뒤에 "번호 부재가 정상" 이 오고,
+# 우리 수록 범위(COVERAGE_GAP)·조회 실패는 그다음이다.
+_UNKNOWN_HEADLINE_FIRST: list[tuple[FindingKind, str]] = [
     (
         FindingKind.OUT_OF_SCOPE,
         "본 서비스 범위 밖 — 식품·화장품 등은 식약처 등 다른 부처 소관입니다. "
@@ -123,6 +129,9 @@ _UNKNOWN_HEADLINE: list[tuple[FindingKind, str]] = [
         "대상 아님 — 표기된 사용연령 기준으로는 어린이제품 안전기준 대상이 "
         "아닙니다. 실사용 연령이 13세 이하이면 대상이 될 수 있으니 표기 근거를 확인하세요.",
     ),
+]
+
+_UNKNOWN_HEADLINE: list[tuple[FindingKind, str]] = [
     (
         FindingKind.COVERAGE_GAP,
         "일부만 확인 — 인증·리콜은 대조했으나, 이 품목군의 유해물질 기준은 아직 "
@@ -142,7 +151,41 @@ _UNKNOWN_NO_INPUT = (
 )
 
 
-def _unknown_headline(kinds: set[FindingKind], has_extracted: bool) -> str:
+def _absence_expected_headline(kinds: set[FindingKind], grade: str) -> str:
+    """"번호가 없는 것이 정상" 을 헤드라인이 말한다.
+
+    finding 안에만 묶어 두면 첫 줄만 읽는 셀러가 못 본다. 정상 상품에 회색·
+    노란불이 반복되면 셀러가 모든 경고를 무시하게 되고, 그게 R3-b 가 막으려던
+    상태다.
+
+    주의: 면제 표현을 쓰지 않는다. "인증이 필요 없다" 는 틀리다 - 제조·수입자
+      가 스스로 시험해 확인할 의무가 있다. 정확한 표현은 "조회 DB 에 번호가
+      없는 것이 정상" 이다.
+
+    리콜 문구는 실제로 대조했을 때만 붙인다. 조회에 실패했으면 대조하지
+    않은 것을 대조했다고 말할 수 없다 (R3).
+    """
+    if FindingKind.RECALL_CLEAR in kinds:
+        recall = " 리콜 이력도 확인되지 않았습니다."
+    elif FindingKind.LOOKUP_FAILED in kinds:
+        recall = " 다만 리콜 조회에는 연결하지 못했습니다."
+    else:
+        recall = ""
+    gap = (
+        " 이 품목군의 유해물질 기준은 아직 수록되지 않았습니다."
+        if FindingKind.COVERAGE_GAP in kinds
+        else ""
+    )
+    return (
+        f"인증번호 부재가 정상 — 이 품목은 {grade} 대상으로, 정부 조회 DB 에 "
+        f"번호가 없는 것이 정상입니다.{recall}{gap} "
+        "다만 실제 안전성은 시험성적서로 확인됩니다."
+    )
+
+
+def _unknown_headline(
+    kinds: set[FindingKind], has_extracted: bool, *, absence_grade: str | None = None
+) -> str:
     """UNKNOWN 의 사유를 헤드라인으로 옮긴다.
 
     같은 회색불이라도 "대상이 아니다" 와 "정보가 부족하다" 와 "우리 범위 밖이다"
@@ -150,6 +193,15 @@ def _unknown_headline(kinds: set[FindingKind], has_extracted: bool) -> str:
     """
     if not has_extracted:
         return _UNKNOWN_NO_INPUT
+    # "범위 밖" · "연령 기준 대상 아님" 은 더 확정된 판단이라 먼저 말한다.
+    # 그 둘이 아니면 "번호 부재가 정상" 이 먼저다 - 셀러의 즉각적인 걱정이
+    # "번호가 없는데 팔아도 되나" 이고, 우리 수록 범위(COVERAGE_GAP)보다
+    # 그 답이 급하다. 수록 범위는 같은 헤드라인 안에 덧붙인다.
+    for kind, text in _UNKNOWN_HEADLINE_FIRST:
+        if kind in kinds:
+            return text
+    if absence_grade and FindingKind.KC_ABSENCE_EXPECTED in kinds:
+        return _absence_expected_headline(kinds, absence_grade)
     for kind, text in _UNKNOWN_HEADLINE:
         if kind in kinds:
             return text
@@ -297,7 +349,19 @@ def score(
     extracted = _extracted_fields(facts)
 
     if signal is Signal.UNKNOWN:
-        headline = _unknown_headline(kinds, has_extracted=bool(extracted))
+        # 부재가 정상인 등급은 finding 의 detail 에 있다. scorer 는 여전히
+        # 순수 함수다 - 주어진 findings 만 읽는다.
+        absence_grade = next(
+            (
+                f.detail.get("grade")
+                for f in findings
+                if f.kind is FindingKind.KC_ABSENCE_EXPECTED and f.detail.get("grade")
+            ),
+            None,
+        )
+        headline = _unknown_headline(
+            kinds, has_extracted=bool(extracted), absence_grade=absence_grade
+        )
     else:
         headline = _HEADLINE[signal]
     if FindingKind.OUT_OF_SCOPE in kinds:

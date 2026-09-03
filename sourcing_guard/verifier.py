@@ -776,9 +776,18 @@ def verify(
             # 조회만 셀러 확인 뒤로 미룬다.
             findings.append(_image_candidate_finding(image_candidates, today))
         else:
-            findings.append(
-                _kc_missing_finding(facts, today, grade_known=bool(graded))
+            # 합의 등급만 넘긴다. 갈릴 때(ITEM_GRADE_SPLIT)는 None 이 되어
+            # 기존 AMBER 경로로 간다 - 느슨한 쪽을 골라 감점을 빼면 화면에서
+            # 막은 "한쪽 단정" 을 신호등에서 하는 셈이다.
+            agreed = next(
+                (
+                    g.detail.get("grade")
+                    for g in graded
+                    if g.kind is FindingKind.ITEM_GRADE_MATCHED
+                ),
+                None,
             )
+            findings.append(_kc_missing_finding(facts, today, grade=agreed))
 
         if _cert_required_here:
             # 어느 위해도 단계(안전인증 / 안전확인 / 공급자적합성확인)인지 모르면
@@ -1099,8 +1108,16 @@ def _weak_reason(weak: list) -> str:
     return "·".join(_WEAK_REASON_KO.get(a, a) for a in axes) or "유사한"
 
 
+# 부재가 정상인 등급. 제조·수입자가 스스로 시험해 확인하므로 정부 조회 DB 에
+# 번호가 없다 (CLAUDE.md R3-b).
+#
+# 주의: "인증이 필요 없다" 가 아니다. 확인 의무는 있고 조회할 번호가 없는
+#   것이다. 문구에 면제 표현을 쓰면 셀러가 의무 자체를 없는 것으로 읽는다.
+_ABSENCE_IS_NORMAL = frozenset({"공급자적합성확인", "안전기준준수"})
+
+
 def _kc_missing_finding(
-    facts: ProductFacts, today: date, *, grade_known: bool = False
+    facts: ProductFacts, today: date, *, grade: str | None = None
 ) -> Finding:
     """인증번호 표기를 못 찾았을 때.
 
@@ -1114,6 +1131,16 @@ def _kc_missing_finding(
       ② "안전인증·안전확인 대상이면…"       등급을 알아냈으면 뺀다
       ③ 정부 사이트 직접 검색 링크          항상 필요하다
 
+    등급에 따라 부재의 뜻이 정반대다.
+
+      안전인증·안전확인          번호가 반드시 있어야 함  → AMBER, 문구 강화
+      공급자적합성확인·안전기준준수  번호 없는 게 정상        → 감점 없음
+      미상 · 갈림                해석할 수 없음           → 기존 AMBER
+
+    주의: 등급이 갈릴 때는 느슨한 쪽으로 감점을 빼지 않는다. 화면에서 세 겹
+      으로 막은 "한쪽 단정" 을 신호등에서 하는 셈이 된다. 부르는 쪽이 합의
+      등급만 넘긴다.
+
     ②는 등급을 모를 때의 일반론이다. 등급을 특정한 finding 이 바로 아래
     붙는데 일반론을 먼저 두면 같은 말을 두 번 읽게 되고, 특정된 답이 묻힌다.
     조회 성공 후 안내문을 교체하는 것과 같은 원칙이다.
@@ -1123,20 +1150,48 @@ def _kc_missing_finding(
         f" 아래 링크에서 '{search_hint}' 로 직접 검색해 인증 이력을 확인할 수 있습니다."
         if search_hint else ""
     )
-    tiers = (
-        ""
-        if grade_known
-        else (
+    if grade in _ABSENCE_IS_NORMAL:
+        # 감점하지 않는다. 조회할 번호가 애초에 없는 제도다.
+        return Finding(
+            kind=FindingKind.KC_ABSENCE_EXPECTED,
+            signal=Signal.UNKNOWN,
+            statement_ko=(
+                # 등급이 뜻하는 바를 여기서 되풀이하지 않는다. 바로 아래
+                # ITEM_GRADE_MATCHED 가 품목명·범위 한정과 함께 말하고,
+                # 헤드라인도 말한다. 세 번 읽게 하면 우리가 무슨 판단을
+                # 했는지가 묻힌다 - 방금 일반론을 뺀 것과 같은 이유다.
+                #
+                # 이 문장이 하는 일은 하나다: **부재를 문제로 보지 않았다**
+                # 는 우리 판단을 밝히는 것.
+                "상세페이지에서 인증번호를 찾지 못했습니다. 다만 아래 등급"
+                f"({grade})에서는 정부 조회 DB 에 번호가 없는 것이 정상이므로 "
+                "부재를 문제로 보지 않았습니다. "
+                "공급처에 시험성적서를 요청해 확인하세요."
+            ),
+            source_label="제품안전정보센터 대상 품목 안내",
+            source_url="https://www.safetykorea.kr/policy/targetsSafetyCheck3",
+            detail={"grade": grade, "search_term": search_hint},
+            checked_at=today,
+        )
+
+    if grade:
+        # 등급을 특정했으니 일반론보다 세게 말할 수 있다.
+        head = (
+            f"이 품목은 {grade} 대상으로 조회되는데 상세페이지에서 "
+            "인증번호를 찾지 못했습니다. "
+            f"{grade} 대상이면 인증번호가 반드시 있어야 합니다."
+        )
+    else:
+        head = (
+            "규제 품목군으로 보이나 상세페이지에서 인증번호를 찾지 못했습니다."
             " 안전인증·안전확인 대상이면 인증번호가 있어야 하고, "
             "공급자적합성확인 대상이면 없는 것이 정상입니다."
         )
-    )
     return Finding(
         kind=FindingKind.KC_MISSING_BUT_REQUIRED,
         signal=Signal.AMBER,
         statement_ko=(
-            "규제 품목군으로 보이나 상세페이지에서 인증번호를 찾지 못했습니다."
-            + tiers
+            head
             + guide
             + " 공급처에 인증 구분과 시험성적서를 요청해 확인하세요."
         ),

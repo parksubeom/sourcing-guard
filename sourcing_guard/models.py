@@ -99,6 +99,15 @@ class FindingKind(str, Enum):
     KC_SUSPENDED = "kc_suspended"        # 표시 사용금지
     KC_UNDER_ACTION = "kc_under_action"  # 개선명령·청문실시
     KC_MISSING_BUT_REQUIRED = "kc_missing_but_required"
+    # 번호를 못 찾았지만 **부재가 정상인** 등급으로 확정된 경우.
+    # 공급자적합성확인·안전기준준수 대상은 제조·수입자가 스스로 시험해
+    # 확인하므로 정부 조회 DB 에 번호가 없다. 이걸 AMBER 로 두면 정상
+    # 상품에 노란불이 반복되고, 셀러가 모든 노란불을 무시하게 된다 -
+    # 그러면 진짜 취소된 인증도 안 보게 된다 (CLAUDE.md R3-b).
+    #
+    # 주의: 등급이 갈릴 때는 쓰지 않는다. 느슨한 쪽을 골라 감점을 빼면
+    #   화면에서 막은 "한쪽 단정" 을 신호등에서 하는 셈이다.
+    KC_ABSENCE_EXPECTED = "kc_absence_expected"
     # 이미지에서 읽었고 형식 검증을 통과한 인증번호. 아직 조회하지 않았다 -
     # 셀러가 "이 번호가 맞다" 고 확인한 뒤에 텍스트 경로로 조회한다.
     KC_IMAGE_CANDIDATE = "kc_image_candidate"
@@ -157,6 +166,8 @@ class FindingGroup(str, Enum):
 _FINDING_GROUP: dict[str, FindingGroup] = {
     # 소싱 전에 확인·준비할 것
     "kc_missing_but_required": FindingGroup.ACTION,
+    # 부재가 정상이어도 시험성적서 요청은 여전히 셀러가 할 일이다.
+    "kc_absence_expected": FindingGroup.ACTION,
     "kc_tier_unknown": FindingGroup.ACTION,
     "item_grade_matched": FindingGroup.ACTION,
     "item_grade_split": FindingGroup.ACTION,
