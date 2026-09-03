@@ -121,3 +121,45 @@ def test_the_two_sets_stay_disjoint():
     assert not (_CERT_REQUIRED & _CERT_REQUIRED_IF_GRADED)
     assert ItemCategory.HOUSEHOLD in _CERT_REQUIRED_IF_GRADED
     assert ItemCategory.ELECTRICAL in _CERT_REQUIRED
+
+
+# --- 승격했다고 커버리지를 선언하지는 않는다 -------------------------------
+def test_household_is_not_declared_covered_yet():
+    """생활용품 규칙 4건을 승격했지만 coverage 에 넣지 않는다.
+
+    승격한 것은 승차용 안전모·휴대용 레이저용품·속눈썹 열 성형기 세 품목뿐이다.
+    그런데 applies_to 가 [household] 로 광범위해서, coverage 에 household 를
+    넣으면 우산·가구·섬유·합성수지 등 나머지 생활용품에도 COVERAGE_GAP 이
+    사라진다 — "이 품목군의 유해물질 기준을 다 봤다" 는 잘못된 안심이 된다.
+
+    부속서가 74번대까지 있으니, 주요 품목이 채워질 때까지는 선언하지 않는다.
+    """
+    import yaml
+    from pathlib import Path
+
+    import sourcing_guard
+
+    path = Path(sourcing_guard.__file__).parent / "data" / "hazard_rules.yaml"
+    doc = yaml.safe_load(path.read_text(encoding="utf-8"))
+    assert "household" not in doc["coverage"]["categories"]
+    assert "electrical" not in doc["coverage"]["categories"]
+
+
+def test_promoted_household_rules_name_the_annex_they_came_from():
+    """승격한 생활용품 규칙은 어느 부속서 몇 절을 대조했는지 남겨야 한다."""
+    import yaml
+    from pathlib import Path
+
+    import sourcing_guard
+
+    path = Path(sourcing_guard.__file__).parent / "data" / "hazard_rules.yaml"
+    doc = yaml.safe_load(path.read_text(encoding="utf-8"))
+    promoted = [
+        r for r in doc["rules"]
+        if r["id"].startswith("KC-LIFE-") and r["status"] == "verified"
+    ]
+    assert len(promoted) == 4
+    for rule in promoted:
+        assert rule["annex_no"], rule["id"]
+        assert rule["verified_source"], rule["id"]
+        assert rule["verified_by"] == "박수범", rule["id"]

@@ -218,8 +218,21 @@ def test_source_pages_match_the_current_decree():
 
 
 def test_promoted_rules_carry_the_current_decree_number():
-    """폐지된 고시 번호로 verified 를 달면 근거가 틀린 채로 프로덕션에 나간다."""
+    """폐지된 고시 번호로 verified 를 달면 근거가 틀린 채로 프로덕션에 나간다.
+
+    규칙 DB 에 고시가 셋이라 체계별로 요구가 다르다. 공통안전기준만 번호를
+    본문에 적고, 부속서·전안법은 부속서 번호나 법령명으로 특정된다.
+    """
     for rule_id, rule in _rules().items():
         if rule.get("status") != "verified":
             continue
-        assert "제2022-220호" in rule["legal_basis"], rule_id
+        basis = rule["legal_basis"]
+        if rule_id.startswith("KC-COMMON-"):
+            assert "제2022-220호" in basis, rule_id
+        else:
+            # 부속서에서 온 것은 부속서 번호로 특정되고, verified_source 에
+            # 어느 조문을 눈으로 대조했는지 남는다.
+            assert "부속서" in basis, rule_id
+            assert rule.get("verified_source"), (
+                f"{rule_id}: verified 인데 무엇을 대조했는지 없다"
+            )

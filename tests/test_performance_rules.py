@@ -31,8 +31,12 @@ def test_existing_substance_rules_are_untouched():
         if rule["id"].startswith(("KC-COMMON-", "KC-ANNEX")):
             assert rule.get("requirement_type", "substance") == "substance", rule["id"]
 
+    # 활성 룰에 성능 요건이 섞이는 것은 정상이다 - 생활용품 부속서를 승격하면
+    # 안전모·레이저가 performance 로 들어온다. 어린이제품 쪽만 불변을 요구한다.
     book = RuleBook()
-    assert all(r.requirement_type == "substance" for r in book.active)
+    for rule in book.active:
+        if rule.id.startswith(("KC-COMMON-", "KC-ANNEX")):
+            assert rule.requirement_type == "substance", rule.id
 
 
 def test_performance_rules_carry_no_limit_value():
