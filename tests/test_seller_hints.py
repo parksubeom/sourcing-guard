@@ -227,3 +227,87 @@ def test_the_screen_forgets_the_hint_when_the_product_changes():
 def test_the_screen_lets_the_seller_undo():
     src = FRONT.read_text(encoding="utf-8")
     assert "되돌리기" in src
+
+
+# ---------------------------------------------------------------------------
+# 7. 실측 오답 5건이 힌트로 해소되는지 - 고정
+# ---------------------------------------------------------------------------
+
+_WRONG = Path(__file__).resolve().parents[1] / "tests" / "fixtures" / "도매꾹239_오답.tsv"
+
+
+def _wrong_rows() -> list[tuple[str, str, str]]:
+    out = []
+    for line in _WRONG.read_text(encoding="utf-8").splitlines():
+        if not line or line.startswith("#"):
+            continue
+        name, item, why = line.split("\t")
+        out.append((name, item, why))
+    return out
+
+
+def _category_of(name: str):
+    """품목군을 등급표에서 가져온다 - scripts/measure_hint_effect.py 와 같은 방법.
+
+    휴리스틱 추출은 상품명만으로 unclassified 를 내고, LLM 을 검사에서 부를
+    수는 없다. 등급표가 적어 둔 품목군을 쓴다 (라이브로 확인: 우산→household ·
+    선풍기→electrical · 공기청정기→electrical).
+    """
+    from sourcing_guard.item_grades import ItemGradeBook
+
+    found = ItemGradeBook().lookup_all(name)
+    assert found, name
+    cats = {g.category for g in found}
+    return (
+        ItemCategory.ELECTRICAL if "electrical" in cats else ItemCategory.HOUSEHOLD
+    )
+
+
+def test_the_measured_wrong_answers_are_all_askable():
+    """질문이 안 뜨는 오답은 힌트로 고칠 수 없다.
+
+    화면은 등급 finding 위에만 질문을 띄운다. 등급 미매칭인 오답이 있으면
+    별도 대응이 필요하므로, 실측 5건이 전부 질문 대상인지 고정한다.
+    """
+    asks = {FindingKind.ITEM_GRADE_MATCHED, FindingKind.ITEM_GRADE_SPLIT}
+    for name, _item, _why in _wrong_rows():
+        found = run(name, _category_of(name))[1]
+        assert {f.kind for f in found} & asks, name
+
+
+def test_the_measured_wrong_answers_are_resolved_by_the_hint():
+    """힌트를 누르면 오답이 사라지고 인증 부재 경고도 남지 않는다.
+
+    ⚠ 이것은 "자동으로 맞아졌다" 가 아니다. 셀러가 버튼을 눌러야 한다.
+      기본 상태의 오답 건수는 그대로다 - 개선된 것은 "해소할 방법이 생겼다".
+    """
+    for name, item, _why in _wrong_rows():
+        _facts, before = run(name, _category_of(name))
+        # 오답이 실제로 그 품목으로 붙는지 먼저 확인한다 - 안 붙으면 이
+        # 검사가 아무것도 재지 않는다.
+        landed = [
+            c["item"]
+            for f in before
+            if f.kind is FindingKind.ITEM_GRADE_MATCHED
+            for c in f.detail.get("candidates", [])
+        ]
+        assert item in landed, (name, landed)
+
+        _facts, after = run(name, _category_of(name), SellerHints(is_accessory=True))
+        kinds_after = {f.kind for f in after}
+        assert FindingKind.ITEM_GRADE_NOT_APPLIED in kinds_after, name
+        assert FindingKind.KC_MISSING_BUT_REQUIRED not in kinds_after, name
+        assert FindingKind.ITEM_GRADE_MATCHED not in kinds_after, name
+        assert sum(_PENALTY[f.kind] for f in after) == 0, name
+
+
+def test_the_default_state_still_has_the_wrong_answers():
+    """힌트 없이는 줄지 않는다는 것을 명시로 고정한다.
+
+    이걸 뭉쳐서 "오답 0" 이라고 보고하면 우리가 스스로를 속인다.
+    """
+    for name, _item, _why in _wrong_rows():
+        found = run(name, _category_of(name))[1]
+        assert sum(_PENALTY[f.kind] for f in found) > 0 or any(
+            f.kind is FindingKind.ITEM_GRADE_MATCHED for f in found
+        ), name
