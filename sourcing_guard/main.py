@@ -20,6 +20,7 @@ from datetime import date
 from uuid import uuid4
 
 from .config import settings
+from .batch import MAX_ROWS, BatchReport, screen
 from .extractor import extract
 from .kats_client import KatsClient, health
 from .noncompliant_index import NoncompliantIndex
@@ -31,7 +32,7 @@ from .ratelimit import RateLimiter, text_fingerprint
 from .recall_index import RecallIndex
 from .storage import SqliteWatchStore
 from .sync import run_sync, sync_loop
-from .verifier import RuleBook, verify, verify_rf_by_model
+from .verifier import _grade_book, RuleBook, verify, verify_rf_by_model
 from .watchlist import sweep
 
 @asynccontextmanager
@@ -84,6 +85,23 @@ class ScanImage(BaseModel):
     # media_type 은 허용 목록으로 제한하고, 개수·크기 상한으로 LLM 비용을 막는다.
     media_type: Literal["image/jpeg", "image/png", "image/webp", "image/gif"]
     data: str = Field(min_length=1, max_length=8_000_000)  # base64, 원본 약 6MB
+
+
+class BatchRequest(BaseModel):
+    """대량 검사. 상품명을 줄바꿈으로 구분해 받는다.
+
+    셀러가 도매매·온채널 엑셀에서 상품명 열을 복사해 붙이면 그것이 곧 200줄
+    이다 - 엑셀 파싱 없이도 실사용이 된다.
+    """
+
+    # 200줄 x 상품명 200자 여유
+    text: str = Field(default="", max_length=60_000)
+
+    @model_validator(mode="after")
+    def _need_text(self) -> "BatchRequest":
+        if not self.text.strip():
+            raise ValueError("검사할 상품명을 한 줄에 하나씩 넣어 주세요.")
+        return self
 
 
 class ScanRequest(BaseModel):
@@ -216,6 +234,56 @@ def rf_lookup(req: RfLookupRequest, request: Request) -> RfLookupResult:
         model_name=req.model_name,
         findings=verify_rf_by_model(req.model_name, _rra),
     )
+
+
+@app.post("/api/v1/batch")
+def batch(req: BatchRequest, request: Request) -> dict:
+    """대량 1차 선별. LLM 을 쓰지 않으므로 200건이 0.1초에 끝난다.
+
+    배치는 **상품명만** 본다. 상세페이지가 없으니 재질·연령을 알 수 없고,
+    리콜 모델명 매칭도 약하다. 그래서 결과는 1차 선별이고, 걸러진 것을 단건
+    검사로 다시 보는 흐름이다 - 안 본 것을 봤다고 말하지 않는다 (R3).
+    """
+    client_ip = _client_ip(request)
+    if not _limiter.allow_request(client_ip, fingerprint=text_fingerprint(req.text)):
+        raise HTTPException(
+            status_code=429,
+            detail="요청이 잠시 많습니다. 1분 뒤에 다시 시도해 주세요.",
+            headers={"Retry-After": str(_limiter.retry_after_seconds(client_ip))},
+        )
+
+    book = _grade_book()
+    if book is None:
+        # 등급표를 못 읽으면 배치가 할 일이 없다. 감추지 않고 알린다.
+        raise HTTPException(
+            status_code=503,
+            detail="품목 등급표를 읽지 못했습니다. 잠시 후 다시 시도해 주세요.",
+        )
+    report = screen(req.text, book)
+    return {
+        "total": len(report.rows),
+        "truncated": report.truncated,
+        "max_rows": MAX_ROWS,
+        "counts": report.counts,
+        "scope_note": (
+            "대량 검사는 상품명만 봅니다. 재질·연령·인증번호는 상세페이지에 있으므로, "
+            "여기서 걸러진 상품은 단건 검사로 다시 확인하세요."
+        ),
+        "rows": [
+            {
+                "line": r.line,
+                "product_name": r.product_name,
+                "verdict": r.verdict.value,
+                "reason": r.reason,
+                "grade": r.grade,
+                "matched_item": r.matched_item,
+                "grade_candidates": r.grade_candidates,
+                "cert_numbers": r.cert_numbers,
+                "rf_numbers": r.rf_numbers,
+            }
+            for r in report.review_first
+        ],
+    }
 
 
 @app.post("/api/v1/scan", response_model=ScanResult)
