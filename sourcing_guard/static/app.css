@@ -378,3 +378,22 @@ nav.pages a[aria-current="page"]{color:var(--primary-60); background:var(--prima
 .saved{display:flex; align-items:center; gap:var(--s2); font-size:15px; font-weight:700; color:var(--success)}
 .saved svg{flex:none}
 @media (max-width:640px){ .watch-cta{padding:var(--s4) var(--s5)} }
+
+/* 등급 후보. 갈릴 때 한쪽을 강조하지 않는다 - 느슨한 쪽을 먼저·크게
+   그리면 셀러가 "번호 없어도 되는구나" 로 읽고 위법 상태로 판다.
+   서버가 준 순서 그대로 같은 모양으로 그린다. */
+.grades { list-style: none; margin: 8px 0 4px; padding: 0; }
+.grades li {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px;
+  padding: 6px 10px; margin-bottom: 4px;
+  border: 1px solid var(--line); border-radius: 6px;
+  background: var(--surface-2, transparent);
+}
+.grades b { font-weight: 600; }
+.grades .g {
+  font-size: 12px; padding: 1px 7px; border-radius: 999px;
+  border: 1px solid var(--line);
+}
+.grades .sub { flex-basis: 100%; font-size: 12px; }
+.confirm.part { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.confirm.part .sub { flex-basis: 100%; }
