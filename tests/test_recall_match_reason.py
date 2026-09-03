@@ -233,11 +233,33 @@ def test_deep_links_are_kept(url):
     assert label == "리콜 공표 원문"
 
 
-def test_domestic_recall_without_url_links_to_the_recall_board():
-    """국내 응답에는 상세 URL 필드가 아예 없다. 메인페이지로 보내면 안 된다."""
+def test_domestic_recall_without_url_links_to_the_individual_notice():
+    """국내 응답에는 상세 URL 필드가 아예 없지만 recallUid 는 전건 있다.
+
+    이전에는 목록 화면으로 보냈다. 메인페이지보다는 낫지만, 셀러가 그 공표를
+    목록에서 다시 찾아야 한다 - 국내 리콜 4,243건 전부가 그랬다.
+
+    recallUid 로 개별 상세를 만들 수 있다. 제품안전정보센터 첫 화면이 리콜
+    목록을 이 주소로 링크하고, 실측에서 표본 6/6(2026-09-01)·5/5(09-03)이
+    HTTP 200 이며 본문에 해당 제품명이 들어 있었다.
+    """
     findings, _ = run(
         PEN,
-        [(rec(scope="domestic", detail_url=None), Match(MatchStrength.EXACT, "model_name"))],
+        [(rec(scope="domestic", detail_url=None, uid="10022642"),
+          Match(MatchStrength.EXACT, "model_name"))],
+    )
+    f = next(x for x in findings if x.kind is FindingKind.RECALL_MATCH)
+    assert "recallUid=10022642" in f.source_url
+    assert f.source_label == "리콜 공표 원문"
+    assert f.detail["evidence_is_original"] is True
+
+
+def test_domestic_recall_without_uid_still_falls_back_to_the_board():
+    """uid 마저 없으면 목록으로 보낸다. 메인페이지로는 보내지 않는다."""
+    findings, _ = run(
+        PEN,
+        [(rec(scope="domestic", detail_url=None, uid=None),
+          Match(MatchStrength.EXACT, "model_name"))],
     )
     f = next(x for x in findings if x.kind is FindingKind.RECALL_MATCH)
     assert f.source_url == RECALL_BOARD_URL

@@ -14,6 +14,7 @@ import yaml
 from typing import TYPE_CHECKING
 
 from .kats_client import (
+    recall_evidence_for,
     CertState,
     KatsApiError,
     KatsClient,
@@ -36,6 +37,9 @@ from .rra_client import RraApiError, RraClient, is_searchable_model, rf_evidence
 
 _NONCOMPLIANT_URL = "https://www.rra.go.kr/ko/license/A_d_list.do"
 from .models import (
+    object_particle,
+    subject_particle,
+    topic_particle,
     Finding,
     FindingKind,
     ItemCategory,
@@ -183,7 +187,7 @@ def _match_statement(facts: ProductFacts, r, m) -> str:
     theirs = _short(r.model_name)
     tail = f", 리콜 쪽 모델명은 '{theirs}'" if theirs else ""
     return (
-        f"{head} 이(가) 리콜 공표 목록과 {m.strength.label_ko}합니다 — "
+        f"{head}{subject_particle(head)} 리콜 공표 목록과 {m.strength.label_ko}합니다 — "
         f"리콜된 제품은 '{recalled}'({where}, {when} 공표){tail} 입니다. "
         "원문 확인이 필요합니다."
     )
@@ -240,7 +244,8 @@ def _rf_verified(record, today: date, *, via: str) -> Finding:
         kind=FindingKind.RF_CERT_VERIFIED,
         signal=Signal.GREEN,
         statement_ko=(
-            f"전파인증 번호 '{record.cert_number}' 이(가) 조회되었습니다({how}). "
+            f"전파인증 번호 '{record.cert_number}'"
+            f"{subject_particle(record.cert_number)} 조회되었습니다({how}). "
             f"업체: {record.company or '-'} / 기자재: {record.equipment or '-'} / "
             f"모델: {models}"
         ),
@@ -292,7 +297,7 @@ def _verify_rf(
                     kind=FindingKind.RF_NONCOMPLIANT,
                     signal=Signal.RED,
                     statement_ko=(
-                        f"부적합 방송통신기자재 현황에 {axis}이(가) 일치하는 항목이 "
+                        f"부적합 방송통신기자재 현황에 {axis}{subject_particle(axis)} 일치하는 항목이 "
                         f"있습니다. 업체: {hit.company or '-'} / 모델: {hit.model or '-'} / "
                         f"처분일자: {hit.acted_on or '-'}"
                     ),
@@ -327,7 +332,8 @@ def _verify_rf(
                     kind=FindingKind.RF_CERT_NOT_FOUND,
                     signal=Signal.AMBER,
                     statement_ko=(
-                        f"전파인증 번호 '{number}' 이(가) 적합성평가 현황에서 조회되지 "
+                        f"전파인증 번호 '{number}'"
+                        f"{subject_particle(number)} 적합성평가 현황에서 조회되지 "
                         "않습니다. 자기적합확인 대상은 이 DB에 번호가 없는 것이 정상이므로, "
                         "공급처에 적합성평가 구분을 확인해 주세요."
                     ),
@@ -538,7 +544,8 @@ def verify(
                         kind=FindingKind.KC_NOT_FOUND,
                         signal=Signal.AMBER,
                         statement_ko=(
-                            f"상세페이지에 표기된 인증번호 '{num}' 이(가) 조회되지 않습니다. "
+                            f"상세페이지에 표기된 인증번호 '{num}'"
+                            f"{subject_particle(num)} 조회되지 않습니다. "
                             "공급자적합성확인 대상 품목은 인증번호가 조회 DB에 없는 것이 "
                             "정상이므로, 이 품목의 인증 구분을 먼저 확인해 주세요."
                         ),
@@ -557,14 +564,16 @@ def verify(
                 kind, signal, advice = _CERT_STATE_FINDING[rec.state]
                 if kind is FindingKind.KC_VERIFIED:
                     statement = (
-                        f"인증번호 '{rec.cert_number}' 이(가) 조회되었습니다"
+                        f"인증번호 '{rec.cert_number}'"
+                        f"{subject_particle(rec.cert_number)} 조회되었습니다"
                         f"(인증상태: {rec.status}). 등록 제품명: {rec.product_name or '-'}"
                     )
                 elif is_state_not_stated(rec.status):
                     # 값이 비어 있는 것("-")과 우리가 해석 못 한 것은 다르다.
                     # "해석하지 못했습니다" 는 우리 잘못처럼 들린다 (완구 43건).
                     statement = (
-                        f"인증번호 '{rec.cert_number}' 은(는) 조회되었으나 "
+                        f"인증번호 '{rec.cert_number}'"
+                        f"{topic_particle(rec.cert_number)} 조회되었으나 "
                         "인증상태가 표기되지 않았습니다. 원문에서 직접 확인해 주세요."
                     )
                 else:
@@ -658,7 +667,7 @@ def verify(
     weak = [(r, m) for r, m in hits if m.strength is MatchStrength.WEAK]
 
     for r, m in confirmed:
-        label, url = recall_evidence(r.detail_url)
+        label, url = recall_evidence_for(r)
         findings.append(
             Finding(
                 kind=FindingKind.RECALL_MATCH,
@@ -688,7 +697,7 @@ def verify(
         # 왔다. 수십 줄로 내면 그건 경고가 아니라 소음이고, 소음이 된 경고는
         # 꺼진 경고와 같다. 주변 리콜(b-2)을 정확 일치로 좁힌 것과 같은 논리다.
         newest = max(weak, key=lambda pair: pair[0].announced_on or "")[0]
-        label, url = recall_evidence(newest.detail_url)
+        label, url = recall_evidence_for(newest)
         findings.append(
             Finding(
                 kind=FindingKind.RECALL_WEAK_MATCH,
@@ -941,7 +950,8 @@ def _image_candidate_finding(candidates: list[str], today: date) -> Finding:
         # 확인한 것처럼 말하게 된다 (R3).
         signal=Signal.UNKNOWN,
         statement_ko=(
-            f"이미지에서 인증번호 '{shown}' 을(를) 확인했습니다. "
+            f"이미지에서 인증번호 '{shown}'"
+                    f"{object_particle(shown)} 확인했습니다. "
             "이미지 판독은 0과 O, 1과 l 이 뒤바뀔 수 있어 자동 조회하지 않습니다. "
             "번호가 맞는지 확인한 뒤 조회해 주세요."
         ),

@@ -316,6 +316,41 @@ def matched_on_label(matched_on: str) -> str:
     return MATCHED_ON_KO.get(matched_on, matched_on)
 
 
+# 한국어로 읽었을 때 받침이 없는 숫자. 2(이) 4(사) 5(오) 9(구).
+# 나머지는 1(일) 3(삼) 6(육) 7(칠) 8(팔) 0(영) 으로 받침이 있다.
+_DIGITS_NO_FINAL = {"2", "4", "5", "9"}
+
+
+def subject_particle(word: str) -> str:
+    """받침에 맞는 주격 조사(이/가)를 돌려준다.
+
+    "인증번호 이(가) 조회되었습니다" 처럼 두 형태를 병기하면 문장이 어색하다.
+    심사위원과 셀러가 읽는 화면이므로 한 글자를 맞춘다.
+
+    한글 음절은 (코드 - 0xAC00) % 28 이 0 이면 받침이 없다. 숫자로 끝나면 읽는
+    소리로 판단한다 - 'CB061R2170-3018' 은 '팔' 로 끝나 받침이 있고 '이' 다.
+    """
+    if not word:
+        return "가"
+    last = word.strip()[-1]
+    if "가" <= last <= "힣":
+        return "가" if (ord(last) - 0xAC00) % 28 == 0 else "이"
+    if last.isdigit():
+        return "가" if last in _DIGITS_NO_FINAL else "이"
+    # 영문·기타로 끝나면 소리를 단정할 수 없다. 병기가 어색하므로 '가' 로 둔다.
+    return "가"
+
+
+def topic_particle(word: str) -> str:
+    """받침에 맞는 보조사(은/는). subject_particle 과 같은 규칙."""
+    return "는" if subject_particle(word) == "가" else "은"
+
+
+def object_particle(word: str) -> str:
+    """받침에 맞는 목적격 조사(을/를)."""
+    return "를" if subject_particle(word) == "가" else "을"
+
+
 class MatchStrength(str, Enum):
     EXACT = "exact"    # 정규화 모델명 완전 일치, 또는 인증번호 일치
     STRONG = "strong"  # 모델명 포함 관계

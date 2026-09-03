@@ -263,6 +263,17 @@ public_urls:
   # '공표일' 컬럼이 있어 리콜 목록 화면임을 확인했다.
   recall_board: "https://www.safetykorea.kr/recall/recallBoard"
 
+  # 국내 리콜 개별 상세. 응답에 URL 이 없지만 recallUid 가 전건(4,243/4,243)
+  # 있고, 제품안전정보센터 첫 화면이 리콜 목록을 이 주소로 링크한다.
+  #
+  # 실측 2026-09-01 표본 6/6, 2026-09-03 재확인 표본 5/5 — HTTP 200 이고
+  # 본문에 해당 제품명이 들어 있다.
+  #
+  # ⚠ 경로에 /ajax/ 가 있어 내부용처럼 보이지만 사이트가 사용자 이동용 href
+  #   로 직접 쓰는 주소다. 다만 문서화된 엔드포인트가 아니라 바뀔 수 있다 -
+  #   깨지면 recall_board 로 폴백한다.
+  recall_detail_domestic: "https://www.safetykorea.kr/recall/ajax/recallBoard?recallUid={uid}"
+
 # ⚠ 아래 두 주소는 근거 링크로 쓰지 않는다. 기록용으로만 남긴다.
 #
 #   certificationsearch : 설계서 p.18 "인증번호 검색 (신)" 이지만 실측 결과
