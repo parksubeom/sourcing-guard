@@ -710,6 +710,7 @@ def cert_evidence_url(cert_number: str) -> str:
 
 _ITEM_SEARCH_URL: str = _CFG.get("public_urls", {}).get("item_search", "")
 RECALL_BOARD_URL: str = _CFG.get("public_urls", {}).get("recall_board", "")
+_RECALL_DETAIL_DOMESTIC: str = _CFG.get("public_urls", {}).get("recall_detail_domestic", "")
 
 # 근거로 쓸 수 없는 리콜 원문 주소.
 #
@@ -784,6 +785,27 @@ def recall_evidence(detail_url: str | None) -> tuple[str, str]:
     if is_usable_recall_url(detail_url):
         return "리콜 공표 원문", detail_url.strip()  # type: ignore[union-attr]
     return "국가기술표준원 리콜정보에서 확인", RECALL_BOARD_URL
+
+
+def recall_evidence_for(record: "RecallRecord") -> tuple[str, str]:
+    """레코드 기준 리콜 근거의 (라벨, 주소).
+
+    recall_evidence 를 먼저 쓰고, 주소가 없으면 recallUid 로 개별 상세를 만든다.
+
+    ⚠ 국내 리콜은 응답에 recallUrl 이 아예 없다 - 4,243건 전부 그렇다. 목록으로
+      보내면 셀러가 그 공표를 직접 찾아야 한다. recallUid 는 전건 있으므로
+      개별 상세를 만들 수 있다 (실측 2026-09-01 표본 6/6, 09-03 재확인 5/5 -
+      HTTP 200 이고 본문에 해당 제품명 포함).
+
+    ⚠ recall_evidence 의 시그니처는 그대로 둔다. URL 단위로 짜인 테스트가
+      있고, 주소 판별 규칙(is_usable_recall_url)은 레코드와 무관하다.
+    """
+    label, url = recall_evidence(record.detail_url)
+    if url != RECALL_BOARD_URL:
+        return label, url
+    if record.scope == "domestic" and record.uid and _RECALL_DETAIL_DOMESTIC:
+        return "리콜 공표 원문", _RECALL_DETAIL_DOMESTIC.format(uid=record.uid)
+    return label, url
 
 
 def item_search_url(term: str | None = None) -> str:

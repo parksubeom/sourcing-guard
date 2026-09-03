@@ -173,3 +173,39 @@ def test_product_name_prompt_makes_null_the_exception():
     )
     # 광고 문구 가드는 유지돼야 한다. 없으면 '무료배송 특가' 가 제품명이 된다.
     assert "광고 문구" in prompt
+
+
+def test_scope_markers_are_extracted_deterministically():
+    """소관 표지는 LLM 판단에 맡기지 않는다.
+
+    out_of_scope 단락은 '화장품책임판매업자'·'죽염' 같은 표지가
+    substances_mentioned 에 실려야 성립한다. LLM 이 드물게 빠뜨리는데
+    (2026-09-01 골든셋 전체 실행에서 두 번 관측), 빠뜨리면 화장품·식품
+    페이지에 인증 의무를 안내하게 된다 - 소관도 아닌 기준이다 (R3).
+
+    표지는 인증번호와 같은 하드 데이터다. 목록이 코드에 있으므로 원문에서
+    직접 뽑는다.
+    """
+    from sourcing_guard.extractor import extract
+
+    facts = extract("약산성 클렌징폼\n화장품책임판매업자: 에스앤비코리아\nEWG 그린등급")
+    lowered = {s.lower() for s in facts.substances_mentioned}
+    assert "화장품책임판매업자" in lowered
+    assert "클렌징폼" in lowered
+
+
+def test_scope_markers_do_not_decide_scope_by_themselves():
+    """표지를 담기만 하고 판정은 out_of_scope_reason 이 한다.
+
+    IN_SCOPE_MARKERS 가드가 있어야 '모형완구 기차놀이' 가 식품으로 판정되던
+    사고가 막힌다. 추출 단계에서 단정하면 그 가드를 우회한다.
+    """
+    from pathlib import Path
+
+    src = Path("sourcing_guard/extractor.py").read_text(encoding="utf-8")
+    body = "\n".join(l for l in src.splitlines() if not l.lstrip().startswith("#"))
+    assert "OUT_OF_SCOPE_HINTS" in body
+    assert 'data["category"] = "out_of_scope"' not in body
+    # ⚠ 이름 언급이 아니라 호출을 본다. 이 규칙을 설명하는 docstring 이
+    #   out_of_scope_reason 을 언급하기 때문이다 - 가드가 자기 설명에 걸린다.
+    assert "out_of_scope_reason(" not in body

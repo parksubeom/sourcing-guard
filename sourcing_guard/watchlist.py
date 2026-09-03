@@ -129,6 +129,69 @@ def _contain_is_distinctive(shorter: str) -> bool:
     """
     return _alpha_count(shorter) >= _MIN_ALPHA_IN_CONTAIN
 
+# 모델명 칸에 들어오지만 모델명이 아닌 값. 정규화한 형태로 둔다.
+#
+# "펜을 검사했는데 창문블라인드 리콜이 떴다" 의 원인이다. 인증 표시 문구가
+# 양쪽 모델명 칸에 다 들어간다 - 정부 리콜 데이터에도, 셀러 상세페이지에도.
+#
+# ⚠ _exact_is_distinctive 로는 못 막는다. 그 검사는 "글자가 하나라도 있으면
+#   식별력이 있다" 인데, '안전품질표시'·'MODEL'·'BLACK' 은 전부 글자다.
+#   식별력 문제가 아니라 애초에 모델명이 아닌 값이라 층을 따로 둔다.
+#
+# 로컬 사본 37,313건의 모델명 조각을 전수로 세서 뽑았다 (2026-09-01).
+# 괄호 안은 사본에 실제로 나온 건수다.
+#
+#   인증·규제 라벨   공급자적합성(153) 비대상(113) 안전품질표시(61) 안전품질(32)
+#   필드 라벨       바코드(139) MODEL(87) 제품명(71) REF(50) ITEMNO(28) SKU(20)
+#   색상명          BLACK(50) WHITE(48) BLUE(44) PINK(38) GREEN(32) RED(23)
+#   순수 숫자       100 110 120 130 140 150 2020~2022 (각 20~31)
+#
+# 실측 효과 (2026-09-03, 현재 코드 기준): 셀러 모델명이 이 값들이었을 때
+#   '안전품질표시' 61건 · '공급자적합성확인' 154건 · 'MODEL' 276건 · 'BLACK' 183건
+# 이 걸렸다. 제외 후 전부 0건.
+#
+# ⚠ 격하가 아니라 제외인 이유: '비대상' 일치는 정보량이 0 이다. 참고 정보로
+#   내려도 수백 건 소음이 그대로 남고, 소음이 된 경고는 꺼진 경고와 같다.
+_MODEL_PLACEHOLDERS = {
+    # 인증·규제 라벨
+    "공급자적합성", "공급자적합성확인", "공급자적합성대상", "비대상", "안전품질표시",
+    "안전품질", "안전확인", "안전인증", "자율안전확인", "KC인증", "해당없음", "미상",
+    "해당사항없음", "전기용품안전",
+    # 필드 라벨 (값이 아니라 필드 이름이 들어온 것)
+    "바코드", "BARCODE", "MODEL", "제품명", "상품명", "품명", "품번", "모델명",
+    "번호", "LOT번호", "REF", "ITEMNO", "EAN", "EAN코드", "ART", "CODE", "SKU",
+    # 색상명 (옵션 표기가 모델명 칸에 들어온 것)
+    "BLACK", "WHITE", "BLUE", "PINK", "GREEN", "RED", "ORANGE", "PURPLE",
+    "YELLOW", "GREY", "GRAY", "BROWN", "BEIGE", "NAVY", "IVORY",
+    # 순수 숫자 (치수·연도)
+    "100", "110", "120", "130", "140", "150", "2020", "2021", "2022",
+}
+
+# 제조사 칸에 들어오지만 업체명이 아닌 값.
+#
+# 빈 문자열 가드로 중국어·그리스문자만인 이름과 '-' 는 막았지만, 정규화 후에도
+# 남는 자리표시자가 있다. 사본 실측: '미상' 1,417건 · '0' 1,026건.
+# 셀러 제조사가 '미상' 이면 오탐 134건이 걸렸다.
+_MAKER_PLACEHOLDERS = {
+    "미상", "0", "회사정보없음", "정보없음", "해당없음", "해당사항없음", "없음",
+    "불명", "NA", "UNKNOWN", "NONE", "NULL", "기타",
+}
+
+
+def is_model_placeholder(normalized: str) -> bool:
+    """정규화된 모델명이 '모델명 아님' 인가.
+
+    양쪽에 같은 기준을 적용한다 - 셀러가 적은 값에만 쓰면 정부 데이터의
+    자리표시자가 남고, 정부 쪽에만 쓰면 셀러가 적은 자리표시자가 남는다.
+    """
+    return normalized in _MODEL_PLACEHOLDERS
+
+
+def is_maker_placeholder(normalized: str) -> bool:
+    """정규화된 제조사가 '업체명 아님' 인가."""
+    return normalized in _MAKER_PLACEHOLDERS
+
+
 _STOPWORDS = {
     "세트", "정품", "무료배송", "당일발송", "신상", "특가", "대용량", "고급",
     "SET", "NEW", "HOT", "FREE",
@@ -189,7 +252,11 @@ def _recall_models(r: RecallRecord) -> list[str]:
     서비스가 하는 유일한 약속을 깨뜨린다 (CLAUDE.md R6).
     """
     raw = r.models or ([r.model_name] if r.model_name else [])
-    return [m for m in (normalize_model(x) for x in raw) if m]
+    return [
+        m
+        for m in (normalize_model(x) for x in raw)
+        if m and not is_model_placeholder(m)
+    ]
 
 
 _TIER_ORDER = {MatchStrength.WEAK: 0, MatchStrength.STRONG: 1, MatchStrength.EXACT: 2}
@@ -210,6 +277,10 @@ def match(item: WatchItem, r: RecallRecord) -> Match | None:
             best = Match(strength, axis)
 
     wm = normalize_model(item.model_name)
+    if is_model_placeholder(wm):
+        # 셀러 페이지의 '안전품질표시' 같은 문구를 모델명으로 읽은 경우.
+        # 이걸로 매칭하면 무관한 품목의 리콜이 붙는다.
+        wm = ""
     recall_models = _recall_models(r)
 
     if wm and len(wm) >= _MIN_EXACT_LEN and wm in recall_models:
@@ -268,6 +339,11 @@ def match(item: WatchItem, r: RecallRecord) -> Match | None:
     #   137건 오탐(ee7011c)과 같은 모양이다 - 비교의 한쪽이 비었는데 통과했다.
     watched_maker = normalize_model(item.maker)
     recall_maker = normalize_model(r.maker)
+    if is_maker_placeholder(watched_maker) or is_maker_placeholder(recall_maker):
+        # '미상'·'0' 은 업체명이 아니다. 빈 문자열 가드로는 못 막는다 -
+        # 정규화 결과가 비어 있지 않기 때문이다. 같은 자리표시자를 가진 서로
+        # 다른 업체가 전부 같은 업체로 취급된다 (실측 오탐 134건).
+        watched_maker = recall_maker = ""
     if watched_maker and recall_maker and watched_maker == recall_maker:
         overlap = tokenize_name(item.product_name) & tokenize_name(r.product_name)
         if len(overlap) >= _MIN_TOKEN_OVERLAP:

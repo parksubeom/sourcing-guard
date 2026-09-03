@@ -238,7 +238,7 @@ def extract(
     if not allow_llm or settings.mock_mode or not settings.anthropic_api_key:
         stats.heuristic += 1
         # 이미지만 있고 LLM 을 못 쓰면 휴리스틱이 읽을 게 없다.
-        return _heuristic_fallback(page_text, page_url)
+        return _with_scope_markers(_heuristic_fallback(page_text, page_url), page_text)
 
     from anthropic import Anthropic
 
@@ -287,7 +287,7 @@ def extract(
         )
         stats.llm_failures += 1
         stats.heuristic += 1
-        return _heuristic_fallback(page_text, page_url)
+        return _with_scope_markers(_heuristic_fallback(page_text, page_url), page_text)
 
     stats.llm += 1
     text = "".join(b.text for b in msg.content if b.type == "text").strip()
@@ -330,6 +330,7 @@ def extract(
     if merged:
         data["kc_numbers"] = merged
 
+
     # 이미지에서 읽은 번호는 형식 검증을 통과한 것만 남긴다 (두 번째 겹).
     #
     # 프롬프트가 "보이는 그대로" 를 요구하므로 오독은 문자열을 망가뜨린 형태로
@@ -362,9 +363,46 @@ def extract(
     data["kc_numbers_from_image"] = from_image
 
     try:
-        return ProductFacts(**data, source_page_url=page_url)
+        parsed = ProductFacts(**data, source_page_url=page_url)
     except Exception:
-        return ProductFacts(source_page_url=page_url)
+        parsed = ProductFacts(source_page_url=page_url)
+    return _with_scope_markers(parsed, page_text)
+
+
+def _with_scope_markers(facts: ProductFacts, page_text: str) -> ProductFacts:
+    """소관을 가르는 표지를 원문에서 결정론적으로 뽑아 합집합을 만든다.
+
+    out_of_scope 단락은 '화장품책임판매업자'·'죽염' 같은 표지가
+    substances_mentioned 에 실려야 성립한다. LLM 이 드물게 빠뜨리는데
+    (2026-09-01 골든셋 전체 실행에서 두 번 관측: cleansing-foam,
+    bamboo-salt-set), 빠뜨리면 화장품·식품 상세페이지에 대해 인증 의무를
+    안내하게 된다 - 소관도 아닌 기준을 들이대는 것이다 (CLAUDE.md R3).
+
+    표지는 인증번호와 같은 하드 데이터다 - 문자열이 정해져 있고 목록이 코드에
+    있다. LLM 판단에 맡길 이유가 없다. 프롬프트도 이 필드를 "소관을 가르는
+    표지" 로 정의하고 있으므로 필드 의미와도 맞다.
+
+    ⚠ 모든 반환 경로에 적용한다. LLM 경로에만 넣으면 목 모드·휴리스틱에서
+      표지가 사라져 두 경로가 다르게 판정한다.
+
+    ⚠ 여기서 out_of_scope 로 단정하지 않는다. 표지를 담아 두기만 하고 판정은
+      out_of_scope_reason 이 IN_SCOPE_MARKERS 가드와 함께 내린다 - '모형완구
+      기차놀이' 가 식품으로 판정된 사고가 그 가드 때문에 막힌다.
+    """
+    from .scoping import OUT_OF_SCOPE_HINTS
+
+    lowered = (page_text or "").lower()
+    mentioned = list(facts.substances_mentioned)
+    seen = {str(x).lower() for x in mentioned}
+    for hints in OUT_OF_SCOPE_HINTS.values():
+        for hint in hints:
+            key = hint.lower()
+            if key in lowered and key not in seen:
+                mentioned.append(hint)
+                seen.add(key)
+    if len(mentioned) == len(facts.substances_mentioned):
+        return facts
+    return facts.model_copy(update={"substances_mentioned": mentioned})
 
 
 def _heuristic_fallback(text: str, url: str | None) -> ProductFacts:

@@ -391,3 +391,83 @@ def test_alerts_still_fire_for_demoted_matches():
     assert alerts[0].strength is MatchStrength.WEAK
     assert "LED 전등" in alerts[0].statement_ko
     assert "모델명" in alerts[0].statement_ko
+
+
+# ---------------------------------------------------------------------------
+# 모델명·제조사 자리표시자 — "펜을 검사했는데 창문블라인드가 떴다"
+#
+# 인증 표시 문구가 양쪽 모델명 칸에 다 들어간다. 정부 리콜 데이터에도 있고
+# (recallModelName 에 '안전품질표시' 61건, '비대상' 113건), 셀러 상세페이지에도
+# 흔히 적힌다.
+#
+# ⚠ _exact_is_distinctive 로는 못 막는다. 그 검사는 "글자가 하나라도 있으면
+#   식별력이 있다" 인데 '안전품질표시'·'MODEL'·'BLACK' 은 전부 글자다.
+#   식별력 문제가 아니라 애초에 모델명이 아닌 값이라 층이 따로 필요하다.
+#
+# 실측 (2026-09-03): 셀러 모델명이 이 값들일 때 61·154·276·183건이 걸렸고,
+# 제조사가 '미상' 이면 134건이 걸렸다. 제외 후 전부 0건.
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "placeholder",
+    ["안전품질표시", "비대상", "공급자적합성확인", "해당없음", "MODEL",
+     "바코드", "제품명", "BLACK", "WHITE", "130"],
+)
+def test_placeholder_model_names_do_not_match(placeholder):
+    """셀러 페이지의 인증 문구·필드 라벨·색상을 모델명으로 읽어도 매칭되지 않는다."""
+    watched = item(product_name="3색 볼펜 유성 펜", model_name=placeholder)
+    r = recall(product_name="창문블라인드", model_name=placeholder)
+    assert match(watched, r) is None, f"{placeholder!r} 로 일치했습니다"
+
+
+def test_placeholder_is_filtered_on_the_recall_side_too():
+    """한쪽만 걸러내면 다른 쪽 자리표시자가 남는다."""
+    from sourcing_guard.watchlist import _recall_models
+
+    raw = "비대상, 안전품질표시, ABC-1234"
+    r = recall(model_name=raw, models=extract_model_hints(raw))
+    assert _recall_models(r) == ["ABC1234"]
+
+
+@pytest.mark.parametrize("real", ["48V20AH", "E430R02", "EK04", "BABYSELFFEEDINGPILLOW"])
+def test_real_model_names_that_look_like_specs_survive(real):
+    """스펙처럼 보이지만 실제 모델명인 것은 남는다.
+
+    사본에 48V20AH(34건)·E430R02(21건)·EK04(16건) 이 있다. 이런 것까지
+    자리표시자로 몰면 진짜 리콜을 놓친다 (CLAUDE.md R6).
+    """
+    watched = item(product_name="전동 킥보드 배터리", model_name=real)
+    r = recall(product_name="전동킥보드 배터리", model_name=real)
+    assert match(watched, r) is not None, f"{real!r} 가 자리표시자로 걸러졌습니다"
+
+
+@pytest.mark.parametrize("maker", ["미상", "0", "회사정보없음", "해당없음"])
+def test_placeholder_makers_do_not_match(maker):
+    """'미상'·'0' 은 업체명이 아니다.
+
+    빈 문자열 가드로는 못 막는다 - 정규화 결과가 비어 있지 않기 때문이다.
+    사본에 '미상' 1,417건 · '0' 1,026건이 있다.
+    """
+    watched = item(product_name="완구 플라스틱 인형", maker=maker)
+    r = recall(product_name="완구 플라스틱 인형 세트", maker=maker)
+    assert match(watched, r) is None
+
+
+def test_normal_maker_weak_match_still_works():
+    """가드는 자리표시자만 막는다. 정상 업체명의 약한 일치는 그대로 남는다."""
+    watched = item(product_name="어린이 원목 의자", maker="이케아")
+    r = recall(product_name="어린이 원목 의자 세트", maker="이케아")
+    assert match(watched, r) is not None
+
+
+def test_placeholder_filters_apply_to_both_sides_in_code():
+    """구현이 한쪽만 걸러내는 형태로 돌아가지 않게 고정한다."""
+    from pathlib import Path
+
+    src = Path("sourcing_guard/watchlist.py").read_text(encoding="utf-8")
+    body = "\n".join(l for l in src.splitlines() if not l.lstrip().startswith("#"))
+    assert "is_model_placeholder(m)" in body, "리콜 쪽 모델명 필터가 없습니다"
+    assert "is_model_placeholder(wm)" in body, "셀러 쪽 모델명 필터가 없습니다"
+    assert "is_maker_placeholder(watched_maker)" in body
+    assert "is_maker_placeholder(recall_maker)" in body
