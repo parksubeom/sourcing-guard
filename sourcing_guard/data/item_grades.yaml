@@ -1,0 +1,2277 @@
+# 전기용품 세부품목 등급표.
+#
+# 「전기용품 및 생활용품 안전관리 운용요령」 별표 1~3 을 그대로 옮긴 것이다.
+# 셀러가 "이 품목이 안전인증 대상인가" 를 알아야 인증번호 부재의 의미가
+# 정해진다 - 안전인증·안전확인 대상이면 번호가 있어야 하고, 공급자적합성확인
+# 대상이면 없는 것이 정상이다 (CLAUDE.md R3-b).
+#
+# ⚠ KC 규격번호는 넣지 않는다. 이 별표에 없고(세 별표 통틀어 4건뿐이며 전부
+#   게임기구 비고의 범위 한정 참조), 있더라도 셀러가 그 번호로 할 수 있는
+#   일이 없다 - 시험기관이 쓰는 규격 코드지 소싱 판단 정보가 아니다.
+#
+# ⚠ scope_note 는 버리지 않는다. 직류전원장치의 "정격출력이 1 kVA 이하인
+#   것에 한정" 을 빼면 1kVA 초과 제품에 잘못된 등급을 말하게 된다.
+#
+# 생성: scripts/parse_item_grades.py
+
+items:
+  - item: "절연전선(공칭단면적이 95mm2 이하인 것에 한정한다)"
+    grade: 안전인증
+    category: electrical
+    division: "전선 및 전원코드 전선, 케이블 및"
+    scope_note: "교류전압을 사용하는 제품에 한정하며, 통신 및 데이터 전송을 목적으로만 사용하는 것은 제외한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "케이블(공칭단면적이 95mm2 이하인 것에 한정한다)"
+    grade: 안전인증
+    category: electrical
+    division: "전선 및 전원코드 전선, 케이블 및"
+    scope_note: "교류전압을 사용하는 제품에 한정하며, 통신 및 데이터 전송을 목적으로만 사용하는 것은 제외한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "코드(공칭단면적이 0.5mm2 이상 6mm2 이하인 것에 한정한다)"
+    grade: 안전인증
+    category: electrical
+    division: "전선 및 전원코드 전선, 케이블 및"
+    scope_note: "교류전압을 사용하는 제품에 한정하며, 통신 및 데이터 전송을 목적으로만 사용하는 것은 제외한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "코드세트(반도체장비 전용의 것으로 전선 또는 케이블 양 끝단에 기기간 상호연결을 위한 커넥터가 부착된 것은 제외한다)"
+    grade: 안전인증
+    category: electrical
+    division: "전선 및 전원코드 전선, 케이블 및"
+    scope_note: "교류전압을 사용하는 제품에 한정하며, 통신 및 데이터 전송을 목적으로만 사용하는 것은 제외한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "전기기기용 스위치(정격전압 480V이하, 정격전류가 30A 이하인 것에 한정한다)"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기용스위치"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "전기설비용 스위치[교류전용 수동식 범용스위치로 정격전압 440V 이하, 정격전류 63A(나사 없는 단자가 달린 스위치의 정격전류는 16A) 이하인 것에 한정한다]"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기용스위치"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "코드스위치(코드선에 연결되어 사용되는 스위치로서 250V 이하, 16A 이하인 것에 한정한다)"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기용스위치"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "전자식 스위치(정격전압 250V이하, 정격전류가 16A 이하인 것에 한정한다)"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기용스위치"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "리모트콘트롤스위치(정격전압 440V 이하, 정격전류 63A 이하인 것에 한정한다)"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기용스위치"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "시간지연스위치(정격전압 440V 이하, 정격전류 63A 이하인 것에 한정한다)"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기용스위치"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "조광기(정격전압 250V이하, 정격전류가 16A 이하인 것에 한정한다)"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기용스위치"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "제어회로용 스위치(정격전압 480V이하, 정격전류가 30A 이하인 것에 한정한다)"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기용스위치"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "전자개폐기(정격전류가 300A 이하인 것에 한정한다)"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기용스위치"
+    scope_note: "교류전압을 사용하는 제품에 한정하며, 기계·기구에 부착되는 특수구조인 것 및 방폭형(폭발을 방지하는 유형)인 것은 제외한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "XㆍY 커패시터(도체간의 전압이 500V 이하이거나 도체와 접지간의 전압이 250V 이하인 것 또는 저항 커패시터가 조합되어 결합되어진 것으로 등가회로의 직렬저항값이 1㏀ 이하인 것에 한정한다)"
+    grade: 안전인증
+    category: electrical
+    division: "전원용 커패시터 및 전원필터"
+    scope_note: "100㎐ 이하인 것만 해당한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "전파장해억제용 전원필터(도체간 공칭전압이 500V 또는 도체와 접지간의 공칭전압이 250V 이하인 것에 한정한다)"
+    grade: 안전인증
+    category: electrical
+    division: "전원용 커패시터 및 전원필터"
+    scope_note: "100㎐ 이하인 것만 해당한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "형광등용 커패시터(용량이 0.1μF 이상이고 무효전력이 2.5kvar 이하인 형광등용인 것에 한정한다)"
+    grade: 안전인증
+    category: electrical
+    division: "전원용 커패시터 및 전원필터"
+    scope_note: "100㎐ 이하인 것만 해당한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "전기기기용접속기류(전원분배기 포함)"
+    grade: 안전인증
+    category: electrical
+    division: "전기설비용 부속품 및 연결부품"
+    scope_note: "방폭형(防爆型)인 것은 제외한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "상호연결커플러(전기기기 또는 그 밖의 전기장치와 전원용 코드를 접속하기 위한 것으로 정격전압 250V 이하, 정격전류 16A 이하의 접지극이 있거나 접지극이 없는 것에 한정한다)"
+    grade: 안전인증
+    category: electrical
+    division: "전기설비용 부속품 및 연결부품"
+    scope_note: "방폭형(防爆型)인 것은 제외한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "플러그 및 콘센트 [교류 전용 플러그와 콘센트 또는 이동형 콘센트로 정격전류가 32A(나사 없는 단자 고정형콘센트의 정격전류는 20A) 이하인 접지핀을 장착한 것 또는 접지극이 없는 것으로서 옥내용 또는 옥외용으로 사용되는 것에 한정한다]"
+    grade: 안전인증
+    category: electrical
+    division: "전기설비용 부속품 및 연결부품"
+    scope_note: "방폭형(防爆型)인 것은 제외한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "케이블릴(단상 정격전압 250V 정격전류 16A 이하, 삼상 정격전압 440V 정격전류 16A 이하인 것에 한정한다)"
+    grade: 안전인증
+    category: electrical
+    division: "전기설비용 부속품 및 연결부품"
+    scope_note: "방폭형(防爆型)인 것은 제외한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "퓨즈(정격전류가 20mA 이상 10A 이하인 것으로 소형퓨즈인 것에 한정한다)"
+    grade: 안전인증
+    category: electrical
+    division: "전기용품보호용 부품"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "온도퓨즈(동작온도가 80 ℃ 초과 280 ℃ 이하인 것에 한정한다)"
+    grade: 안전인증
+    category: electrical
+    division: "전기용품보호용 부품"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "기기보호용 차단기(정격전류가 125A 이하인 것에 한정한다)"
+    grade: 안전인증
+    category: electrical
+    division: "전기용품보호용 부품"
+    scope_note: "교류전압을 사용하는 제품에 한정한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "배선용차단기(정격전류가 300A 이하인 것에 한정한다)"
+    grade: 안전인증
+    category: electrical
+    division: "전기용품보호용 부품"
+    scope_note: "교류전압을 사용하는 제품에 한정한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "누전차단기(정격전류가 300A 이하인 것으로 누전보호전용 또는 누전ㆍ과부하보호ㆍ단락겸용보호 겸용인 것에 한정한다)"
+    grade: 안전인증
+    category: electrical
+    division: "전기용품보호용 부품"
+    scope_note: "교류전압을 사용하는 제품에 한정한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "전압조정기"
+    grade: 안전인증
+    category: electrical
+    division: "절연변압기"
+    scope_note: "정격출력 5 kVA 이하인 것만 해당되며, 기계기구에 부착되는 특수구조인 것은 제외한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "가정용 소형변압기"
+    grade: 안전인증
+    category: electrical
+    division: "절연변압기"
+    scope_note: "정격출력 5 kVA 이하인 것만 해당되며, 기계기구에 부착되는 특수구조인 것은 제외한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "교류어댑터"
+    grade: 안전인증
+    category: electrical
+    division: "절연변압기"
+    scope_note: "정격출력 5 kVA 이하인 것만 해당되며, 기계기구에 부착되는 특수구조인 것은 제외한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "진공청소기"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    scope_note: "교류전원 30V 이하, 직류전원 42V 이하에서 사용하는 것을 포함하며, 이 경우 공급자적합성확인대상으로 한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "물흡입청소기"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    scope_note: "교류전원 30V 이하, 직류전원 42V 이하에서 사용하는 것을 포함하며, 이 경우 공급자적합성확인대상으로 한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "전기바닥청소기"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    scope_note: "교류전원 30V 이하, 직류전원 42V 이하에서 사용하는 것을 포함하며, 이 경우 공급자적합성확인대상으로 한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "전기표면세척기"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    scope_note: "교류전원 30V 이하, 직류전원 42V 이하에서 사용하는 것을 포함하며, 이 경우 공급자적합성확인대상으로 한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "스팀청소기"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    scope_note: "교류전원 30V 이하, 직류전원 42V 이하에서 사용하는 것을 포함하며, 이 경우 공급자적합성확인대상으로 한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "스팀해빙기"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    scope_note: "교류전원 30V 이하, 직류전원 42V 이하에서 사용하는 것을 포함하며, 이 경우 공급자적합성확인대상으로 한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "고압세척기(정격입력 3kW 이하인 것에 한정한다)"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    scope_note: "교류전원 30V 이하, 직류전원 42V 이하에서 사용하는 것을 포함하며, 이 경우 공급자적합성확인대상으로 한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "전기다리미"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "스팀다리미"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "바지 프레스기"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "주름펴기"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "다림질 프레스"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "전기레인지"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "전기오븐기기"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "전기거치식그릴"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "삭제<2023. 3. 20.>"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "전기곤로"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "전기가열기"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "전기토스터"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "전기프라이팬"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "전기휴대형그릴"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "전기고기구이기"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "와플기기"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "삭제<2023. 3. 20.>"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "전기세탁기"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "전기탈수기"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "일체형 세탁·건조기"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "모발건조기"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "전기머리인두"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "모발말개"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "주서"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "주서믹서기"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "후드믹서"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "전기녹즙기"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "크림거품기"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "계란반죽기"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "혼합기"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "버터제조기"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "압즙기"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "슬라이스기"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "전기칼갈이"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "전기깡통따개"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "전기칼"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "커피분쇄기"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "빙삭기"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "전기고기갈개"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "전기국수제조기"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "전기육절기"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "전기골절기"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "기타주방용전동기기"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "전기밥솥"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "삭제<2023. 3. 20.>"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "전기주전자"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "전기냄비"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "전기물끓이기"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "전기약탕기"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "커피메이커"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "전기스팀쿠커"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "달걀조리기"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "우유가열기"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "젖병가열기"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "요구르트제조기"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "증기조리기 등 기타 액체가열기기"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "전기요"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    scope_note: "교류전원 30V 이하, 직류전원 42V 이하에서 사용하는 것을 포함한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "전기매트"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    scope_note: "교류전원 30V 이하, 직류전원 42V 이하에서 사용하는 것을 포함한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "전기카펫"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    scope_note: "교류전원 30V 이하, 직류전원 42V 이하에서 사용하는 것을 포함한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "전기장판"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    scope_note: "교류전원 30V 이하, 직류전원 42V 이하에서 사용하는 것을 포함한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "전기침대"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    scope_note: "교류전원 30V 이하, 직류전원 42V 이하에서 사용하는 것을 포함한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "전기방석"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    scope_note: "교류전원 30V 이하에서 사용하는 것을 포함한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "전기찜질기"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    scope_note: "교류전원 30V 이하에서 사용하는 것을 포함한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "발보온기"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    scope_note: "교류전원 30V 이하에서 사용하는 것을 포함한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "전기온수기(끊는 점 이하의 온도로 유지하는 것을 말한다)"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "순간온수기"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "전기냉장·냉동기기"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    scope_note: "정격입력이 1.5kW 이하인 것에 한정한다. 다만 제빙기는 3kW 이하인 것에 한정한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "제빙기"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    scope_note: "정격입력이 1.5kW 이하인 것에 한정한다. 다만 제빙기는 3kW 이하인 것에 한정한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "아이스크림프리저"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    scope_note: "정격입력이 1.5kW 이하인 것에 한정한다. 다만 제빙기는 3kW 이하인 것에 한정한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "전기냉수기"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    scope_note: "정격입력이 1.5kW 이하인 것에 한정한다. 다만 제빙기는 3kW 이하인 것에 한정한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "전자레인지(300MHz ∼ 30GHz 대역의 주파수를 사용하는 것을 말한다)"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "전기충전기"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    scope_note: "교류전원 30V 초과 250V 이하에서 사용 하는 제품에 한정한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "회전형 전기건조기"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    scope_note: "손,발,의류,농산물,수산물 등을 건조하는 것에 한정한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "손건조기"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    scope_note: "손,발,의류,농산물,수산물 등을 건조하는 것에 한정한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "전기건조기"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    scope_note: "손,발,의류,농산물,수산물 등을 건조하는 것에 한정한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "의류관리기"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    scope_note: "손,발,의류,농산물,수산물 등을 건조하는 것에 한정한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "전기스토브"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "전열보드"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "전기라디에이터"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "전기온풍기"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "축열식 전기난방기"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "전구모양 히터"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "펠릿 스토브 (전열소자를 이용하여 점화하는 경우에 한정한다)"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "전기마사지기"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "냉방기"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "전격살충기"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    scope_note: "교류전원 30V 이하에서 사용"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "선풍기"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    scope_note: "정격입력이 1kW 이하인 것에 한정한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "송풍기"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    scope_note: "정격입력이 1kW 이하인 것에 한정한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "환풍기"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    scope_note: "정격입력이 1kW 이하인 것에 한정한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "레인지후드"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    scope_note: "정격입력이 1kW 이하인 것에 한정한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "전기냉풍기"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    scope_note: "정격입력이 1kW 이하인 것에 한정한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "수지형(휴대용) 정원 송풍기"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    scope_note: "정격입력이 1kW 이하인 것에 한정한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "수지형(휴대용) 정원 진공기"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    scope_note: "정격입력이 1kW 이하인 것에 한정한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "자동세정건조식변기"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "전기변좌"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "오물흡입기"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "가습기"
+    grade: 안전인증
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "직류전원장치"
+    grade: 안전인증
+    category: electrical
+    division: "정보․통신․ 사무기기"
+    scope_note: "정격출력이 1 kVA 이하인 것에 한정한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "휴대전화 전지 충전기(충전 거치대를 포함한다)"
+    grade: 안전인증
+    category: electrical
+    division: "정보․통신․ 사무기기"
+    scope_note: "정격출력이 1 kVA 이하인 것에 한정한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "단전지"
+    grade: 안전인증
+    category: electrical
+    division: "정보․통신․ 사무기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "형광램프 홀더"
+    grade: 안전인증
+    category: electrical
+    division: "조명기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "에디슨 나사형 홀더"
+    grade: 안전인증
+    category: electrical
+    division: "조명기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "기타 램프 홀더"
+    grade: 안전인증
+    category: electrical
+    division: "조명기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "형광등용 스타터 홀더"
+    grade: 안전인증
+    category: electrical
+    division: "조명기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "형광등기구"
+    grade: 안전인증
+    category: electrical
+    division: "조명기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "PLS조명기구"
+    grade: 안전인증
+    category: electrical
+    division: "조명기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "백열등기구·전기스탠드(전자회로가 있는 구조의 것)"
+    grade: 안전인증
+    category: electrical
+    division: "조명기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "LED등기구"
+    grade: 안전인증
+    category: electrical
+    division: "조명기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "할로겐등기구(전자회로가 있는 구조의 것으로 램프당 150W 이하인 것에 한정함)"
+    grade: 안전인증
+    category: electrical
+    division: "조명기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "고압방전등기구(램프당 150W 이하인 것에 한정함)"
+    grade: 안전인증
+    category: electrical
+    division: "조명기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "LED조명 시스템(전체 시스템 정격이1,000W 이하인 것에 한정함)"
+    grade: 안전인증
+    category: electrical
+    division: "조명기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "램프용 자기식안정기(정격입력이 1,000W 이하인 것을 한정한다)"
+    grade: 안전인증
+    category: electrical
+    division: "조명기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "램프용 전자식안정기(정격입력이 1,000W 이하인 것을 한정한다)"
+    grade: 안전인증
+    category: electrical
+    division: "조명기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "네온변압기"
+    grade: 안전인증
+    category: electrical
+    division: "조명기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "조명기구용컨버터(LED 전원공급장치포함)"
+    grade: 안전인증
+    category: electrical
+    division: "조명기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "안정기내장형램프(LED용 포함)"
+    grade: 안전인증
+    category: electrical
+    division: "조명기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "리튬이차단전지"
+    grade: 안전인증
+    category: electrical
+    division: "전기저장장치 구성품"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
+  - item: "온도조절기"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기용 스위치"
+    scope_note: "교류전압을 사용하는 제품에 한하며, 기계·기구에 부착되는 특수구조인 것 및 방폭형인 것은 제외한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "온도과승방지장치"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기용 스위치"
+    scope_note: "교류전압을 사용하는 제품에 한하며, 기계·기구에 부착되는 특수구조인 것 및 방폭형인 것은 제외한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "자동압력 스위치"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기용 스위치"
+    scope_note: "교류전압을 사용하는 제품에 한하며, 기계·기구에 부착되는 특수구조인 것 및 방폭형인 것은 제외한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "타이머 및 타임스위치"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기용 스위치"
+    scope_note: "교류전압을 사용하는 제품에 한하며, 기계·기구에 부착되는 특수구조인 것 및 방폭형인 것은 제외한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "전기구동 모터 기동릴레이"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기용 스위치"
+    scope_note: "교류전압을 사용하는 제품에 한하며, 기계·기구에 부착되는 특수구조인 것 및 방폭형인 것은 제외한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "에너지 레귤레이터"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기용 스위치"
+    scope_note: "교류전압을 사용하는 제품에 한하며, 기계·기구에 부착되는 특수구조인 것 및 방폭형인 것은 제외한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "고주파웰더(고주파용접기)"
+    grade: 안전확인
+    category: electrical
+    division: "절연 변압기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "전기용접기"
+    grade: 안전확인
+    category: electrical
+    division: "절연 변압기"
+    scope_note: "정격출력 5 kVA 이하인 것만 해당되며, 기계·기구에 부착되는 특수구조인 것은 제외한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "권총형아크접착기"
+    grade: 안전확인
+    category: electrical
+    division: "절연 변압기"
+    scope_note: "정격출력 5 kVA 이하인 것만 해당되며, 기계·기구에 부착되는 특수구조인 것은 제외한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "과일 껍질깎이"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "왁스 용해기"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "쵸코렛 용해기"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "파라핀 용해기"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "두피모발기"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "샴푸기기"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "모발가습기"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "손톱정리기"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "전기면도기"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "전기이발기"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "안면사우나기"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "전기이발용의자"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "전동침대"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "전기온열의자"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "각도조절의자"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "컴프레서(compressor)"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "전기온수매트"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "전기온수침대"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "전동칫솔"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "구강세척기"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "해충퇴치기"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "전기포충기"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "전기집진기"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "전기광택기"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "수하물보관기"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "지폐교환기"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "동전교환기"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "전기에어커튼"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "팬코일유닛(fan coil unit)"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "폐열 회수 환기장치"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "레이저사격기기"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    scope_note: "K 또는 KC 60335-2-82에 규정된 개인용 서비스기기 및 상업용 등 이와 유사한 장소에 사용하는 것에 한정하며, KC 62368-1에 규정된 비디오게임용기구는 별표 2의2 제9호 버목(비디오게임기구)을 적용한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "운전시뮬레이션게임기구"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    scope_note: "K 또는 KC 60335-2-82에 규정된 개인용 서비스기기 및 상업용 등 이와 유사한 장소에 사용하는 것에 한정하며, KC 62368-1에 규정된 비디오게임용기구는 별표 2의2 제9호 버목(비디오게임기구)을 적용한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "인형뽑기"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    scope_note: "K 또는 KC 60335-2-82에 규정된 개인용 서비스기기 및 상업용 등 이와 유사한 장소에 사용하는 것에 한정하며, KC 62368-1에 규정된 비디오게임용기구는 별표 2의2 제9호 버목(비디오게임기구)을 적용한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "다트판"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    scope_note: "K 또는 KC 60335-2-82에 규정된 개인용 서비스기기 및 상업용 등 이와 유사한 장소에 사용하는 것에 한정하며, KC 62368-1에 규정된 비디오게임용기구는 별표 2의2 제9호 버목(비디오게임기구)을 적용한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "농구게임기"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    scope_note: "K 또는 KC 60335-2-82에 규정된 개인용 서비스기기 및 상업용 등 이와 유사한 장소에 사용하는 것에 한정하며, KC 62368-1에 규정된 비디오게임용기구는 별표 2의2 제9호 버목(비디오게임기구)을 적용한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "기타게임기구"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    scope_note: "K 또는 KC 60335-2-82에 규정된 개인용 서비스기기 및 상업용 등 이와 유사한 장소에 사용하는 것에 한정하며, KC 62368-1에 규정된 비디오게임용기구는 별표 2의2 제9호 버목(비디오게임기구)을 적용한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "전기식기세척기"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    scope_note: "정격입력이 5kW 이하인 것에 한정한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "전기식기건조기"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    scope_note: "정격입력이 5kW 이하인 것에 한정한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "전기훈증살충기"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "전기방향확산기"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "수도 동결 방지기"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "산소이온발생기"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "전기정수기"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "전기이온수기"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "초음파세척기"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    scope_note: "오존수 발생장치는 교류전원 30V 이하, 직류전원 42V 이하에 사용하는 것을 포함하며, 이 경우 공급자적합성확인대상전기용품으로 한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "과일야채세척기"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    scope_note: "오존수 발생장치는 교류전원 30V 이하, 직류전원 42V 이하에 사용하는 것을 포함하며, 이 경우 공급자적합성확인대상전기용품으로 한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "기타 전기세척기"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    scope_note: "오존수 발생장치는 교류전원 30V 이하, 직류전원 42V 이하에 사용하는 것을 포함하며, 이 경우 공급자적합성확인대상전기용품으로 한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "오존수 발생장치"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    scope_note: "오존수 발생장치는 교류전원 30V 이하, 직류전원 42V 이하에 사용하는 것을 포함하며, 이 경우 공급자적합성확인대상전기용품으로 한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "전기헬스기구"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "전기차충전기"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    scope_note: "정격출력이 200 kVA 이하인 것에 한정한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "자동차 어댑터"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    scope_note: "정격출력이 200 kVA 이하인 것에 한정한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "가정용 전동재봉기"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "전기스팀사우나기기"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "전기사우나기기"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "사우나기기용 전열기"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "스팀사우나용 전열기"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "관상어용·식물용 히터"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "동물부화․사육용 히터"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "관상어용 기포발생기"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "관상용전기어항"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "기포발생기"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "공기청정기"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "이온발생기"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "전기분무기"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "물수건포장기"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "물수건마는기기"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "주서"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    scope_note: "직류전원 42V 이하에서 사용하는 것을 포함하며, 이 경우 공급자적합성확인대상으로 한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "주서믹서기"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    scope_note: "직류전원 42V 이하에서 사용하는 것을 포함하며, 이 경우 공급자적합성확인대상으로 한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "후드믹서"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    scope_note: "직류전원 42V 이하에서 사용하는 것을 포함하며, 이 경우 공급자적합성확인대상으로 한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "전기녹즙기"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    scope_note: "직류전원 42V 이하에서 사용하는 것을 포함하며, 이 경우 공급자적합성확인대상으로 한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "크림거품기"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    scope_note: "직류전원 42V 이하에서 사용하는 것을 포함하며, 이 경우 공급자적합성확인대상으로 한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "계란반죽기"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    scope_note: "직류전원 42V 이하에서 사용하는 것을 포함하며, 이 경우 공급자적합성확인대상으로 한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "혼합기"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    scope_note: "직류전원 42V 이하에서 사용하는 것을 포함하며, 이 경우 공급자적합성확인대상으로 한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "버터제조기"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    scope_note: "직류전원 42V 이하에서 사용하는 것을 포함하며, 이 경우 공급자적합성확인대상으로 한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "압즙기"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    scope_note: "직류전원 42V 이하에서 사용하는 것을 포함하며, 이 경우 공급자적합성확인대상으로 한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "슬라이스기"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    scope_note: "직류전원 42V 이하에서 사용하는 것을 포함하며, 이 경우 공급자적합성확인대상으로 한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "커피분쇄기"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    scope_note: "직류전원 42V 이하에서 사용하는 것을 포함하며, 이 경우 공급자적합성확인대상으로 한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "빙삭기"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    scope_note: "직류전원 42V 이하에서 사용하는 것을 포함하며, 이 경우 공급자적합성확인대상으로 한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "기타 주방용 전동기기"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    scope_note: "직류전원 42V 이하에서 사용하는 것을 포함하며, 이 경우 공급자적합성확인대상으로 한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "전격살충기"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    scope_note: "직류전원 42V 이하에서 사용하는 것을 포함한다. 다만, 전지(건전지) 및 2차전지(충전지)만을 전원으로 사용하는 것은 공급자적합성확인대상으로 한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "자동판매기"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "전기소독기"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "제습기"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "음식물처리기(주방용 오물분쇄기는 제외한다)"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "주방용 오물분쇄기(하수도법에서"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "전기보온기"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    scope_note: "음식이나 그릇류 등을 보온하는 기능을 가진 것을 말한다"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "전기주온기"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    scope_note: "음식이나 그릇류 등을 보온하는 기능을 가진 것을 말한다"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "전기온장고"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    scope_note: "음식이나 그릇류 등을 보온하는 기능을 가진 것을 말한다"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "유체펌프"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    scope_note: "여과기능이 내장된 펌프를 포함하며, 사용액체의 온도가 90 ℃ 이하인 것만 해당되며, 진공펌프, 오일펌프, 샌드펌프 및 기계기구에 부착되는 특수구조인 것은 제외한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "전기온수펌프"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    scope_note: "여과기능이 내장된 펌프를 포함하며, 사용액체의 온도가 90 ℃ 이하인 것만 해당되며, 진공펌프, 오일펌프, 샌드펌프 및 기계기구에 부착되는 특수구조인 것은 제외한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "납땜인두"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "납땜제거인두"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "권총형납땜기"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "열가소성도관용접기"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "필름접착기"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "플라스틱절단기"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "페인트제거기"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "가열총"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "전기조각기"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "소용돌이욕조(독립적으로 사용가능한 욕조기포발생기를 포함한다)"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "반신⦁전신욕조"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "발욕조"
+    grade: 안전확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "전기드릴"
+    grade: 안전확인
+    category: electrical
+    division: "전동공구 교류전원을 사용하는"
+    scope_note: "정격입력이 1.5 kW 이하인 것만 해당된다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "전기드라이버"
+    grade: 안전확인
+    category: electrical
+    division: "전동공구 교류전원을 사용하는"
+    scope_note: "정격입력이 1.5 kW 이하인 것만 해당된다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "전기그라인더"
+    grade: 안전확인
+    category: electrical
+    division: "전동공구 교류전원을 사용하는"
+    scope_note: "정격입력이 1.5 kW 이하인 것만 해당된다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "포리셔"
+    grade: 안전확인
+    category: electrical
+    division: "전동공구 교류전원을 사용하는"
+    scope_note: "정격입력이 1.5 kW 이하인 것만 해당된다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "전기샌더"
+    grade: 안전확인
+    category: electrical
+    division: "전동공구 교류전원을 사용하는"
+    scope_note: "정격입력이 1.5 kW 이하인 것만 해당된다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "전기원형톱"
+    grade: 안전확인
+    category: electrical
+    division: "전동공구 교류전원을 사용하는"
+    scope_note: "정격입력이 1.5 kW 이하인 것만 해당된다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "전기햄머"
+    grade: 안전확인
+    category: electrical
+    division: "전동공구 교류전원을 사용하는"
+    scope_note: "정격입력이 1.5 kW 이하인 것만 해당된다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "전기금속가위"
+    grade: 안전확인
+    category: electrical
+    division: "전동공구 교류전원을 사용하는"
+    scope_note: "정격입력이 1.5 kW 이하인 것만 해당된다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "전기테이퍼"
+    grade: 안전확인
+    category: electrical
+    division: "전동공구 교류전원을 사용하는"
+    scope_note: "정격입력이 1.5 kW 이하인 것만 해당된다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "전기왕복톱"
+    grade: 안전확인
+    category: electrical
+    division: "전동공구 교류전원을 사용하는"
+    scope_note: "정격입력이 1.5 kW 이하인 것만 해당된다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "전기진동기"
+    grade: 안전확인
+    category: electrical
+    division: "전동공구 교류전원을 사용하는"
+    scope_note: "정격입력이 1.5 kW 이하인 것만 해당된다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "전기체인톱"
+    grade: 안전확인
+    category: electrical
+    division: "전동공구 교류전원을 사용하는"
+    scope_note: "정격입력이 1.5 kW 이하인 것만 해당된다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "전기대패"
+    grade: 안전확인
+    category: electrical
+    division: "전동공구 교류전원을 사용하는"
+    scope_note: "정격입력이 1.5 kW 이하인 것만 해당된다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "전기잔디깎이"
+    grade: 안전확인
+    category: electrical
+    division: "전동공구 교류전원을 사용하는"
+    scope_note: "정격입력이 1.5 kW 이하인 것만 해당된다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "전기못총"
+    grade: 안전확인
+    category: electrical
+    division: "전동공구 교류전원을 사용하는"
+    scope_note: "정격입력이 1.5 kW 이하인 것만 해당된다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "라우터"
+    grade: 안전확인
+    category: electrical
+    division: "전동공구 교류전원을 사용하는"
+    scope_note: "정격입력이 1.5 kW 이하인 것만 해당된다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "트리밍기 등 기타 전동공구"
+    grade: 안전확인
+    category: electrical
+    division: "전동공구 교류전원을 사용하는"
+    scope_note: "정격입력이 1.5 kW 이하인 것만 해당된다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "텔레비전수상기"
+    grade: 안전확인
+    category: electrical
+    division: "오디오·비디오 응용기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "텔레비전 내장형 전자칠판"
+    grade: 안전확인
+    category: electrical
+    division: "오디오·비디오 응용기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "텔레비전 내장형 전자테이블"
+    grade: 안전확인
+    category: electrical
+    division: "오디오·비디오 응용기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "디스크플레이어"
+    grade: 안전확인
+    category: electrical
+    division: "오디오·비디오 응용기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "오디오시스템"
+    grade: 안전확인
+    category: electrical
+    division: "오디오·비디오 응용기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "모니터"
+    grade: 안전확인
+    category: electrical
+    division: "정보․통신․ 사무기기"
+    scope_note: "교류전원 30V 이하, 직류전원 42V 이하에서 사용하는 것을 포함하며, 이 경우 공급자적합성확인대상으로 한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "모니터 내장형 전자칠판"
+    grade: 안전확인
+    category: electrical
+    division: "정보․통신․ 사무기기"
+    scope_note: "교류전원 30V 이하, 직류전원 42V 이하에서 사용하는 것을 포함하며, 이 경우 공급자적합성확인대상으로 한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "모니터 내장형 전자테이블"
+    grade: 안전확인
+    category: electrical
+    division: "정보․통신․ 사무기기"
+    scope_note: "교류전원 30V 이하, 직류전원 42V 이하에서 사용하는 것을 포함하며, 이 경우 공급자적합성확인대상으로 한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "프린터(플로터 및 그래픽 전용인 것은 제외한다)"
+    grade: 안전확인
+    category: electrical
+    division: "정보․통신․ 사무기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "프로젝터"
+    grade: 안전확인
+    category: electrical
+    division: "정격입력 3kW이하인 것에 한정한다."
+    scope_note: "교류전원 30V 이하, 직류전원 42V 이하에서 사용하는 것을 포함하며, 이 경우 공급자적합성확인대상으로 한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "문서세단기"
+    grade: 안전확인
+    category: electrical
+    division: "정격입력 3kW이하인 것에 한정한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "천공기"
+    grade: 안전확인
+    category: electrical
+    division: "정격입력 3kW이하인 것에 한정한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "복사기(광원의 정격 출력이 1.2 ㎾ 이하인 것을 말한다)"
+    grade: 안전확인
+    category: electrical
+    division: "정격입력 3kW이하인 것에 한정한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "무정전 전원 장치 (정격출력이 10 ㎸A 이하인 것에 한정한다)"
+    grade: 안전확인
+    category: electrical
+    division: "정격입력 3kW이하인 것에 한정한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "컴퓨터용 전원공급장치"
+    grade: 안전확인
+    category: electrical
+    division: "정격입력 3kW이하인 것에 한정한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "디지털TV(인터넷망을 이용하여 방송 및 콘텐츠를 제공받는 것을 말한다)"
+    grade: 안전확인
+    category: electrical
+    division: "정격입력 3kW이하인 것에 한정한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "코팅기(종이 등을 코팅하는 것을 말한다)"
+    grade: 안전확인
+    category: electrical
+    division: "정격입력 3kW이하인 것에 한정한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "노트북 컴퓨터"
+    grade: 안전확인
+    category: electrical
+    division: "정격입력 3kW이하인 것에 한정한다."
+    scope_note: "교류전원 30V 이하, 직류전원 42V 이하에서 사용하는 것을 포함한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "태블릿 PC(화면 대각선의 길이가 17 ㎝이상인 것에 한정하며, 음성 통화기능이 있는 경우도 태블릿 PC로 본다)"
+    grade: 안전확인
+    category: electrical
+    division: "정격입력 3kW이하인 것에 한정한다."
+    scope_note: "교류전원 30V 이하, 직류전원 42V 이하에서 사용하는 것을 포함한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "전지"
+    grade: 안전확인
+    category: electrical
+    division: "정격입력 3kW이하인 것에 한정한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "백열등기구·전기스탠드 (전자회로가 없는 구조의 것)"
+    grade: 안전확인
+    category: electrical
+    division: "조명기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "샹들리에(1kW 이하인 것에 한정한다)"
+    grade: 안전확인
+    category: electrical
+    division: "조명기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "형광램프"
+    grade: 안전확인
+    category: electrical
+    division: "조명기기"
+    scope_note: "정격입력이 1,000 W 이하인 것에 한정한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "무전극램프"
+    grade: 안전확인
+    category: electrical
+    division: "조명기기"
+    scope_note: "정격입력이 1,000 W 이하인 것에 한정한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "수은램프"
+    grade: 안전확인
+    category: electrical
+    division: "조명기기"
+    scope_note: "정격입력이 1,000 W 이하인 것에 한정한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "메탈할라이드램프"
+    grade: 안전확인
+    category: electrical
+    division: "조명기기"
+    scope_note: "정격입력이 1,000 W 이하인 것에 한정한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "나트륨램프 (※ 컬러램프 포함)"
+    grade: 안전확인
+    category: electrical
+    division: "조명기기"
+    scope_note: "정격입력이 1,000 W 이하인 것에 한정한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "체인형 조명기구"
+    grade: 안전확인
+    category: electrical
+    division: "조명기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "충전식 휴대전등"
+    grade: 안전확인
+    category: electrical
+    division: "조명기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "투광조명기구 (구동장치가 없는 구조로 램프당 150W이하인 것에 한정한다)"
+    grade: 안전확인
+    category: electrical
+    division: "조명기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "할로겐등기구 (구동장치가 없는 구조로 램프당 150W이하인 것에 한정한다)"
+    grade: 안전확인
+    category: electrical
+    division: "조명기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "등기구 전원공급용 트랙시스템"
+    grade: 안전확인
+    category: electrical
+    division: "조명기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "백열전구"
+    grade: 안전확인
+    category: electrical
+    division: "조명기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "LED램프 (모듈)"
+    grade: 안전확인
+    category: electrical
+    division: "조명기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "할로겐전구 (250W 이하인 것에 한정한다)"
+    grade: 안전확인
+    category: electrical
+    division: "조명기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "전력변환장치(정격출력이 2 MVA 이하인 것만 해당한다)"
+    grade: 안전확인
+    category: electrical
+    division: "전기저장장치 구성품"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "리튬이차전지시스템(정격용량이 300 kWh 이하인 것만 해당한다)"
+    grade: 안전확인
+    category: electrical
+    division: "전기저장장치 구성품"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 2"
+  - item: "감자탈피기"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "전기정미기"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "전기 빵 자르개"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "애완동물목욕기"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "전기주류숙성기"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "전기시계"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "적외선방사 피부관리기"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "자외선방사 피부관리기"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "전기분수기"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "슬라이드 투영기"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "필름스트립 투영기"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "OHP"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "필름투영기"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "착유기"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "보풀제거기"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "새싹 및 콩나물 재배기"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "전기 작동 도어록"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "공기청정기"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "전기기기"
+    scope_note: "직류 전원 42V 이하에서 사용하는 것을 포함한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "이온발생기"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "전기기기"
+    scope_note: "직류 전원 42V 이하에서 사용하는 것을 포함한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "전동형 롤스크린(전동식 커튼, 셔터, 그릴, 차양, 블라인드 및 전기구동장치를 말한다)"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "전기기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "전기찜질기"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "전기기기"
+    scope_note: "직류전원 42 V 이하에서 사용하는 것을 포함한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "발보온기"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "전기기기"
+    scope_note: "직류전원 42 V 이하에서 사용하는 것을 포함한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "전기손난로"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "전기기기"
+    scope_note: "직류전원 42 V 이하에서 사용하는 것을 포함한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "전기방석"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "전기기기"
+    scope_note: "직류전원 42 V 이하에서 사용하는 것을 포함한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "온열시트"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "전기기기"
+    scope_note: "직류전원 42 V 이하에서 사용하는 것을 포함한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "직류전원을 사용하는 충전용 전동공구"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "전동공구 직류전원을 사용하는"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "비디오카메라"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "오디오․비디오 응용기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "튜너"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "오디오․비디오 응용기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "라디오 수신기"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "오디오․비디오 응용기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "리시버"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "오디오․비디오 응용기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "음성기록계"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "오디오․비디오 응용기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "음성플레이어"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "오디오․비디오 응용기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "위성방송수신기"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "오디오․비디오 응용기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "비디오폰"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "오디오․비디오 응용기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "음질조절기"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "오디오․비디오 응용기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "AD/DA 변환장치"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "오디오․비디오 응용기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "컴프레서 게이트"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "오디오․비디오 응용기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "전자시계"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "오디오․비디오 응용기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "CCTV 카메라"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "오디오․비디오 응용기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "영상수신기 및 변환기"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "오디오․비디오 응용기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "영상기록계"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "오디오․비디오 응용기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "A/V신호수신기"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "오디오․비디오 응용기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "CATV방송수신기"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "오디오․비디오 응용기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "턴테이블"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "오디오․비디오 응용기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "모듈레이터"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "오디오․비디오 응용기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "비디오게임기구(텔레비전수상기에 접속하여 사용하거나 브라운관, 액정표시장치 또는 플라즈마표시장치를 갖는 구조의 것만 해당한다)"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "오디오․비디오 응용기기"
+    scope_note: "KC 62368-1에 규정된 가정용 및 이와 유사한 용도로 사용하는 기기에 한정하며, K 또는 KC 60335-2-82에 규정된 상업용 비디오게임기, 폴리퍼게임기, 전자게임기, 상업용스코어링 머신은 별표2 제7호 하목(게임기구)을 적용한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "오디오 및 비디오 학습기"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "오디오․비디오 응용기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "앰프"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "오디오․비디오 응용기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "앰프 내장형 스피커"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "오디오․비디오 응용기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "편집기 (음성·음향 또는 영상을 편집하는 기기)"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "오디오․비디오 응용기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "음성 및 영상분배기"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "오디오․비디오 응용기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "영상전송기"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "오디오․비디오 응용기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "전자악기"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "오디오․비디오 응용기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "오디오프로세서(오디오믹서를 포함한다)"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "오디오․비디오 응용기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "영상프로세서"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "오디오․비디오 응용기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "스캐너"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "정보․통신 ․ 사무기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "지폐계수기"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "정보․통신 ․ 사무기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "금전등록기"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "정보․통신 ․ 사무기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "어학실습기"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "정보․통신 ․ 사무기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "전자칠판"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "정보․통신 ․ 사무기기"
+    scope_note: "텔레비전(TV), 모니터 기능이 없는 것을 말한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "전자보드"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "정보․통신 ․ 사무기기"
+    scope_note: "텔레비전(TV), 모니터 기능이 없는 것을 말한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "동전계수기"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "정보․통신 ․ 사무기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "전동타자기"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "정보․통신 ․ 사무기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "전기소자기"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "정보․통신 ․ 사무기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "교통카드 충전기"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "정보․통신 ․ 사무기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "번호표 발행기"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "정보․통신 ․ 사무기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "티켓 발행기"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "정보․통신 ․ 사무기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "순번대기기"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "정보․통신 ․ 사무기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "아마추어무선국용 무선설비의 기기(HF주파수대 기기)"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "정보․통신 ․ 사무기기"
+    scope_note: "교류전원 30V 이하, 직류전원 42V 이하에서 사용하는 것을 포함한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "아마추어무선국용 무선설비의 기기(VHF/UHF주파수대 기기)"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "정보․통신 ․ 사무기기"
+    scope_note: "교류전원 30V 이하, 직류전원 42V 이하에서 사용하는 것을 포함한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "생활무선국용 무선설비의 기기"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "정보․통신 ․ 사무기기"
+    scope_note: "교류전원 30V 이하, 직류전원 42V 이하에서 사용하는 것을 포함한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "해상이동전화용 무선설비의 기기"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "정보․통신 ․ 사무기기"
+    scope_note: "교류전원 30V 이하, 직류전원 42V 이하에서 사용하는 것을 포함한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "무선마이크 시스템"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "정보․통신 ․ 사무기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "무선스피커 시스템"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "정보․통신 ․ 사무기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "무선 헤드셋"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "정보․통신 ․ 사무기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "IP 주소 공유기"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "정보․통신 ․ 사무기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "인터넷멀티미디어 방송 가입자"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "정보․통신 ․ 사무기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "종합유선방송 가입자 단말장치"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "정보․통신 ․ 사무기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "디지털 재변조형 주 파수변환기(지상파 디지털 TV용셋톱박스, D/A용 셋톱박스, A/V 신호수 신기 등)"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "정보․통신 ․ 사무기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "A/D 및 D/A 신호변환기(아날로그 신호를 디지털 방송신호로 변환해 주는 셋톱박스 등)"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "정보․통신 ․ 사무기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "디지털 지상파 텔레비전방송신호 처리기"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "정보․통신 ․ 사무기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "아날로그 지상파 텔레비전 방송신호처리기"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "정보․통신 ․ 사무기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "재단기"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "정보․통신 ․ 사무기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "실물화상기"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "정보․통신 ․ 사무기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "입체영상기"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "정보․통신 ․ 사무기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "휴대폰"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "정보․통신 ․ 사무기기"
+    scope_note: "교류전원 30V 이하, 직류전원 42V 이하에서 사용하는 것을 포함하며, 휴대용 통신기기만 해당된다"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "스마트폰"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "정보․통신 ․ 사무기기"
+    scope_note: "교류전원 30V 이하, 직류전원 42V 이하에서 사용하는 것을 포함하며, 휴대용 통신기기만 해당된다"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "TRS 휴대폰"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "정보․통신 ․ 사무기기"
+    scope_note: "교류전원 30V 이하, 직류전원 42V 이하에서 사용하는 것을 포함하며, 휴대용 통신기기만 해당된다"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "전화기(유선·무선, 공중 및 영상 전화기를 포함한다)"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "정보․통신 ․ 사무기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "전화기와 함께 사용되는 접속기기(인터넷전화기, 회의용브릿지, 번호표시기, 착신표시기, 통화감지기, 통화시간기록기, 자동다이얼기, 장거리자동전화발신 제어기, 착신전환기, 자동 응답기 등)"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "정보․통신 ․ 사무기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "팩시밀리기기(전화기 부가기능을 가진 기기를 포함한다)"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "정보․통신 ․ 사무기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "홈오토메이션"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "정보․통신 ․ 사무기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "비디오도어폰"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "정보․통신 ․ 사무기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "기타 전화기능을 내장한 복합단말기기"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "정보․통신 ․ 사무기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "공중전화회선을 이용한 데이터전송 및 검색 단말기"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "정보․통신 ․ 사무기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "신용카드조회 단말기기"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "정보․통신 ․ 사무기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "정보검색용 단말기기"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "정보․통신 ․ 사무기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "현금자동취급기"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "정보․통신 ․ 사무기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "금융단말기기"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "정보․통신 ․ 사무기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "버스정류장 버스 안내 시스템"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "정보․통신 ․ 사무기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "내비게이션"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "정보․통신 ․ 사무기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "기타 위치기반 서비스용 무선기기"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "정보․통신 ․ 사무기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "원격제어방송기기"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "정보․통신 ․ 사무기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "제본기"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "정보․통신 ․ 사무기기"
+    scope_note: "정격입력이 1 kW 이하인 것에 한정한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "스테이플러"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "정보․통신 ․ 사무기기"
+    scope_note: "정격입력이 1 kW 이하인 것에 한정한다."
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "램프용 글로우스타터"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "조명기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
+  - item: "램프용 전자식스타터"
+    grade: 공급자적합성확인
+    category: electrical
+    division: "조명기기"
+    source: "전기용품 및 생활용품 안전관리 운용요령 별표 3"
