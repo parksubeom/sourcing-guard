@@ -145,7 +145,25 @@ def test_rule_book_cites_the_current_gazette():
         if "2019-201" in r.get("legal_basis", "") or "2019-0201" in r.get("legal_basis", "")
     ]
     assert not stale, f"폐지된 고시를 인용하는 룰: {stale}"
-    assert all("제2022-220호" in r.get("legal_basis", "") for r in raw["rules"])
+
+    # 규칙 DB 에 고시가 둘 이상 들어온다. 공통안전기준(제2022-220호)과
+    # 안전확인 안전기준 부속서는 별개 고시이므로, "모든 룰이 공통기준을 인용" 은
+    # 더 이상 참이 아니다. id 접두로 갈라서 각자의 근거를 요구한다.
+    for rule in raw["rules"]:
+        basis = rule.get("legal_basis", "")
+        if rule["id"].startswith("KC-COMMON-"):
+            assert "제2022-220호" in basis, f"{rule['id']}: 공통기준 고시 번호 없음"
+        elif rule["id"].startswith("KC-ANNEX"):
+            assert "부속서" in basis, f"{rule['id']}: 부속서 근거 없음"
+        elif rule["id"].startswith(("KC-LIFE-", "KC-ELEC-")):
+            # 생활용품·전기용품(전안법). 원문을 확인하면 부속서 번호까지
+            # 특정되므로 근거가 "부속서 52(승차용 안전모)" 형태가 되고,
+            # 아직 특정 못 했으면 상위 법률만 적는다. 둘 다 허용한다.
+            assert "부속서" in basis or "전기용품 및 생활용품 안전관리법" in basis, (
+                f"{rule['id']}: 전안법·부속서 근거 없음 - {basis!r}"
+            )
+        else:
+            raise AssertionError(f"{rule['id']}: 근거 체계를 알 수 없는 id 접두")
 
 
 # ---------------------------------------------------------------------------
@@ -189,6 +207,9 @@ def test_source_pages_match_the_current_decree():
     expected_by_clause = {"3.1.1": 2, "3.1.2": 3, "3.1.3": 3,
                           "3.1.4": 4, "3.1.5": 4, "3.1.6": 4}
     for rule_id, rule in _rules().items():
+        # 부속서는 별개 문서라 쪽 배치가 다르다. 이 가드는 공통기준 전용이다.
+        if not rule_id.startswith("KC-COMMON-"):
+            continue
         clause = rule["clause"].split()[0]
         want = expected_by_clause[clause]
         assert rule["source_page"] == want, (

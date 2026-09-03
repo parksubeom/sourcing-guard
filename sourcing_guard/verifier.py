@@ -103,6 +103,81 @@ class HazardRule:
     unit: str | None
     legal_basis: str
     source_url: str
+    # pH 처럼 상·하한이 모두 있는 룰. 크기 비교(어느 쪽이 더 엄격한가)에 쓴다.
+    range_min: float | None = None
+    range_max: float | None = None
+
+    # --- 성능·구조 요건 (생활용품·전기용품) ------------------------------
+    # 유해물질은 "납 90mg/kg" 처럼 값 하나로 떨어지지만, 성능 요건은 그렇지
+    # 않다. 부속서 53(운동용 안전모) 원문을 보면 기준이 "가속도계를 무게중심
+    # 반경 10mm 이내에 설치하고 6kHz 로 샘플링해 CFC 1000 으로 필터링" 같은
+    # **시험 절차 규격**이다. 셀러에게 그 값을 보여줘 봐야 쓸 수 없다.
+    #
+    # 그래서 값 대신 **어떤 시험을 통과해야 하는지**를 담는다. 화면에서 하는
+    # 일은 유해물질과 같다 - "이걸 확인하라" 는 안내다.
+    requirement_type: str = "substance"   # substance | performance
+    test_items: tuple[str, ...] = ()      # 충격흡수성, 관통성 ...
+    annex_no: str | None = None           # 부속서 번호
+    # 정부 조사에서 이 품목이 어떻게 나왔는지. 비율만 두면 표본 8개짜리가
+    # 통계처럼 읽히므로 표본을 반드시 함께 담는다 (test_failure_rate_honesty).
+    failure_rate: dict | None = None
+
+
+def _performance_statement(rule: "HazardRule") -> str:
+    """성능·구조 요건의 화면 문구.
+
+    유해물질처럼 값을 보여줄 수 없다 - 기준이 시험 절차 규격이라 셀러가 쓸 수
+    없기 때문이다. 대신 **어떤 시험을 통과해야 하는지**와, 정부 조사에서 이
+    품목이 어떻게 나왔는지를 알려준다.
+
+    부적합률은 비율만 쓰지 않고 표본을 함께 낸다. "88%" 만 적으면 표본 8개짜리
+    수치가 통계처럼 읽힌다 (기획서 §2.2 에서 한 번 틀렸던 실수다).
+    """
+    items = ", ".join(rule.test_items[:5]) if rule.test_items else None
+    parts = [f"이 품목은 {rule.legal_basis} 대상입니다."]
+    if items:
+        parts.append(f"{items} 시험을 통과해야 하며, 공급처에 시험성적서를 요구하세요.")
+    else:
+        parts.append("공급처에 해당 안전기준 시험성적서를 요구하세요.")
+
+    rate = rule.failure_rate or {}
+    sample = rate.get("sample")
+    if sample:
+        source = rate.get("source", "정부 안전성조사")
+        parts.append(
+            f"참고로 {source}에서 이 품목은 {sample}가 안전기준에 부적합했습니다. "
+            "표적 조사이고 표본이 작아 일반화할 수는 없으나, 확인 없이 소싱하기에는 "
+            "위험이 큽니다."
+        )
+    return " ".join(parts)
+
+
+def _looser_of(a: "HazardRule", b: "HazardRule") -> "HazardRule | None":
+    """두 룰 중 더 느슨한 쪽. 비교 불가면 공통기준 쪽을 돌려준다.
+
+    셀러가 통과시켜야 하는 것은 둘 중 빡빡한 기준이므로, 화면에는 엄격한 쪽만
+    남긴다. 단위가 다르거나(mg/kg 대 %) 형태가 다르면(범위 대 단일값) 크기를
+    비교할 수 없으므로, 그 품목을 더 정확히 겨냥한 개별기준을 남긴다.
+    """
+    # 범위(pH)끼리는 상한이 큰 쪽이 느슨하다.
+    if a.range_max is not None and b.range_max is not None:
+        return a if a.range_max > b.range_max else b
+
+    comparable = (
+        a.limit_value is not None
+        and b.limit_value is not None
+        and a.unit == b.unit
+        and a.range_max is None
+        and b.range_max is None
+    )
+    if comparable:
+        if a.limit_value == b.limit_value:
+            # 값이 같으면 중복이다. 개별기준을 남기고 공통을 뺀다.
+            return b if b.id.startswith("KC-COMMON-") else a
+        return a if a.limit_value > b.limit_value else b
+
+    # 비교 불가 - 개별기준을 남긴다.
+    return b if b.id.startswith("KC-COMMON-") else a
 
 
 class RuleBook:
@@ -127,11 +202,56 @@ class RuleBook:
                     unit=r.get("unit"),
                     legal_basis=r["legal_basis"],
                     source_url=r["source_url"],
+                    range_min=r.get("range_min"),
+                    range_max=r.get("range_max"),
+                    requirement_type=r.get("requirement_type", "substance"),
+                    test_items=tuple(r.get("test_items", [])),
+                    annex_no=r.get("annex_no"),
+                    failure_rate=r.get("failure_rate"),
                 )
             )
 
     def for_category(self, cat: ItemCategory) -> list[HazardRule]:
-        return [r for r in self.active if cat.value in r.applies_to]
+        """해당 품목군에 적용되는 룰. 같은 물질에 두 기준이 있으면 하나만 남긴다.
+
+        공통안전기준 3.1.5 는 "개별안전기준이 없는 섬유제품" 에만 적용된다고
+        스스로 적고 있다(비고 1). 그래서 개별 부속서가 우선한다 - 다만 그것을
+        **"부속서가 무조건 이긴다" 로 구현하면 안 된다.**
+
+        실제로 갈린다:
+          부속서 1  폼알데하이드 20  vs 공통 75   -> 부속서가 더 엄격
+          부속서 11 pH 4.0~8.0     vs 공통 ~7.5 -> **부속서가 더 느슨**
+
+        둘을 함께 내보내면 화면에 두 값이 나란히 떠서 셀러가 느슨한 쪽을 읽는다.
+        그렇다고 부속서를 무조건 남기면 pH 처럼 느슨한 값을 우리가 골라주는 셈이
+        된다. 그래서 **더 엄격한 쪽**을 남긴다 - 셀러가 통과시켜야 할 기준은
+        둘 중 빡빡한 쪽이기 때문이다.
+
+        비교가 불가능하면(단위가 다르거나 범위 대 단일값) 부속서를 남긴다.
+        개별기준이 그 품목을 더 정확히 겨냥하고 있어서다.
+        """
+        applicable = [r for r in self.active if cat.value in r.applies_to]
+
+        # 물질별로 묶는다. 표기가 달라도 잡히도록 aliases 까지 키로 쓴다
+        # (총 납 함유량 / 총 납(함유량)).
+        buckets: dict[str, list[HazardRule]] = {}
+        for rule in applicable:
+            for term in {rule.substance, *rule.aliases}:
+                buckets.setdefault(term, []).append(rule)
+
+        dropped: set[str] = set()
+        for rules in buckets.values():
+            annex = [r for r in rules if r.id.startswith("KC-ANNEX")]
+            common = [r for r in rules if r.id.startswith("KC-COMMON-")]
+            if not annex or not common:
+                continue
+            for c in common:
+                for a in annex:
+                    loser = _looser_of(a, c)
+                    if loser is not None:
+                        dropped.add(loser.id)
+
+        return [r for r in applicable if r.id not in dropped]
 
     def covers(self, cat: ItemCategory) -> bool:
         """Declared coverage is not enough: it must be backed by verified rules.
@@ -842,6 +962,27 @@ def verify(
             # 말하면 셀러에게 실제보다 느슨한 수치를 보여주게 된다. 이건 "모른다"
             # 가 아니라 "틀렸다" 라서, 부속서를 수록할 때까지 그 한계를 문장에
             # 적어둔다. 값을 지어내지 않고 단정만 걷어내는 것이다 (R5·§1).
+            if rule.requirement_type == "performance":
+                statement = _performance_statement(rule)
+                findings.append(
+                    Finding(
+                        kind=FindingKind.HAZARD_RULE_APPLIES,
+                        signal=Signal.UNKNOWN,
+                        statement_ko=statement,
+                        source_label=rule.legal_basis,
+                        source_url=rule.source_url,
+                        legal_basis=rule.legal_basis,
+                        detail={
+                            "rule_id": rule.id,
+                            "requirement_type": "performance",
+                            "test_items": list(rule.test_items),
+                            "failure_rate": rule.failure_rate,
+                        },
+                        checked_at=today,
+                    )
+                )
+                continue
+
             limit = f" ({rule.limit_value}{rule.unit})" if rule.limit_value else ""
             if "공통안전기준" in (rule.legal_basis or ""):
                 statement = (
