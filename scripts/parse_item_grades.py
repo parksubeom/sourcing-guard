@@ -90,6 +90,12 @@ def parse(lines: list[str]) -> list[dict]:
 
         if line[0] in CIRCLED:
             name = _clean(line[1:])
+            # 개정으로 빠진 항목. "삭제<2023. 3. 20.>" 형태로 자리만 남는다.
+            # 품목으로 넣으면 셀러 상품명이 여기 붙을 일은 없지만, 표 건수를
+            # 부풀리고 등급 통계를 흐린다.
+            if re.match(r"^삭제", name) or name in ("-", ""):
+                pending_div = False
+                continue
             if name:
                 rows.append({"division": division, "item": item or division, "detail": name, "note": ""})
             pending_div = False

@@ -256,11 +256,6 @@ items:
     category: electrical
     division: "전기기기"
     source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
-  - item: "삭제<2023. 3. 20.>"
-    grade: 안전인증
-    category: electrical
-    division: "전기기기"
-    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
   - item: "전기곤로"
     grade: 안전인증
     category: electrical
@@ -292,11 +287,6 @@ items:
     division: "전기기기"
     source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
   - item: "와플기기"
-    grade: 안전인증
-    category: electrical
-    division: "전기기기"
-    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
-  - item: "삭제<2023. 3. 20.>"
     grade: 안전인증
     category: electrical
     division: "전기기기"
@@ -432,11 +422,6 @@ items:
     division: "전기기기"
     source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
   - item: "전기밥솥"
-    grade: 안전인증
-    category: electrical
-    division: "전기기기"
-    source: "전기용품 및 생활용품 안전관리 운용요령 별표 1"
-  - item: "삭제<2023. 3. 20.>"
     grade: 안전인증
     category: electrical
     division: "전기기기"
