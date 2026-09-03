@@ -17,6 +17,7 @@ from sourcing_guard.item_grades import (
     ALIASES,
     _SHORT_KEY_EXCEPTIONS,
     ItemGradeBook,
+    chemical_variant_dominates,
     normalize,
     strip_modifiers,
 )
@@ -433,3 +434,48 @@ def test_power_banks_resolve_to_the_battery_item_not_the_cell_item():
         items = [(g.item, g.grade) for g in book.lookup_all(name)]
         assert ("전지", "안전확인") in items, items
         assert not any(i in ("단전지", "리튬이차단전지") for i, _ in items), items
+
+
+# ---------------------------------------------------------------------------
+# 접미 한 글자가 화학제와 기기를 가른다
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "name",
+    [
+        # 염화칼슘 제습제다. 표의 '제습기'(전기기기)가 아니다.
+        "대용량 500ml 옷걸이 제습제 곰팡이방지 제습기 옷장용제습제 차량용제습제 습기제거",
+        "옷걸이 제습제 곰팡이방지 제습기 옷장용제습제 신발장제습제 차량용제습제 습기제거제",
+        "옷걸이 제습제 250g 곰팡이방지 제습기 염화칼슘제습제 신발장제습제 차량용제습제",
+    ],
+)
+def test_chemical_products_do_not_match_the_appliance(book, name):
+    assert "제습기" not in [g.item for g in book.lookup_all(name)]
+
+
+@pytest.mark.parametrize(
+    "name, expect",
+    [
+        ("ADP T8 미니 제습기", "제습기"),
+        ("미니제습기 지니큐 펠티어방식 제습기", "제습기"),
+        # 쉼표가 지워지면 '가습'+'제습 기능' 이 들러붙어 '가습제' 가 생긴다.
+        # 존재 검사를 쓰면 이 상품이 죽는다 - 그래서 개수를 비교한다.
+        ("가습기 대용량 (가습, 제습 기능 있음)", "가습기"),
+    ],
+)
+def test_the_rule_does_not_kill_real_appliances(book, name, expect):
+    assert expect in [g.item for g in book.lookup_all(name)]
+
+
+def test_the_rule_compares_counts_not_mere_presence():
+    """존재 검사는 낱말 경계가 지워져 생긴 '제' 형태에 걸린다.
+
+    실측(41,800건)에서 어간+'제' 가 나타난 짝은 셋뿐이고, 그중 '가습제' 14건은
+    전부 "공기청정기(가습, 제습기능 있음)" 이었다 - 쉼표가 지워져 생긴 것이다.
+    """
+    assert chemical_variant_dominates(normalize("옷걸이 제습제 제습기 차량용제습제"), "제습기")
+    assert not chemical_variant_dominates(normalize("가습기 (가습, 제습 기능)"), "가습기")
+    assert not chemical_variant_dominates(normalize("미니 제습기 제습기"), "제습기")
+    # '기' 로 끝나지 않거나 어간이 한 글자면 보지 않는다.
+    assert not chemical_variant_dominates(normalize("전기면도기 면도제"), "전기면도기")

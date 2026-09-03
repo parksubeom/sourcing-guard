@@ -311,6 +311,30 @@ def names_the_subject(normalized_name: str, normalized_key: str) -> bool:
     return False
 
 
+# 접미 한 글자가 화학제와 기기를 가른다 - '제습제' 는 '제습기' 가 아니다.
+#
+# 실측(실상품 30건 + 도매꾹 239건 + 리콜 제품명 41,800건)에서 어간+'제' 가
+# 실제로 나타난 짝은 셋뿐이다:
+#
+#   제습기 vs 제습제        3건 - 전부 염화칼슘 제습제였다 (오답이었다)
+#   가습기 vs 가습제       14건 - 전부 "공기청정기(가습, 제습기능 있음)" 다.
+#                                쉼표가 지워져 '가습'+'제습기능' 이 들러붙어
+#                                생긴 것이고, 가습기 자체는 안 나온다
+#   페인트제거기 vs 페인트제거제  2건 - 전부 "페인트 제거제" 였다 (막는 게 맞다)
+#
+# **존재 검사가 아니라 개수 비교를 쓴다.** 존재만 보면 위 두 번째 짝처럼
+# 낱말 경계가 지워져 생긴 '제' 형태가 정상 기기를 막는다 - "가습기 (가습,
+# 제습 기능)" 같은 상품명이 그렇게 죽는다. 도매 상품명은 본 품목을 여러 번
+# 반복하므로, 어느 쪽이 더 많이 나오는지가 무엇을 파는지에 가깝다.
+def chemical_variant_dominates(normalized_name: str, normalized_key: str) -> bool:
+    """상품명에서 어간+'제'(화학제)가 어간+'기'(기기)보다 더 많이 나오는가."""
+    if not normalized_key.endswith("기") or len(normalized_key) < 3:
+        return False
+    chem = normalized_key[:-1] + "제"
+    if chem not in normalized_name:
+        return False
+    return normalized_name.count(chem) > normalized_name.count(normalized_key)
+
 def split_aliases(item: str) -> list[str]:
     """품목명 하나가 실은 여러 이름인 경우를 쪼갠다.
 
@@ -480,7 +504,9 @@ class ItemGradeBook:
         for key, rows in self._contain_keys:
             # 부속어 가드는 포함 매칭에도 적용한다 - "전동 칫솔거치대" 는
             # 표의 '전동칫솔' 을 그대로 담고 있지만 칫솔이 아니다.
-            if names_the_subject(intact, key):
+            if names_the_subject(intact, key) and not chemical_variant_dominates(
+                intact, key
+            ):
                 offer(rows, "contains")
 
         # (3) 접두 확장
@@ -494,9 +520,14 @@ class ItemGradeBook:
         # (4) 별칭 - 우리 추정이므로 마지막이다
         for target in forms:
             for key, legal in ALIASES.items():
-                if names_the_subject(target, normalize(key)):
-                    for name in (legal,) if isinstance(legal, str) else legal:
-                        offer(self._by_name.get(normalize(name)), "alias")
+                if not names_the_subject(target, normalize(key)):
+                    continue
+                for name in (legal,) if isinstance(legal, str) else legal:
+                    # 별칭이 가리키는 품목에도 같은 검사를 한다 - '제습기' 로
+                    # 보내는 별칭이 생기면 화학제 상품에 붙는다.
+                    if chemical_variant_dominates(target, normalize(name)):
+                        continue
+                    offer(self._by_name.get(normalize(name)), "alias")
 
         return found
 
