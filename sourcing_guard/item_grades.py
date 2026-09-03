@@ -112,7 +112,9 @@ def normalize(name: str) -> str:
 _SHORT_KEY_EXCEPTIONS = {"랜턴", "헬멧"}
 
 
-ALIASES: dict[str, str] = {
+# 값이 튜플이면 후보를 다 낸다 - 원문이 갈라 두지 않은 말을 우리가
+# 한쪽으로 갈라서 단정하지 않기 위한 것이다.
+ALIASES: dict[str, str | tuple[str, ...]] = {
     # 조명 - 손에 드는 것과 천장에 다는 것은 등급이 다르다
     "펜라이트": "충전식 휴대전등",
     "손전등": "충전식 휴대전등",
@@ -145,8 +147,30 @@ ALIASES: dict[str, str] = {
     "텐트장식": "체인형 조명기구",
     "자두전구": "체인형 조명기구",
     "알조명": "체인형 조명기구",
-    # 센서등·현관등은 벽·천장 고정이라 LED등기구다 (휴대전등과 갈린다)
-    "센서등": "LED등기구",
+    # ⚠ 센서등·정원등은 **한쪽으로 단정하지 않는다.**
+    #
+    #   원문(운용요령 별표 1·2)의 갈림 기준은 전원 방식이지 용도가 아니다.
+    #     별표 1 11.나 일반조명기구      ④ LED등기구            안전인증
+    #     별표 2 11.다 그밖의 조명기구   ② 충전식 휴대전등       안전확인
+    #   같은 이름이 양쪽에 있는 항목들이 그 기준을 드러낸다 - 할로겐등기구는
+    #   "전자회로가 있는"(별표1) 과 "구동장치가 없는"(별표2) 로만 갈리고,
+    #   투광조명기구도 구동장치 유무로 갈린다. 즉 상시전원을 받아 구동장치를
+    #   품은 것이 별표 1 이다.
+    #
+    #   '센서등' 은 원문에 없는 셀러 말이고, 실제 상품은 양쪽에 다 걸린다:
+    #     "간편부착 무선 센서라이트 LED센서등 건전지형"   건전지 · 부착
+    #     "DGITEM LED무선센서등 충전식 라이트"           충전식 · 휴대
+    #     "태양광정원등 태양광조명 센서등 가로등 공장등"   태양광 · 고정
+    #   앞의 둘은 상시전원이 아니고, 셋째는 고정이지만 태양광이다. 벽에
+    #   붙는다는 이유로 LED등기구(안전인증)로 보내면 안전확인 대상에
+    #   안전인증 의무를 말하게 된다 - 등급이 뒤집힌다.
+    #
+    #   그래서 후보를 둘 다 낸다. 등급이 갈리므로 grades_agree 가 None 을
+    #   돌리고, 셀러는 "전원 방식을 확인하라" 는 답을 받는다 (CLAUDE.md R3).
+    "센서등": ("LED등기구", "충전식 휴대전등"),
+    "센서라이트": ("LED등기구", "충전식 휴대전등"),
+    "정원등": ("LED등기구", "충전식 휴대전등"),
+    # 현관등은 상시전원 고정 조명이라 갈리지 않는다.
     "현관등": "LED등기구",
     # ⚠ '무드등' 은 별칭에 넣지 않는다. 체인형·충전식·LED등기구 어느 것이든
     #   될 수 있고, 도매 상품명이 연관 검색어로 붙이는 대표적인 말이다.
@@ -275,20 +299,28 @@ class ItemGradeBook:
     def __init__(self, path: Path | None = None) -> None:
         raw = yaml.safe_load((path or _PATH).read_text(encoding="utf-8"))
         self._rows = raw["items"]
-        self._by_name: dict[str, dict] = {}
+        # ⚠ 한 이름이 여러 등급에 걸린다. 표에 '공기청정기' 가 안전확인과
+        #   공급자적합성확인 양쪽에 있고, '전기스탠드' 는 전자회로 유무로
+        #   안전인증·안전확인이 갈린다 - 이런 이름이 24건이다.
+        #
+        #   먼저 만난 하나만 담으면 나머지를 조용히 버리게 된다. 등급이
+        #   갈리는 것을 모른 채 한쪽을 단정하면, 공급자적합성확인 대상에
+        #   "번호가 있어야 한다" 고 말하게 된다 (CLAUDE.md R3-b). 전부 담고
+        #   갈리면 grades_agree 가 None 을 돌려 확인을 요청하게 한다.
+        self._by_name: dict[str, list[dict]] = {}
         for row in self._rows:
             for name in split_aliases(row["item"]):
-                self._by_name.setdefault(normalize(name), row)
+                self._by_name.setdefault(normalize(name), []).append(row)
 
         # 역방향 포함 매칭용. **긴 품목명이 먼저** 와야 한다 -
         # '자전거용 안전모' 가 '안전모' 보다 먼저 걸려야 등급이 정확해진다.
-        keys: dict[str, dict] = {}
+        keys: dict[str, list[dict]] = {}
         for row in self._rows:
             for name in split_aliases(row["item"]):
                 key = normalize(name)
                 if is_usable_contain_key(key):
-                    keys.setdefault(key, row)
-        self._contain_keys: list[tuple[str, dict]] = sorted(
+                    keys.setdefault(key, []).append(row)
+        self._contain_keys: list[tuple[str, list[dict]]] = sorted(
             keys.items(), key=lambda pair: -len(pair[0])
         )
 
@@ -316,47 +348,59 @@ class ItemGradeBook:
             return []
 
         stripped = strip_modifiers(product_name)
-        forms = [normalize(product_name)]
-        if normalize(stripped) != forms[0]:
+        intact = normalize(product_name)
+        forms = [intact]
+        if normalize(stripped) != intact:
             forms.append(normalize(stripped))
 
         found: list[ItemGrade] = []
-        seen: set[str] = set()
+        seen: set[tuple[str, str]] = set()
 
-        def offer(row: dict, how: str) -> None:
-            if row["item"] not in seen:
-                seen.add(row["item"])
-                found.append(self._to_grade(row, how))
+        def offer(rows: list[dict] | None, how: str) -> None:
+            # dedupe 를 이름만으로 하면 안 된다 - 표에 '주서' 가 안전인증과
+            # 안전확인 양쪽에 같은 이름으로 있어서 한쪽이 사라진다.
+            for row in rows or ():
+                mark = (row["item"], row["grade"])
+                if mark not in seen:
+                    seen.add(mark)
+                    found.append(self._to_grade(row, how))
 
         # (1) 정확 일치
         for base in (product_name, stripped):
             for candidate in prefix_variants(base):
-                row = self._by_name.get(normalize(candidate))
-                if row:
-                    offer(row, "exact")
+                offer(self._by_name.get(normalize(candidate)), "exact")
 
         # (2) 역방향 포함. 긴 품목명이 먼저 - '자전거용 안전모' 가 '안전모'
         #     보다 앞서야 등급이 정확해진다.
-        for target in forms:
-            for key, row in self._contain_keys:
-                if key in target:
-                    offer(row, "contains")
+        #
+        # ⚠ **수식어를 뗀 형태로는 포함 검사를 하지 않는다.** normalize 가
+        #   띄어쓰기를 지우므로, 가운데 토큰을 빼면 양옆이 들러붙어 원문에
+        #   없던 낱말이 생긴다. 실제로 "2.1A충전기 가정용 충전기" 에서
+        #   '가정용' 을 떼자 "…충전기충전기…" 가 되어 표의 '전기충전기'
+        #   (교류 30V 초과 250V 이하 - 벽 콘센트에 꽂는 것)에 붙었다.
+        #   휴대폰 충전기가 그 품목일 리 없다.
+        #
+        #   뗀 형태가 필요하지도 않다. 띄어쓰기가 이미 지워졌으므로 진짜
+        #   포함 관계는 원본 형태에서 그대로 보인다 - '무선 전기 주전자' 는
+        #   원본만으로도 '전기주전자' 를 담고 있다.
+        for key, rows in self._contain_keys:
+            if key in intact:
+                offer(rows, "contains")
 
         # (3) 접두 확장
         for nb in forms:
             if not is_usable_contain_key(nb):
                 continue
-            for key, row in self._contain_keys:
+            for key, rows in self._contain_keys:
                 if is_prefix_expansion(nb, key):
-                    offer(row, "expand")
+                    offer(rows, "expand")
 
         # (4) 별칭 - 우리 추정이므로 마지막이다
         for target in forms:
             for key, legal in ALIASES.items():
                 if normalize(key) in target:
-                    row = self._by_name.get(normalize(legal))
-                    if row:
-                        offer(row, "alias")
+                    for name in (legal,) if isinstance(legal, str) else legal:
+                        offer(self._by_name.get(normalize(name)), "alias")
 
         return found
 
