@@ -37,12 +37,47 @@ def missing(grade: str | None) -> Finding:
 
 @pytest.mark.parametrize("grade", ["안전인증", "안전확인"])
 def test_required_grades_stay_amber_and_speak_harder(grade):
-    """번호가 반드시 있어야 하는 등급은 일반론보다 세게 말한다."""
+    """번호가 반드시 있어야 하는 등급은 일반론보다 세게 말한다.
+
+    2026-09-03 갱신: 의무 문장("{grade} 대상이면 인증번호가 반드시 있어야
+    합니다")이 여기서 ITEM_GRADE_MATCHED 로 옮겨졌다. 중복 가드
+    (test_no_repeated_facts)가 두 finding 이 같은 문장을 말하는 것을 잡았고,
+    등급의 뜻은 품목명·범위 한정과 함께 말하는 등급 finding 이 맡는 것이
+    맞다. 이 문장이 하는 일은 "등급을 지목하고 부재를 알린다" 로 좁혀졌다.
+
+    문장이 아예 사라지지는 않았는지는 아래
+    test_the_obligation_sentence_survives_somewhere 가 지킨다.
+    """
     f = missing(grade)
     assert f.kind is FindingKind.KC_MISSING_BUT_REQUIRED
     assert f.signal is Signal.AMBER
     assert _PENALTY[f.kind] > 0
-    assert f"{grade} 대상이면 인증번호가 반드시 있어야 합니다" in f.statement_ko
+    # 품목군이 아니라 등급을 지목한다 - 그게 강화다.
+    assert f"{grade} 대상으로 조회되는데" in f.statement_ko
+    assert "인증번호를 찾지 못했습니다" in f.statement_ko
+    # 일반론은 빠졌다.
+    assert "안전인증·안전확인 대상이면" not in f.statement_ko
+
+
+@pytest.mark.parametrize(
+    "name, grade",
+    [
+        ("신일 BLDC 무선 선풍기 14인치", "안전인증"),
+        ("모즈온 미니 도킹 보조배터리 5000 C타입", "안전확인"),
+    ],
+)
+def test_the_obligation_sentence_survives_somewhere(name, grade):
+    """중복을 없애다가 정보를 잃으면 안 된다.
+
+    의무 문장은 결과 어딘가에 **정확히 한 번** 있어야 한다. 없으면 셀러가
+    "번호가 없다" 만 읽고 그것이 문제인지 모른다.
+    """
+    from sourcing_guard.verifier import _GRADE_MEANING, _item_grade_findings
+
+    graded = _item_grade_findings(name, TODAY)
+    texts = [g.statement_ko for g in graded] + [missing(grade).statement_ko]
+    hits = [t for t in texts if _GRADE_MEANING[grade] in t]
+    assert len(hits) == 1, hits
 
 
 @pytest.mark.parametrize("grade", sorted(_ABSENCE_IS_NORMAL))
@@ -65,7 +100,13 @@ def test_absence_normal_copy_never_uses_exemption_language(grade):
     for bad in ("없어도 됩니다", "필요 없습니다", "필요없습니다", "면제",
                 "대상이 아닙니다", "안 받아도"):
         assert bad not in text, (bad, text)
-    assert "번호가 없는 것이 정상" in text
+    # 2026-09-03 갱신: "정부 조회 DB 에 번호가 없는 것이 정상" 이 여기서
+    # ITEM_GRADE_MATCHED 로 옮겨졌다(중복 가드가 잡았다). 여기서는 우리
+    # 판단만 밝힌다 - 부재를 문제로 보지 않았다는 것.
+    assert "부재가 정상이므로 문제로 보지 않았습니다" in text
+    # 등급의 뜻은 등급 finding 에 정확히 한 번 있어야 한다.
+    from sourcing_guard.verifier import _GRADE_MEANING
+    assert _GRADE_MEANING[grade].endswith("번호가 없는 것이 정상입니다")
 
 
 def test_unknown_grade_keeps_the_general_explanation():
