@@ -84,11 +84,12 @@ def test_common_standard_is_not_presented_as_the_final_limit():
         assert "부속서" in f.statement_ko
 
 
-def test_rule_db_holds_only_common_standards_for_now():
-    """부속서가 들어오면 여기가 먼저 실패한다.
+def test_rule_db_carries_both_common_and_annex_standards():
+    """규칙 DB 에 고시가 둘 있다 - 공통안전기준과 안전확인 부속서.
 
-    그때 할 일: status: draft 로 넣고(§5), 사람 검수 후 verified 로 승격하고,
-    verifier 의 "품목별 부속서가 더 엄격한 값을" 문구를 다시 볼 것.
+    이 테스트는 원래 "공통기준만 있다" 를 지키며 부속서가 들어오면 실패하도록
+    쓰여 있었다. 실제로 부속서 1·6·11 이 들어오면서 실패했고, 그 알림대로
+    갱신했다. 지금은 두 체계가 공존하는지와, 근거가 없는 룰이 없는지를 본다.
     """
     from pathlib import Path
 
@@ -99,8 +100,16 @@ def test_rule_db_holds_only_common_standards_for_now():
     path = Path(sourcing_guard.__file__).parent / "data" / "hazard_rules.yaml"
     doc = yaml.safe_load(path.read_text(encoding="utf-8"))
     rules = doc["rules"] if isinstance(doc, dict) and "rules" in doc else doc
+
+    # 규칙 DB 에 법 체계가 셋이다:
+    #   어린이제품 공통안전기준 / 안전확인 부속서 / 전기용품 및 생활용품 안전관리법
+    KNOWN = ("공통안전기준", "부속서", "전기용품 및 생활용품 안전관리법")
+    for rule in rules:
+        basis = rule.get("legal_basis", "")
+        assert any(k in basis for k in KNOWN), (
+            f"{rule['id']}: 근거 체계를 알 수 없다 - {basis!r}"
+        )
+
     bases = {r.get("legal_basis", "") for r in rules}
-    assert all("공통안전기준" in b for b in bases), (
-        f"부속서 근거가 들어왔다: {sorted(b for b in bases if '공통안전기준' not in b)}. "
-        "verifier 의 부속서 단서 문구와 이 테스트를 갱신할 것."
-    )
+    assert any("공통안전기준" in b for b in bases)
+    assert any("부속서" in b for b in bases)

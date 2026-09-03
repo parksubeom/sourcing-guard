@@ -356,6 +356,9 @@ rules:
     applies_to: [children_textile]
     limit_value: null          # 상한이 아니라 범위다. range 참조.
     unit: null
+    comparator: range
+    range_min: 4.0
+    range_max: 7.5
     range: {min: 4.0, max: 7.5}
     clause: "3.1.5 폼알데하이드, 아릴아민, pH"
     source_page: 4
@@ -388,5 +391,927 @@ rules:
 
 # 커버리지 선언: 여기에 없는 품목군은 COVERAGE_GAP 으로 처리되어 UNKNOWN 이 됩니다.
 # 선언만으로는 부족하고 해당 품목군에 verified 룰이 최소 1건 있어야 커버로 칩니다.
+  # ==========================================================================
+  # 안전확인 안전기준 부속서 1 - 유아용 섬유제품 (36개월 미만)
+  #
+  # 공통안전기준보다 **엄격하다.** 폼알데하이드가 대표적으로 공통 75 -> 20 이다.
+  # 개별 안전기준이 있는 품목에 공통기준을 적용하면 셀러에게 실제보다 느슨한
+  # 값을 보여주게 된다 - "모른다" 가 아니라 "틀렸다" 라서 더 나쁘다.
+  #
+  # 그리고 공통안전기준에 **아예 없는 물질이 6종** 있다: 유기주석(DBT/TBT),
+  # 방염제, 알러지성 염료, 니켈 용출량, 노닐페놀.
+  #
+  # 적용범위 단서 (부속서 1, 1항):
+  #   - 36개월 미만 영·유아용 섬유제품
+  #   - 맞춤복은 안전확인대상에서 제외
+  #   - **놀이용 가장복은 부속서 6(완구)** 으로 간다
+  #   - 가죽·모피 부분은 공급자적합성확인 부속서 1(어린이용 가죽제품) 적용.
+  #     단 면적 5% 이하 또는 전체 중량 1% 미만이면 이 기준을 적용한다.
+  # ==========================================================================
+  - id: KC-ANNEX1-TEXTILE-HCHO
+    substance: 폼알데하이드
+    aliases: [formaldehyde, 포름알데히드, 폼알데히드, 甲醛]
+    applies_to: [children_textile]
+    limit_value: 20
+    unit: mg/kg
+    clause: "5.2 유해물질 안전요건 [표 2]"
+    source_page: 3
+    condition: "36개월 미만 영·유아용 섬유제품. 섬유부분에 한하여 적용(주 1)"
+    test_method: "KS K ISO 14184-1 (6.2.1)"
+    legal_basis: "안전확인 안전기준 부속서 1(유아용 섬유제품) 5.2"
+    source_url: "https://www.law.go.kr/행정규칙/안전확인대상어린이제품의안전기준"
+    status: draft
+    verified_by: null
+    verified_at: null
+    note: >-
+      공통안전기준 3.1.5 는 75 mg/kg 이다. 개별기준이 있으므로 이쪽이 우선하며,
+      3.75배 엄격하다. 공통기준을 적용하면 느슨한 값을 보여주게 된다.
+
+  - id: KC-ANNEX1-TEXTILE-DBT
+    substance: 유기주석화합물 DBT
+    aliases: [DBT, dibutyltin, 디부틸주석, 유기주석]
+    applies_to: [children_textile]
+    limit_value: 1.0
+    unit: mg/kg
+    clause: "5.2 유해물질 안전요건 [표 2]"
+    source_page: 3
+    condition: "섬유 원단에 코팅·프린팅 등이 되어 있는 경우만 적용(주 2)"
+    test_method: "KS K 0737 (6.2.2)"
+    legal_basis: "안전확인 안전기준 부속서 1(유아용 섬유제품) 5.2"
+    source_url: "https://www.law.go.kr/행정규칙/안전확인대상어린이제품의안전기준"
+    status: draft
+    verified_by: null
+    verified_at: null
+    note: 공통안전기준에 없는 물질이다.
+
+  - id: KC-ANNEX1-TEXTILE-TBT
+    substance: 유기주석화합물 TBT
+    aliases: [TBT, tributyltin, 트리부틸주석, 유기주석]
+    applies_to: [children_textile]
+    limit_value: 0.5
+    unit: mg/kg
+    clause: "5.2 유해물질 안전요건 [표 2]"
+    source_page: 3
+    condition: "섬유 원단에 코팅·프린팅 등이 되어 있는 경우만 적용(주 2)"
+    test_method: "KS K 0737 (6.2.2)"
+    legal_basis: "안전확인 안전기준 부속서 1(유아용 섬유제품) 5.2"
+    source_url: "https://www.law.go.kr/행정규칙/안전확인대상어린이제품의안전기준"
+    status: draft
+    verified_by: null
+    verified_at: null
+    note: 공통안전기준에 없는 물질이다.
+
+  - id: KC-ANNEX1-TEXTILE-ARYLAMINE
+    substance: 아릴아민
+    aliases: [arylamine, 아릴아민, 芳香胺]
+    applies_to: [children_textile]
+    limit_value: 30
+    unit: mg/kg
+    limit_basis: 각각
+    clause: "5.2 유해물질 안전요건 [표 2]"
+    source_page: 3
+    condition: "염색한 섬유부분에만 적용. 대상물질은 안전기준준수 부속서 1(가정용 섬유제품) 부록 B, KS K 0739 에 따름(주 3)"
+    test_method: "KS K 0739 (6.2.3)"
+    legal_basis: "안전확인 안전기준 부속서 1(유아용 섬유제품) 5.2"
+    source_url: "https://www.law.go.kr/행정규칙/안전확인대상어린이제품의안전기준"
+    status: draft
+    verified_by: null
+    verified_at: null
+    note: 공통안전기준 3.1.5 와 같은 값(각각 30)이다.
+
+  - id: KC-ANNEX1-TEXTILE-PHT
+    substance: 프탈레이트계 가소제
+    aliases: [phthalate, 프탈레이트, 가소제, DEHP, DBP, BBP, DINP, DIDP, DnOP, DIBP, PVC]
+    applies_to: [children_textile]
+    limit_value: 0.1
+    unit: "%"
+    limit_basis: 총 함유량
+    clause: "5.2 유해물질 안전요건 [표 2]"
+    source_page: 3
+    condition: "섬유 원단에 합성수지(합성고무 포함) 코팅·프린팅 가공을 한 경우 및 합성수지 소재의 부자재에만 적용. 금속·고분자 기질 위에 페인트 코팅된 경우는 제외(주 4)"
+    test_method: "어린이제품 공통안전기준에 따름 (6.2.4)"
+    legal_basis: "안전확인 안전기준 부속서 1(유아용 섬유제품) 5.2"
+    source_url: "https://www.law.go.kr/행정규칙/안전확인대상어린이제품의안전기준"
+    status: draft
+    verified_by: null
+    verified_at: null
+    note: 대상물질과 기준치는 공통안전기준 3.1.3(7종 총합 0.1%)을 그대로 따른다.
+
+  - id: KC-ANNEX1-TEXTILE-FLAME
+    substance: 방염제
+    aliases: [방염제, TDBPP, PentaBDE, OctaBDE, flame retardant]
+    applies_to: [children_textile]
+    limit_value: 0
+    unit: null
+    comparator: prohibited
+    clause: "5.2 유해물질 안전요건 [표 2]"
+    source_page: 3
+    condition: "방염가공처리된 제품에 한하여 적용. 대상물질은 TDBPP, PentaBDE, OctaBDE(주 5)"
+    test_method: "PentaBDE·OctaBDE 는 KS C IEC 62321-6, TDBPP 는 안전기준준수 부속서 2(양탄자) 부록 A (6.2.5)"
+    legal_basis: "안전확인 안전기준 부속서 1(유아용 섬유제품) 5.2"
+    source_url: "https://www.law.go.kr/행정규칙/안전확인대상어린이제품의안전기준"
+    status: draft
+    verified_by: null
+    verified_at: null
+    note: >-
+      허용치가 아니라 "사용하지 말 것" 이다. 석면(공통 3.1.6)과 같은 전면 금지형.
+      공통안전기준에 없는 항목이다.
+
+  - id: KC-ANNEX1-TEXTILE-PB
+    substance: 총 납 함유량
+    aliases: [Pb, lead, 총납, 铅]
+    applies_to: [children_textile]
+    limit_value: 100
+    unit: mg/kg
+    clause: "5.2 유해물질 안전요건 [표 2]"
+    source_page: 3
+    condition: "금속 기질·고분자 기질·페인팅 및 유사코팅·기타 재료(목재 등) 부분에 적용. 섬유 원단에는 적용하지 않음. 페인팅·표면코팅은 공통안전기준 값에 따름(주 6)"
+    test_method: "어린이제품 공통안전기준에 따름 (6.2.7)"
+    legal_basis: "안전확인 안전기준 부속서 1(유아용 섬유제품) 5.2"
+    source_url: "https://www.law.go.kr/행정규칙/안전확인대상어린이제품의안전기준"
+    status: draft
+    verified_by: null
+    verified_at: null
+    note: 공통안전기준 3.1.2 와 같은 값(100)이다. 적용 부위 단서가 더 구체적이다.
+
+  - id: KC-ANNEX1-TEXTILE-CD
+    substance: 총 카드뮴 함유량
+    aliases: [Cd, cadmium, 총카드뮴, 镉]
+    applies_to: [children_textile]
+    limit_value: 75
+    unit: mg/kg
+    clause: "5.2 유해물질 안전요건 [표 2]"
+    source_page: 3
+    condition: "금속 기질·고분자 기질·페인팅 및 유사코팅·기타 재료 부분에 적용. 섬유 원단에는 적용하지 않음(주 6)"
+    test_method: "어린이제품 공통안전기준에 따름 (6.2.8)"
+    legal_basis: "안전확인 안전기준 부속서 1(유아용 섬유제품) 5.2"
+    source_url: "https://www.law.go.kr/행정규칙/안전확인대상어린이제품의안전기준"
+    status: draft
+    verified_by: null
+    verified_at: null
+    note: 공통안전기준 3.1.2 와 같은 값(75)이다.
+
+  - id: KC-ANNEX1-TEXTILE-AZODYE
+    substance: 알러지성 염료
+    aliases: [알러지성 염료, allergenic dye, 알레르기성 염료]
+    applies_to: [children_textile]
+    limit_value: 50
+    unit: mg/kg
+    limit_basis: 각각
+    clause: "5.2 유해물질 안전요건 [표 2]"
+    source_page: 3
+    condition: "대상물질은 KS K 0736 에 따름. 적용 조성섬유는 폴리에스터·나일론·아크릴·아세테이트·트리아세테이트·염화비닐 섬유이며, 염색한 섬유부분에 한하여 적용(주 7)"
+    test_method: "KS K 0736 (6.2.9)"
+    legal_basis: "안전확인 안전기준 부속서 1(유아용 섬유제품) 5.2"
+    source_url: "https://www.law.go.kr/행정규칙/안전확인대상어린이제품의안전기준"
+    status: draft
+    verified_by: null
+    verified_at: null
+    note: 공통안전기준에 없는 물질이다.
+
+  - id: KC-ANNEX1-TEXTILE-PH
+    substance: pH
+    aliases: [pH, 산도]
+    applies_to: [children_textile]
+    limit_value: null
+    unit: null
+    comparator: range
+    range_min: 4.0
+    range_max: 7.5
+    clause: "5.2 유해물질 안전요건 [표 2]"
+    source_page: 3
+    condition: "섬유부분에 한하여 적용(주 1)"
+    test_method: "KS K ISO 3071 (6.2.6)"
+    legal_basis: "안전확인 안전기준 부속서 1(유아용 섬유제품) 5.2"
+    source_url: "https://www.law.go.kr/행정규칙/안전확인대상어린이제품의안전기준"
+    status: draft
+    verified_by: null
+    verified_at: null
+    note: 공통안전기준 3.1.5 와 같은 범위(4.0~7.5)다.
+
+  - id: KC-ANNEX1-TEXTILE-NI
+    substance: 니켈 용출량
+    aliases: [Ni, nickel, 니켈, 镍]
+    applies_to: [children_textile]
+    limit_value: 0.5
+    unit: "μg/㎠/week"
+    clause: "5.2 유해물질 안전요건 [표 2]"
+    source_page: 3
+    condition: "원래 용도대로 제품을 착용한 상태에서 피부에 지속적으로 접촉하는 금속에 한하여 적용. 표면이 도금형태가 아닌 페인트 코팅된 경우는 제외(주 8)"
+    test_method: "공급자적합성확인 부속서 11(어린이용 장신구)에 따름 (6.2.10)"
+    legal_basis: "안전확인 안전기준 부속서 1(유아용 섬유제품) 5.2"
+    source_url: "https://www.law.go.kr/행정규칙/안전확인대상어린이제품의안전기준"
+    status: draft
+    verified_by: null
+    verified_at: null
+    note: >-
+      공통안전기준에 없는 물질이다. 단위가 다른 유일한 룰 - 함유량(mg/kg)이 아니라
+      단위면적·주당 용출량이다.
+
+  - id: KC-ANNEX1-TEXTILE-NP
+    substance: 노닐페놀
+    aliases: [NP, NPEO, nonylphenol, 노닐페놀]
+    applies_to: [children_textile]
+    limit_value: 100
+    unit: mg/kg
+    limit_basis: 총 함량
+    clause: "5.2 유해물질 안전요건 [표 2]"
+    source_page: 3
+    condition: "섬유부분에 한하여 적용(주 1)"
+    test_method: "NP 는 부속서 1 부록 A, NPEO 는 KS K ISO 18254-1 (6.2.11)"
+    legal_basis: "안전확인 안전기준 부속서 1(유아용 섬유제품) 5.2"
+    source_url: "https://www.law.go.kr/행정규칙/안전확인대상어린이제품의안전기준"
+    status: draft
+    verified_by: null
+    verified_at: null
+    note: 공통안전기준에 없는 물질이다.
+
+  # ==========================================================================
+  # 안전확인 안전기준 부속서 11 - 학용품
+  #
+  # 부속서 1(섬유)과 달리 **대부분 공통기준과 같다.** 유해원소 용출 8종, 총 납
+  # 100, 총 카드뮴 75 가 그대로이고, 프탈레이트는 아예 "어린이제품 공통안전기준에
+  # 따름" 으로 위임한다. 그래서 중복 룰을 만들지 않는다.
+  #
+  # 공통기준과 **다른 것만** 담는다:
+  #   - 폼알데하이드가 잉크류 20 / 문구용 풀 0.1% 로 갈린다 (공통 75 는 섬유 전용)
+  #   - pH 가 4.0~8.0 (공통 4.0~7.5 보다 상한이 넓다 - 액상풀 한정)
+  #   - 향료·급성경구독성·유전독성은 크레용·크레파스·지우개에만 걸린다
+  # ==========================================================================
+  - id: KC-ANNEX11-SCHOOL-HCHO-INK
+    substance: 폼알데하이드(잉크류)
+    aliases: [formaldehyde, 포름알데히드, 폼알데히드, 마킹펜, 잉크]
+    applies_to: [children_stationery]
+    limit_value: 20
+    unit: mg/kg
+    clause: "4.2 유해물질 [표 1]"
+    source_page: 4
+    condition: "잉크류(마킹펜류)에 적용"
+    test_method: "KS K ISO 105-F02 면 첨부포 (5.7.1). 측정은 부속서 1(유아용 섬유제품)에 따름"
+    legal_basis: "안전확인 안전기준 부속서 11(학용품) 4.2"
+    source_url: "https://www.law.go.kr/행정규칙/안전확인대상어린이제품의안전기준"
+    status: draft
+    verified_by: null
+    verified_at: null
+    note: 공통안전기준 3.1.5 의 75 는 섬유제품 전용이라 학용품 잉크에는 이 값이 쓰인다.
+
+  - id: KC-ANNEX11-SCHOOL-HCHO-GLUE
+    substance: 폼알데하이드(문구용 풀)
+    aliases: [formaldehyde, 포름알데히드, 폼알데히드, 문구용 풀, 접착제]
+    applies_to: [children_stationery]
+    limit_value: 0.1
+    unit: "%"
+    clause: "4.2 유해물질 [표 1]"
+    source_page: 4
+    condition: "문구용 풀에 적용"
+    test_method: "부속서 6(완구) 제10부 부록 D 에 따름 (5.7.2)"
+    legal_basis: "안전확인 안전기준 부속서 11(학용품) 4.2"
+    source_url: "https://www.law.go.kr/행정규칙/안전확인대상어린이제품의안전기준"
+    status: draft
+    verified_by: null
+    verified_at: null
+    note: >-
+      단위가 % 다(잉크류는 mg/kg). 같은 물질인데 제품 형태에 따라 기준과 단위가
+      모두 다르므로 한 룰로 합치면 안 된다.
+
+  - id: KC-ANNEX11-SCHOOL-PH
+    substance: pH(액상풀)
+    aliases: [pH, 산도, 액상풀]
+    applies_to: [children_stationery]
+    limit_value: null
+    unit: null
+    comparator: range
+    range_min: 4.0
+    range_max: 8.0
+    clause: "4.2 유해물질 [표 1]"
+    source_page: 4
+    condition: "액상풀에 적용"
+    test_method: "부속서 11 5.9"
+    legal_basis: "안전확인 안전기준 부속서 11(학용품) 4.2"
+    source_url: "https://www.law.go.kr/행정규칙/안전확인대상어린이제품의안전기준"
+    status: draft
+    verified_by: null
+    verified_at: null
+    note: >-
+      공통안전기준 3.1.5 는 4.0~7.5 다. 여기는 상한이 8.0 으로 **더 느슨하다** -
+      개별기준이 항상 더 엄격한 것은 아니다.
+
+  # ==========================================================================
+  # 안전확인 안전기준 부속서 6 - 완구, 제4부 유해화학물질
+  #
+  # 공통안전기준과 **구조가 다르다.** 공통은 유해원소 8종에 값 하나씩이지만,
+  # 완구는 19종에 재질 카테고리별로 값이 셋이다(원문 p.105 [표 4-2]).
+  # 그리고 훨씬 엄격하다 - 납이 공통 90 인데 완구는 카테고리 2 에서 3.4 다.
+  #
+  # 카테고리는 재질로 정해진다 (p.104 [표 4-1]) - 우리가 이미 추출하는 값이다:
+  #   1  크레용·색연필 심·분필, 점토·석고 (고체 형태로 흔적을 남기는 재료)
+  #   2  액체 페인트·잉크·슬라임·비눗방울 용액, 고체 풀
+  #   3  코팅·고분자·종이·섬유·유리/세라믹/금속·나무 (대부분이 여기)
+  #
+  # limit_value 에는 **카테고리 2(가장 엄격)** 를 둔다. 셀러가 재질을 안 적었을
+  # 때 느슨한 값을 보여주면 안 되기 때문이다. 재질이 확인되면 category_limits
+  # 에서 해당 값을 쓴다.
+  # ==========================================================================
+
+  - id: KC-ANNEX6-TOY-MIG-AL
+    substance: 알루미늄(완구 용출)
+    aliases: ["Al", "aluminium", "알루미늄", "铝"]
+    applies_to: [children_toy]
+    limit_value: 1406
+    unit: mg/kg
+    category_limits: {category_1: 5625, category_2: 1406, category_3: 70000}
+    clause: "제4부 4.1.2 유해원소 용출 [표 4-2]"
+    source_page: 105
+    condition: "완구 재질 카테고리별. 1=크레용·점토류, 2=액체 페인트·잉크·슬라임·고체풀, 3=코팅·고분자·종이·섬유·유리·금속·나무"
+    test_method: "제4부 8. 유해원소 용출 방법 (부록 E: 17종, 부록 F: 3가/6가 크로뮴, 부록 G: 유기주석)"
+    legal_basis: "안전확인 안전기준 부속서 6(완구) 제4부 4.1"
+    source_url: "https://www.law.go.kr/행정규칙/안전확인대상어린이제품의안전기준"
+    status: draft
+    verified_by: null
+    verified_at: null
+
+  - id: KC-ANNEX6-TOY-MIG-SB
+    substance: 안티모니(완구 용출)
+    aliases: ["Sb", "antimony", "안티몬"]
+    applies_to: [children_toy]
+    limit_value: 11.3
+    unit: mg/kg
+    category_limits: {category_1: 45, category_2: 11.3, category_3: 560}
+    clause: "제4부 4.1.2 유해원소 용출 [표 4-2]"
+    source_page: 105
+    condition: "완구 재질 카테고리별. 1=크레용·점토류, 2=액체 페인트·잉크·슬라임·고체풀, 3=코팅·고분자·종이·섬유·유리·금속·나무"
+    test_method: "제4부 8. 유해원소 용출 방법 (부록 E: 17종, 부록 F: 3가/6가 크로뮴, 부록 G: 유기주석)"
+    legal_basis: "안전확인 안전기준 부속서 6(완구) 제4부 4.1"
+    source_url: "https://www.law.go.kr/행정규칙/안전확인대상어린이제품의안전기준"
+    status: draft
+    verified_by: null
+    verified_at: null
+
+  - id: KC-ANNEX6-TOY-MIG-AS
+    substance: 비소(완구 용출)
+    aliases: ["As", "arsenic", "비소", "砷"]
+    applies_to: [children_toy]
+    limit_value: 0.9
+    unit: mg/kg
+    category_limits: {category_1: 3.8, category_2: 0.9, category_3: 47}
+    clause: "제4부 4.1.2 유해원소 용출 [표 4-2]"
+    source_page: 105
+    condition: "완구 재질 카테고리별. 1=크레용·점토류, 2=액체 페인트·잉크·슬라임·고체풀, 3=코팅·고분자·종이·섬유·유리·금속·나무"
+    test_method: "제4부 8. 유해원소 용출 방법 (부록 E: 17종, 부록 F: 3가/6가 크로뮴, 부록 G: 유기주석)"
+    legal_basis: "안전확인 안전기준 부속서 6(완구) 제4부 4.1"
+    source_url: "https://www.law.go.kr/행정규칙/안전확인대상어린이제품의안전기준"
+    status: draft
+    verified_by: null
+    verified_at: null
+
+  - id: KC-ANNEX6-TOY-MIG-BA
+    substance: 바륨(완구 용출)
+    aliases: ["Ba", "barium", "바륨", "钡"]
+    applies_to: [children_toy]
+    limit_value: 375
+    unit: mg/kg
+    category_limits: {category_1: 1500, category_2: 375, category_3: 18750}
+    clause: "제4부 4.1.2 유해원소 용출 [표 4-2]"
+    source_page: 105
+    condition: "완구 재질 카테고리별. 1=크레용·점토류, 2=액체 페인트·잉크·슬라임·고체풀, 3=코팅·고분자·종이·섬유·유리·금속·나무"
+    test_method: "제4부 8. 유해원소 용출 방법 (부록 E: 17종, 부록 F: 3가/6가 크로뮴, 부록 G: 유기주석)"
+    legal_basis: "안전확인 안전기준 부속서 6(완구) 제4부 4.1"
+    source_url: "https://www.law.go.kr/행정규칙/안전확인대상어린이제품의안전기준"
+    status: draft
+    verified_by: null
+    verified_at: null
+
+  - id: KC-ANNEX6-TOY-MIG-CD
+    substance: 카드뮴(완구 용출)
+    aliases: ["Cd", "cadmium", "카드뮴", "镉"]
+    applies_to: [children_toy]
+    limit_value: 0.3
+    unit: mg/kg
+    category_limits: {category_1: 1.3, category_2: 0.3, category_3: 17}
+    clause: "제4부 4.1.2 유해원소 용출 [표 4-2]"
+    source_page: 105
+    condition: "완구 재질 카테고리별. 1=크레용·점토류, 2=액체 페인트·잉크·슬라임·고체풀, 3=코팅·고분자·종이·섬유·유리·금속·나무"
+    test_method: "제4부 8. 유해원소 용출 방법 (부록 E: 17종, 부록 F: 3가/6가 크로뮴, 부록 G: 유기주석)"
+    legal_basis: "안전확인 안전기준 부속서 6(완구) 제4부 4.1"
+    source_url: "https://www.law.go.kr/행정규칙/안전확인대상어린이제품의안전기준"
+    status: draft
+    verified_by: null
+    verified_at: null
+
+  - id: KC-ANNEX6-TOY-MIG-CR3
+    substance: 3가 크로뮴(완구 용출)
+    aliases: ["Cr(III)", "크로뮴", "크롬"]
+    applies_to: [children_toy]
+    limit_value: 9.4
+    unit: mg/kg
+    category_limits: {category_1: 37.5, category_2: 9.4, category_3: 460}
+    clause: "제4부 4.1.2 유해원소 용출 [표 4-2]"
+    source_page: 105
+    condition: "완구 재질 카테고리별. 1=크레용·점토류, 2=액체 페인트·잉크·슬라임·고체풀, 3=코팅·고분자·종이·섬유·유리·금속·나무"
+    test_method: "제4부 8. 유해원소 용출 방법 (부록 E: 17종, 부록 F: 3가/6가 크로뮴, 부록 G: 유기주석)"
+    legal_basis: "안전확인 안전기준 부속서 6(완구) 제4부 4.1"
+    source_url: "https://www.law.go.kr/행정규칙/안전확인대상어린이제품의안전기준"
+    status: draft
+    verified_by: null
+    verified_at: null
+
+  - id: KC-ANNEX6-TOY-MIG-CR6
+    substance: 6가 크로뮴(완구 용출)
+    aliases: ["Cr(VI)", "6가크롬", "육가크롬"]
+    applies_to: [children_toy]
+    limit_value: 0.005
+    unit: mg/kg
+    category_limits: {category_1: 0.02, category_2: 0.005, category_3: 0.2}
+    clause: "제4부 4.1.2 유해원소 용출 [표 4-2]"
+    source_page: 105
+    condition: "완구 재질 카테고리별. 1=크레용·점토류, 2=액체 페인트·잉크·슬라임·고체풀, 3=코팅·고분자·종이·섬유·유리·금속·나무"
+    test_method: "제4부 8. 유해원소 용출 방법 (부록 E: 17종, 부록 F: 3가/6가 크로뮴, 부록 G: 유기주석)"
+    legal_basis: "안전확인 안전기준 부속서 6(완구) 제4부 4.1"
+    source_url: "https://www.law.go.kr/행정규칙/안전확인대상어린이제품의안전기준"
+    status: draft
+    verified_by: null
+    verified_at: null
+
+  - id: KC-ANNEX6-TOY-MIG-PB
+    substance: 납(완구 용출)
+    aliases: ["Pb", "lead", "납", "铅"]
+    applies_to: [children_toy]
+    limit_value: 3.4
+    unit: mg/kg
+    category_limits: {category_1: 13.5, category_2: 3.4, category_3: 160}
+    clause: "제4부 4.1.2 유해원소 용출 [표 4-2]"
+    source_page: 105
+    condition: "완구 재질 카테고리별. 1=크레용·점토류, 2=액체 페인트·잉크·슬라임·고체풀, 3=코팅·고분자·종이·섬유·유리·금속·나무"
+    test_method: "제4부 8. 유해원소 용출 방법 (부록 E: 17종, 부록 F: 3가/6가 크로뮴, 부록 G: 유기주석)"
+    legal_basis: "안전확인 안전기준 부속서 6(완구) 제4부 4.1"
+    source_url: "https://www.law.go.kr/행정규칙/안전확인대상어린이제품의안전기준"
+    status: draft
+    verified_by: null
+    verified_at: null
+
+  - id: KC-ANNEX6-TOY-MIG-HG
+    substance: 수은(완구 용출)
+    aliases: ["Hg", "mercury", "수은", "汞"]
+    applies_to: [children_toy]
+    limit_value: 1.9
+    unit: mg/kg
+    category_limits: {category_1: 7.5, category_2: 1.9, category_3: 94}
+    clause: "제4부 4.1.2 유해원소 용출 [표 4-2]"
+    source_page: 105
+    condition: "완구 재질 카테고리별. 1=크레용·점토류, 2=액체 페인트·잉크·슬라임·고체풀, 3=코팅·고분자·종이·섬유·유리·금속·나무"
+    test_method: "제4부 8. 유해원소 용출 방법 (부록 E: 17종, 부록 F: 3가/6가 크로뮴, 부록 G: 유기주석)"
+    legal_basis: "안전확인 안전기준 부속서 6(완구) 제4부 4.1"
+    source_url: "https://www.law.go.kr/행정규칙/안전확인대상어린이제품의안전기준"
+    status: draft
+    verified_by: null
+    verified_at: null
+
+  - id: KC-ANNEX6-TOY-MIG-SE
+    substance: 셀레늄(완구 용출)
+    aliases: ["Se", "selenium", "셀레늄", "硒"]
+    applies_to: [children_toy]
+    limit_value: 9.4
+    unit: mg/kg
+    category_limits: {category_1: 37.5, category_2: 9.4, category_3: 460}
+    clause: "제4부 4.1.2 유해원소 용출 [표 4-2]"
+    source_page: 105
+    condition: "완구 재질 카테고리별. 1=크레용·점토류, 2=액체 페인트·잉크·슬라임·고체풀, 3=코팅·고분자·종이·섬유·유리·금속·나무"
+    test_method: "제4부 8. 유해원소 용출 방법 (부록 E: 17종, 부록 F: 3가/6가 크로뮴, 부록 G: 유기주석)"
+    legal_basis: "안전확인 안전기준 부속서 6(완구) 제4부 4.1"
+    source_url: "https://www.law.go.kr/행정규칙/안전확인대상어린이제품의안전기준"
+    status: draft
+    verified_by: null
+    verified_at: null
+
+  - id: KC-ANNEX6-TOY-MIG-B
+    substance: 붕소(완구 용출)
+    aliases: ["B", "boron", "붕소", "硼"]
+    applies_to: [children_toy]
+    limit_value: 300
+    unit: mg/kg
+    category_limits: {category_1: 1200, category_2: 300, category_3: 15000}
+    clause: "제4부 4.1.2 유해원소 용출 [표 4-2]"
+    source_page: 105
+    condition: "완구 재질 카테고리별. 1=크레용·점토류, 2=액체 페인트·잉크·슬라임·고체풀, 3=코팅·고분자·종이·섬유·유리·금속·나무"
+    test_method: "제4부 8. 유해원소 용출 방법 (부록 E: 17종, 부록 F: 3가/6가 크로뮴, 부록 G: 유기주석)"
+    legal_basis: "안전확인 안전기준 부속서 6(완구) 제4부 4.1"
+    source_url: "https://www.law.go.kr/행정규칙/안전확인대상어린이제품의안전기준"
+    status: draft
+    verified_by: null
+    verified_at: null
+
+  - id: KC-ANNEX6-TOY-MIG-CO
+    substance: 코발트(완구 용출)
+    aliases: ["Co", "cobalt", "코발트", "钴"]
+    applies_to: [children_toy]
+    limit_value: 2.6
+    unit: mg/kg
+    category_limits: {category_1: 10.5, category_2: 2.6, category_3: 130}
+    clause: "제4부 4.1.2 유해원소 용출 [표 4-2]"
+    source_page: 105
+    condition: "완구 재질 카테고리별. 1=크레용·점토류, 2=액체 페인트·잉크·슬라임·고체풀, 3=코팅·고분자·종이·섬유·유리·금속·나무"
+    test_method: "제4부 8. 유해원소 용출 방법 (부록 E: 17종, 부록 F: 3가/6가 크로뮴, 부록 G: 유기주석)"
+    legal_basis: "안전확인 안전기준 부속서 6(완구) 제4부 4.1"
+    source_url: "https://www.law.go.kr/행정규칙/안전확인대상어린이제품의안전기준"
+    status: draft
+    verified_by: null
+    verified_at: null
+
+  - id: KC-ANNEX6-TOY-MIG-CU
+    substance: 구리(완구 용출)
+    aliases: ["Cu", "copper", "구리", "铜"]
+    applies_to: [children_toy]
+    limit_value: 156
+    unit: mg/kg
+    category_limits: {category_1: 622.5, category_2: 156, category_3: 7700}
+    clause: "제4부 4.1.2 유해원소 용출 [표 4-2]"
+    source_page: 105
+    condition: "완구 재질 카테고리별. 1=크레용·점토류, 2=액체 페인트·잉크·슬라임·고체풀, 3=코팅·고분자·종이·섬유·유리·금속·나무"
+    test_method: "제4부 8. 유해원소 용출 방법 (부록 E: 17종, 부록 F: 3가/6가 크로뮴, 부록 G: 유기주석)"
+    legal_basis: "안전확인 안전기준 부속서 6(완구) 제4부 4.1"
+    source_url: "https://www.law.go.kr/행정규칙/안전확인대상어린이제품의안전기준"
+    status: draft
+    verified_by: null
+    verified_at: null
+
+  - id: KC-ANNEX6-TOY-MIG-MN
+    substance: 망간(완구 용출)
+    aliases: ["Mn", "manganese", "망간", "锰"]
+    applies_to: [children_toy]
+    limit_value: 300
+    unit: mg/kg
+    category_limits: {category_1: 1200, category_2: 300, category_3: 15000}
+    clause: "제4부 4.1.2 유해원소 용출 [표 4-2]"
+    source_page: 105
+    condition: "완구 재질 카테고리별. 1=크레용·점토류, 2=액체 페인트·잉크·슬라임·고체풀, 3=코팅·고분자·종이·섬유·유리·금속·나무"
+    test_method: "제4부 8. 유해원소 용출 방법 (부록 E: 17종, 부록 F: 3가/6가 크로뮴, 부록 G: 유기주석)"
+    legal_basis: "안전확인 안전기준 부속서 6(완구) 제4부 4.1"
+    source_url: "https://www.law.go.kr/행정규칙/안전확인대상어린이제품의안전기준"
+    status: draft
+    verified_by: null
+    verified_at: null
+
+  - id: KC-ANNEX6-TOY-MIG-NI
+    substance: 니켈(완구 용출)
+    aliases: ["Ni", "nickel", "니켈", "镍"]
+    applies_to: [children_toy]
+    limit_value: 18.8
+    unit: mg/kg
+    category_limits: {category_1: 75, category_2: 18.8, category_3: 930}
+    clause: "제4부 4.1.2 유해원소 용출 [표 4-2]"
+    source_page: 105
+    condition: "완구 재질 카테고리별. 1=크레용·점토류, 2=액체 페인트·잉크·슬라임·고체풀, 3=코팅·고분자·종이·섬유·유리·금속·나무"
+    test_method: "제4부 8. 유해원소 용출 방법 (부록 E: 17종, 부록 F: 3가/6가 크로뮴, 부록 G: 유기주석)"
+    legal_basis: "안전확인 안전기준 부속서 6(완구) 제4부 4.1"
+    source_url: "https://www.law.go.kr/행정규칙/안전확인대상어린이제품의안전기준"
+    status: draft
+    verified_by: null
+    verified_at: null
+
+  - id: KC-ANNEX6-TOY-MIG-SR
+    substance: 스트론튬(완구 용출)
+    aliases: ["Sr", "strontium", "스트론튬", "锶"]
+    applies_to: [children_toy]
+    limit_value: 1125
+    unit: mg/kg
+    category_limits: {category_1: 4500, category_2: 1125, category_3: 56000}
+    clause: "제4부 4.1.2 유해원소 용출 [표 4-2]"
+    source_page: 105
+    condition: "완구 재질 카테고리별. 1=크레용·점토류, 2=액체 페인트·잉크·슬라임·고체풀, 3=코팅·고분자·종이·섬유·유리·금속·나무"
+    test_method: "제4부 8. 유해원소 용출 방법 (부록 E: 17종, 부록 F: 3가/6가 크로뮴, 부록 G: 유기주석)"
+    legal_basis: "안전확인 안전기준 부속서 6(완구) 제4부 4.1"
+    source_url: "https://www.law.go.kr/행정규칙/안전확인대상어린이제품의안전기준"
+    status: draft
+    verified_by: null
+    verified_at: null
+
+  - id: KC-ANNEX6-TOY-MIG-SN
+    substance: 주석(완구 용출)
+    aliases: ["Sn", "tin", "주석", "锡"]
+    applies_to: [children_toy]
+    limit_value: 3750
+    unit: mg/kg
+    category_limits: {category_1: 15000, category_2: 3750, category_3: 180000}
+    clause: "제4부 4.1.2 유해원소 용출 [표 4-2]"
+    source_page: 105
+    condition: "완구 재질 카테고리별. 1=크레용·점토류, 2=액체 페인트·잉크·슬라임·고체풀, 3=코팅·고분자·종이·섬유·유리·금속·나무"
+    test_method: "제4부 8. 유해원소 용출 방법 (부록 E: 17종, 부록 F: 3가/6가 크로뮴, 부록 G: 유기주석)"
+    legal_basis: "안전확인 안전기준 부속서 6(완구) 제4부 4.1"
+    source_url: "https://www.law.go.kr/행정규칙/안전확인대상어린이제품의안전기준"
+    status: draft
+    verified_by: null
+    verified_at: null
+
+  - id: KC-ANNEX6-TOY-MIG-ORGSN
+    substance: 유기주석 화합물(완구 용출)
+    aliases: ["organic tin", "유기주석", "organotin"]
+    applies_to: [children_toy]
+    limit_value: 0.2
+    unit: mg/kg
+    category_limits: {category_1: 0.9, category_2: 0.2, category_3: 12}
+    clause: "제4부 4.1.2 유해원소 용출 [표 4-2]"
+    source_page: 105
+    condition: "완구 재질 카테고리별. 1=크레용·점토류, 2=액체 페인트·잉크·슬라임·고체풀, 3=코팅·고분자·종이·섬유·유리·금속·나무"
+    test_method: "제4부 8. 유해원소 용출 방법 (부록 E: 17종, 부록 F: 3가/6가 크로뮴, 부록 G: 유기주석)"
+    legal_basis: "안전확인 안전기준 부속서 6(완구) 제4부 4.1"
+    source_url: "https://www.law.go.kr/행정규칙/안전확인대상어린이제품의안전기준"
+    status: draft
+    verified_by: null
+    verified_at: null
+
+  - id: KC-ANNEX6-TOY-MIG-ZN
+    substance: 아연(완구 용출)
+    aliases: ["Zn", "zinc", "아연", "锌"]
+    applies_to: [children_toy]
+    limit_value: 938
+    unit: mg/kg
+    category_limits: {category_1: 3750, category_2: 938, category_3: 46000}
+    clause: "제4부 4.1.2 유해원소 용출 [표 4-2]"
+    source_page: 105
+    condition: "완구 재질 카테고리별. 1=크레용·점토류, 2=액체 페인트·잉크·슬라임·고체풀, 3=코팅·고분자·종이·섬유·유리·금속·나무"
+    test_method: "제4부 8. 유해원소 용출 방법 (부록 E: 17종, 부록 F: 3가/6가 크로뮴, 부록 G: 유기주석)"
+    legal_basis: "안전확인 안전기준 부속서 6(완구) 제4부 4.1"
+    source_url: "https://www.law.go.kr/행정규칙/안전확인대상어린이제품의안전기준"
+    status: draft
+    verified_by: null
+    verified_at: null
+
+  - id: KC-ANNEX6-TOY-PB-TOTAL
+    substance: 총 납(완구)
+    aliases: ["Pb", "lead", "총납", "铅"]
+    applies_to: [children_toy]
+    limit_value: 100
+    unit: mg/kg
+    clause: "제4부 4.2 총 납"
+    source_page: 106
+    condition: "기질 중 함유량. 페인트·표면코팅은 90 이하. 전기·전자제품 기능성 부품(전기연결용 소자 등), 금속 필기구 팁, 섬유원단에는 적용하지 않음"
+    variant_limits: {페인트·표면코팅: 90}
+    test_method: "제4부 8. 유해원소 용출 방법"
+    legal_basis: "안전확인 안전기준 부속서 6(완구) 제4부 4.2"
+    source_url: "https://www.law.go.kr/행정규칙/안전확인대상어린이제품의안전기준"
+    status: draft
+    verified_by: null
+    verified_at: null
+    note: 공통안전기준 3.1.2 와 같은 값(100 / 코팅 90)이다.
+
+  - id: KC-ANNEX6-TOY-CD-TOTAL
+    substance: 총 카드뮴(완구)
+    aliases: ["Cd", "cadmium", "총카드뮴", "镉"]
+    applies_to: [children_toy]
+    limit_value: 75
+    unit: mg/kg
+    clause: "제4부 4.3 총 카드뮴"
+    source_page: 106
+    condition: "기질 중 함유량. 섬유원단에는 적용하지 않음"
+    test_method: "제4부 8. 유해원소 용출 방법"
+    legal_basis: "안전확인 안전기준 부속서 6(완구) 제4부 4.3"
+    source_url: "https://www.law.go.kr/행정규칙/안전확인대상어린이제품의안전기준"
+    status: draft
+    verified_by: null
+    verified_at: null
+    note: 공통안전기준 3.1.2 와 같은 값(75)이다.
+
+  - id: KC-ANNEX6-TOY-NI-MIG
+    substance: 니켈 용출량(완구)
+    aliases: ["Ni", "nickel", "니켈", "镍"]
+    applies_to: [children_toy]
+    limit_value: 0.5
+    unit: "μg/㎠/week"
+    clause: "제4부 4.4 니켈 용출량"
+    source_page: 106
+    condition: "지속적으로 접촉되는 금속제 부품에 한함. 선글라스·안경·반지·목걸이·팔찌처럼 신체에 직접 접촉하여 사용하는 형태"
+    test_method: "제4부 부록 G"
+    legal_basis: "안전확인 안전기준 부속서 6(완구) 제4부 4.4"
+    source_url: "https://www.law.go.kr/행정규칙/안전확인대상어린이제품의안전기준"
+    status: draft
+    verified_by: null
+    verified_at: null
+    note: 부속서 1(유아용 섬유제품)의 니켈 용출량과 같은 값·단위다.
+
+  - id: KC-ANNEX6-TOY-PHT
+    substance: 프탈레이트계 가소제(완구)
+    aliases: [phthalate, 프탈레이트, 가소제, DEHP, DBP, BBP, DINP, DIDP, DnOP, DIBP, PVC]
+    applies_to: [children_toy]
+    limit_value: 0.1
+    unit: "%"
+    limit_basis: 7종의 총 함유량
+    clause: "제4부 4.5 프탈레이트계 가소제"
+    source_page: 106
+    condition: "완구에 사용된 합성수지 재질. DEHP·DBP·BBP·DnOP·DINP·DIDP 및 DIBP 합유 중량의 총합"
+    test_method: "어린이제품 공통안전기준 부록 C"
+    legal_basis: "안전확인 안전기준 부속서 6(완구) 제4부 4.5"
+    source_url: "https://www.law.go.kr/행정규칙/안전확인대상어린이제품의안전기준"
+    status: draft
+    verified_by: null
+    verified_at: null
+    note: >-
+      공통안전기준 3.1.3 과 같은 7종·0.1% 다. DIBP 가 포함되어 있어 부속서 2(2017년,
+      6종)와 달리 현행 공통기준과 일치한다.
+
+  - id: KC-ANNEX6-TOY-NITROSAMINE
+    substance: 니트로사민류(완구)
+    aliases: [nitrosamine, 니트로사민, N-니트로소, 亚硝胺]
+    applies_to: [children_toy]
+    limit_value: 0.05
+    unit: mg/kg
+    clause: "제4부 4.6 니트로사민류 및 니트로사민류 생성 가능물질"
+    source_page: 106
+    condition: "탄성중합체(elastomer). 입에 넣어 사용할 용도로 제작된 36개월 미만용은 0.01 이하"
+    variant_limits: {입에 넣는 36개월 미만용: 0.01}
+    test_method: "제4부 4.6"
+    legal_basis: "안전확인 안전기준 부속서 6(완구) 제4부 4.6"
+    source_url: "https://www.law.go.kr/행정규칙/안전확인대상어린이제품의안전기준"
+    status: draft
+    verified_by: null
+    verified_at: null
+    note: >-
+      **니트로사민은 제12부가 아니라 제4부 4.6 에 있다.** 공통안전기준 4.1.4 와
+      부속서 11 이 "부속서 6 완구 제12부" 로 인용하는데, 확보한 원문(p.106)에는
+      제4부에 있다. 값(0.01/0.05, 생성가능물질 0.1/1.0)은 공통기준과 같다.
+
+  - id: KC-ANNEX6-TOY-NITROSATABLE
+    substance: 니트로사민류 생성 가능물질(완구)
+    aliases: [nitrosatable, 니트로사민 생성, N-nitrosatable]
+    applies_to: [children_toy]
+    limit_value: 1.0
+    unit: mg/kg
+    clause: "제4부 4.6 니트로사민류 및 니트로사민류 생성 가능물질"
+    source_page: 106
+    condition: "탄성중합체(elastomer). 입에 넣어 사용할 용도로 제작된 36개월 미만용은 0.1 이하"
+    variant_limits: {입에 넣는 36개월 미만용: 0.1}
+    test_method: "제4부 4.6"
+    legal_basis: "안전확인 안전기준 부속서 6(완구) 제4부 4.6"
+    source_url: "https://www.law.go.kr/행정규칙/안전확인대상어린이제품의안전기준"
+    status: draft
+    verified_by: null
+    verified_at: null
+
+  # ==========================================================================
+  # 성능·구조 안전요건 (생활용품·전기용품)
+  #
+  # 유해물질과 담는 방식이 다르다. 부속서 53(운동용 안전모) 원문을 보면 기준이
+  # "가속도계를 무게중심 반경 10mm 이내에 설치하고 6kHz 로 샘플링해 CFC 1000
+  # 으로 필터링" 같은 **시험 절차 규격**이다. 값을 보여줘야 셀러가 쓸 수 없다.
+  #
+  # 그래서 값 대신 **어떤 시험을 통과해야 하는지**(test_items)와, 정부 조사에서
+  # 이 품목이 어떻게 나왔는지(failure_rate)를 담는다. 화면에서 하는 일은
+  # 유해물질과 같다 - "이걸 확인하라" 는 안내다.
+  #
+  # ⚠ failure_rate 는 비율만 두지 않는다. "88%" 만 적으면 표본 8개짜리가 통계
+  #   처럼 읽힌다. sample 과 source 를 반드시 함께 담는다
+  #   (tests/test_failure_rate_honesty.py 가 강제한다).
+  #
+  # ⚠ 아래 셋은 **부속서 번호와 시험 항목이 원문 미확인**이다. 부적합률만
+  #   정부 보도자료로 확인했다. 원문을 받으면 test_items·annex_no·clause 를
+  #   채우고 승격한다. 지금은 구조 증명용 draft 다.
+  # ==========================================================================
+  - id: KC-LIFE-WATERPLAY-PERF
+    requirement_type: performance
+    substance: 공기주입 물놀이기구 안전요건
+    aliases: [물놀이기구, 튜브, 수영링, 에어매트, 워터슬라이드, inflatable]
+    applies_to: [household]
+    limit_value: null
+    unit: null
+    test_items: []          # 원문 미확인
+    annex_no: null          # 원문 미확인
+    clause: "안전확인대상생활용품의 안전기준 (부속서 번호 미확인)"
+    source_page: null
+    condition: "공기주입식 물놀이기구"
+    test_method: null
+    failure_rate:
+      sample: "18개 중 18개"
+      source: "국가기술표준원 해외직구 안전성조사 2026-06"
+      note: "조사한 전부가 부적합. 다만 여름철 표적 조사라 전체 평균은 아니다."
+    legal_basis: "전기용품 및 생활용품 안전관리법 (안전확인대상생활용품)"
+    source_url: "https://www.law.go.kr/행정규칙/안전확인대상생활용품의안전기준"
+    status: draft
+    verified_by: null
+    verified_at: null
+
+  - id: KC-LIFE-HELMET-PERF
+    requirement_type: performance
+    substance: 승차용 안전모 안전요건
+    aliases: [안전모, 헬멧, helmet, 이륜차 안전모, 오토바이 헬멧, 승차용 안전모]
+    applies_to: [household]
+    limit_value: null
+    unit: null
+    test_items: [충격 흡수, 유지 시스템 강도, 내관통]
+    annex_no: "52"
+    clause: "안전확인 안전기준 부속서 52(승차용 안전모) 5.2 성능"
+    source_page: null
+    condition: >-
+      「자동차관리법」에 따른 자동차(이륜 포함) 승차자용 안전모. 눈 보호구가
+      함께 있으면 평행도·굴절력·투과율·내열성·내한성·강도 시험이 추가된다.
+    test_method: "부속서 52 6.2 성능"
+    failure_rate:
+      sample: "10개 중 7개"
+      source: "국가기술표준원 해외직구 안전성조사 2026-04"
+    legal_basis: "안전확인 안전기준 부속서 52(승차용 안전모)"
+    source_url: "https://www.law.go.kr/행정규칙/안전확인대상생활용품의안전기준"
+    status: draft
+    verified_by: null
+    verified_at: null
+    note: >-
+      원문 확인 완료(law.go.kr flSeq=162048313, 고시 2026-31 판본). 종류가
+      1~3종으로 나뉘고 형식(하프/스리쿼터/오픈페이스/풀페이스)마다 보호 범위가
+      다르나, 우리는 "어떤 시험을 통과해야 하는지" 까지만 안내한다.
+      ⚠ 부속서 53(운동용 안전모)은 별개 기준이다. 자전거·스포츠용은 53 이다.
+
+  - id: KC-LIFE-LASER-PERF
+    requirement_type: performance
+    substance: 휴대용 레이저용품 안전요건
+    aliases: [레이저, laser, 레이저포인터, 레이저 거리측정기, 휴대용 레이저]
+    applies_to: [household]
+    limit_value: null
+    unit: null
+    test_items: [겉모양, 구조, 레이저의 등급]
+    annex_no: "46"
+    clause: "안전확인 안전기준 부속서 46(휴대용 레이저용품) 4. 안전요건"
+    source_page: null
+    condition: "휴대용 레이저용품. 등급 분류는 KS C IEC 60825-1 에 따른다"
+    test_method: "부속서 46 5. 시험방법 (등급은 KS C IEC 60825-1)"
+    failure_rate:
+      sample: "10개 중 8개"
+      source: "국가기술표준원 해외직구 안전성조사 2026-04"
+    legal_basis: "안전확인 안전기준 부속서 46(휴대용 레이저용품)"
+    source_url: "https://www.law.go.kr/행정규칙/안전확인대상생활용품의안전기준"
+    status: draft
+    verified_by: null
+    verified_at: null
+    note: >-
+      원문 확인 완료(flSeq=162048275). 핵심은 **레이저 등급**이다 - 등급별
+      경고라벨 도안과 부착위치가 KS C IEC 60825-1 을 따라야 한다. 값이 아니라
+      등급 분류라 limit_value 로 담지 않는다.
+
+  - id: KC-ELEC-LED-PERF
+    requirement_type: performance
+    substance: LED등기구 안전요건
+    aliases: [LED, 등기구, 조명, 램프, LED조명, luminaire]
+    applies_to: [electrical]
+    limit_value: null
+    unit: null
+    test_items: []
+    annex_no: null
+    clause: "전기용품 안전기준 KC 60598 계열 (개별 고시)"
+    source_page: null
+    condition: "LED 등기구"
+    test_method: null
+    failure_rate:
+      sample: "22개 중 10개"
+      source: "국가기술표준원 해외직구 안전성조사 2025-06"
+    legal_basis: "전기용품 및 생활용품 안전관리법 (전기용품 안전기준)"
+    source_url: "https://www.law.go.kr/행정규칙/안전확인대상전기용품의안전기준"
+    status: draft
+    verified_by: null
+    verified_at: null
+
+  # 속눈썹 열 성형기는 성능 요건인데 **값이 있다**(정격 24V, 발열체 160도).
+  # 부적합률이 가장 높은 품목이라(8개 중 7개) 값을 그대로 보여주는 편이 낫다.
+  # 그래서 performance 가 아니라 substance 스키마로 담는다 - 구분 기준은
+  # "값 하나로 떨어지는가" 이지 "물질인가" 가 아니다.
+  - id: KC-LIFE-CURLER-VOLT
+    substance: 속눈썹 열 성형기 정격전압
+    aliases: [속눈썹, 뷰러, 열성형기, eyelash curler, 속눈썹 고데기]
+    applies_to: [household]
+    limit_value: 24
+    unit: "V(DC)"
+    clause: "공급자적합성확인 기준 부속서 9(속눈썹 열 성형기) 4.2"
+    source_page: null
+    condition: "기기의 정격전압은 DC 24V 를 넘지 않아야 한다"
+    test_method: "부속서 9 6. 시험방법"
+    failure_rate:
+      sample: "8개 중 7개"
+      source: "국가기술표준원 해외직구 안전성조사 2026-04"
+    legal_basis: "공급자적합성확인 기준 부속서 9(속눈썹 열 성형기)"
+    source_url: "https://www.law.go.kr/행정규칙/공급자적합성확인대상생활용품의안전기준"
+    status: draft
+    verified_by: null
+    verified_at: null
+
+  - id: KC-LIFE-CURLER-TEMP
+    substance: 속눈썹 열 성형기 이상온도
+    aliases: [속눈썹, 뷰러, 열성형기, eyelash curler, 속눈썹 고데기]
+    applies_to: [household]
+    limit_value: 160
+    unit: "℃"
+    clause: "공급자적합성확인 기준 부속서 9(속눈썹 열 성형기) 5.3"
+    source_page: null
+    condition: >-
+      이상 사용·부주의 사용 시 발열체 온도가 160도를 넘지 않아야 하며, 불꽃
+      발생·금속 용융·유독성 또는 가연성 가스 발생이 없어야 한다
+    test_method: "부속서 9 6.3 (열화상카메라, 주위온도 20±5도)"
+    failure_rate:
+      sample: "8개 중 7개"
+      source: "국가기술표준원 해외직구 안전성조사 2026-04"
+    legal_basis: "공급자적합성확인 기준 부속서 9(속눈썹 열 성형기)"
+    source_url: "https://www.law.go.kr/행정규칙/공급자적합성확인대상생활용품의안전기준"
+    status: draft
+    verified_by: null
+    verified_at: null
+    note: >-
+      원문 확인 완료(flSeq=159649035). 공급자적합성확인 대상이라 조회 DB 에
+      인증번호가 없는 것이 정상이다(R3-b). 부적합률 최상위 품목인데 등급은
+      가장 낮다 - 셀러가 "번호가 없으니 괜찮다" 로 읽으면 안 되는 대표 사례다.
+
 coverage:
   categories: [children_toy, children_stationery, children_textile]
