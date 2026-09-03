@@ -236,3 +236,21 @@ def test_promoted_rules_carry_the_current_decree_number():
             assert rule.get("verified_source"), (
                 f"{rule_id}: verified 인데 무엇을 대조했는지 없다"
             )
+
+
+def test_the_handoff_log_names_the_real_install_command():
+    """작업로그가 없는 파일을 시키면 집에서 첫 명령부터 막힌다.
+
+    2026-09-03 에 실제로 겪었다 - `pip install -e ".[dev]"` 를 적었는데
+    이 저장소에는 pyproject.toml 이 없다. 깨끗한 클론으로 돌려보고 찾았다.
+    """
+    root = Path(__file__).resolve().parents[1]
+    log = root / "docs" / "작업로그_2026-09-03.md"
+    text = log.read_text(encoding="utf-8")
+
+    assert "requirements.txt" in text
+    # 없는 파일을 시키지 않는다.
+    for absent in ("pyproject.toml", "poetry", "Pipfile"):
+        if not (root / absent).exists():
+            assert f'install -e ".[dev]"' not in text, absent
+    assert (root / "requirements.txt").exists()

@@ -23,7 +23,8 @@
 python -m venv .venv && source .venv/Scripts/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 cp .env.example .env          # MOCK_MODE=true 로 키 없이 구동됩니다
-pytest -q                     # 100 passed
+pytest -q                     # 819 passed (2026-09-03). 느린 것을 빼려면
+                              # pytest -q --deselect tests/test_ratelimit.py
 uvicorn sourcing_guard.main:app --reload
 curl -s localhost:8000/healthz
 ```
