@@ -763,12 +763,22 @@ def verify(
                     )
                 )
     elif image_candidates or _cert_required_here:
+        # 등급을 먼저 알아낸다. 알아냈으면 "안전인증이면 있어야 하고
+        # 공급자적합성확인이면 없는 게 정상" 이라는 일반론을 위에서 빼야
+        # 한다 - 특정된 답이 바로 아래 붙는데 일반론을 먼저 두면 묻힌다.
+        graded = (
+            _item_grade_findings(facts.product_name, today)
+            if _cert_required_here else []
+        )
+
         if image_candidates:
             # "찾지 못했습니다" 가 아니다. 읽었고, 형식 검증도 통과했다.
             # 조회만 셀러 확인 뒤로 미룬다.
             findings.append(_image_candidate_finding(image_candidates, today))
         else:
-            findings.append(_kc_missing_finding(facts, today))
+            findings.append(
+                _kc_missing_finding(facts, today, grade_known=bool(graded))
+            )
 
         if _cert_required_here:
             # 어느 위해도 단계(안전인증 / 안전확인 / 공급자적합성확인)인지 모르면
@@ -777,7 +787,6 @@ def verify(
             # 먼저 세부품목 등급표(운용요령 별표 1~7)에서 찾아본다. 찾으면
             # 부재의 의미를 정확히 말할 수 있다 - 안전인증이면 "있어야 한다",
             # 공급자적합성확인이면 "없는 것이 정상" 이라 정반대다.
-            graded = _item_grade_findings(facts.product_name, today)
             if graded:
                 findings.extend(graded)
             else:
@@ -1090,25 +1099,44 @@ def _weak_reason(weak: list) -> str:
     return "·".join(_WEAK_REASON_KO.get(a, a) for a in axes) or "유사한"
 
 
-def _kc_missing_finding(facts: ProductFacts, today: date) -> Finding:
+def _kc_missing_finding(
+    facts: ProductFacts, today: date, *, grade_known: bool = False
+) -> Finding:
     """인증번호 표기를 못 찾았을 때.
 
     제품명·업체명이 있으면 셀러가 정부 사이트에서 직접 인증 여부를 검색할 수
     있게 링크를 연다. 우리가 대신 조회해 "인증 없음"을 단정하지 않는다 -
     브랜드명 미등록·SCoC 대상이면 DB 에 없는 게 정상이다 (R3).
+
+    이 문장이 하는 일이 셋이다:
+
+      ① "인증번호를 찾지 못했습니다"        항상 필요하다
+      ② "안전인증·안전확인 대상이면…"       등급을 알아냈으면 뺀다
+      ③ 정부 사이트 직접 검색 링크          항상 필요하다
+
+    ②는 등급을 모를 때의 일반론이다. 등급을 특정한 finding 이 바로 아래
+    붙는데 일반론을 먼저 두면 같은 말을 두 번 읽게 되고, 특정된 답이 묻힌다.
+    조회 성공 후 안내문을 교체하는 것과 같은 원칙이다.
     """
     search_hint = facts.maker or facts.product_name
     guide = (
         f" 아래 링크에서 '{search_hint}' 로 직접 검색해 인증 이력을 확인할 수 있습니다."
         if search_hint else ""
     )
+    tiers = (
+        ""
+        if grade_known
+        else (
+            " 안전인증·안전확인 대상이면 인증번호가 있어야 하고, "
+            "공급자적합성확인 대상이면 없는 것이 정상입니다."
+        )
+    )
     return Finding(
         kind=FindingKind.KC_MISSING_BUT_REQUIRED,
         signal=Signal.AMBER,
         statement_ko=(
-            "규제 품목군으로 보이나 상세페이지에서 인증번호를 찾지 못했습니다. "
-            "안전인증·안전확인 대상이면 인증번호가 있어야 하고, "
-            "공급자적합성확인 대상이면 없는 것이 정상입니다."
+            "규제 품목군으로 보이나 상세페이지에서 인증번호를 찾지 못했습니다."
+            + tiers
             + guide
             + " 공급처에 인증 구분과 시험성적서를 요청해 확인하세요."
         ),

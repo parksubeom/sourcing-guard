@@ -171,3 +171,43 @@ def test_accessory_answer_does_not_claim_children_parts_are_exempt():
     assert "어린이제품 안전 특별법" in block
     assert "제2조 1호" in block
     assert "부분품" in block
+
+
+# ---------------------------------------------------------------------------
+# 등급을 알아냈으면 일반론을 위에 두지 않는다
+# ---------------------------------------------------------------------------
+
+_GENERIC_TIERS = "안전인증·안전확인 대상이면 인증번호가 있어야 하고"
+
+
+def _missing(name: str, *, grade_known: bool) -> str:
+    from sourcing_guard.models import ItemCategory, ProductFacts
+    from sourcing_guard.verifier import _kc_missing_finding
+
+    facts = ProductFacts(product_name=name, category=ItemCategory.ELECTRICAL)
+    return _kc_missing_finding(facts, TODAY, grade_known=grade_known).statement_ko
+
+
+def test_generic_tier_sentence_is_dropped_once_the_grade_is_known():
+    """특정된 답이 바로 아래 붙는데 일반론을 먼저 두면 같은 말을 두 번 읽는다."""
+    known = _missing("HK HAIKE 소형 미니공기청정기", grade_known=True)
+    assert _GENERIC_TIERS not in known
+
+
+def test_the_other_two_jobs_survive():
+    """이 문장이 하는 일 셋 중 ②만 뺀다.
+
+      ① "인증번호를 찾지 못했습니다"        유지
+      ② "안전인증·안전확인 대상이면…"       등급을 알아냈으면 뺀다
+      ③ 정부 사이트 직접 검색 링크          유지
+    """
+    known = _missing("HK HAIKE 소형 미니공기청정기", grade_known=True)
+    assert "인증번호를 찾지 못했습니다" in known
+    assert "직접 검색" in known
+    assert "공급처에" in known
+
+
+def test_generic_tier_sentence_stays_when_the_grade_is_unknown():
+    """등급을 모르면 일반론이 셀러가 가진 유일한 단서다."""
+    unknown = _missing("곰돌이 인형 키링 9종", grade_known=False)
+    assert _GENERIC_TIERS in unknown
