@@ -164,13 +164,31 @@ def test_accessory_answer_does_not_claim_children_parts_are_exempt():
 
     부속품이라고 답했다고 "대상이 아닙니다" 로 끝내면 어린이용 부속품에
     틀린 면제를 말한다.
+
+    2026-09-03 갱신: 이 문구가 화면 JS 에서 **서버 문장**으로 옮겨졌다.
+    부속품 답을 서버로 올려야 인증 부재 경고(AMBER)까지 빠지기 때문이다.
+    화면 템플릿을 보던 검사를 실제로 전달되는 문장을 보도록 바꿨다 -
+    옮기면서 문구를 잃지 않았는지가 이 검사의 요지이고, 서버 출력을 보는
+    쪽이 더 강하다.
     """
-    src = FRONT.read_text(encoding="utf-8")
-    i = src.index('data-part]')
-    block = src[i:i + 1800]
-    assert "어린이제품 안전 특별법" in block
-    assert "제2조 1호" in block
-    assert "부분품" in block
+    from sourcing_guard.models import ItemCategory, ProductFacts, SellerHints
+    from sourcing_guard.verifier import _item_grade_findings
+
+    found = _item_grade_findings(
+        "무타공 전기면도기 스테인레스 거치대 면도기 홀더",
+        TODAY,
+        hints=SellerHints(is_accessory=True),
+    )
+    assert len(found) == 1
+    text = found[0].statement_ko
+    assert "어린이제품 안전 특별법" in text
+    assert "제2조 1호" in text
+    assert "부분품" in text
+    # 셀러가 말한 것임을 밝힌다 - 우리 판정으로 보이면 안 된다.
+    assert "셀러가 부속품으로 확인하셨습니다" in text
+    assert found[0].detail["declared_by"] == "seller"
+    # "대상이 아닙니다" 로 끝내지 않는다.
+    assert "대상이 아닙니다" not in text
 
 
 # ---------------------------------------------------------------------------

@@ -45,6 +45,9 @@ _PENALTY: dict[FindingKind, int] = {
     # 의미를 셀러에게 설명하는 역할만 한다.
     FindingKind.ITEM_GRADE_MATCHED: 0,
     FindingKind.ITEM_GRADE_SPLIT: 0,
+    # 셀러가 부속품이라고 답해 등급을 적용하지 않은 경우. 셀러가 준
+    # 사실을 기록한 것이라 위험도 감점도 아니다.
+    FindingKind.ITEM_GRADE_NOT_APPLIED: 0,
     FindingKind.OUT_OF_SCOPE: 0,
     FindingKind.AGE_OUT_OF_CHILD_RANGE: 0,
     FindingKind.INFO_REQUEST: 0,

@@ -247,12 +247,15 @@
 
   pt.addEventListener("input", updateCount);
   $("clear").addEventListener("click", function () {
+    clearHints();
     pt.value = "";
     shots.forEach(function (s) { URL.revokeObjectURL(s.url); });
     shots = [];
     renderShots();
     resSec.hidden = true; err.hidden = true; pt.focus();
   });
+  // 본문이 바뀌면 다른 상품일 수 있다. 이전 상품의 답을 물려주면 안 된다.
+  pt.addEventListener("input", clearHints);
   go.addEventListener("click", scan);
 
   // 정부 사이트로 나가는 링크. 모양은 버튼이지만 요소는 a 로 둔다 — 실제로
@@ -363,6 +366,12 @@
     var rf = f.kind === "rf_wireless_unverified" ? rfLookupRow(f) : "";
     var isGrade = f.kind === "item_grade_matched" || f.kind === "item_grade_split";
     var grades = isGrade ? gradeRow(f) + partRow(f) : "";
+    // 잘못 눌렀을 때 되돌릴 길을 남긴다.
+    if (f.kind === "item_grade_not_applied") {
+      grades = '<p class="confirm part">' +
+        '<button class="btn-t sm" type="button" data-part="main">' +
+        "본체입니다 (되돌리기)</button></p>";
+    }
     return '<li class="' + esc(f.kind) + aside + '">' +
            '<span class="tick ' + esc(f.signal) + '" aria-hidden="true"></span>' +
            '<div class="f-body"><p class="f-text">' + esc(f.statement_ko) + "</p>" +
@@ -376,6 +385,16 @@
       : "";
     return "<li>" + esc(f.statement_ko) + link + "</li>";
   }
+
+  // 셀러가 답해 준 사실. 서버에 그대로 넘긴다.
+  //
+  // 주의: 우리 판정이 아니다. 값이 있으면 서버가 근거를 밝힌 문장을 돌려주고,
+  //   없으면 힌트 도입 전과 같이 동작한다 - 추가 정보이지 필수 입력이 아니다.
+  //
+  // 자리를 넓게 잡아 둔다. 다음에 올 것은 power_source 다(조명 등급 갈림).
+  var sellerHints = {};
+
+  function clearHints() { sellerHints = {}; }
 
   var lastFacts = null;
 
@@ -479,21 +498,11 @@
     //   1호가 "부분품이나 부속품" 을 어린이제품에 포함한다.
     res.querySelectorAll("button[data-part]").forEach(function (b) {
       b.addEventListener("click", function () {
-        var li = b.closest("li");
-        var row = b.closest("p.part");
-        if (!li || !row) return;
-        var item = (li.querySelector(".grades b") || {}).textContent || "이 품목";
-        if (b.getAttribute("data-part") === "main") {
-          row.innerHTML = '<span class="sub">본체로 확인하셨습니다. ' +
-            "위 등급이 이 상품에 적용됩니다.</span>";
-        } else {
-          row.innerHTML = '<span class="sub">부속품으로 확인하셨습니다. ' +
-            esc(item) + "의 등급은 이 상품에 적용되지 않습니다. " +
-            "다만 부속품 자체가 별도 품목일 수 있고(합성수지제품·섬유제품 등), " +
-            "어린이용이면 「어린이제품 안전 특별법」 제2조 1호가 부분품·부속품도 " +
-            "어린이제품에 포함합니다.</span>";
-          li.classList.add("aside");
-        }
+        // 화면 안에서만 문장을 바꾸지 않는다. 서버로 올려 판단을 다시 받는다 -
+        // 그러지 않으면 다시 검사할 때 도로 막히고, 인증 부재 경고(AMBER)도
+        // 그대로 남는다. 남은 오답이 정확히 그 모양이었다.
+        sellerHints.is_accessory = b.getAttribute("data-part") === "accessory";
+        scan();
       });
     });
 
@@ -615,7 +624,8 @@
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         page_text: text,
-        images: shots.map(function (s) { return { media_type: s.media_type, data: s.data }; })
+        images: shots.map(function (s) { return { media_type: s.media_type, data: s.data }; }),
+        seller_hints: sellerHints
       })
     })
       .then(function (r) {

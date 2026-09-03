@@ -24,7 +24,7 @@ from .extractor import extract
 from .kats_client import KatsClient, health
 from .noncompliant_index import NoncompliantIndex
 from .rra_client import RraClient
-from .models import Finding, RecallAlert, ScanResult, WatchItem
+from .models import Finding, RecallAlert, ScanResult, SellerHints, WatchItem
 from .scorer import score
 from .demos import DEMOS, DEMO_TEXTS
 from .ratelimit import RateLimiter, text_fingerprint
@@ -92,6 +92,9 @@ class ScanRequest(BaseModel):
     page_text: str = Field(default="", max_length=200_000)
     page_url: str | None = None
     images: list[ScanImage] = Field(default_factory=list, max_length=4)
+    # 셀러가 화면에서 답해 준 사실. 없으면 힌트 도입 전과 같이 동작한다 -
+    # 추가 정보이지 필수 입력이 아니다.
+    seller_hints: SellerHints = Field(default_factory=SellerHints)
 
     @model_validator(mode="after")
     def _need_some_input(self) -> "ScanRequest":
@@ -231,7 +234,10 @@ def scan(req: ScanRequest, request: Request) -> ScanResult:
     allow_llm = _limiter.take_llm_budget(fingerprint=fp)
     imgs = [{"media_type": i.media_type, "data": i.data} for i in req.images]
     facts = extract(req.page_text, req.page_url, images=imgs, allow_llm=allow_llm)
-    findings = verify(facts, _kats, _rules, _recalls, _rra, _noncompliant)
+    findings = verify(
+        facts, _kats, _rules, _recalls, _rra, _noncompliant,
+        hints=req.seller_hints,
+    )
     result = score(facts, findings, recall_data_as_of=_recalls.as_of)
     if not allow_llm:
         result.extraction_note = (
