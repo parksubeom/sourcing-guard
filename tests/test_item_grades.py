@@ -140,9 +140,16 @@ def test_alias_dictionary_stays_small():
 
 
 def test_alias_targets_exist_in_the_table(book):
-    """사전이 표에 없는 법령 어휘를 가리키면 조용히 아무것도 안 한다."""
+    """사전이 표에 없는 법령 어휘를 가리키면 조용히 아무것도 안 한다.
+
+    값은 문자열 하나이거나 여러 후보의 튜플이다 - 원문이 갈라 두지 않은
+    말('센서등')을 한쪽으로 단정하지 않기 위해 튜플을 허용한다.
+    """
     for key, legal in ALIASES.items():
-        assert book._by_name.get(normalize(legal)), f"{key} -> {legal} : 표에 없다"
+        targets = (legal,) if isinstance(legal, str) else legal
+        assert targets, f"{key} : 가리키는 품목이 없다"
+        for name in targets:
+            assert book._by_name.get(normalize(name)), f"{key} -> {name} : 표에 없다"
 
 
 # ---------------------------------------------------------------------------
@@ -248,3 +255,68 @@ def test_modifier_stripping_does_not_break_table_names(book):
                  "가정용 압력냄비", "충전식 휴대전등"):
         g = book.lookup(name)
         assert g is not None and g.matched_by == "exact", f"{name} 가 깨졌다"
+
+
+# ---------------------------------------------------------------------------
+# 같은 이름이 여러 등급에 걸리면 한쪽을 단정하지 않는다
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "name, grades",
+    [
+        # 표에 같은 이름으로 두 등급이 있다. 하나만 답하면 인증번호 부재의
+        # 의미가 뒤집힌다 - 공급자적합성확인이면 없는 것이 정상이다 (R3-b).
+        ("소형 미니 공기청정기", {"안전확인", "공급자적합성확인"}),
+        ("USB 온열 전기방석", {"안전인증", "공급자적합성확인"}),
+        # 전자회로 유무로 갈리는 조명. 상품명만으로는 알 수 없다.
+        ("LED 전기스탠드 책상", {"안전인증", "안전확인"}),
+    ],
+)
+def test_names_spanning_two_grades_return_both(book, name, grades):
+    found = book.lookup_all(name)
+    assert grades <= {g.grade for g in found}, [
+        (g.item, g.grade) for g in found
+    ]
+    assert ItemGradeBook.grades_agree(found) is None, "갈리는데 하나로 답했다"
+
+
+def test_same_name_at_two_grades_is_not_deduplicated(book):
+    """'주서' 는 이름이 같고 등급만 다르다. 이름으로 중복을 지우면 한쪽이 사라진다."""
+    found = [g for g in book.lookup_all("주서") if g.item == "주서"]
+    assert {g.grade for g in found} == {"안전인증", "안전확인"}
+
+
+# ---------------------------------------------------------------------------
+# 수식어를 뗀 형태로 포함 검사를 하면 없던 낱말이 생긴다
+# ---------------------------------------------------------------------------
+
+
+def test_stripping_a_middle_word_must_not_weld_neighbours():
+    """normalize 가 띄어쓰기를 지우므로 가운데 토큰을 빼면 양옆이 붙는다.
+
+    "2.1A충전기 가정용 충전기" 에서 '가정용' 을 떼면 "…충전기충전기…" 가
+    되어 표의 '전기충전기'(교류 30V 초과 250V 이하 - 벽 콘센트에 꽂는 것)에
+    붙었다. 휴대폰 충전기가 그 품목일 리 없다.
+    """
+    welded = normalize(strip_modifiers("2.1A충전기 가정용 충전기 C타입"))
+    assert "전기충전기" in welded, "전제가 깨졌다 - 이 검사의 의미가 없어진다"
+
+    book = ItemGradeBook()
+    found = book.lookup_all("충전기 2.1A충전기 가정용 충전기 C타입 USB충전기")
+    assert "전기충전기" not in [g.item for g in found]
+
+
+def test_lighting_words_the_decree_does_not_split_are_left_undecided():
+    """'센서등' 은 원문에 없는 셀러 말이고 전원 방식에 따라 등급이 갈린다.
+
+    별표 1 은 상시전원 일반조명기구(안전인증), 별표 2 는 그밖의 조명기구
+    (안전확인)다. 건전지형·태양광 센서등을 LED등기구로 보내면 안전확인
+    대상에 안전인증 의무를 말하게 된다.
+    """
+    book = ItemGradeBook()
+    for name in ("무선 센서라이트 LED센서등 건전지형", "태양광정원등 센서등 가로등"):
+        found = book.lookup_all(name)
+        items = {g.item for g in found}
+        assert {"LED등기구", "충전식 휴대전등"} <= items, items
+        assert ItemGradeBook.grades_agree(found) is None
