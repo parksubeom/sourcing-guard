@@ -74,3 +74,40 @@ def test_rivals_are_only_declared_between_items_that_both_exist():
     for key, (_, target) in _RIVAL_ITEMS.items():
         assert book._by_name.get(normalize(key)), f"{key} 가 표에 없다"
         assert book._by_name.get(normalize(target)), f"{target} 가 표에 없다"
+
+
+# ---------------------------------------------------------------------------
+# 양보는 지금 "안 붙는다" 까지만 한다 - 대상에 착지하지는 않는다
+# ---------------------------------------------------------------------------
+
+
+def test_the_yield_target_does_not_actually_land_yet():
+    """경쟁에서 진 뒤 양보 대상이 붙지는 않는다. 미매칭이 된다.
+
+    _RIVAL_ITEMS 가 '의류 이외의 섬유제품' 을 양보 대상으로 적고 그 이름으로
+    offer() 를 부르는데, 매처의 본체 검사(names_subject)가 **목적지 품목명**
+    으로 이뤄진다. 상품명에 '의류 이외의 섬유제품' 이라는 말이 있을 리 없으니
+    항상 거부된다.
+
+        "메모리폼 크로스오버 4D방석 … 의자방석 쿠션방석"
+          경쟁 판정  → 의류 이외의 섬유제품
+          매처 판정  → REJECTED ("부속품·부정 표현으로만 나옵니다")
+          결과      → 미매칭
+
+    별칭 단계는 이 함정을 이미 알고 있다 - 거기 주석이 "본체 검사는 별칭
+    키로 한다. 목적지 품목명은 상품명에 없는 것이 정상이다" 라고 적고 있다.
+    경쟁 단계만 그 처리가 빠졌다.
+
+    지금 동작이 틀린 것은 아니다. 방석이 의자로 붙던 오답이 사라졌고, 그것이
+    이 규칙의 목적이었다. 다만 **적어 둔 의도(양보)와 실제(미매칭)가 다르니**
+    검사로 고정해 둔다 - 고칠 때 이 검사가 깨지면서 알려준다.
+    """
+    book = ItemGradeBook()
+    name = "메모리폼 크로스오버 4D방석 메모리폼 의자방석 쿠션방석 사무실방석 쿠션"
+
+    assert rival_wins(normalize(name), normalize("의자")) == "의류 이외의 섬유제품"
+    # 의자로는 안 붙는다 - 규칙의 목적은 달성됐다.
+    assert "의자" not in _items(book, name)
+    # 다만 양보 대상도 안 붙는다.
+    assert "의류 이외의 섬유제품" not in _items(book, name)
+    assert _items(book, name) == []
