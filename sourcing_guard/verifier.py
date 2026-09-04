@@ -5,7 +5,7 @@ Produces Finding objects only. Scoring happens in scorer.py.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import date
 from pathlib import Path
 
@@ -704,7 +704,10 @@ def verify(
     # 여부를 정한다 - 등급을 모르면 부재를 해석할 수 없고, 해석 못 하는
     # 부재를 경고로 내보내면 정상 상품에 노란불이 반복된다 (R3-b).
     _graded = (
-        _item_grade_findings(facts.product_name, today, hints=hints)
+        _item_grade_findings(
+            facts.product_name, today,
+            hints=hints, legal_name=facts.legal_item_name,
+        )
         if facts.category in (_CERT_REQUIRED | _CERT_REQUIRED_IF_GRADED)
         else []
     )
@@ -1358,7 +1361,11 @@ def _powered_word(product_name: str | None) -> bool:
 
 
 def _item_grade_findings(
-    product_name: str | None, today: date, *, hints: SellerHints | None = None
+    product_name: str | None,
+    today: date,
+    *,
+    hints: SellerHints | None = None,
+    legal_name: str | None = None,
 ) -> list[Finding]:
     """세부품목 등급표에서 품목을 찾아 인증번호 부재의 의미를 말해 준다.
 
@@ -1380,7 +1387,7 @@ def _item_grade_findings(
     # 답이 있어야 붙일 수 있다.
     extra = ALIASES_IF_MAINS if (hints and hints.says_mains()) else None
     found = book.lookup_all(product_name, extra_aliases=extra)
-    if not found:
+    if not found and not legal_name:
         # 전원 방식을 알면 정해지는 상품인데 아직 안 물어봤으면 물어본다.
         # 물어볼 자리가 없으면 셀러가 답할 방법도 없다 - 부속품 질문이
         # 등급 finding 위에만 뜨는 것과 같은 구조다.
@@ -1408,6 +1415,34 @@ def _item_grade_findings(
         return []
 
     label, url = _GRADE_SOURCE
+
+    # LLM 이 옮긴 법령 품목명을 표에서 조회한다.
+    #
+    # 손으로 만든 별칭이 한계에 왔다 - 튜닝 표본에서 71%, 새 표본에서 24%.
+    # 별칭이 첫 표본에서 만들어졌으니 새 상품에는 안 통한다. 문제가 문자열이
+    # 아니라 의미라서 규칙을 넓히면 오답이 더 빨리 늘었다(핵심 명사 색인
+    # 실험: 34건 추가 매칭에 절반이 오답).
+    #
+    # ⚠ **표가 검증자다.** LLM 은 이름만 내놓고, 그 이름이 실제로 표에 있는지는
+    #   여기서 확인한다. 없으면 미매칭이다. 등급은 표에서 결정론적으로 읽으므로
+    #   LLM 이 등급을 지어낼 수 없다 (R1).
+    #
+    # ⚠ 정확 일치만 본다. 별칭·접두 확장·포함 매칭을 다시 걸지 않는다 -
+    #   LLM 이 낸 이름에 우리 추정을 또 얹으면 어디서 온 오답인지 못 가린다.
+    if legal_name:
+        for row in book._by_name.get(normalize_item(legal_name)) or ():
+            mark = (row["item"], row["grade"])
+            if mark not in {(g.item, g.grade) for g in found}:
+                found.append(
+                    replace(
+                        book._to_grade(row, "legal_name"),
+                        confidence="likely",
+                        match_reason=(
+                            f"상품명을 법령 용어로 옮긴 '{legal_name}' 이 "
+                            "표의 품목명과 일치합니다."
+                        ),
+                    )
+                )
 
     # 셀러가 전원 방식을 답했으면 후보를 좁힌다. 부속품 판정보다 뒤다 -
     # 부속품이면 등급 자체를 적용하지 않으므로 좁힐 이유가 없다.
