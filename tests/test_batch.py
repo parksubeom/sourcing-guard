@@ -122,3 +122,52 @@ def test_batch_declares_that_it_only_read_the_name(book):
     # 판정 사유가 상품명 근거임을 드러내야 한다
     assert report.rows[0].reason
     assert "상세페이지" in report.rows[0].reason or "단건" in report.rows[0].reason
+
+
+# ---------------------------------------------------------------------------
+# 갈릴 때 대표 품목 하나를 고르지 않는다
+# ---------------------------------------------------------------------------
+
+
+def test_split_rows_do_not_name_a_single_representative_item():
+    """단건 화면에서 세 겹으로 막은 "한쪽 단정" 을 배치에서 하면 안 된다.
+
+    실측(도매꾹 239건)에서 드러났다 - "보조배터리 10000 C타입보조배터리
+    선풍기조끼 쿨링조끼 …" 가 candidates[0] 로 '선풍기' 를 대표로 달았다.
+    연관 검색어에서 온 후보이고, 셀러는 보조배터리를 팔면서 선풍기를 본다.
+    """
+    report = screen(
+        "보조배터리 10000 C타입보조배터리 선풍기조끼 쿨링조끼 아이폰 휴대폰",
+        grades=ItemGradeBook(),
+    )
+    row = report.rows[0]
+    assert row.verdict is RowVerdict.CHECK_SUPPLIER
+    assert row.matched_item is None, row.matched_item
+    # 대신 후보를 다 낸다 - 등급처럼 품목도 전부.
+    assert len(row.matched_items) > 1
+    assert "전지" in row.matched_items
+
+
+def test_agreed_rows_still_name_the_item():
+    """등급이 하나로 모이면 어느 품목을 골라도 결론이 같으므로 이름을 준다."""
+    report = screen("신일 BLDC 무선 선풍기 14인치 SIF-B1424CL", grades=ItemGradeBook())
+    row = report.rows[0]
+    assert row.matched_item == "선풍기"
+    assert row.matched_items == ["선풍기"]
+
+
+def test_the_api_exposes_every_item_candidate():
+    """화면이 후보를 다 그리려면 응답에 있어야 한다."""
+    from fastapi.testclient import TestClient
+
+    from sourcing_guard.main import app
+
+    with TestClient(app) as client:
+        res = client.post(
+            "/api/v1/batch",
+            json={"text": "간편부착 바트 무선 센서라이트 LED센서등 건전지형"},
+        )
+    assert res.status_code == 200
+    row = res.json()["rows"][0]
+    assert row["matched_item"] is None
+    assert set(row["matched_items"]) == {"LED등기구", "충전식 휴대전등"}

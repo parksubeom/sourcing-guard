@@ -277,6 +277,7 @@ def batch(req: BatchRequest, request: Request) -> dict:
                 "reason": r.reason,
                 "grade": r.grade,
                 "matched_item": r.matched_item,
+                "matched_items": r.matched_items,
                 "grade_candidates": r.grade_candidates,
                 "cert_numbers": r.cert_numbers,
                 "rf_numbers": r.rf_numbers,

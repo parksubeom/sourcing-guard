@@ -63,6 +63,9 @@ class BatchRow:
     matched_item: str | None = None
     # 등급이 갈리면 후보를 다 담는다. 한쪽을 고르지 않는다 (R3).
     grade_candidates: list[str] = field(default_factory=list)
+    # 품목 후보도 다 담는다. 갈릴 때 matched_item 은 비운다 - 대표 하나를
+    # 고르면 연관 검색어에서 온 후보가 대표가 될 수 있다.
+    matched_items: list[str] = field(default_factory=list)
     cert_numbers: list[str] = field(default_factory=list)
     rf_numbers: list[str] = field(default_factory=list)
     # 2단계(LLM)로 넘길 대상인가. 1단계에서 결론이 난 것은 넘기지 않는다.
@@ -174,15 +177,28 @@ def _apply_grades(row: BatchRow, candidates: list[ItemGrade]) -> None:
     같기 때문이다. 갈리면 후보를 다 담고 확인을 요청한다.
     """
     row.grade_candidates = sorted({c.grade for c in candidates})
-    row.matched_item = candidates[0].item
 
     if len(row.grade_candidates) > 1:
+        # ⚠ 갈릴 때 대표 품목 하나를 고르지 않는다. 단건 화면에서 세 겹으로
+        #   막은 "한쪽 단정" 을 여기서 하는 셈이 된다.
+        #
+        #   실측에서 드러났다 - "보조배터리 10000 … 선풍기조끼 쿨링조끼 …"
+        #   가 candidates[0] 로 '선풍기' 를 대표로 달았다. 연관 검색어에서
+        #   온 후보이고, 셀러는 보조배터리를 팔면서 선풍기를 보게 된다.
+        #
+        #   품목도 등급처럼 전부 담는다. 어느 것이 맞는지는 우리가 아니라
+        #   공급처가 안다.
+        row.matched_items = [c.item for c in candidates]
         row.verdict = RowVerdict.CHECK_SUPPLIER
         row.reason = (
             f"세부품목이 갈립니다({' / '.join(row.grade_candidates)}). "
             "어느 쪽인지 공급처에 확인하세요."
         )
         return
+
+    # 등급이 하나로 모이면 어느 품목을 골라도 결론이 같다.
+    row.matched_item = candidates[0].item
+    row.matched_items = [c.item for c in candidates]
 
     row.grade = row.grade_candidates[0]
 
