@@ -88,14 +88,19 @@ def test_graded_household_gets_the_absence_is_normal_answer(name):
     [
         # '의자' 는 식별력이 없어 포함 키에서 뺐다(의자방석이 의자로 붙는다).
         # 그래서 등급 미매칭이고, 이때 경고하면 틀린 경고가 된다.
-        "휴대용 폴딩 접이식 캠핑 의자 다용도 초경량 간이 의자",
-        # 예초기 안전모는 표의 안전모(자전거·등산·승차·스키용)가 아니다.
+                # 예초기 안전모는 표의 안전모(자전거·등산·승차·스키용)가 아니다.
         "고급형 레드 예초기 보호 헬맷 안전모",
         # 휴지통은 부속서 5 가구 적용범위에서 명시 제외된다.
         "슬림 휴지통 20L 분리수거함",
     ],
 )
 def test_ungraded_household_says_nothing_about_certification(name):
+    """등급을 못 찾은 생활용품에는 인증 이야기를 꺼내지 않는다.
+
+    2026-09-03 갱신: 캠핑 의자를 표본에서 뺐다. '의자' 를 경쟁 규칙(_RIVAL_ITEMS)
+    으로 열면서 등급이 붙었기 때문이고, 붙은 뒤에는 "안전기준준수라 인증 절차가
+    없다" 를 말하는 것이 맞다. 낡은 위치, 살아있는 의도다.
+    """
     got = kinds(name, ItemCategory.HOUSEHOLD)
     assert not (got & CERT_KINDS), got
 
