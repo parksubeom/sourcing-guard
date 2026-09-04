@@ -1,0 +1,68 @@
+# 국가기술표준원 「제품 안전인증 및 리콜 정보」 매핑
+#
+# ⚠ 이 파일의 값은 아직 검증되지 않았습니다 (CLAUDE.md R5).
+# data.go.kr 15116894 는 API 유형이 LINK 라서 연산 규격이 safetykorea.kr 의
+# HWP 인터페이스 설계서에 있습니다. 아래 절차로 실제 값을 채우세요.
+#
+#   1) https://www.data.go.kr/data/15116894/openapi.do 에서 활용신청
+#      (개발단계 자동승인 → 즉시 서비스키 발급)
+#   2) https://www.safetykorea.kr/release/openapi 에서 인터페이스 설계서 다운로드
+#   3) python scripts/probe_kats_schema.py --base-url <URL> --path <PATH>
+#      → 실제 응답 구조와 필드 후보를 출력합니다
+#   4) 아래 TODO 를 확인된 값으로 교체하고 verified 를 true 로
+#
+# 값을 추측해서 채우지 마세요. 채우기 전까지는 MOCK_MODE 로 개발합니다.
+
+verified: false
+
+operations:
+  certification:
+    path: "TODO(unverified)"
+    rows_path: ["response", "body", "items", "item"]   # TODO(unverified)
+    params:
+      service_key: "serviceKey"
+      query: "TODO(unverified)"     # 인증번호 검색 파라미터명
+    defaults:
+      type: "json"
+      numOfRows: "10"
+    fields:
+      cert_number: "TODO(unverified)"
+      product_name: "TODO(unverified)"
+      model_name: "TODO(unverified)"
+      maker: "TODO(unverified)"
+      status: "TODO(unverified)"
+      detail_url: ""
+
+  recall_domestic:
+    path: "TODO(unverified)"
+    rows_path: ["response", "body", "items", "item"]
+    params:
+      service_key: "serviceKey"
+      query: "TODO(unverified)"
+    defaults:
+      type: "json"
+      numOfRows: "50"
+    fields:
+      product_name: "TODO(unverified)"
+      model_name: "TODO(unverified)"
+      maker: "TODO(unverified)"
+      reason: "TODO(unverified)"
+      announced_on: "TODO(unverified)"
+      detail_url: ""
+
+  recall_overseas:
+    path: "TODO(unverified)"
+    rows_path: ["response", "body", "items", "item"]
+    params:
+      service_key: "serviceKey"
+      query: "TODO(unverified)"
+    defaults:
+      type: "json"
+      numOfRows: "50"
+    fields:
+      product_name: "TODO(unverified)"
+      model_name: "TODO(unverified)"
+      maker: "TODO(unverified)"
+      reason: "TODO(unverified)"
+      announced_on: "TODO(unverified)"
+      detail_url: ""

@@ -53,6 +53,10 @@ def main() -> None:
     ap.add_argument("--gap", type=float, default=5.5)
     ap.add_argument("--sample", default=str(_SAMPLE))
     ap.add_argument("--out", default="")
+    # 저장된 LLM 응답으로 다시 재는 경로. 30건이 일일 상한의 6% 라,
+    # 매칭 규칙만 바꿔 보고 싶을 때 다시 부르면 예산이 아깝다.
+    ap.add_argument("--replay", default="",
+                    help="저장된 원자료(json)로 재계산. LLM 을 부르지 않는다")
     args = ap.parse_args()
 
     names = [
@@ -64,13 +68,23 @@ def main() -> None:
     pick = names[::step][: args.n]
 
     book = ItemGradeBook()
+
+    if args.replay:
+        saved = json.loads(pathlib.Path(args.replay).read_text(encoding="utf-8"))
+        pairs = [(r["raw"], r.get("legal")) for r in saved]
+    else:
+        pairs = [(raw, None) for raw in pick]
+
     rows = []
-    for i, raw in enumerate(pick):
-        if i:
-            time.sleep(args.gap)
-        got = scan(args.url, raw)
-        facts = got.get("facts") or {}
-        legal = facts.get("legal_item_name")
+    for i, (raw, legal) in enumerate(pairs):
+        if not args.replay:
+            if i:
+                time.sleep(args.gap)
+            got = scan(args.url, raw)
+            facts = got.get("facts") or {}
+            legal = facts.get("legal_item_name")
+        else:
+            facts = {"product_name": None, "category": None}
         by_rule = [g.item for g in book.lookup_all(raw)]
         by_legal = [
             row["item"] for row in (book._by_name.get(normalize(legal or "")) or ())
