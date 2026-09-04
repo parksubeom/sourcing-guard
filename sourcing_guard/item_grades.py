@@ -24,7 +24,13 @@ from pathlib import Path
 
 import yaml
 
-from .matcher import Confidence, Judgement, has_consumable_hint, judge
+from .matcher import (
+    Confidence,
+    Judgement,
+    chemical_rival_wins,
+    has_consumable_hint,
+    judge,
+)
 
 _PATH = Path(__file__).parent / "data" / "item_grades.yaml"
 
@@ -549,6 +555,10 @@ class ItemGradeBook:
                         else chemical_variant_dominates(intact, probe)
                     ),
                     consumable_hint=consumable,
+                    # 화학제 검사는 **목적지 품목명**으로 한다. 별칭 키
+                    # ('손난로')가 아니라 그 별칭이 가리키는 품목
+                    # ('전기손난로')이 화학제와 자리를 다투기 때문이다.
+                    chemical_rival=chemical_rival_wins(product_name, row["item"]),
                 )
                 if not verdict.accepted:
                     continue
