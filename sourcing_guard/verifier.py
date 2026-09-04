@@ -1387,34 +1387,6 @@ def _item_grade_findings(
     # 답이 있어야 붙일 수 있다.
     extra = ALIASES_IF_MAINS if (hints and hints.says_mains()) else None
     found = book.lookup_all(product_name, extra_aliases=extra)
-    if not found and not legal_name:
-        # 전원 방식을 알면 정해지는 상품인데 아직 안 물어봤으면 물어본다.
-        # 물어볼 자리가 없으면 셀러가 답할 방법도 없다 - 부속품 질문이
-        # 등급 finding 위에만 뜨는 것과 같은 구조다.
-        if hints and hints.power_source is None and _powered_word(product_name):
-            label, url = _GRADE_SOURCE
-            return [
-                Finding(
-                    kind=FindingKind.ITEM_GRADE_NEEDS_POWER,
-                    signal=Signal.UNKNOWN,
-                    statement_ko=(
-                        "상품명만으로는 세부품목을 정하지 못했습니다. "
-                        "전원을 쓰는 제품이면 표의 품목에 해당할 수 있고, "
-                        "손으로 쓰는 기구이면 전기용품이 아닙니다. "
-                        "어느 쪽인지 알려주시면 품목을 특정하겠습니다."
-                    ),
-                    source_label=label,
-                    source_url=url,
-                    detail={"ask": "power", "question": "powered"},
-                    checked_at=today,
-                )
-            ]
-        # 전원을 안 쓴다고 답했으면 그 사실 자체가 답이다 - 수동 기구는
-        # 전기용품이 아니다. 다만 "안전관리 대상 아님" 이라고는 하지 않는다.
-        # 생활용품·어린이제품 기준은 전원과 무관하게 적용될 수 있다.
-        return []
-
-    label, url = _GRADE_SOURCE
 
     # LLM 이 옮긴 법령 품목명을 표에서 조회한다.
     #
@@ -1443,6 +1415,35 @@ def _item_grade_findings(
                         ),
                     )
                 )
+
+    if not found:
+        # 전원 방식을 알면 정해지는 상품인데 아직 안 물어봤으면 물어본다.
+        # 물어볼 자리가 없으면 셀러가 답할 방법도 없다 - 부속품 질문이
+        # 등급 finding 위에만 뜨는 것과 같은 구조다.
+        if hints and hints.power_source is None and _powered_word(product_name):
+            label, url = _GRADE_SOURCE
+            return [
+                Finding(
+                    kind=FindingKind.ITEM_GRADE_NEEDS_POWER,
+                    signal=Signal.UNKNOWN,
+                    statement_ko=(
+                        "상품명만으로는 세부품목을 정하지 못했습니다. "
+                        "전원을 쓰는 제품이면 표의 품목에 해당할 수 있고, "
+                        "손으로 쓰는 기구이면 전기용품이 아닙니다. "
+                        "어느 쪽인지 알려주시면 품목을 특정하겠습니다."
+                    ),
+                    source_label=label,
+                    source_url=url,
+                    detail={"ask": "power", "question": "powered"},
+                    checked_at=today,
+                )
+            ]
+        # 전원을 안 쓴다고 답했으면 그 사실 자체가 답이다 - 수동 기구는
+        # 전기용품이 아니다. 다만 "안전관리 대상 아님" 이라고는 하지 않는다.
+        # 생활용품·어린이제품 기준은 전원과 무관하게 적용될 수 있다.
+        return []
+
+    label, url = _GRADE_SOURCE
 
     # 셀러가 전원 방식을 답했으면 후보를 좁힌다. 부속품 판정보다 뒤다 -
     # 부속품이면 등급 자체를 적용하지 않으므로 좁힐 이유가 없다.

@@ -587,3 +587,26 @@ def test_the_legal_name_path_does_not_stack_our_guesses():
     )
     items = [c["item"] for f in found for c in f.detail.get("candidates", [])]
     assert "무선스피커 시스템" not in items
+
+
+def test_no_finding_is_built_from_an_empty_candidate_list():
+    """후보가 0이면 finding 을 만들지 않는다.
+
+    ⚠ 회귀 가드. legal_name 조회를 빈 검사 **뒤에** 놓았다가, 표에 없는 이름이
+      오면 후보 0으로 "갈립니다" finding 이 나오고 부속품 분기의 found[0] 이
+      IndexError 가 됐다. 순서가 조회 → 빈 검사여야 한다.
+    """
+    from datetime import date
+
+    from sourcing_guard.models import SellerHints
+    from sourcing_guard.verifier import _item_grade_findings
+
+    for hints in (None, SellerHints(is_accessory=True), SellerHints(power_source="mains")):
+        found = _item_grade_findings(
+            "무엇인지 알 수 없는 물건",
+            date(2026, 9, 4),
+            hints=hints,
+            legal_name="존재하지않는품목명",
+        )
+        for f in found:
+            assert f.detail.get("candidates") != [], f"{hints} : 후보 0인 finding"
