@@ -502,6 +502,7 @@ class ItemGrade:
     scope_note: str
     source: str
     matched_by: str          # exact | alias | expand | contains
+                             # legal_name | legal_name_contains
     # 매처가 이 후보를 얼마나 믿는지, 그리고 왜 그렇게 판정했는지.
     # 매칭/미매칭 이분법으로는 "안전모인 건 알지만 어느 안전모인지 모른다" 를
     # 표현할 수 없어 아는 것까지 버리게 된다.
@@ -702,6 +703,69 @@ class ItemGradeBook:
         """
         grades = {c.grade for c in candidates}
         return grades.pop() if len(grades) == 1 else None
+
+    def lookup_legal_name(self, legal_name: str | None) -> list[ItemGrade]:
+        """LLM 이 옮긴 법령 품목명을 표에서 조회한다.
+
+        **표가 검증자다.** LLM 은 이름만 내놓고 등급은 표에서 결정론적으로
+        읽으므로, LLM 이 등급을 지어낼 수 없다 (CLAUDE.md R1).
+
+        정확 일치를 먼저 보고, 없으면 **표의 품목명이 LLM 답을 포함하는지**
+        본다. 방향이 이것뿐인 이유:
+
+          표 561건 중 75건(13%)에 법령 수식이 붙어 있다 - '무선스피커 시스템'·
+          '전기오븐기기'·'형광등기구'·'할로겐등기구'. LLM 이 자연스럽게 답하면
+          이 75건은 영원히 안 맞는다. 검증자가 자기 표기법을 강요하는 것이지
+          LLM 이 틀린 게 아니다.
+
+        ⚠ 이 완화는 **LLM 답에만** 허용한다. 셀러 상품명에는 절대 쓰지 않는다.
+          위험도가 다르다:
+
+            셀러 상품명  '신일 BLDC 무선 선풍기 써큘레이터 캠핑용 탁상 휴대용'
+                         브랜드·수식어·연관검색어·부속품이 섞여 있어 포함이
+                         물면 엉뚱한 품목이 걸린다
+            LLM 답       '무선스피커'
+                         이미 정리된 품목명 하나라 포함이 물 것은 표의 수식뿐
+
+          LLM 이 추출을 이미 끝냈다. 남은 것은 어휘 정렬이지 추출이 아니다.
+
+        ⚠ 포함으로 걸린 것은 **possible** 이다. 표기가 정확히 같지 않았으니
+          likely 로 올리지 않는다. 후보가 여럿이면 부르는 쪽의 합의·갈림
+          로직이 그대로 받는다 - 여기서 하나를 골라 단정하지 않는다 (R3).
+        """
+        key = normalize(legal_name or "")
+        if not key:
+            return []
+
+        exact = self._by_name.get(key)
+        if exact:
+            return [self._to_grade(row, "legal_name") for row in exact]
+
+        # 표가 수식을 붙인 형태를 찾는다. 두 모양이 있고 둘 다 필요하다:
+        #
+        #   뒤·앞에 붙는다   무선스피커 ⊂ 무선스피커**시스템**
+        #                    안전모     ⊂ **자전거용**안전모
+        #   가운데 끼어든다   전기그릴   ⊂ 전기**거치식**그릴
+        #
+        # 앞의 것은 부분 문자열, 뒤의 것은 부분열이다. **새 관계를 만들지
+        # 않고** 셀러 상품명 경로에서 이미 검증된 is_prefix_expansion 을
+        # 그대로 쓴다 - 삽입 글자 수 제한이 이미 들어 있어 짧은 답이 긴
+        # 품목명에 무조건 걸리는 것을 막는다.
+        #
+        # 짧은 답이 여럿을 물 수 있고, 그때는 갈림으로 확인을 요청하는 것이
+        # 정확한 동작이다 - 하나를 골라 단정하지 않는다 (R3).
+        seen: set[tuple[str, str]] = set()
+        out: list[ItemGrade] = []
+        for name, rows in self._by_name.items():
+            if key not in name and not is_prefix_expansion(key, name):
+                continue
+            for row in rows:
+                mark = (row["item"], row["grade"])
+                if mark in seen:
+                    continue
+                seen.add(mark)
+                out.append(self._to_grade(row, "legal_name_contains"))
+        return out
 
     @staticmethod
     def _to_grade(row: dict, how: str) -> ItemGrade:

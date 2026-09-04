@@ -1396,25 +1396,35 @@ def _item_grade_findings(
     # 실험: 34건 추가 매칭에 절반이 오답).
     #
     # ⚠ **표가 검증자다.** LLM 은 이름만 내놓고, 그 이름이 실제로 표에 있는지는
-    #   여기서 확인한다. 없으면 미매칭이다. 등급은 표에서 결정론적으로 읽으므로
-    #   LLM 이 등급을 지어낼 수 없다 (R1).
+    #   표가 확인한다. 등급은 표에서 결정론적으로 읽으므로 LLM 이 등급을
+    #   지어낼 수 없다 (R1).
     #
-    # ⚠ 정확 일치만 본다. 별칭·접두 확장·포함 매칭을 다시 걸지 않는다 -
-    #   LLM 이 낸 이름에 우리 추정을 또 얹으면 어디서 온 오답인지 못 가린다.
-    if legal_name:
-        for row in book._by_name.get(normalize_item(legal_name)) or ():
-            mark = (row["item"], row["grade"])
-            if mark not in {(g.item, g.grade) for g in found}:
-                found.append(
-                    replace(
-                        book._to_grade(row, "legal_name"),
-                        confidence="likely",
-                        match_reason=(
-                            f"상품명을 법령 용어로 옮긴 '{legal_name}' 이 "
-                            "표의 품목명과 일치합니다."
-                        ),
-                    )
-                )
+    # ⚠ 포함 완화는 **LLM 답에만** 열려 있다. 셀러 상품명 경로(lookup_all)는
+    #   건드리지 않았다 - 위험도가 다르다. 자세한 이유는
+    #   ItemGradeBook.lookup_legal_name 주석에 적었다.
+    #
+    # ⚠ 어느 경로로 걸렸는지 남긴다(matched_by). 오답이 나면 정확 일치에서
+    #   온 것인지 포함에서 온 것인지 가려야 한다.
+    for cand in book.lookup_legal_name(legal_name):
+        if (cand.item, cand.grade) in {(g.item, g.grade) for g in found}:
+            continue
+        exact = cand.matched_by == "legal_name"
+        if exact:
+            why = (f"상품명을 법령 용어로 옮긴 '{legal_name}' 이 "
+                   "표의 품목명과 일치합니다.")
+        else:
+            why = (f"상품명을 법령 용어로 옮긴 '{legal_name}' 이 표의 "
+                   f"'{cand.item}' 안에 들어 있습니다. 표는 법령 수식을 붙여 "
+                   "적으므로 표기가 완전히 같지는 않습니다.")
+        found.append(
+            replace(
+                cand,
+                # 표기가 정확히 같지 않았으면 possible 이다 - 표의 수식을
+                # 우리가 넘겨 짚은 것이므로 likely 로 올리지 않는다.
+                confidence="likely" if exact else "possible",
+                match_reason=why,
+            )
+        )
 
     if not found:
         # 전원 방식을 알면 정해지는 상품인데 아직 안 물어봤으면 물어본다.

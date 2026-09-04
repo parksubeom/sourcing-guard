@@ -26,9 +26,17 @@ import pathlib
 import subprocess
 import time
 
-from sourcing_guard.item_grades import ItemGradeBook, normalize
+from datetime import date
+
+from sourcing_guard.item_grades import ItemGradeBook
+from sourcing_guard.verifier import _item_grade_findings
 
 _SAMPLE = pathlib.Path("tests/fixtures/새표본235.txt")
+_TODAY = date(2026, 9, 4)
+
+
+def _items(found: list) -> list[str]:
+    return [c["item"] for f in found for c in f.detail.get("candidates", [])]
 
 
 def scan(url: str, text: str) -> dict:
@@ -85,10 +93,17 @@ def main() -> None:
             legal = facts.get("legal_item_name")
         else:
             facts = {"product_name": None, "category": None}
-        by_rule = [g.item for g in book.lookup_all(raw)]
-        by_legal = [
-            row["item"] for row in (book._by_name.get(normalize(legal or "")) or ())
-        ]
+        # ⚠ 조회를 여기서 다시 구현하지 않는다. 프로덕션 함수를 그대로
+        #   부른다 - 측정이 프로덕션과 갈리면 숫자가 전부 틀린다.
+        by_rule = _items(_item_grade_findings(raw, _TODAY))
+        both = _items(_item_grade_findings(raw, _TODAY, legal_name=legal))
+        # ⚠ 두 질문을 섞지 않는다.
+        #   by_legal   LLM 답이 표에서 풀렸는가 (규칙이 이미 맞췄는지와 무관)
+        #   new_items  규칙이 못 맞춘 것을 새로 맞췄는가
+        #   중복을 뺀 값 하나로 둘 다 답하면 "표에 없어 버려졌다" 안에
+        #   "규칙이 이미 맞췄다" 가 섞여 버린다.
+        by_legal = [g.item for g in book.lookup_legal_name(legal)]
+        new_items = [i for i in both if i not in by_rule]
         rows.append({
             "raw": raw,
             "product_name": facts.get("product_name"),
@@ -96,12 +111,13 @@ def main() -> None:
             "category": facts.get("category"),
             "by_rule": by_rule,
             "by_legal": by_legal,
+            "new_items": new_items,
         })
 
     n = len(rows)
     rule_hit = sum(1 for r in rows if r["by_rule"])
-    both_hit = sum(1 for r in rows if r["by_rule"] or r["by_legal"])
-    new_only = [r for r in rows if r["by_legal"] and not r["by_rule"]]
+    both_hit = sum(1 for r in rows if r["by_rule"] or r["new_items"])
+    new_only = [r for r in rows if r["new_items"] and not r["by_rule"]]
     named = [r for r in rows if r["legal"]]
     named_missed = [r for r in named if not r["by_legal"]]
 
@@ -117,7 +133,7 @@ def main() -> None:
     print(f"\n── 새로 걸린 {len(new_only)}건 (오답인지 눈으로 볼 것) ──")
     for r in new_only:
         print(f"  {r['raw'][:62]}")
-        print(f"     LLM '{r['legal']}' → {r['by_legal']}")
+        print(f"     LLM '{r['legal']}' → {r['new_items']}")
 
     if named_missed:
         print(f"\n── 표에 없어 버려진 이름 {len(named_missed)}건 ──")
