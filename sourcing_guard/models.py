@@ -126,6 +126,10 @@ class FindingKind(str, Enum):
     # 우리 판정이 아니라 셀러가 준 사실이므로 kind 를 분리해 화면이
     # 근거를 밝힐 수 있게 한다.
     ITEM_GRADE_NOT_APPLIED = "item_grade_not_applied"
+    # 상품명만으로는 품목을 못 정하는데, 전원 방식을 알면 정해지는 경우.
+    # "안마기" 는 전동이면 전기마사지기(안전인증)이고 수동이면 표에 없다.
+    # 물어볼 자리가 없으면 셀러가 답할 방법도 없다.
+    ITEM_GRADE_NEEDS_POWER = "item_grade_needs_power"
     OUT_OF_SCOPE = "out_of_scope"          # 우리 소관 밖 품목
     AGE_OUT_OF_CHILD_RANGE = "age_out_of_child_range"  # 14세 이상 표기
     INFO_REQUEST = "info_request"          # 공급처에 물어야 할 것
@@ -179,6 +183,7 @@ _FINDING_GROUP: dict[str, FindingGroup] = {
     # 자체가 별도 품목일 수 있고, 어린이용이면 부분품·부속품도 대상이다.
     # CONTEXT 로 내리면 유일한 인증 관련 문장이 화면 아래로 묻힌다.
     "item_grade_not_applied": FindingGroup.ACTION,
+    "item_grade_needs_power": FindingGroup.ACTION,
     "info_request": FindingGroup.ACTION,
     "kc_image_candidate": FindingGroup.ACTION,
     "substance_mentioned": FindingGroup.ACTION,
@@ -230,12 +235,37 @@ class SellerHints(BaseModel):
     # True 면 부속품(거치대·커버·필터 등), False 면 본체. None 은 안 물어봤다.
     is_accessory: bool | None = None
 
-    # TODO(예정) power_source: Literal["mains", "battery", "solar"] | None
-    #   조명 등급 갈림(실측 37건 중 다수)을 셀러 한 번의 답으로 좁힌다.
-    #   스키마 자리만 남긴다 - 이번 회차에서 구현하지 않는다.
+    # 전원 방식. **조명 전용이 아니다** - 같은 질문이 두 곳에서 답을 준다.
+    #
+    #   조명   별표 1 일반조명기구(상시전원, 안전인증) vs 별표 2 그밖의
+    #          조명기구(충전식 휴대전등, 안전확인). 원문의 갈림 기준이 곧
+    #          전원 방식이다.
+    #   안마기 전동이면 표의 '전기마사지기'(안전인증)이고, 수동이면 표에
+    #          없다. 실측에서 미매칭 5건 중 4건이 이 갈래였다 -
+    #          "지압봉 안마기 어깨마사지기 발지압봉" 은 손으로 누르는 것이고,
+    #          "문어발 USB 진동 마사지기" 는 전동이다.
+    #
+    # none 이 수동 기구를 가려낸다. 이게 없으면 '안마기' 를 별칭 키로 쓸 수
+    # 없다 - 수동 제품이 같이 걸려 오답이 된다.
+    power_source: Literal["mains", "battery", "solar", "none"] | None = None
 
     def says_accessory(self) -> bool:
         return self.is_accessory is True
+
+    def says_unpowered(self) -> bool:
+        """전원을 쓰지 않는다고 답했는가. 수동 기구는 전기용품이 아니다."""
+        return self.power_source == "none"
+
+    def says_self_powered(self) -> bool:
+        """상시전원이 아니라고 답했는가 (배터리·충전식·태양광).
+
+        조명에서 별표 2 쪽(충전식 휴대전등)을 가리킨다.
+        """
+        return self.power_source in ("battery", "solar")
+
+    def says_mains(self) -> bool:
+        """상시전원이라고 답했는가. 조명에서 별표 1 쪽(LED등기구)을 가리킨다."""
+        return self.power_source == "mains"
 
 class Finding(BaseModel):
     """One verifiable statement. Never a conclusion, always a fact + its source."""

@@ -343,6 +343,36 @@
       "</p>";
   }
 
+  // 전원 방식 질문. **같은 필드지만 묻는 말이 다르다** - 조명은 상시전원인지
+  // 충전식인지가 갈림이고, 안마기는 전원을 쓰는지 자체가 갈림이다.
+  // 어느 쪽을 물을지는 서버가 detail.question 으로 알려준다.
+  var POWER_ASK = {
+    lighting: {
+      q: "이 조명은 상시전원인가요, 충전·건전지식인가요?",
+      opts: [["mains", "상시전원 (콘센트·배선)"],
+             ["battery", "충전·건전지식"],
+             ["solar", "태양광"]]
+    },
+    powered: {
+      q: "이 상품은 전원을 쓰나요?",
+      opts: [["mains", "전원을 씁니다"],
+             ["none", "손으로 쓰는 기구입니다"]]
+    }
+  };
+
+  function powerRow(f) {
+    var d = f.detail || {};
+    if (d.ask !== "power") return "";
+    var spec = POWER_ASK[d.question];
+    if (!spec) return "";
+    return '<p class="confirm part">' +
+      '<span class="sub">' + esc(spec.q) + "</span>" +
+      spec.opts.map(function (o) {
+        return '<button class="btn-t sm" type="button" data-power="' + o[0] + '">' +
+               esc(o[1]) + "</button>";
+      }).join("") + "</p>";
+  }
+
   function findingRow(f) {
     var basis = f.legal_basis ? '<span class="tag">' + esc(f.legal_basis) + "</span>" : "";
     // 같은 제조사의 다른 리콜은 이 상품의 위험이 아니라 공급처 참고 정보다.
@@ -365,7 +395,8 @@
     var confirm = f.kind === "kc_image_candidate" ? confirmRow(f) : "";
     var rf = f.kind === "rf_wireless_unverified" ? rfLookupRow(f) : "";
     var isGrade = f.kind === "item_grade_matched" || f.kind === "item_grade_split";
-    var grades = isGrade ? gradeRow(f) + partRow(f) : "";
+    var grades = isGrade ? gradeRow(f) + powerRow(f) + partRow(f) : "";
+    if (f.kind === "item_grade_needs_power") grades = powerRow(f);
     // 잘못 눌렀을 때 되돌릴 길을 남긴다.
     if (f.kind === "item_grade_not_applied") {
       grades = '<p class="confirm part">' +
@@ -496,6 +527,15 @@
     //
     // 주의: "부속품이면 대상이 아닙니다" 라고 쓰지 않는다. 어린이제품법 제2조
     //   1호가 "부분품이나 부속품" 을 어린이제품에 포함한다.
+    // 전원 방식 답도 서버로 올린다. 화면 안에서만 바꾸면 다시 검사할 때
+    // 도로 갈리고, 판정에도 반영되지 않는다.
+    res.querySelectorAll("button[data-power]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        sellerHints.power_source = b.getAttribute("data-power");
+        scan();
+      });
+    });
+
     res.querySelectorAll("button[data-part]").forEach(function (b) {
       b.addEventListener("click", function () {
         // 화면 안에서만 문장을 바꾸지 않는다. 서버로 올려 판단을 다시 받는다 -

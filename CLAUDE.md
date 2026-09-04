@@ -60,12 +60,38 @@ LLM의 역할은 **추출(extraction)**, **분류(classification)**, **설명(ex
 | `emsit.go.kr` | 전파인증 번호 조회 (Open API, 인증키 불필요) | 예정 `rra_client.py` |
 | `rra.go.kr` | 전파인증 모델명 검색·부적합 현황 (HTML) | 예정 `rra_client.py` |
 | `law.go.kr` | 고시·별표·부속서 원문 (DRF OpenAPI, `OC=test`) | `verifier.py` 근거 URL · `scripts/` 자료 수집 |
+| `domeggook.com` | 도매꾹·도매매 상품 상세 (**공개 Open API 전용**) | 예정 `domeggook_client.py` |
 
 전부 정부 도메인이며 상거래 사이트가 아니다. 도메인을 추가하려면 이 표에 먼저 적는다.
 
 `law.go.kr` 은 런타임 조회가 아니다. 고시 원문을 받아 `data/` 로 옮기는 자료
 수집 경로이고, `verifier.py` 가 근거 URL 로 표시한다. 기준치·조항 번호를 기억으로
 쓰지 않기 위한 통로다 (R5).
+
+`domeggook.com` 은 **공개 Open API 만** 쓴다. HTML 스크래핑은 금지다.
+
+허용: `https://www.domeggook.com/ssl/api/` (`mode=getItemView`, `aid`=API Key).
+      상품번호로 상세 정보를 받는다. 이 API 에는 `detail.safetyCert.no`
+      (인증번호) · `detail.country` · `detail.manufacturer` · `detail.model` 이
+      구조화 필드로 들어 있어, 상세페이지 텍스트를 파싱하지 않아도 된다.
+
+금지: 검색 결과·상품 페이지 HTML 파싱. 이 세션에서 실상품 239건 표본을 만들 때
+      검색 결과 HTML 을 읽었지만 그것은 **조사용 일회성**이었고 프로덕션 경로가
+      아니다. 구분을 여기 적어 두지 않으면 다음 사람이 스크래핑을 프로덕션에
+      넣는다.
+
+R4 가 막으려던 것은 상거래 사이트 무단 크롤링이지 제공되는 API 가 아니다.
+셀러 자신의 소싱처이고, 공개 API 이며, 키로 접근을 관리한다.
+
+⚠ `safetyCert` 는 **공급사가 입력한 값**이다. 그 자체가 검증된 사실이 아니다 -
+  우리는 이 번호를 **입력**으로 받아 SafetyKorea 에 대조하고, 값의 진위는 여전히
+  우리가 확인한다. `no` 가 `'-'` 이거나 `useNo='N'` 이면 R3-b 에 따라 부재의
+  의미를 등급으로 해석한다.
+
+⚠ **미확인 (2026-09-04)**: 호출 쿼터와 키 종류. 공식 문서(상품상세정보)에
+  쿼터 표기가 없고, 키 발급 문서는 SPA 라 본문을 못 읽었다. **키가 셀러 계정에
+  묶이면 셀러가 입력해야 하고 UI 가 늘어난다.** 붙이기 전에 확정할 것 -
+  techsupport@ggook.com 문의 경로가 문서에 있다.
 
 ⚠ 이 목록은 문서에만 있고 코드가 강제하지 않는다. 현재 서버가 외부로 나가는
 경로는 `kats_client.py` 하나뿐이라 어댑터 계층이 사실상 게이트 역할을 한다.
