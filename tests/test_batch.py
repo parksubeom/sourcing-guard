@@ -40,10 +40,18 @@ def test_header_row_is_dropped():
 
 
 def test_rows_beyond_the_limit_are_reported_not_silently_dropped():
-    """상한을 넘겨 잘렸으면 알려야 한다. 조용히 버리면 셀러가 검사됐다고 믿는다."""
-    names, truncated = parse_lines("\n".join(f"상품{i}번" for i in range(250)))
+    """상한을 넘겨 잘렸으면 알려야 한다. 조용히 버리면 셀러가 검사됐다고 믿는다.
+
+    2026-09-04 갱신: 250줄·잘림 50 을 박아 뒀는데 MAX_ROWS 를 실측으로 다시
+    정하면서(200 → 500) 깨졌다. 상한값이 아니라 **잘렸다는 사실을 보고하는가**
+    가 이 검사의 요지이므로 MAX_ROWS 기준으로 쓴다.
+    """
+    over = 50
+    names, truncated = parse_lines(
+        "\n".join(f"상품{i}번" for i in range(MAX_ROWS + over))
+    )
     assert len(names) == MAX_ROWS
-    assert truncated == 50
+    assert truncated == over
 
 
 # --- LLM 예산 -------------------------------------------------------------

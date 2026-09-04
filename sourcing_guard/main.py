@@ -134,6 +134,16 @@ def index() -> FileResponse:
     return FileResponse(_STATIC / "index.html", media_type="text/html; charset=utf-8")
 
 
+@app.get("/batch", response_class=FileResponse, include_in_schema=False)
+def batch_page() -> FileResponse:
+    """대량 검사 화면.
+
+    셀러는 상품을 한 건씩 붙여넣지 않는다 - 도매 플랫폼에서 엑셀을 받아
+    수백 건을 한 번에 올린다. API 만 있고 화면이 없으면 그 흐름에 못 들어간다.
+    """
+    return FileResponse(_STATIC / "batch.html", media_type="text/html; charset=utf-8")
+
+
 @app.get("/watch", response_class=FileResponse, include_in_schema=False)
 def watch_page() -> FileResponse:
     """감시 목록 화면.

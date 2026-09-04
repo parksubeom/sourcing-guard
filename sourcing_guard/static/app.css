@@ -397,3 +397,34 @@ nav.pages a[aria-current="page"]{color:var(--primary-60); background:var(--prima
 .grades .sub { flex-basis: 100%; font-size: 12px; }
 .confirm.part { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .confirm.part .sub { flex-basis: 100%; }
+
+/* 대량 검사. 500줄을 한 화면에 쏟으면 셀러가 못 읽는다 - 판정별로 접고,
+   구획 안에서도 처음 50줄만 그린 뒤 눌러서 편다. */
+.b-group { border: 1px solid var(--line); border-radius: 8px; margin: 10px 0; }
+.b-group > summary {
+  cursor: pointer; padding: 12px 14px; font-weight: 600;
+  list-style: none;
+}
+.b-group > summary::-webkit-details-marker { display: none; }
+.b-group > summary::before { content: "▸ "; }
+.b-group[open] > summary::before { content: "▾ "; }
+.b-group > .scope { margin: 4px 14px 8px; }
+.b-group > .scope { margin: 2px 14px 8px; }
+.b-n { font-weight: 400; font-size: 13px; }
+.b-list { list-style: none; margin: 0; padding: 0 14px 12px; }
+.b-row {
+  display: flex; gap: 10px; align-items: baseline;
+  padding: 7px 0; border-top: 1px solid var(--line);
+}
+.b-line { min-width: 34px; text-align: right; font-size: 12px; opacity: .6; }
+.b-body { flex: 1; min-width: 0; }
+.b-name { margin: 0 0 2px; word-break: break-all; }
+.b-item { font-weight: 600; margin-right: 8px; }
+/* 등급이 갈리면 품목 후보를 목록으로. 괄호 안에 넣으면 셋 이상일 때
+   안 읽힌다 - 단건 화면에서 같은 판단을 했다. */
+.b-cands { list-style: none; margin: 2px 0; padding: 0; }
+.b-cands li {
+  display: inline-block; margin: 2px 6px 2px 0; padding: 1px 8px;
+  border: 1px solid var(--line); border-radius: 999px; font-size: 12px;
+}
+.b-more { display: contents; }

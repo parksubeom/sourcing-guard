@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>대량 검사 · 안심 소싱 돋보기</title>
+<meta name="description" content="상품명 목록을 붙여넣으면 어느 것을 먼저 봐야 하는지 가려 드립니다.">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+<a class="skip" href="#main">본문으로 건너뛰기</a>
+
+<header class="masthead">
+  <div class="container">
+    <svg class="mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/><path d="M7.8 10.6l1.9 1.9 3.5-3.6"/>
+    </svg>
+    <span class="wordmark">안심 소싱 돋보기</span>
+    <nav class="pages" aria-label="주요 화면">
+      <a href="/">상품 검사</a>
+      <a href="/batch" aria-current="page">대량 검사</a>
+      <a href="/watch">감시 목록</a>
+    </nav>
+  </div>
+</header>
+
+<div class="intro">
+  <div class="container">
+    <h2>어느 상품부터 봐야 하는지 가려 드립니다</h2>
+    <p>엑셀의 상품명 열을 복사해 붙여넣으세요. 상품명만 보므로 1차 선별이고,
+       걸러진 상품은 단건 검사로 다시 확인하시면 됩니다.</p>
+  </div>
+</div>
+
+<main id="main">
+  <div class="container">
+    <section class="card">
+      <h3>상품명 붙여넣기</h3>
+      <p class="scope">한 줄에 하나씩. 엑셀에서 열을 복사하면 그대로 붙습니다.
+         열 머리글(<code>상품명</code>)이 섞여도 알아서 걸러냅니다.</p>
+      <textarea id="bt" rows="10"
+        placeholder="탁상용 선풍기 미니 무선&#10;우산 양산 양우산 자동우산&#10;보조배터리 10000mAh C타입"></textarea>
+      <p class="scope" id="cnt">0줄</p>
+      <p class="actions">
+        <button class="btn" id="go" type="button">검사</button>
+        <button class="btn-t" id="clear" type="button">지우기</button>
+      </p>
+    </section>
+
+    <section id="out" hidden></section>
+  </div>
+</main>
+
+<footer class="foot">
+  <div class="container">
+    <p>본 결과는 공개된 정부 데이터에 기반한 참고 정보이며, 법적 판단이나 안전 인증을 대체하지 않습니다.</p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  "use strict";
+  function $(id) { return document.getElementById(id); }
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+
+  var bt = $("bt"), out = $("out"), go = $("go");
+  var MAX_SHOWN = 50;   // 구획마다 처음에 그리는 줄 수. 나머지는 눌러서 편다.
+  var last = null;
+
+  // 판정별 이름과 순서. 셀러는 500줄을 다 읽지 않는다 - 다시 볼 것부터 둔다.
+  var GROUPS = [
+    ["needs_review",   "단건 검사로 다시 보세요",       "상품명에 인증번호가 보입니다. 실제 유효 여부는 조회해야 압니다."],
+    ["cert_required",  "인증번호가 반드시 있어야 합니다", "상세페이지에서 번호를 확인한 뒤 단건 검사로 조회하세요."],
+    ["check_supplier", "공급처에 확인이 필요합니다",     "세부품목이 갈려 등급을 하나로 정할 수 없습니다."],
+    ["undecided",      "상품명만으로는 가리지 못했습니다", "상세페이지가 있어야 판단할 수 있습니다."],
+    ["absence_normal", "번호가 없는 것이 정상입니다",    "인증·신고 절차가 없거나 스스로 확인하는 등급입니다."],
+    ["out_of_scope",   "본 서비스 범위 밖입니다",       "다른 부처 소관입니다."]
+  ];
+
+  function countLines() {
+    var n = bt.value.split("\n").filter(function (s) { return s.trim(); }).length;
+    $("cnt").textContent = n + "줄";
+  }
+  bt.addEventListener("input", countLines);
+  $("clear").addEventListener("click", function () {
+    bt.value = ""; countLines(); out.hidden = true; out.innerHTML = ""; last = null;
+  });
+
+  // 잘림 안내. **조용히 버리면 셀러가 검사됐다고 믿는다.**
+  function truncNote(d) {
+    if (!d.truncated) return "";
+    return '<p class="input-note">' +
+      esc(d.total + "줄만 검사했습니다. " + d.truncated + "줄이 상한(" +
+          d.max_rows + "줄)을 넘어 잘렸습니다. 남은 줄은 나눠서 다시 넣어 주세요.") +
+      "</p>";
+  }
+
+  function rowHtml(r) {
+    // 등급이 갈리면 품목 후보를 **목록으로** 그린다. 괄호 안에 넣으면
+    // 셋 이상일 때 안 읽힌다 - 단건 화면에서 같은 판단을 했다.
+    var items = r.matched_items || [];
+    var body = "";
+    if (r.matched_item) {
+      body = '<span class="b-item">' + esc(r.matched_item) + "</span>" +
+             (r.grade ? '<span class="g">' + esc(r.grade) + "</span>" : "");
+    } else if (items.length) {
+      body = '<ul class="b-cands">' + items.map(function (it) {
+        return "<li>" + esc(it) + "</li>";
+      }).join("") + "</ul>" +
+      (r.grade_candidates && r.grade_candidates.length
+        ? '<span class="sub">' + esc(r.grade_candidates.join(" / ")) + "</span>" : "");
+    }
+    var kc = (r.cert_numbers || []).length
+      ? '<span class="sub">상품명에 보이는 번호: ' + esc(r.cert_numbers.join(", ")) + "</span>" : "";
+    return '<li class="b-row"><span class="b-line">' + esc(r.line) + "</span>" +
+           '<div class="b-body"><p class="b-name">' + esc(r.product_name) + "</p>" +
+           body + kc + "</div></li>";
+  }
+
+  function groupHtml(key, title, note, rows) {
+    if (!rows.length) return "";
+    // 제목은 summary 가 이미 말한다. h4 로 또 쓰면 같은 사실을 두 번 읽게 된다 -
+    // 단건 화면에서 세 번 고친 결함이라 여기서는 처음부터 안 만든다.
+    var head = '<p class="scope">' + esc(note) + "</p>";
+    var shown = rows.slice(0, MAX_SHOWN).map(rowHtml).join("");
+    var rest = rows.length > MAX_SHOWN
+      ? '<div class="b-more" hidden>' + rows.slice(MAX_SHOWN).map(rowHtml).join("") + "</div>" +
+        '<p class="actions"><button class="btn-t sm" type="button" data-more="' + esc(key) + '">' +
+        "나머지 " + (rows.length - MAX_SHOWN) + "줄 펼치기</button></p>"
+      : "";
+    // 판정별로 접는다. 500줄을 다 펼치면 셀러가 못 읽는다 - cert_required 만
+    // 수백 줄이 될 수 있고, 그러면 전부 무시하게 된다.
+    return '<details class="b-group" data-g="' + esc(key) + '"' +
+           (key === "needs_review" || key === "cert_required" ? " open" : "") + ">" +
+           "<summary>" + esc(title) + " · " + rows.length + "줄</summary>" +
+           head + '<ul class="b-list">' + shown + "</ul>" + rest + "</details>";
+  }
+
+  // 엑셀 붙여넣기용. 셀러는 결과를 자기 엑셀로 가져가야 한다 - 화면에만
+  // 있으면 200줄을 손으로 옮겨야 하고, 그러면 아무도 안 쓴다.
+  function toTsv(d) {
+    var head = ["줄", "상품명", "판정", "품목", "등급", "등급후보", "상품명속인증번호"];
+    var lines = [head.join("\t")];
+    var label = {};
+    GROUPS.forEach(function (g) { label[g[0]] = g[1]; });
+    (d.rows || []).forEach(function (r) {
+      lines.push([
+        r.line,
+        r.product_name,
+        label[r.verdict] || r.verdict,
+        r.matched_item || (r.matched_items || []).join(" | "),
+        r.grade || "",
+        (r.grade_candidates || []).join(" | "),
+        (r.cert_numbers || []).join(" ")
+      ].map(function (v) { return String(v).replace(/[\t\n\r]/g, " "); }).join("\t"));
+    });
+    return lines.join("\n");
+  }
+
+  function render(d) {
+    last = d;
+    var by = {};
+    (d.rows || []).forEach(function (r) { (by[r.verdict] = by[r.verdict] || []).push(r); });
+
+    var html = '<div class="card">';
+    html += "<h3>검사 결과 · " + d.total + "줄</h3>";
+    html += truncNote(d);
+    html += '<p class="scope">' + esc(d.scope_note) + "</p>";
+    html += '<p class="actions">' +
+      '<button class="btn-t" id="copy" type="button">엑셀로 복사</button>' +
+      '<button class="btn-t" id="dl" type="button">파일로 저장</button>' +
+      '<span class="sub" id="copied"></span></p>';
+    html += "</div>";
+
+    GROUPS.forEach(function (g) {
+      html += groupHtml(g[0], g[1], g[2], by[g[0]] || []);
+    });
+    out.innerHTML = html;
+    out.hidden = false;
+
+    out.querySelectorAll("button[data-more]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var box = b.closest("details").querySelector(".b-more");
+        if (box) { box.hidden = false; b.remove(); }
+      });
+    });
+    var copy = document.getElementById("copy");
+    if (copy) copy.addEventListener("click", function () {
+      var tsv = toTsv(last);
+      navigator.clipboard.writeText(tsv).then(function () {
+        document.getElementById("copied").textContent =
+          "복사했습니다. 엑셀에 붙여넣으세요.";
+      }, function () {
+        // 클립보드가 막히면 셀러가 직접 고를 수 있게 텍스트로 내놓는다.
+        var ta = document.createElement("textarea");
+        ta.value = tsv; ta.rows = 8; ta.style.width = "100%";
+        copy.parentNode.appendChild(ta); ta.select();
+        document.getElementById("copied").textContent = "직접 복사해 주세요 (Ctrl+C).";
+      });
+    });
+    var dl = document.getElementById("dl");
+    if (dl) dl.addEventListener("click", function () {
+      // BOM 을 붙여야 엑셀이 한글을 안 깨뜨린다.
+      var blob = new Blob(["﻿" + toTsv(last)],
+                          { type: "text/tab-separated-values;charset=utf-8" });
+      var a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "대량검사결과.tsv";
+      a.click();
+      URL.revokeObjectURL(a.href);
+    });
+  }
+
+  go.addEventListener("click", function () {
+    var text = bt.value.trim();
+    if (!text) { bt.focus(); return; }
+    go.disabled = true;
+    out.hidden = false;
+    out.innerHTML = '<div class="card"><p class="scope">검사하고 있습니다…</p></div>';
+    fetch("/api/v1/batch", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: text })
+    })
+      .then(function (r) {
+        return r.json().then(function (b) {
+          if (!r.ok) throw new Error(b.detail || "검사를 완료하지 못했습니다.");
+          return b;
+        });
+      })
+      .then(render)
+      .catch(function (e) {
+        out.innerHTML = '<div class="card"><p class="scope">' + esc(e.message) + "</p></div>";
+      })
+      .finally(function () { go.disabled = false; });
+  });
+
+  countLines();
+})();
+</script>
+</body>
+</html>
