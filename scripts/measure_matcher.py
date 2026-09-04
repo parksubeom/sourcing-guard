@@ -80,6 +80,7 @@ def main() -> None:
                         hits.append(("alias", normalize(key), row))
 
         any_reject = False
+        accepted_marks: set[tuple[str, str]] = set()
         for how, key, row in hits:
             mark = (row["item"], row["grade"])
             if mark in seen:
@@ -107,11 +108,26 @@ def main() -> None:
                 per_product_rejected += 1
             else:
                 accepted[v.confidence.value] += 1
+                accepted_marks.add(mark)
         products_with_rejection += any_reject
+
+        # ⚠ 이 스크립트는 1단계(검색)를 **직접 재현한다.** 프로덕션 코드가
+        #   바뀌면 재현이 뒤처지고, 그러면 숫자가 조용히 틀린다 - 오늘 두 번
+        #   겪었다(chemical_rival · 경쟁 단계). 매번 실제 결과와 대조해서,
+        #   어긋나면 숫자를 내지 않고 멈춘다.
+        real = {(g.item, g.grade) for g in book.lookup_all(raw)}
+        if accepted_marks != real:
+            raise SystemExit(
+                "재현이 실제 코드와 어긋납니다. 이 스크립트를 고치기 전까지 "
+                "숫자를 믿을 수 없습니다.\n"
+                f"  상품: {raw[:60]}\n"
+                f"  재현: {sorted(i for i, _ in accepted_marks)}\n"
+                f"  실제: {sorted(i for i, _ in real)}"
+            )
 
     total_rej = sum(rejected.values())
     total_acc = sum(accepted.values())
-    print(f"도매꾹 실상품 {len(names)}건\n")
+    print(f"도매꾹 실상품 {len(names)}건 (재현이 실제 코드와 일치함을 확인)\n")
     print(f"1단계가 찾아온 후보  {total_acc + total_rej:4}개")
     print(f"  매처가 통과시킴     {total_acc:4}개")
     print(f"  매처가 거부함       {total_rej:4}개   "

@@ -19,6 +19,9 @@
 
 from __future__ import annotations
 
+import re
+from pathlib import Path
+
 import pytest
 
 from sourcing_guard.kats_client import KatsClient
@@ -130,3 +133,82 @@ def test_the_guard_can_actually_fail():
     ]
     holders = [f.kind.value for f in twins if phrase in f.statement_ko]
     assert len(holders) == 2, "검사가 중복을 못 만들면 회귀를 못 잡는다"
+
+
+# ---------------------------------------------------------------------------
+# 화면도 같은 사실을 두 번 말하지 않는다
+# ---------------------------------------------------------------------------
+#
+# 서버 finding 만 보던 검사가 화면은 못 잡았다. 오늘 배치 화면을 만들면서
+# 구획 제목을 summary 와 h4 에 두 번 썼고, 검사가 아니라 **스크린샷을 보고**
+# 발견했다 - 같은 결함을 네 번째로 낸 것이다.
+#
+# ⚠ **오늘 낸 그 결함은 이 검사로 못 잡는다.** 되돌려서 확인했다 - 배치
+#   화면의 구획 제목은 JS 가 `'<h4>' + esc(title) + '</h4>'` 로 조립하므로
+#   정적 HTML 에 리터럴이 없다. 이 검사는 `<script>` 안을 아예 제외한다
+#   (거기 문자열은 조건에 따라 하나만 그려지므로 두 번 나온다고 중복이
+#   아니다).
+#
+#   그래도 두는 이유: 마크업에 직접 쓴 문구의 중복은 잡는다. index.html 에
+#   같은 안내문을 두 번 넣어 보니 걸렸다. 화면 문구가 정적인 자리(머리말·
+#   안내·라벨)가 화면마다 스무 줄쯤 되고, 거기서 나는 중복은 이 검사가 막는다.
+#
+#   JS 조립까지 잡으려면 렌더된 DOM 을 봐야 한다 - Playwright 로 각 화면을
+#   띄워 텍스트를 훑는 방식이다. 지금은 안 한다(검사 시간이 분 단위로 늘고,
+#   화면 검사를 그렇게 붙이면 CI 가 느려진다). 남은 한계로 적어 둔다.
+
+_STATIC = Path(__file__).resolve().parents[1] / "sourcing_guard" / "static"
+
+# 한 화면 안에서 두 번 나오면 안 되는 문구의 최소 길이.
+# 짧으면 "확인하세요" 같은 상투구가 걸린다.
+_HTML_SPAN = 24
+
+# 두 번 나와도 되는 것. 이유를 적지 않은 예외는 두지 않는다.
+_HTML_ALLOWED = (
+    # 접근성 문구와 공통 머리말은 화면마다 반복되는 것이 정상이다.
+    "본 결과는 공개된 정부 데이터에 기반한 참고 정보이며",
+    "안심 소싱 돋보기",
+    # 같은 안내를 두 자리(안내문·placeholder)에 두는 것은 의도다.
+    "상세페이지",
+)
+
+
+def _visible_text_blocks(html: str) -> list[str]:
+    """사람이 읽는 문구만 뽑는다.
+
+    <script> 안은 뺀다 - 거기 있는 문자열은 조건에 따라 하나만 그려지므로
+    두 번 나온다고 중복이 아니다. 태그·속성도 뺀다.
+    """
+    body = re.sub(r"<script\b.*?</script>", " ", html, flags=re.S | re.I)
+    body = re.sub(r"<style\b.*?</style>", " ", body, flags=re.S | re.I)
+    body = re.sub(r"<!--.*?-->", " ", body, flags=re.S)
+    # 태그 사이의 텍스트만
+    return [t.strip() for t in re.split(r"<[^>]+>", body) if t.strip()]
+
+
+@pytest.mark.parametrize("page", ["index.html", "batch.html", "watch.html"])
+def test_no_visible_sentence_is_repeated_on_one_page(page):
+    blocks = _visible_text_blocks((_STATIC / page).read_text(encoding="utf-8"))
+    seen: dict[str, str] = {}
+    for block in blocks:
+        squashed = re.sub(r"\s+", " ", block)
+        if any(a in squashed for a in _HTML_ALLOWED):
+            continue
+        for start in range(0, max(0, len(squashed) - _HTML_SPAN) + 1):
+            chunk = squashed[start:start + _HTML_SPAN]
+            if chunk in seen and seen[chunk] != squashed:
+                raise AssertionError(
+                    f"{page}: 같은 문구가 두 자리에 있습니다.\n"
+                    f"  '{chunk}'\n  ① {seen[chunk][:70]}\n  ② {squashed[:70]}"
+                )
+            seen.setdefault(chunk, squashed)
+
+
+def test_the_html_guard_can_actually_fail(tmp_path):
+    """무엇도 잡지 못하는 상태로 통과하지 않게 한다."""
+    twin = "인증번호가 반드시 있어야 하는 품목입니다"
+    page = tmp_path / "dup.html"
+    page.write_text(f"<h1>{twin}</h1><p>{twin}</p>", encoding="utf-8")
+
+    blocks = _visible_text_blocks(page.read_text(encoding="utf-8"))
+    assert blocks.count(twin) == 2, blocks
