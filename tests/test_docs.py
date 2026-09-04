@@ -254,3 +254,60 @@ def test_the_handoff_log_names_the_real_install_command():
         if not (root / absent).exists():
             assert f'install -e ".[dev]"' not in text, absent
     assert (root / "requirements.txt").exists()
+
+
+def test_the_proposal_numbers_match_the_code():
+    """기획서에 적은 실측 숫자가 코드와 어긋나면 심사에서 그대로 드러난다.
+
+    이 저장소의 반복 결함이 문서와 코드가 어긋나는 것이다. 기획서는 제출
+    서류라 비용이 특히 크므로, 바뀌면 검사가 깨지게 한다.
+
+    ⚠ 44/56은 **상품 단위**다. 한 상품에 원문 일치가 하나라도 있으면 44%
+      쪽으로 센다. 후보 단위로 세면 39/61이 되는데, 한 상품이 후보를 여럿
+      내면(청소기 하나가 넷) 부풀기 때문이다. 기획서도 그 단위를 밝힌다.
+    """
+    import collections
+    import pathlib as _p
+
+    import yaml as _yaml
+
+    from sourcing_guard.batch import MAX_ROWS
+    from sourcing_guard.item_grades import ItemGradeBook
+
+    root = Path(__file__).resolve().parents[1]
+    doc = (root / "01_기획서_안심소싱돋보기.md").read_text(encoding="utf-8")
+
+    # 등급표 건수와 등급별 분포
+    grades = _yaml.safe_load(
+        (root / "sourcing_guard" / "data" / "item_grades.yaml").read_text(encoding="utf-8")
+    )["items"]
+    assert f"**{len(grades)}건**" in doc, len(grades)
+    counts = collections.Counter(r["grade"] for r in grades)
+    for grade, n in counts.items():
+        assert f"| {grade} | {n} |" in doc, (grade, n)
+
+    # 실측 매칭률
+    book = ItemGradeBook()
+    names = [
+        n.strip()
+        for n in (root / "tests" / "fixtures" / "도매꾹239.txt")
+        .read_text(encoding="utf-8").splitlines()
+        if n.strip()
+    ]
+    matched = [n for n in names if book.lookup_all(n)]
+    pct = round(len(matched) / len(names) * 100)
+    assert f"{len(matched)}건 ({pct}%)" in doc, (len(matched), pct)
+    assert f"못 맞춘 것        {len(names) - len(matched)}건" in doc
+
+    # 원문 일치 / 우리 추정 비율 (상품 단위)
+    only_guess = 0
+    for name in matched:
+        levels = {str(g.confidence) for g in book.lookup_all(name)}
+        if levels == {"possible"}:
+            only_guess += 1
+    strong = len(matched) - only_guess
+    assert f"{round(strong / len(matched) * 100)}% ({strong}건)" in doc
+    assert f"{round(only_guess / len(matched) * 100)}% ({only_guess}건)" in doc
+
+    # 대량 검사 상한
+    assert f"{MAX_ROWS}줄" in doc, MAX_ROWS
