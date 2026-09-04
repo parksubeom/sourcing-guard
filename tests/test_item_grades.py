@@ -527,3 +527,63 @@ def test_the_rival_rule_needs_an_electric_hint_to_be_bypassed():
     assert not chemical_rival_wins("USB 충전식 손난로", "전기손난로")
     # 다른 품목에는 적용되지 않는다.
     assert not chemical_rival_wins("흔드는 핫팩", "선풍기")
+
+
+# ---------------------------------------------------------------------------
+# 법령 품목명 - LLM 이 이름을 내고 표가 검증한다
+# ---------------------------------------------------------------------------
+
+
+def test_legal_item_name_is_looked_up_in_the_table():
+    """LLM 이 옮긴 이름이 표에 있으면 매칭된다.
+
+    손으로 만든 별칭이 한계에 왔다 - 튜닝 표본 71%, 새 표본 24%. 별칭이 첫
+    표본에서 만들어졌으니 새 상품에는 안 통한다. 문제가 문자열이 아니라
+    의미라서, LLM 을 번역기로 쓰고 표를 검증자로 둔다.
+    """
+    from datetime import date
+
+    from sourcing_guard.verifier import _item_grade_findings
+
+    found = _item_grade_findings(
+        "코웨이 정수기 렌탈 냉온정", date(2026, 9, 4), legal_name="전기정수기"
+    )
+    items = [c["item"] for f in found for c in f.detail.get("candidates", [])]
+    assert "전기정수기" in items
+
+
+def test_a_made_up_legal_name_is_thrown_away():
+    """표가 검증자다. 표에 없는 이름은 버려진다 - LLM 이 등급을 지어낼 수 없다 (R1).
+
+    실측(새 표본 30건): LLM 이 이름을 답한 11건 중 9건이 표에 없어 버려졌다.
+    """
+    from datetime import date
+
+    from sourcing_guard.verifier import _item_grade_findings
+
+    found = _item_grade_findings(
+        "무엇인지 알 수 없는 물건", date(2026, 9, 4), legal_name="존재하지않는품목명"
+    )
+    assert found == []
+
+
+def test_the_legal_name_path_does_not_stack_our_guesses():
+    """정확 일치만 본다. 별칭·접두 확장을 다시 걸지 않는다.
+
+    LLM 이 낸 이름에 우리 추정을 또 얹으면 어디서 온 오답인지 못 가린다.
+
+    ⚠ 실측에서 이 선택의 비용이 드러났다 - 정확 일치만으로는 새 표본 30건에서
+      **+0건**이었다. LLM 은 '무선스피커'·'전기오븐' 처럼 맞는 이름을 내는데
+      표는 '무선스피커 시스템'·'전기오븐기기' 로 수식이 붙어 있다. 접두 확장을
+      허용하면 20% → 30% 로 오르지만(3건), 그건 별개 결정이라 미뤘다.
+    """
+    from datetime import date
+
+    from sourcing_guard.verifier import _item_grade_findings
+
+    # 표에는 '무선스피커 시스템' 만 있다. 정확 일치가 아니므로 안 붙는다.
+    found = _item_grade_findings(
+        "소니 블루투스 스피커", date(2026, 9, 4), legal_name="무선스피커"
+    )
+    items = [c["item"] for f in found for c in f.detail.get("candidates", [])]
+    assert "무선스피커 시스템" not in items

@@ -80,6 +80,18 @@ class ProductFacts(BaseModel):
     #    "무선 기능 표기가 있습니다" 여야 한다.
     wireless_hints: list[str] = Field(default_factory=list)
     target_age: str | None = None
+    # 셀러 말을 법령 용어로 옮긴 이름. LLM 이 답하고 **표가 검증한다.**
+    #
+    # 손으로 만든 별칭이 한계에 왔다 - 튜닝에 쓴 표본에서 71% 였는데 새로
+    # 긁은 표본에서는 24% 였다. 별칭 24개가 첫 표본에서 만들어졌으니 새
+    # 상품에는 안 통한다. 놓친 것 대부분이 표에 있는데 이름만 다르다
+    # (블루투스 스피커/무선스피커 · 정수기/전기정수기 · 커피머신/커피메이커).
+    #
+    # ⚠ LLM 에게 561건 목록에서 고르게 하지 않는다. 그러면 LED등기구 같은
+    #   그럴듯한 오답이 나온다. 이름만 자연스럽게 답하게 하고, 그 이름이
+    #   표에 있는지는 우리가 확인한다. 등급은 표에서 결정론적으로 읽으므로
+    #   LLM 이 등급을 지어낼 수 없다 (CLAUDE.md R1).
+    legal_item_name: str | None = None
     category: ItemCategory = ItemCategory.UNCLASSIFIED
     category_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
     source_page_url: str | None = None
