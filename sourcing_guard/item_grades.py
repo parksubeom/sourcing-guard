@@ -284,6 +284,41 @@ ALIASES_IF_MAINS: dict[str, str | tuple[str, ...]] = {
     "안마의자": "전기마사지기",
 }
 
+# 두 품목이 함께 보일 때 어느 쪽이 본체인가.
+#
+# "의자방석" 은 방석이지 의자가 아니다. 그런데 '의자' 를 닫아 두면 방석도 의자도
+# 답을 못 준다 - 실측에서 의자 계열 8건이 전부 미매칭이었다.
+#
+# 닫는 대신 **경쟁 관계를 적는다.** 더 구체적인 쪽이 이긴다:
+#
+#   "메모리폼 의자방석 쿠션방석"     방석이 이긴다 -> 의류 이외의 섬유제품
+#   "무중력의자 리클라이너"          경쟁자가 없다 -> 의자
+#   "국산 8단 전기방석 전기요"       전기방석이 이긴다 (표에 그 이름이 있다)
+#
+# 방석은 부속품이 아니라 **별개 품목**이다. 부속서 1 기타 제품류가 "쿠션류,
+# 방석류" 를 명시하고, 표에 '의류 이외의 섬유제품'(안전기준준수)이 있다.
+# 그래서 is_accessory 질문으로는 못 가른다 - 셀러가 방석을 팔면서 "부속품
+# 입니다" 를 누를 이유가 없다. 갈림이 본체 vs 부속품이 아니라 품목 A vs B 다.
+#
+# ⚠ 경쟁 품목은 **양쪽 다 표에 있을 때만** 적는다. 한쪽이 비대상이면 경쟁이
+#   아니라 그냥 오답이고, 그건 부속어·부정어 신호가 처리한다.
+_RIVAL_ITEMS: dict[str, tuple[tuple[str, ...], str]] = {
+    # 키(닫혀 있던 말): (이 말들이 함께 보이면 양보한다, 양보해서 갈 품목)
+    "의자": (("방석", "쿠션"), "의류 이외의 섬유제품"),
+}
+
+
+def rival_wins(normalized_name: str, key: str) -> str | None:
+    """이 상품명에서 경쟁 품목이 이기는가. 이기면 그 품목명을 돌려준다."""
+    rule = _RIVAL_ITEMS.get(key)
+    if rule is None:
+        return None
+    rivals, target = rule
+    if any(normalize(r) in normalized_name for r in rivals):
+        return target
+    return None
+
+
 # 역방향 포함 매칭(품목명이 상품명 안에 들어 있는가)에서 키로 쓰지 않는 말.
 #
 # "신일 BLDC 무선 선풍기 써큘레이터" 처럼 셀러는 브랜드·수식어를 앞뒤에 붙인다.
@@ -295,11 +330,11 @@ ALIASES_IF_MAINS: dict[str, str | tuple[str, ...]] = {
 #   (안전확인)이다. 리콜 매칭에서 '153' 이 볼펜과 LED 전등을 잇던 것과 같은
 #   뿌리다 - 짧고 흔한 토큰은 식별력이 없다.
 #
-# ⚠ '의자' 는 2글자라 길이 규칙에도 걸리지만 명시해 둔다. 표에 전기이발용의자·
-#   전기온열의자·각도조절의자가 따로 있어서, 일반 '의자' 로 붙이면 등급이
-#   엉뚱한 항목으로 간다.
+# ⚠ '의자' 는 여기서 뺐다. 닫아 두면 방석도 의자도 답을 못 주는데(실측 8건이
+#   전부 미매칭), 방석은 부속품이 아니라 별개 품목이라 부속어 신호로도 못
+#   가린다. 대신 _RIVAL_ITEMS 로 "방석·쿠션이 함께 보이면 양보한다" 를 적었다.
 _WEAK_CONTAIN_KEYS = {
-    "LED", "전지", "코드", "전선", "의자", "매트", "조명", "기구", "전기", "히터",
+    "LED", "전지", "코드", "전선", "매트", "조명", "기구", "전기", "히터",
     "램프", "전등", "케이블", "배터리", "충전", "스위치", "기기", "장치", "용품",
 }
 
@@ -402,8 +437,18 @@ def split_aliases(item: str) -> list[str]:
     return out
 
 
+# 길이 규칙의 예외. 짧지만 경쟁 규칙이 지켜 주는 키다.
+#
+# '의자' 는 2글자라 _MIN_CONTAIN_LEN 에 걸린다. 그런데 길이 규칙의 목적은
+# 우연 충돌을 막는 것이고, _RIVAL_ITEMS 가 이미 그 자리를 지키고 있다 -
+# 방석·쿠션이 함께 보이면 양보한다. 규칙이 있는 키만 예외로 둔다.
+_SHORT_KEYS_WITH_RIVALS = frozenset(_RIVAL_ITEMS)
+
+
 def is_usable_contain_key(normalized: str) -> bool:
     """이 품목명을 '상품명 안에 있는가' 검사의 키로 쓸 수 있는가."""
+    if normalized in {normalize(k) for k in _SHORT_KEYS_WITH_RIVALS}:
+        return True
     if len(normalized) < _MIN_CONTAIN_LEN:
         return False
     return normalized not in {normalize(w) for w in _WEAK_CONTAIN_KEYS}
@@ -593,6 +638,18 @@ class ItemGradeBook:
         for key, rows in self._contain_keys:
             # 부속어 가드는 포함 매칭에도 적용한다 - "전동 칫솔거치대" 는
             # 표의 '전동칫솔' 을 그대로 담고 있지만 칫솔이 아니다.
+            #
+            # 경쟁 품목이 이기면 이 후보를 양보하고 그쪽을 담는다.
+            # "의자방석" 은 방석이지 의자가 아니다 - 둘 다 표에 있는 품목이라
+            # 부속어 신호로는 못 가른다.
+            winner = rival_wins(intact, key)
+            if winner is not None:
+                offer(
+                    self._by_name.get(normalize(winner)),
+                    "contains",
+                    normalize(winner),
+                )
+                continue
             offer(rows, "contains", key)
 
         # (3) 접두 확장
