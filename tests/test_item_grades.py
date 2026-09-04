@@ -479,3 +479,51 @@ def test_the_rule_compares_counts_not_mere_presence():
     assert not chemical_variant_dominates(normalize("미니 제습기 제습기"), "제습기")
     # '기' 로 끝나지 않거나 어간이 한 글자면 보지 않는다.
     assert not chemical_variant_dominates(normalize("전기면도기 면도제"), "전기면도기")
+
+
+# ---------------------------------------------------------------------------
+# 같은 일을 하는 화학제는 전기 품목이 아니다
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "name",
+    [
+        # 흔드는 핫팩은 화학 발열체다. 표의 '전기손난로'(공급자적합성확인)가
+        # 아니고, 붙이면 안전관리 대상이 아닌 상품에 의무를 말하게 된다.
+        "핫팩 [아이러버] 흔드는핫팩 80g 200개 붙이는 핫팩 400개 대용량 100개 손난로 찜질팩",
+        "프리미엄 홍일병 대용량 핫팩 100g 캠핑 군인 손난로 군용 흔드는 핫팩 1매 포켓용핫팩",
+    ],
+)
+def test_chemical_hot_packs_are_not_electric_hand_warmers(book, name):
+    assert "전기손난로" not in [g.item for g in book.lookup_all(name)]
+
+
+@pytest.mark.parametrize(
+    "name",
+    [
+        # 충전식 손난로가 '핫팩' 을 연관 검색어로 다는 것이 도매의 전형이다.
+        # 화학제 낱말이 있다고 거부하면 정답 6건이 함께 죽는다.
+        "아이리스 손난로 보조배터리 대용량 10000mA USB 충전식 BP12 멀티 핸드워머 핫팩",
+        "고용량 레트로 핸드워머 손난로 10000mA USB 충전식 Q2 KC인증 대량구매 핫팩",
+        "[당일출고] 6000mAH 충전식 손난로 판촉물 충전손난로 보조배터리 파워뱅크",
+    ],
+)
+def test_rechargeable_hand_warmers_survive_the_hot_pack_word(book, name):
+    assert "전기손난로" in [g.item for g in book.lookup_all(name)]
+
+
+def test_the_rival_rule_needs_an_electric_hint_to_be_bypassed():
+    """전기 신호가 하나라도 있으면 화학제로 보지 않는다.
+
+    실측(도매꾹 239건)에서 '손난로'·'핫팩' 8건이 전기 표기 유무로 정확히
+    갈렸다 - 있는 6건은 전기, 없는 2건은 화학이다.
+    """
+    from sourcing_guard.matcher import chemical_rival_wins
+
+    assert chemical_rival_wins("흔드는 핫팩 200개 손난로", "전기손난로")
+    assert not chemical_rival_wins("USB 충전식 손난로 핫팩", "전기손난로")
+    # 화학제 낱말이 없으면 아예 보지 않는다.
+    assert not chemical_rival_wins("USB 충전식 손난로", "전기손난로")
+    # 다른 품목에는 적용되지 않는다.
+    assert not chemical_rival_wins("흔드는 핫팩", "선풍기")

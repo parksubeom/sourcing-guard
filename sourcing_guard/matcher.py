@@ -84,6 +84,44 @@ class Judgement:
 _CONSUMABLE_WORDS = ("리필", "교체용", "소모품", "여분", "예비")
 
 
+# 같은 일을 하는 화학제와 전기기기. 표에는 전기 쪽만 있어서, 화학제가 그
+# 품목으로 붙으면 안전인증 대상이 아닌 상품에 의무를 말하게 된다.
+#
+# '제습제 vs 제습기' 는 접미 한 글자라 chemical_variant_dominates 가 잡는다.
+# 이건 낱말이 아예 달라서 따로 적어야 한다.
+#
+# 실측(도매꾹 239건): '손난로'·'핫팩' 이 나오는 상품 8건 중
+#   전기 신호(충전·USB·mAh)가 있는 6건 → 전기손난로가 맞다
+#   없는 2건 → "흔드는핫팩 80g 200개", "군용 흔드는 핫팩" = 화학 발열체
+# 전기 신호로 정확히 갈렸다.
+#
+# ⚠ 화학제 낱말이 있다고 거부하지 않는다. 충전식 손난로가 '핫팩' 을 연관
+#   검색어로 달고 파는 것이 도매의 전형이다 - 실측 6건이 그랬다.
+#   **전기 신호가 하나도 없을 때만** 화학제로 본다.
+_CHEMICAL_RIVALS: dict[str, tuple[str, ...]] = {
+    # 표의 품목(정규화) -> 그 자리를 차지하는 화학제 낱말
+    "전기손난로": ("핫팩", "발열팩", "찜질팩"),
+}
+
+# 전기 제품임을 드러내는 표기. 하나라도 있으면 화학제로 보지 않는다.
+_ELECTRIC_HINTS = ("충전", "usb", "전기", "리튬", "mah", "ma", "배터리", "전원")
+
+
+def chemical_rival_wins(raw_name: str, item_name: str) -> bool:
+    """표의 전기 품목 자리에 화학제가 있는가.
+
+    원문(정규화 전)에서 본다 - 'mAh' 같은 표기가 정규화로 뭉개지면
+    전기 신호를 놓친다.
+    """
+    words = _CHEMICAL_RIVALS.get(item_name.replace(" ", ""))
+    if not words:
+        return False
+    low = raw_name.lower()
+    if not any(w in raw_name for w in words):
+        return False
+    return not any(h in low for h in _ELECTRIC_HINTS)
+
+
 def judge(
     *,
     normalized_name: str,
@@ -92,6 +130,7 @@ def judge(
     names_subject: bool,
     chemical_dominates: bool,
     consumable_hint: bool = False,
+    chemical_rival: bool = False,
 ) -> Judgement:
     """후보 하나를 판정한다.
 
@@ -112,6 +151,14 @@ def judge(
         signals.append(Signal(
             "chemical_variant", True,
             f"'{normalized_key[:-1]}제'(화학제)가 더 자주 나옵니다. 기기가 아닙니다.",
+        ))
+
+    # (2b) 같은 일을 하는 화학제. '핫팩' 은 '전기손난로' 가 아니다.
+    #      낱말이 아예 달라 (2) 의 접미 규칙으로는 안 잡힌다.
+    if chemical_rival:
+        signals.append(Signal(
+            "chemical_rival", True,
+            "화학 발열체 표기만 있고 전기 표기가 없습니다. 전기기기가 아닙니다.",
         ))
 
     # (3) 소모품 표기. 단독으로는 거부하지 않고, 본체 신호가 이미 약할 때만
