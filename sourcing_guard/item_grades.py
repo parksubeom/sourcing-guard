@@ -19,10 +19,12 @@ from __future__ import annotations
 
 import re
 import unicodedata
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 
 import yaml
+
+from .matcher import Confidence, Judgement, has_consumable_hint, judge
 
 _PATH = Path(__file__).parent / "data" / "item_grades.yaml"
 
@@ -449,6 +451,11 @@ class ItemGrade:
     scope_note: str
     source: str
     matched_by: str          # exact | alias | expand | contains
+    # 매처가 이 후보를 얼마나 믿는지, 그리고 왜 그렇게 판정했는지.
+    # 매칭/미매칭 이분법으로는 "안전모인 건 알지만 어느 안전모인지 모른다" 를
+    # 표현할 수 없어 아는 것까지 버리게 된다.
+    confidence: str = "likely"
+    match_reason: str = ""
 
 
 class ItemGradeBook:
@@ -516,14 +523,44 @@ class ItemGradeBook:
         found: list[ItemGrade] = []
         seen: set[tuple[str, str]] = set()
 
-        def offer(rows: list[dict] | None, how: str) -> None:
+        consumable = has_consumable_hint(product_name)
+
+        def offer(rows: list[dict] | None, how: str, key: str = "") -> None:
+            """후보를 매처에 거쳐 담는다.
+
+            1단계(검색)가 찾아온 것을 2단계(매처)가 가린다. 매처는 거부하는
+            쪽으로만 강하다 - 참을 만들어내지 않는다.
+            """
             # dedupe 를 이름만으로 하면 안 된다 - 표에 '주서' 가 안전인증과
             # 안전확인 양쪽에 같은 이름으로 있어서 한쪽이 사라진다.
             for row in rows or ():
                 mark = (row["item"], row["grade"])
-                if mark not in seen:
-                    seen.add(mark)
-                    found.append(self._to_grade(row, how))
+                if mark in seen:
+                    continue
+                probe = key or normalize(row["item"])
+                verdict = judge(
+                    normalized_name=intact,
+                    normalized_key=probe,
+                    matched_by=how,
+                    # 정확 일치는 상품명 전체가 품목명이라 부속어 검사가 무의미하다.
+                    names_subject=True if how == "exact" else names_the_subject(intact, probe),
+                    chemical_dominates=(
+                        False if how == "exact"
+                        else chemical_variant_dominates(intact, probe)
+                    ),
+                    consumable_hint=consumable,
+                )
+                if not verdict.accepted:
+                    continue
+                seen.add(mark)
+                grade = self._to_grade(row, how)
+                found.append(
+                    replace(
+                        grade,
+                        confidence=verdict.confidence.value,
+                        match_reason=verdict.reason,
+                    )
+                )
 
         # (1) 정확 일치
         for base in (product_name, stripped):
@@ -546,10 +583,7 @@ class ItemGradeBook:
         for key, rows in self._contain_keys:
             # 부속어 가드는 포함 매칭에도 적용한다 - "전동 칫솔거치대" 는
             # 표의 '전동칫솔' 을 그대로 담고 있지만 칫솔이 아니다.
-            if names_the_subject(intact, key) and not chemical_variant_dominates(
-                intact, key
-            ):
-                offer(rows, "contains")
+            offer(rows, "contains", key)
 
         # (3) 접두 확장
         for nb in forms:
@@ -570,11 +604,15 @@ class ItemGradeBook:
                 if not names_the_subject(target, normalize(key)):
                     continue
                 for name in (legal,) if isinstance(legal, str) else legal:
-                    # 별칭이 가리키는 품목에도 같은 검사를 한다 - '제습기' 로
-                    # 보내는 별칭이 생기면 화학제 상품에 붙는다.
+                    # ⚠ 본체 검사는 **별칭 키**로 한다. 목적지 품목명은 상품명에
+                    #   없는 것이 정상이다 - '랜턴' 을 '충전식 휴대전등' 으로
+                    #   보내는데, 그 이름으로 본체 검사를 하면 항상 거부된다.
+                    #
+                    #   화학제 검사만 목적지로 한다 - '제습기' 로 보내는 별칭이
+                    #   생기면 화학제 상품에 붙기 때문이다.
                     if chemical_variant_dominates(target, normalize(name)):
                         continue
-                    offer(self._by_name.get(normalize(name)), "alias")
+                    offer(self._by_name.get(normalize(name)), "alias", normalize(key))
 
         return found
 
