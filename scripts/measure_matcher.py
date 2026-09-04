@@ -20,7 +20,12 @@ from sourcing_guard.item_grades import (
     normalize,
     strip_modifiers,
 )
-from sourcing_guard.matcher import Confidence, has_consumable_hint, judge
+from sourcing_guard.matcher import (
+    Confidence,
+    chemical_rival_wins,
+    has_consumable_hint,
+    judge,
+)
 
 _SAMPLE = pathlib.Path("tests/fixtures/도매꾹239.txt")
 
@@ -84,6 +89,7 @@ def main() -> None:
                     intact, normalize(row["item"])
                 ),
                 consumable_hint=consumable,
+                chemical_rival=chemical_rival_wins(raw, row["item"]),
             )
             if v.confidence is Confidence.REJECTED:
                 name = next((s.name for s in v.signals if s.rejects), "알수없음")
