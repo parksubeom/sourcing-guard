@@ -644,11 +644,15 @@ class ItemGradeBook:
             # 부속어 신호로는 못 가른다.
             winner = rival_wins(intact, key)
             if winner is not None:
-                offer(
-                    self._by_name.get(normalize(winner)),
-                    "contains",
-                    normalize(winner),
-                )
+                # ⚠ 본체 검사는 **경쟁 키**('의자')로 한다. 목적지 품목명
+                #   ('의류 이외의 섬유제품')은 상품명에 없는 것이 정상이라,
+                #   그 이름으로 검사하면 항상 거부되고 양보가 착지하지 않는다.
+                #
+                #   별칭 단계가 같은 함정을 이미 알고 있다 - 거기 주석이
+                #   "본체 검사는 별칭 키로 한다" 라고 적고 있다. 경쟁 단계만
+                #   그 처리가 빠져 있었고, 실측에서 방석 3건이 양보 대상에
+                #   붙지 못한 채 미매칭으로 남았다.
+                offer(self._by_name.get(normalize(winner)), "contains", key)
                 continue
             offer(rows, "contains", key)
 
