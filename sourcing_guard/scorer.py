@@ -48,6 +48,8 @@ _PENALTY: dict[FindingKind, int] = {
     # 셀러가 부속품이라고 답해 등급을 적용하지 않은 경우. 셀러가 준
     # 사실을 기록한 것이라 위험도 감점도 아니다.
     FindingKind.ITEM_GRADE_NOT_APPLIED: 0,
+    # 셀러에게 묻는 것이지 위험을 발견한 것이 아니다.
+    FindingKind.ITEM_GRADE_NEEDS_POWER: 0,
     FindingKind.OUT_OF_SCOPE: 0,
     FindingKind.AGE_OUT_OF_CHILD_RANGE: 0,
     FindingKind.INFO_REQUEST: 0,

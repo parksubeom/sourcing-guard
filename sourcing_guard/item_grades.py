@@ -238,8 +238,12 @@ ALIASES: dict[str, str | tuple[str, ...]] = {
     #   "고데기 걸이 정리 고대기 고데기 거치대" 즉 거치대였다. 오타 별칭은
     #   부속어 가드를 우회해서 들어온다.
     "제모기": "전기면도기",
-    # ⚠ 안마기도 '안마기' 를 키로 쓰지 않는다. 옥혈침기·지압봉 같은 수동
-    #   제품이 '가정용안마기' 를 연관 검색어로 달고 있다(표본에 3건).
+    # ⚠ '안마기' 를 키로 쓰지 않는다. 옥혈침기·지압봉 같은 수동 제품이
+    #   '가정용안마기' 를 연관 검색어로 달고 있다(표본에 4건). 전기 제품에만
+    #   붙는 앞말을 쓴다.
+    #
+    #   셀러가 전원 방식을 답하면 그때 넓은 키를 쓸 수 있다 -
+    #   ALIASES_IF_POWERED 를 볼 것.
     "전동안마기": "전기마사지기",
     "유선안마기": "전기마사지기",
     "전기안마기": "전기마사지기",
@@ -250,6 +254,27 @@ ALIASES: dict[str, str | tuple[str, ...]] = {
     "빨래걸이": "간이 빨래걸이",
 }
 
+
+# 셀러가 "전원을 쓴다" 고 답했을 때만 쓰는 별칭.
+#
+# '안마기'·'마사지기' 는 그 자체로는 전동인지 수동인지 알 수 없다. 표본에서
+# 미매칭 5건 중 4건이 이 갈래였다:
+#
+#   "지압봉 안마기 어깨마사지기 발지압봉"        손으로 누른다 → 표에 없다
+#   "문어발 USB 진동 마사지기"                 전동 → 전기마사지기(안전인증)
+#
+# 상품명만으로는 못 가른다. '안마기' 를 그냥 키로 쓰면 수동 제품이 안전인증
+# 대상으로 붙어 오답이 되고, 안 쓰면 전동 제품을 놓친다. 셀러가 "전원을
+# 쓰나요" 에 답하면 그때 붙인다.
+#
+# ⚠ 전원을 쓴다고 답해도 배터리·태양광은 여기 넣지 않는다. 표의 '전기마사지기'
+#   가 어느 전원까지 담는지 원문에서 확인하지 않았다 (R5). mains 만 쓴다.
+ALIASES_IF_MAINS: dict[str, str | tuple[str, ...]] = {
+    "안마기": "전기마사지기",
+    "마사지기": "전기마사지기",
+    "맛사지기": "전기마사지기",
+    "안마의자": "전기마사지기",
+}
 
 # 역방향 포함 매칭(품목명이 상품명 안에 들어 있는가)에서 키로 쓰지 않는 말.
 #
@@ -445,7 +470,9 @@ class ItemGradeBook:
     def __len__(self) -> int:
         return len(self._rows)
 
-    def lookup_all(self, product_name: str | None) -> list[ItemGrade]:
+    def lookup_all(
+        self, product_name: str | None, *, extra_aliases: dict | None = None
+    ) -> list[ItemGrade]:
         """상품명에서 보이는 품목 후보를 **전부** 돌려준다. 강한 순.
 
         도매 상품명은 연관 검색어를 다 붙이는 것이 전형이다 - "미니 무선 탁상용
@@ -518,8 +545,13 @@ class ItemGradeBook:
                     offer(rows, "expand")
 
         # (4) 별칭 - 우리 추정이므로 마지막이다
+        alias_table = dict(ALIASES)
+        if extra_aliases:
+            # 셀러가 답해 준 사실이 있을 때만 열리는 별칭. 기본 사전을
+            # 덮어쓰지 않고 더한다.
+            alias_table.update(extra_aliases)
         for target in forms:
-            for key, legal in ALIASES.items():
+            for key, legal in alias_table.items():
                 if not names_the_subject(target, normalize(key)):
                     continue
                 for name in (legal,) if isinstance(legal, str) else legal:

@@ -32,7 +32,8 @@ from .scoping import (
     missing_inputs,
     out_of_scope_reason,
 )
-from .item_grades import ItemGradeBook
+from .item_grades import ALIASES_IF_MAINS, ItemGradeBook
+from .item_grades import normalize as normalize_item
 from .noncompliant_index import NoncompliantIndex
 from .rra_client import RraApiError, RraClient, is_searchable_model, rf_evidence_url
 
@@ -1308,6 +1309,54 @@ _GRADE_SOURCE = (
 )
 
 
+# 전원 방식이 가리키는 품목. 원문이 갈라 둔 것만 적는다.
+#
+#   별표 1  11.나 일반조명기구      ④ LED등기구        안전인증
+#   별표 2  11.다 그밖의 조명기구   ② 충전식 휴대전등    안전확인
+#
+# 양쪽에 같은 이름으로 있는 항목(할로겐등기구·투광조명기구)이 괄호로만
+# 갈리는 것이 기준을 확정한다 - "전자회로가 있는" / "구동장치가 없는".
+# 즉 상시전원을 받아 구동장치를 품은 것이 별표 1 이다.
+_POWER_PICKS: dict[str, dict[str, tuple[str, ...]]] = {
+    # 셀러 답 -> {버릴 품목: 남길 품목들}
+    "mains": {"충전식 휴대전등": ("LED등기구",)},
+    "battery": {"LED등기구": ("충전식 휴대전등",)},
+    "solar": {"LED등기구": ("충전식 휴대전등",)},
+}
+
+
+def _narrow_by_power(found: list, hints: SellerHints) -> list:
+    """전원 방식 답으로 등급 후보를 좁힌다.
+
+    ⚠ 좁히기만 하고 새로 만들지 않는다. 셀러 답이 후보에 없는 품목을
+      가리켜도 그 품목을 끌어오지 않는다 - 우리가 특정하지 못한 것을
+      셀러 답으로 메우면 근거 없는 단정이 된다 (R3).
+
+    ⚠ 좁혀서 하나만 남을 때만 의미가 있다. 남는 것이 없으면 원래 후보를
+      그대로 둔다.
+    """
+    picks = _POWER_PICKS.get(hints.power_source or "")
+    if not picks:
+        return found
+    drop = {
+        item
+        for item, keep in picks.items()
+        if any(g.item in keep for g in found)
+    }
+    if not drop:
+        return found
+    narrowed = [g for g in found if g.item not in drop]
+    return narrowed or found
+
+
+def _powered_word(product_name: str | None) -> bool:
+    """전원 방식을 알면 품목이 정해지는 말이 상품명에 있는가."""
+    if not product_name:
+        return False
+    target = normalize_item(product_name)
+    return any(normalize_item(k) in target for k in ALIASES_IF_MAINS)
+
+
 def _item_grade_findings(
     product_name: str | None, today: date, *, hints: SellerHints | None = None
 ) -> list[Finding]:
@@ -1326,11 +1375,44 @@ def _item_grade_findings(
     book = _grade_book()
     if book is None:
         return []
-    found = book.lookup_all(product_name)
+    # 셀러가 "전원을 쓴다" 고 답했으면 그때만 열리는 별칭을 더한다.
+    # '안마기'·'마사지기' 는 그 자체로 전동인지 수동인지 알 수 없어서,
+    # 답이 있어야 붙일 수 있다.
+    extra = ALIASES_IF_MAINS if (hints and hints.says_mains()) else None
+    found = book.lookup_all(product_name, extra_aliases=extra)
     if not found:
+        # 전원 방식을 알면 정해지는 상품인데 아직 안 물어봤으면 물어본다.
+        # 물어볼 자리가 없으면 셀러가 답할 방법도 없다 - 부속품 질문이
+        # 등급 finding 위에만 뜨는 것과 같은 구조다.
+        if hints and hints.power_source is None and _powered_word(product_name):
+            label, url = _GRADE_SOURCE
+            return [
+                Finding(
+                    kind=FindingKind.ITEM_GRADE_NEEDS_POWER,
+                    signal=Signal.UNKNOWN,
+                    statement_ko=(
+                        "상품명만으로는 세부품목을 정하지 못했습니다. "
+                        "전원을 쓰는 제품이면 표의 품목에 해당할 수 있고, "
+                        "손으로 쓰는 기구이면 전기용품이 아닙니다. "
+                        "어느 쪽인지 알려주시면 품목을 특정하겠습니다."
+                    ),
+                    source_label=label,
+                    source_url=url,
+                    detail={"ask": "power", "question": "powered"},
+                    checked_at=today,
+                )
+            ]
+        # 전원을 안 쓴다고 답했으면 그 사실 자체가 답이다 - 수동 기구는
+        # 전기용품이 아니다. 다만 "안전관리 대상 아님" 이라고는 하지 않는다.
+        # 생활용품·어린이제품 기준은 전원과 무관하게 적용될 수 있다.
         return []
 
     label, url = _GRADE_SOURCE
+
+    # 셀러가 전원 방식을 답했으면 후보를 좁힌다. 부속품 판정보다 뒤다 -
+    # 부속품이면 등급 자체를 적용하지 않으므로 좁힐 이유가 없다.
+    if hints:
+        found = _narrow_by_power(found, hints)
 
     # 셀러가 부속품이라고 답했으면 본체 품목의 등급을 적용하지 않는다.
     #
@@ -1418,7 +1500,17 @@ def _item_grade_findings(
             ),
             source_label=label,
             source_url=url,
-            detail={"grades": sorted({n["grade"] for n in names}), "candidates": names},
+            detail={
+                "grades": sorted({n["grade"] for n in names}),
+                "candidates": names,
+                # 전원 방식으로 좁힐 수 있는 갈림이면 화면이 질문을 띄운다.
+                # 조명과 안마기는 묻는 말이 다르다.
+                **(
+                    {"ask": "power", "question": "lighting"}
+                    if _narrow_by_power(found, SellerHints(power_source="mains")) != found
+                    else {}
+                ),
+            },
             checked_at=today,
         )
     ]
