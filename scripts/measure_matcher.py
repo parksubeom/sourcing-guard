@@ -18,6 +18,7 @@ from sourcing_guard.item_grades import (
     chemical_variant_dominates,
     names_the_subject,
     normalize,
+    rival_wins,
     strip_modifiers,
 )
 from sourcing_guard.matcher import (
@@ -57,9 +58,17 @@ def main() -> None:
             for row in rows or ():
                 hits.append(("exact", normalize(row["item"]), row))
         for key, rows in book._contain_keys:
-            if key in intact:
-                for row in rows:
+            if key not in intact:
+                continue
+            # 경쟁 단계도 재현한다. 안 하면 새 규칙이 측정에 안 보인다 -
+            # chemical_rival 때 겪은 것과 같다.
+            winner = rival_wins(intact, key)
+            if winner is not None:
+                for row in book._by_name.get(normalize(winner)) or ():
                     hits.append(("contains", key, row))
+                continue
+            for row in rows:
+                hits.append(("contains", key, row))
         from sourcing_guard.item_grades import ALIASES
 
         for target in forms:
