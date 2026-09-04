@@ -567,26 +567,80 @@ def test_a_made_up_legal_name_is_thrown_away():
     assert found == []
 
 
-def test_the_legal_name_path_does_not_stack_our_guesses():
-    """정확 일치만 본다. 별칭·접두 확장을 다시 걸지 않는다.
+def test_the_table_qualifier_is_bridged_on_the_legal_name_path():
+    """표가 법령 수식을 붙인 형태까지 조회한다 - LLM 답에만.
 
-    LLM 이 낸 이름에 우리 추정을 또 얹으면 어디서 온 오답인지 못 가린다.
+    표 561건 중 75건(13%)에 수식이 붙어 있다 - '무선스피커 시스템'·
+    '전기오븐기기'·'형광등기구'. LLM 이 자연스럽게 답하면 이 75건은 영원히
+    안 맞는다. 검증자가 자기 표기법을 강요하는 것이지 LLM 이 틀린 게 아니다.
 
-    ⚠ 실측에서 이 선택의 비용이 드러났다 - 정확 일치만으로는 새 표본 30건에서
-      **+0건**이었다. LLM 은 '무선스피커'·'전기오븐' 처럼 맞는 이름을 내는데
-      표는 '무선스피커 시스템'·'전기오븐기기' 로 수식이 붙어 있다. 접두 확장을
-      허용하면 20% → 30% 로 오르지만(3건), 그건 별개 결정이라 미뤘다.
+    수식이 붙는 자리가 셋이라 부분 문자열만으로는 부족하다:
+        뒤   무선스피커 ⊂ 무선스피커**시스템**
+        앞   안전모     ⊂ **자전거용**안전모
+        가운데 전기그릴 ⊂ 전기**거치식**그릴
     """
     from datetime import date
 
     from sourcing_guard.verifier import _item_grade_findings
 
-    # 표에는 '무선스피커 시스템' 만 있다. 정확 일치가 아니므로 안 붙는다.
-    found = _item_grade_findings(
-        "소니 블루투스 스피커", date(2026, 9, 4), legal_name="무선스피커"
-    )
-    items = [c["item"] for f in found for c in f.detail.get("candidates", [])]
-    assert "무선스피커 시스템" not in items
+    for legal, want in (
+        ("무선스피커", "무선스피커 시스템"),
+        ("전기오븐", "전기오븐기기"),
+        ("전기그릴", "전기거치식그릴"),
+        ("안전모", "자전거용 안전모"),
+    ):
+        found = _item_grade_findings("아무 상품", date(2026, 9, 4), legal_name=legal)
+        items = [c["item"] for f in found for c in f.detail.get("candidates", [])]
+        assert want in items, f"'{legal}' → '{want}' 가 안 걸린다"
+
+
+def test_a_bridged_candidate_is_only_possible():
+    """표기가 정확히 같지 않았으면 possible 이다.
+
+    표의 수식을 우리가 넘겨 짚은 것이므로 likely 로 올리지 않는다. 정확
+    일치는 likely 로 남는다 - 둘을 같은 신뢰도로 두면 오답이 나올 때 어느
+    쪽에서 왔는지 못 가린다.
+    """
+    from datetime import date
+
+    from sourcing_guard.item_grades import ItemGradeBook
+
+    book = ItemGradeBook()
+
+    bridged = book.lookup_legal_name("무선스피커")
+    assert [g.matched_by for g in bridged] == ["legal_name_contains"]
+
+    exact = book.lookup_legal_name("전기정수기")
+    assert [g.matched_by for g in exact] == ["legal_name"]
+
+    # 정확 일치가 있으면 포함으로 더 긁어오지 않는다 - '전지' 가 표에 있으니
+    # '건전지'·'충전지' 류를 함께 담지 않는다.
+    assert len(book.lookup_legal_name("전지")) == 1
+
+    del date  # 이 검사는 표만 본다
+
+
+def test_the_containment_relaxation_never_touches_the_seller_name_path():
+    """포함 완화는 LLM 답 전용이다. 셀러 상품명에는 쓰지 않는다.
+
+    ⚠ 위험도가 다르다. 셀러 상품명에는 브랜드·수식어·연관검색어·부속품이
+      섞여 있어 포함이 물면 엉뚱한 품목이 걸린다. LLM 답은 이미 정리된
+      품목명 하나라 포함이 물 것이 표의 수식뿐이다.
+
+      이 검사가 없으면 다음 사람이 "포함이 되던데" 하고 상품명 경로에도
+      열게 된다. 그 경로는 137건 오탐 사고를 낸 자리다.
+    """
+    from sourcing_guard.item_grades import ItemGradeBook
+
+    book = ItemGradeBook()
+
+    # 상품명 경로로는 '무선스피커 시스템' 이 안 걸린다.
+    by_name = [g.item for g in book.lookup_all("무선스피커")]
+    assert "무선스피커 시스템" not in by_name
+
+    # 같은 문자열을 LLM 답으로 주면 걸린다.
+    by_legal = [g.item for g in book.lookup_legal_name("무선스피커")]
+    assert by_legal == ["무선스피커 시스템"]
 
 
 def test_no_finding_is_built_from_an_empty_candidate_list():
