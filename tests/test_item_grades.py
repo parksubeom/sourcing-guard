@@ -903,3 +903,35 @@ def test_the_catch_all_does_not_claim_the_product_is_exempt():
     assert "별표 3 제2호" in f.source_label
     assert f.source_url.startswith("https://")
     assert f.detail["source_text"].startswith("개별 안전기준이 없는")
+
+
+def test_only_the_measured_school_supply_alias_is_present():
+    """부속서 11 서문의 16개 이름 중 실측으로 오답 0 인 것만 넣었다.
+
+    ⚠ 별칭이지 등급표 행이 아니다. 부속서는 안전기준이고 품목 목록은
+      시행규칙 별표다 - 부속서 이름을 표에 행으로 넣으면 그 구분이 무너지고,
+      matched_by 가 exact 급이 되어 실제보다 세게 말하게 된다.
+
+    ⚠ 나머지를 뺀 것은 "안전해서" 가 아니라 **안 재봐서**다.
+        지우개  맞음 4 / 오답 4 (택배송장지우개·얼룩지우개) → 기준 오답 0
+        파스텔  성인용 튜브에 걸린다 - 색 이름이라 식별력이 없다
+        나머지 13개는 이 표본에서 한 건도 안 걸렸다
+    """
+    from sourcing_guard.item_grades import ALIASES
+
+    assert ALIASES.get("크레파스") == "학용품"
+    for not_measured in ("지우개", "파스텔", "색연필", "연필류", "그림물감",
+                         "스케치북", "색종이", "연필깎이", "마킹펜류"):
+        assert not_measured not in ALIASES, (
+            f"'{not_measured}' 는 실측 없이 들어왔다"
+        )
+
+
+def test_the_school_supply_alias_lands_as_possible_not_exact():
+    """별칭이므로 possible 이다 - 표의 품목명이 아니라는 사실이 남아야 한다."""
+    from sourcing_guard.item_grades import ItemGradeBook
+
+    got = ItemGradeBook().lookup_all("단색 크레파스 12개입 문교 유아 색칠 교구")
+    assert [(g.item, g.grade, g.matched_by, g.confidence) for g in got] == [
+        ("학용품", "안전확인", "alias", "possible")
+    ]
