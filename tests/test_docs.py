@@ -286,28 +286,48 @@ def test_the_proposal_numbers_match_the_code():
     for grade, n in counts.items():
         assert f"| {grade} | {n} |" in doc, (grade, n)
 
-    # 실측 매칭률
+    # 실측 - 새 표본 235건 전수 검수. 네 칸이 기획서와 맞아야 한다.
+    #
+    # ⚠ 발표 숫자는 **정답률**이지 매칭률이 아니다. 애매를 정답에 넣어 세면
+    #   도매꾹239 에서 71% 를 말할 때와 같은 일이 된다.
     book = ItemGradeBook()
     names = [
         n.strip()
-        for n in (root / "tests" / "fixtures" / "도매꾹239.txt")
+        for n in (root / "tests" / "fixtures" / "새표본235.txt")
         .read_text(encoding="utf-8").splitlines()
         if n.strip()
     ]
-    matched = [n for n in names if book.lookup_all(n)]
-    pct = round(len(matched) / len(names) * 100)
-    assert f"{len(matched)}건 ({pct}%)" in doc, (len(matched), pct)
-    assert f"못 맞춘 것        {len(names) - len(matched)}건" in doc
+    wrong, vague, section = set(), set(), None
+    for line in (root / "tests" / "fixtures" / "새표본235_오답.tsv").read_text(
+        encoding="utf-8"
+    ).splitlines():
+        if line.startswith("#"):
+            if "--- 오답" in line:
+                section = "wrong"
+            elif "[애매]" in line:
+                section = "vague"
+            elif "[검수했고 정답]" in line or "[고쳐짐]" in line:
+                section = None
+            continue
+        if not line.strip() or section is None:
+            continue
+        (wrong if section == "wrong" else vague).add(line.split("\t")[0])
 
-    # 원문 일치 / 우리 추정 비율 (상품 단위)
-    only_guess = 0
-    for name in matched:
-        levels = {str(g.confidence) for g in book.lookup_all(name)}
-        if levels == {"possible"}:
-            only_guess += 1
-    strong = len(matched) - only_guess
-    assert f"{round(strong / len(matched) * 100)}% ({strong}건)" in doc
-    assert f"{round(only_guess / len(matched) * 100)}% ({only_guess}건)" in doc
+    matched = [n for n in names if book.lookup_all(n)]
+    n_wrong = len([n for n in matched if n in wrong])
+    n_vague = len([n for n in matched if n in vague])
+    n_ok = len(matched) - n_wrong - n_vague
+    pct = round(n_ok / len(names) * 100, 1)
+
+    assert f"정답     {n_ok}건 ({pct}%)" in doc, (n_ok, pct)
+    assert f"애매      {n_vague}건" in doc, n_vague
+    assert f"오답      {n_wrong}건" in doc, n_wrong
+    assert f"미매칭  {len(names) - len(matched)}건" in doc
+    assert f"발표에 쓰는 숫자는 {pct}% 입니다" in doc
+
+    # 매칭률은 참고로만 적는다 - 발표 숫자가 아니라고 밝혀야 한다.
+    match_pct = round(len(matched) / len(names) * 100, 1)
+    assert f"매칭률 {match_pct}%" in doc, match_pct
 
     # 대량 검사 상한
     assert f"{MAX_ROWS}줄" in doc, MAX_ROWS
