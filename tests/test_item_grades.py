@@ -935,3 +935,97 @@ def test_the_school_supply_alias_lands_as_possible_not_exact():
     assert [(g.item, g.grade, g.matched_by, g.confidence) for g in got] == [
         ("학용품", "안전확인", "alias", "possible")
     ]
+
+
+def test_kickboard_is_not_a_containment_key():
+    """'킥보드' 는 표본에서 오답 7건을 만들었다 - 전수 검수 오답 13건의 절반이 넘는다.
+
+    표본에 킥보드 **본체가 0건**인데 부속품·호환표기로 계속 걸렸다:
+        유모차 컵홀더(킥보드 호환) · 무릎보호대(인라인 킥보드) · 후미등 ·
+        헬멧 · 이름표 · 방한장갑 ×2
+
+    ⚠ 표에서 뺀 것이 아니라 **포함 키에서만** 뺐다. 정확 일치와 '전동킥보드'
+      는 살아 있어야 한다 - 킥보드 본체 상품이 오면 여전히 걸려야 하고,
+      이득 손실이 0 이라는 근거가 그것이다.
+    """
+    from sourcing_guard.item_grades import ItemGradeBook
+
+    book = ItemGradeBook()
+    for raw in ("집게 업그레이드 2 in 1유모차 컵홀더 자전거 킥보드 오토바이 호환",
+                "USB충전식 방수 자전거 킥보드 안전 후미등",
+                "[ABC0532] 핸드워머 자전거 킥보드 방한장갑 핸드머프"):
+        assert not [g for g in book.lookup_all(raw) if g.item == "킥보드"], raw
+
+    assert [g.item for g in book.lookup_all("킥보드")] == ["킥보드", "전동킥보드"]
+    assert [g.item for g in book.lookup_all("전동킥보드 접이식 성인용")] == ["전동킥보드"]
+
+
+def test_knee_pad_alias_lands_on_the_child_sports_gear_item():
+    """무릎보호대 → 어린이용 스포츠 보호용품. 근거는 안전확인 부속서 3 원문.
+
+        서문      "보호장구(롤러스포츠용에 한함)"
+        1부 적용범위 "보호대란, 인라인스케이트, 롤러스케이트, 스케이트보드,
+                    자전거 등을 탈 때 … 손, 손목, 팔꿈치, **무릎**에 입는 …
+                    상해로부터 보호하거나 상해를 경감시킬 목적으로 사용되는 보호대"
+        3.3       무릎 보호대 정의
+
+    ⚠ 키가 '보호대' 가 아니라 '무릎보호대' 다 - '모서리보호대' 가 걸리면 안 된다.
+    ⚠ 팔꿈치·손목·손 보호대는 넣지 않았다. 부속서에 함께 열거돼 있지만 표본에
+      0건이라 못 쟀다. 크레파스 때와 같다 - 안전한 것이 아니라 모르는 것이다.
+    """
+    from sourcing_guard.item_grades import ALIASES, ItemGradeBook
+
+    book = ItemGradeBook()
+    got = book.lookup_all("주니어 어린이 초등학생 쿠션무릎보호대 (2p 1set) / 인라인 킥보드")
+    assert [(g.item, g.grade, g.matched_by, g.confidence) for g in got] == [
+        ("어린이용 스포츠 보호용품(보호 장구 및 안전모)", "안전확인", "alias", "possible")
+    ]
+
+    for must_not in ("모서리보호대 코너가드 아기보호 충격방지 안전쿠션 문 벽 기둥 캡",
+                     "[겨울필수템] USB 포켓 발열무릎담요 플란넬 양털 극세사 대형 무릎담요"):
+        assert not book.lookup_all(must_not), must_not
+
+    for not_measured in ("보호대", "팔꿈치보호대", "손목보호대", "손보호대"):
+        assert not_measured not in ALIASES, f"'{not_measured}' 는 실측 없이 들어왔다"
+
+
+def test_the_audited_wrong_answers_are_the_only_ones_left():
+    """새표본235 의 매칭이 검수 파일과 어긋나지 않는지 잠근다.
+
+    ⚠ 발표에 쓰는 숫자는 매칭률이 아니라 **정답률**이다.
+        매칭률 56/235 = 23.8%
+        정답률 50/235 = 21.3%   (오답 6 제외)
+        정답률 47/235 = 20.0%   (애매 3 도 오답으로 셀 때)
+
+    이 검사가 실패하면 매칭이 바뀐 것이다 - 검수 파일을 다시 만들 것.
+    """
+    import pathlib
+
+    from sourcing_guard.item_grades import ItemGradeBook
+
+    book = ItemGradeBook()
+    rows = [l.strip() for l in
+            pathlib.Path("tests/fixtures/새표본235.txt").read_text(encoding="utf-8").splitlines()
+            if l.strip()]
+    wrong, vague, section = set(), set(), "wrong"
+    for line in pathlib.Path("tests/fixtures/새표본235_오답.tsv").read_text(
+            encoding="utf-8").splitlines():
+        if line.startswith("#"):
+            if "[애매]" in line:
+                section = "vague"
+            elif "[고쳐짐]" in line:
+                section = "fixed"
+            continue
+        if not line.strip():
+            continue
+        (wrong if section == "wrong" else vague if section == "vague" else set()).add(
+            line.split("\t")[0]
+        )
+
+    matched = [r for r in rows if book.lookup_all(r)]
+    assert len(matched) == 56
+    assert len([r for r in matched if r in wrong]) == 6
+    assert len([r for r in matched if r in vague]) == 3
+    # 검수 파일에 적힌 오답이 실제로 아직 매칭되고 있어야 한다 - 고쳐졌으면
+    # [고쳐짐] 절로 옮길 것.
+    assert wrong <= set(matched) and vague <= set(matched)
