@@ -705,3 +705,87 @@ def test_the_fallback_condition_is_zero_candidates_not_weak_ones():
     )
     for smell in ("confidence ==", 'confidence ==\n', "possible\" in", "certain\" in"):
         assert smell not in head, f"신뢰도로 두 경로를 비교하고 있다: {smell}"
+
+
+# ---------------------------------------------------------------------------
+# 어린이제품 등급표 - 자료만 넣고 판정에는 아직 연결하지 않았다
+# ---------------------------------------------------------------------------
+
+
+def _child_table() -> dict:
+    from pathlib import Path
+
+    import yaml
+
+    return yaml.safe_load(
+        (Path("sourcing_guard/data/child_item_grades.yaml")).read_text(encoding="utf-8")
+    )
+
+
+def test_child_table_has_the_thirty_five_items_from_the_three_appendices():
+    """시행규칙 별표 1·2·3 의 품목 수를 잠근다.
+
+    561건 표는 전기·생활용품뿐이라 완구·학용품·유아용품이 아예 없었다.
+    새 표본 235건에서 어린이제품이 35건(15%)이라 커버리지 공백이 컸다.
+    """
+    from collections import Counter
+
+    items = _child_table()["items"]
+    assert len(items) == 35
+    assert Counter(i["grade"] for i in items) == {
+        "안전확인": 17,
+        "공급자적합성확인": 14,
+        "안전인증": 4,
+    }
+    names = {i["item"] for i in items}
+    for must in ("완구", "학용품", "유모차", "보행기", "어린이용 자전거"):
+        assert must in names
+
+
+def test_child_table_uses_the_same_schema_as_the_five_sixty_one():
+    """스키마가 같아야 나중에 합칠 때 변환이 없다."""
+    from pathlib import Path
+
+    import yaml
+
+    adult = yaml.safe_load(
+        Path("sourcing_guard/data/item_grades.yaml").read_text(encoding="utf-8")
+    )["items"]
+    child = _child_table()["items"]
+    assert set(child[0]) == set(adult[0])
+
+
+def test_the_catch_all_rule_is_a_field_not_a_comment():
+    """포괄 규정을 데이터로 남긴다 - 화면이 그대로 쓸 수 있어야 한다.
+
+    전기·생활용품에서는 "표에 없음 = 비대상이 아니다" 를 우리가 추론했지만,
+    어린이제품은 시행규칙 별표 3 제2호가 문장으로 적고 있다. 그래서 목록에
+    없어도 "판별 못 함" 이 아니라 확정된 답을 줄 수 있다.
+    """
+    ca = _child_table()["catch_all"]
+    assert ca["grade"] == "공급자적합성확인"
+    assert ca["standard"] == "어린이제품 공통안전기준"
+    assert "별표 3 제2호" in ca["source"]
+    assert ca["source_text"] == (
+        "개별 안전기준이 없는 공급자적합성확인대상어린이제품은 "
+        "어린이제품 공통안전기준을 적용한다."
+    )
+    # ⚠ 단정하지 않는다 (R3-b). "대상이 아닙니다" 로 끝내면 안 된다.
+    assert "빠지지 않습니다" in ca["statement_ko"]
+    assert "안전합니다" not in ca["statement_ko"]
+
+
+def test_the_child_table_is_not_wired_into_judgement_yet():
+    """자료만 넣고 판정에는 연결하지 않았다 - 561건을 처음 넣을 때와 같은 순서다.
+
+    ⚠ 이 검사가 실패하면 연결한 것이다. 그때는 합칠 때의 충돌을 실측하고
+      (실측 결과: 이름이 같은데 등급이 다른 경우 0건, 구체형 관계 16건)
+      이 검사를 지우면서 왜 지우는지 적을 것.
+    """
+    from pathlib import Path
+
+    src = Path("sourcing_guard").rglob("*.py")
+    for f in src:
+        assert "child_item_grades" not in f.read_text(encoding="utf-8"), (
+            f"{f} 가 어린이제품 표를 읽는다"
+        )
