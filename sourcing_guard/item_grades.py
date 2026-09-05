@@ -33,6 +33,7 @@ from .matcher import (
 )
 
 _PATH = Path(__file__).parent / "data" / "item_grades.yaml"
+_CHILD_PATH = Path(__file__).parent / "data" / "child_item_grades.yaml"
 
 # 상품명에 붙지만 품목을 가리지 않는 말. 떼고 나서 별칭 사전을 본다.
 #
@@ -336,6 +337,17 @@ def rival_wins(normalized_name: str, key: str) -> str | None:
 _WEAK_CONTAIN_KEYS = {
     "LED", "전지", "코드", "전선", "매트", "조명", "기구", "전기", "히터",
     "램프", "전등", "케이블", "배터리", "충전", "스위치", "기기", "장치", "용품",
+    # 어린이제품 표를 합치면서 들어온 3글자 이름. 실측에서 오답 11건을 전부
+    # 이 셋이 만들었다 - 도매 상품명에서 부속품이 본체 이름을 그대로 달기
+    # 때문이다.
+    #
+    #     유모차 컵홀더 · 유모차 고리 · 유모차 모기장 · 기저귀 가방(유모차 언급)
+    #     목발형 보행기(성인 보행보조기) · 보행기튜브(물놀이 튜브) 3건
+    #     학용품보관 필통
+    #
+    # 이건 새 규칙이 아니라 이미 있던 원칙이다 - "짧고 흔한 토큰은 식별력이
+    # 없다". 정확 일치와 별칭으로는 여전히 걸린다.
+    "유모차", "보행기", "학용품",
 }
 
 # 포함 매칭 키의 최소 길이. 2글자는 우연 충돌이 심하다.
@@ -513,9 +525,36 @@ class ItemGrade:
 class ItemGradeBook:
     """세부품목 등급표."""
 
-    def __init__(self, path: Path | None = None) -> None:
+    def __init__(self, path: Path | None = None,
+                 child_path: Path | None = None) -> None:
         raw = yaml.safe_load((path or _PATH).read_text(encoding="utf-8"))
-        self._rows = raw["items"]
+        self._rows = list(raw["items"])
+
+        # 어린이제품 표를 **같은 색인에** 넣는다.
+        #
+        # 두 표를 나눠 두 번 조회하는 방법도 있지만, 합칠 때의 충돌을 먼저
+        # 쟀더니 나눌 이유가 없었다:
+        #     이름이 정확히 같은데 등급이 다름   0건
+        #     어린이 쪽이 구체형인 관계        16건  (유아용 의자 ⊃ 의자)
+        #     겹치지 않음                     19건
+        #
+        # 16건 전부 어린이 쪽 이름이 더 길다. _contain_keys 가 이미 길이순
+        # 정렬이라 '유아용 의자' 가 '의자' 보다 먼저 걸린다 - 새 개념이
+        # 필요 없다. 나누면 오히려 "어느 표를 볼지" 를 먼저 판정해야 하고,
+        # 그건 상품이 어린이제품인지 우리가 단정하는 일이 된다.
+        child_raw = yaml.safe_load(
+            (child_path or _CHILD_PATH).read_text(encoding="utf-8")
+        )
+        self._rows += list(child_raw["items"])
+
+        # 목록에 없는 어린이제품이 어디로 가는지. 「어린이제품 안전 특별법
+        # 시행규칙」 별표 3 제2호가 문장으로 적고 있어, 우리가 추론하지 않고
+        # 그대로 옮긴 것이다.
+        #
+        # ⚠ 아무 때나 꺼내면 안 된다. 상품이 어린이제품이라는 것이 확인된
+        #   뒤에만이다. 어린이제품인지 모르는 상태에서 "어린이제품이면
+        #   공통안전기준이 적용됩니다" 를 붙이면 모든 상품에 붙는 소음이 된다.
+        self.child_catch_all: dict = child_raw["catch_all"]
         # ⚠ 한 이름이 여러 등급에 걸린다. 표에 '공기청정기' 가 안전확인과
         #   공급자적합성확인 양쪽에 있고, '전기스탠드' 는 전자회로 유무로
         #   안전인증·안전확인이 갈린다 - 이런 이름이 24건이다.

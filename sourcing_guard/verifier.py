@@ -714,6 +714,49 @@ def verify(
     if facts.category in _CERT_REQUIRED_IF_GRADED and _graded:
         _cert_required_here = True
 
+    # 어린이제품인 것이 **표기로 확인됐는데** 목록에 없으면, 그 자체가 답이다.
+    #
+    #     「어린이제품 안전 특별법 시행규칙」 별표 3 제2호
+    #     "개별 안전기준이 없는 공급자적합성확인대상어린이제품은
+    #      어린이제품 공통안전기준을 적용한다"
+    #
+    # 전기·생활용품에서는 "표에 없음 = 비대상이 아니다" 를 조문에서 추론해야
+    # 했지만(docs/표에_없음은_비대상이_아니다.md), 어린이제품은 원문이 문장으로
+    # 적고 있다. 그래서 "판별 못 함" 대신 확정된 답을 줄 수 있다.
+    #
+    # ⚠ **아무 때나 꺼내지 않는다.** 조건 둘이 함께여야 한다:
+    #     (1) age is CHILD_PRODUCT   - 페이지가 사용연령을 표기했고 만 13세
+    #                                  이하다. 우리 추측이 아니라 셀러 페이지가
+    #                                  말한 사실이다. UNKNOWN 에는 안 붙인다.
+    #     (2) 등급 후보가 0건        - 목록에서 찾았으면 그 등급이 답이다.
+    #
+    #   상품이 어린이제품인지 모르는 상태에서 "어린이제품이면 공통안전기준이
+    #   적용됩니다" 를 붙이면 모든 상품에 붙는 소음이 되고, 그러면 셀러가
+    #   이 문장을 읽지 않게 된다.
+    if age is AgeScope.CHILD_PRODUCT and not _graded:
+        _catch = _grade_book().child_catch_all if _grade_book() else None
+        if _catch:
+            findings.append(
+                Finding(
+                    kind=FindingKind.CHILD_CATCH_ALL,
+                    signal=Signal.UNKNOWN,
+                    statement_ko=(
+                        f"사용연령이 '{facts.target_age}' 로 표기되어 어린이제품입니다. "
+                        + _catch["statement_ko"]
+                    ),
+                    source_label=_catch["source"],
+                    source_url="https://www.law.go.kr/법령/어린이제품안전특별법시행규칙",
+                    legal_basis=_catch["source"],
+                    detail={
+                        "grade": _catch["grade"],
+                        "standard": _catch["standard"],
+                        "source_text": _catch["source_text"],
+                        "target_age": facts.target_age,
+                    },
+                    checked_at=today,
+                )
+            )
+
     # 셀러가 부속품이라고 답했고 우리가 품목을 특정했으면, 본체 품목의 인증
     # 의무를 이 상품에 묻지 않는다.
     #
