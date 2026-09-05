@@ -664,3 +664,44 @@ def test_no_finding_is_built_from_an_empty_candidate_list():
         )
         for f in found:
             assert f.detail.get("candidates") != [], f"{hints} : 후보 0인 finding"
+
+
+def test_the_legal_name_path_is_a_fallback_not_an_addition():
+    """규칙 경로가 후보를 냈으면 법령 경로를 얹지 않는다.
+
+    더 구체적인 답이 있는데 상위 개념의 형제를 얹는 것이 이상하다. 킥보드
+    헬멧에서 규칙이 '자전거용 안전모' 를 맞췄는데 LLM 답 '안전모' 로
+    스키용·야구용까지 6개가 붙어, 셀러가 자기 상품이 아닌 것을 읽었다.
+
+    contains 경로가 이미 쓰는 "긴 이름 우선"을 경로 사이로 넓힌 것이다.
+    """
+    from datetime import date
+
+    from sourcing_guard.verifier import _item_grade_findings
+
+    raw = "[21st ScooTer] 21세기 킥보드 보호 헬멧 로봇 플라워"
+    without = _item_grade_findings(raw, date(2026, 9, 5))
+    with_legal = _item_grade_findings(raw, date(2026, 9, 5), legal_name="안전모")
+    assert [f.detail["candidates"] for f in without] == [
+        f.detail["candidates"] for f in with_legal
+    ], "규칙이 답을 냈는데 법령 경로가 후보를 얹었다"
+
+
+def test_the_fallback_condition_is_zero_candidates_not_weak_ones():
+    """조건은 '규칙 경로가 0건' 이지 '규칙 경로가 약하다' 가 아니다.
+
+    ⚠ 두 경로를 신뢰도로 비교하기 시작하면 어느 쪽이 옳은지 우리가 판정하게
+      되는데, 그건 우리가 할 수 있는 일이 아니다 (R1). 규칙이 possible 로
+      하나만 찾았어도 법령 경로를 얹지 않는다.
+    """
+    import inspect
+
+    from sourcing_guard import verifier
+
+    src = inspect.getsource(verifier._item_grade_findings)
+    head = src[: src.index("if not found:")]
+    assert "lookup_legal_name(legal_name) if not found else ()" in head, (
+        "폴백 조건이 바뀌었다"
+    )
+    for smell in ("confidence ==", 'confidence ==\n', "possible\" in", "certain\" in"):
+        assert smell not in head, f"신뢰도로 두 경로를 비교하고 있다: {smell}"
