@@ -541,7 +541,9 @@ def test_the_rival_rule_needs_an_electric_hint_to_be_bypassed():
 def test_legal_item_name_is_looked_up_in_the_table():
     """LLM 이 옮긴 이름이 표에 있으면 매칭된다.
 
-    손으로 만든 별칭이 한계에 왔다 - 튜닝 표본 71%, 새 표본 24%. 별칭이 첫
+    손으로 만든 별칭이 한계에 왔다. 세 숫자를 구분한다 -
+    튜닝 표본(도매꾹239) 매칭률 71% / 새 표본(235) 매칭률 24% /
+    새 표본 검수 정답률 20%(발표 숫자). 별칭이 첫
     표본에서 만들어졌으니 새 상품에는 안 통한다. 문제가 문자열이 아니라
     의미라서, LLM 을 번역기로 쓰고 표를 검증자로 둔다.
     """
@@ -1029,3 +1031,67 @@ def test_the_audited_wrong_answers_are_the_only_ones_left():
     # 검수 파일에 적힌 오답이 실제로 아직 매칭되고 있어야 한다 - 고쳐졌으면
     # [고쳐짐] 절로 옮길 것.
     assert wrong <= set(matched) and vague <= set(matched)
+
+
+def test_knee_pad_alias_needs_a_child_marker_in_the_product_name():
+    """표의 품목명이 '어린이용' 이므로 별칭도 그 범위를 넘지 않아야 한다.
+
+    ⚠ 이건 "못 재서 미룬 것" 이 아니라 **별칭이 표의 범위보다 넓었던 것**이다.
+      부속서 3 서문이 "만 13세 이하의 어린이가 … 사용되는" 이라고 못박는다.
+      표본에 성인용 보호대가 0건이라는 것은 오답이 안 난다는 뜻이지 별칭이
+      맞다는 뜻이 아니다.
+
+    조건은 셀러 답이 아니라 **상품명에 이미 적힌 표지어**다 - 질문이 늘지 않는다.
+    """
+    from sourcing_guard.item_grades import ALIASES, ItemGradeBook
+
+    book = ItemGradeBook()
+    for raw in ("주니어 어린이 초등학생 쿠션무릎보호대 (2p 1set) / 인라인 킥보드",
+                "키즈 무릎보호대 인라인 세트"):
+        assert [g.item for g in book.lookup_all(raw)] == [
+            "어린이용 스포츠 보호용품(보호 장구 및 안전모)"
+        ], raw
+    for raw in ("성인용 무릎보호대 작업용 니패드 2p",
+                "스포츠 무릎보호대 등산 러닝 관절보호"):
+        assert not book.lookup_all(raw), raw
+
+    # 무조건 별칭에는 없어야 한다.
+    assert "무릎보호대" not in ALIASES
+
+
+def test_water_play_alias_has_no_age_gate_on_purpose():
+    """물놀이기구에는 표지어 조건을 걸지 않는다 - 걸면 정답을 죽인다.
+
+    '공기주입물놀이기구' 는 어린이제품이 아니라 생활용품(운용요령 별표 4)이고,
+    안전인증 부속서 7 서문이 "수영장, 강가, 해수욕장 등 물에서 놀이를 하거나
+    수영을 배울 때 사용자의 부양을 도울 목적으로 사용되는 기구" 라고만 적어
+    **연령 범위를 두지 않는다**. 성인용 튜브도 대상이다.
+    """
+    from sourcing_guard.item_grades import ALIASES_IF_CHILD_MARKED, ItemGradeBook
+
+    book = ItemGradeBook()
+    for raw in ("특대형 성인용 파인애플 튜브 여름/바다/계곡/휴가철 물놀이 튜브",
+                "프리미엄 클래식 파스텔 튜브 파도타기 물놀이 용품 성인용 튜브"):
+        assert [g.item for g in book.lookup_all(raw)] == ["공기주입물놀이기구"], raw
+
+    assert "물놀이" not in ALIASES_IF_CHILD_MARKED
+
+
+def test_the_three_rates_are_kept_distinct_in_the_proposal():
+    """제출 문서가 71%·24%·20% 를 구분해 적는지 잠근다.
+
+    ⚠ 71% 는 별칭을 만들 때 쓴 표본(도매꾹239)의 매칭률이고, 24% 는 새 표본의
+      **검수 전** 매칭률이다. 둘 다 발표 숫자가 아니다. 발표 숫자는 새 표본
+      235건 전수 검수 정답률 20.0% 하나다.
+    """
+    import pathlib
+
+    doc = pathlib.Path("01_기획서_안심소싱돋보기.md").read_text(encoding="utf-8")
+    assert "이것이 발표 숫자다" in doc
+    assert "20.0%" in doc
+    # 71% 가 나오면 반드시 "발표 숫자가 아니" 라는 설명과 함께여야 한다.
+    if "71%" in doc:
+        assert "별칭을 만들 때 쓴 표본" in doc
+    # 애매를 정답에 넣은 값을 대표로 쓰지 않는다.
+    head = doc[: doc.index("**오답 6건은 세 갈래입니다.**")]
+    assert "21.3%" in head and "발표에 쓰는 숫자는 20.0%" in head
