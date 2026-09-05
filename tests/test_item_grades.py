@@ -35,14 +35,18 @@ def book() -> ItemGradeBook:
 # ---------------------------------------------------------------------------
 
 
-def test_table_covers_both_electrical_and_household(book):
+def test_table_covers_all_three_regimes(book):
     """전기용품만 넣었을 때 골든셋·데모 19건 중 3건만 대상이었다.
 
     휴지통·토트백·키링처럼 셀러가 실제로 소싱하는 것이 전부 생활용품이라
     빠졌다. 별표 4~7 을 받아 채웠다.
+
+    ⚠ children 이 나중에 늘었다. 새 표본 235건에서 어린이제품이 35건(15%)
+      인데 완구·학용품·유아용품이 561건 표에 아예 없었다 - 매칭 규칙 문제가
+      아니라 커버리지 공백이었다.
     """
     cats = {row["category"] for row in book._rows}
-    assert cats == {"electrical", "household"}
+    assert cats == {"electrical", "household", "children"}
     assert len(book) > 500
 
 
@@ -775,17 +779,127 @@ def test_the_catch_all_rule_is_a_field_not_a_comment():
     assert "안전합니다" not in ca["statement_ko"]
 
 
-def test_the_child_table_is_not_wired_into_judgement_yet():
-    """자료만 넣고 판정에는 연결하지 않았다 - 561건을 처음 넣을 때와 같은 순서다.
+def test_the_child_table_is_wired_into_one_shared_index():
+    """어린이제품 표를 561건과 **같은 색인에** 넣었다.
 
-    ⚠ 이 검사가 실패하면 연결한 것이다. 그때는 합칠 때의 충돌을 실측하고
-      (실측 결과: 이름이 같은데 등급이 다른 경우 0건, 구체형 관계 16건)
-      이 검사를 지우면서 왜 지우는지 적을 것.
+    ⚠ 이 검사는 앞서 "아직 연결하지 않았다" 를 잠그고 있던 자리다. 연결하면서
+      뒤집었다 - 현 동작을 박아둔 검사가 남으면 다음 사람이 그게 정답이라고
+      읽는다.
+
+    나누지 않고 합친 근거는 실측이다:
+        이름이 정확히 같은데 등급이 다름   0건
+        어린이 쪽이 구체형인 관계        16건  (유아용 의자 ⊃ 의자)
+    나누면 "어느 표를 볼지" 를 먼저 판정해야 하는데, 그건 상품이 어린이제품
+    인지 우리가 단정하는 일이 된다.
     """
-    from pathlib import Path
+    from sourcing_guard.item_grades import ItemGradeBook
 
-    src = Path("sourcing_guard").rglob("*.py")
-    for f in src:
-        assert "child_item_grades" not in f.read_text(encoding="utf-8"), (
-            f"{f} 가 어린이제품 표를 읽는다"
-        )
+    book = ItemGradeBook()
+    assert len(book) == 561 + 35
+    names = {r["item"] for r in book._rows}
+    assert {"완구", "학용품", "유모차"} <= names          # 어린이제품
+    assert {"의자", "전기장판"} <= names                  # 전기·생활용품
+    assert book.child_catch_all["grade"] == "공급자적합성확인"
+
+
+def test_short_child_names_are_not_containment_keys():
+    """유모차·보행기·학용품 은 역방향 포함 키로 쓰지 않는다.
+
+    ⚠ 실측: 그대로 합치면 235건에서 +7 걸리는데 6건이 오답이고, 합의였던
+      5건이 오답 갈림으로 바뀐다. 오답 11건을 전부 이 3글자 셋이 만들었다.
+
+          유모차 컵홀더 · 유모차 고리 · 유모차 모기장 · 기저귀 가방
+          목발형 보행기(성인 보행보조기) · 보행기튜브(물놀이 튜브) 3건
+
+      도매 상품명에서 부속품이 본체 이름을 그대로 달기 때문이고, 이미 있던
+      원칙("짧고 흔한 토큰은 식별력이 없다")에 그대로 해당한다.
+    """
+    from sourcing_guard.item_grades import ItemGradeBook
+
+    book = ItemGradeBook()
+    for raw in ("내맘대로 360도 회전 유모차 자전거 컵홀더 음료 커피 물통",
+                "목발형 접이식 보행기 깁스 보조 지팡이 이동",
+                "런웨이브 보행기튜브/플라밍고/독수리/물놀이튜브"):
+        assert not [g for g in book.lookup_all(raw)
+                    if g.item in {"유모차", "보행기", "학용품"}], raw
+
+    # 정확 일치로는 여전히 걸린다 - 키에서 뺀 것이지 표에서 뺀 것이 아니다.
+    assert [g.item for g in book.lookup_all("유모차")] == ["유모차"]
+
+
+# ---------------------------------------------------------------------------
+# 포괄 규정 - 어린이제품인 것이 확인됐는데 목록에 없을 때만
+# ---------------------------------------------------------------------------
+
+
+def _verify(name, *, age=None, category=None):
+    from unittest.mock import MagicMock
+
+    from sourcing_guard.models import ItemCategory, ProductFacts
+    from sourcing_guard.verifier import verify
+
+    kats = MagicMock()
+    kats.lookup_certification_cached.return_value = MagicMock(record=None)
+    rules = MagicMock()
+    rules.covers.return_value = True
+    rules.matching.return_value = []
+    facts = ProductFacts(
+        product_name=name,
+        category=category or ItemCategory.CHILDREN_TOY,
+        target_age=age,
+    )
+    return [f.kind.value for f in verify(facts, kats, rules)]
+
+
+def test_the_catch_all_speaks_only_when_the_page_declared_a_child_age():
+    """조건 (1) 어린이제품인 것이 표기로 확인됐을 때만.
+
+    ⚠ 연령 표기가 없으면 붙이지 않는다. 어린이제품인지 모르는 상태에서
+      "어린이제품이면 공통안전기준이 적용됩니다" 를 말하면 모든 상품에 붙는
+      소음이 되고, 그러면 셀러가 이 문장을 읽지 않게 된다.
+
+    ⚠ 우리 추측이 아니라 셀러 페이지가 말한 사실이다 - UNKNOWN 은 UNKNOWN 이다 (R3).
+    """
+    assert "child_catch_all" in _verify("랜덤 뽑기 굿즈 캡슐", age="3세 이상")
+    assert "child_catch_all" not in _verify("랜덤 뽑기 굿즈 캡슐", age=None)
+    assert "child_catch_all" not in _verify("랜덤 뽑기 굿즈 캡슐", age="만 15세 이상")
+
+
+def test_the_catch_all_stays_quiet_when_the_item_is_in_the_table():
+    """조건 (2) 목록에서 찾았으면 그 등급이 답이다.
+
+    '어린이용 킥보드' 는 시행규칙 별표 3 에 있으므로 공급자적합성확인으로
+    특정된다. 거기에 포괄 규정을 겹쳐 말하면 같은 사실을 두 번 말하게 된다.
+    """
+    kinds = _verify("어린이용 킥보드", age="3세 이상")
+    assert "item_grade_matched" in kinds
+    assert "child_catch_all" not in kinds
+
+
+def test_the_catch_all_does_not_claim_the_product_is_exempt():
+    """"대상이 아닙니다" 로 끝내지 않는다 (R3-b · CLAUDE.md §9)."""
+    from unittest.mock import MagicMock
+
+    from sourcing_guard.models import ItemCategory, ProductFacts
+    from sourcing_guard.verifier import verify
+
+    kats = MagicMock()
+    kats.lookup_certification_cached.return_value = MagicMock(record=None)
+    rules = MagicMock()
+    rules.covers.return_value = True
+    rules.matching.return_value = []
+    facts = ProductFacts(
+        product_name="랜덤 뽑기 굿즈 캡슐",
+        category=ItemCategory.CHILDREN_TOY,
+        target_age="3세 이상",
+    )
+    found = [f for f in verify(facts, kats, rules) if f.kind.value == "child_catch_all"]
+    assert len(found) == 1
+    f = found[0]
+    assert "빠지지 않습니다" in f.statement_ko
+    for banned in ("안전합니다", "합법", "대상이 아닙니다", "판매 가능"):
+        assert banned not in f.statement_ko
+    # R2 - 근거 없는 출력은 없다.
+    assert "별표 3 제2호" in f.source_label
+    assert f.source_url.startswith("https://")
+    assert f.detail["source_text"].startswith("개별 안전기준이 없는")

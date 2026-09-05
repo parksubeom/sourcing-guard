@@ -142,6 +142,11 @@ class FindingKind(str, Enum):
     # "안마기" 는 전동이면 전기마사지기(안전인증)이고 수동이면 표에 없다.
     # 물어볼 자리가 없으면 셀러가 답할 방법도 없다.
     ITEM_GRADE_NEEDS_POWER = "item_grade_needs_power"
+    # 어린이제품인 것이 표기로 확인됐는데 세부품목 목록에는 없는 경우.
+    # 「어린이제품 안전 특별법 시행규칙」 별표 3 제2호가 "개별 안전기준이
+    # 없는 공급자적합성확인대상어린이제품은 어린이제품 공통안전기준을
+    # 적용한다" 고 명시하므로, 이건 "판별 못 함" 이 아니라 확정된 답이다.
+    CHILD_CATCH_ALL = "child_catch_all"
     OUT_OF_SCOPE = "out_of_scope"          # 우리 소관 밖 품목
     AGE_OUT_OF_CHILD_RANGE = "age_out_of_child_range"  # 14세 이상 표기
     INFO_REQUEST = "info_request"          # 공급처에 물어야 할 것

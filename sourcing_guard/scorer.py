@@ -50,6 +50,11 @@ _PENALTY: dict[FindingKind, int] = {
     FindingKind.ITEM_GRADE_NOT_APPLIED: 0,
     # 셀러에게 묻는 것이지 위험을 발견한 것이 아니다.
     FindingKind.ITEM_GRADE_NEEDS_POWER: 0,
+    # 어린이제품인데 세부품목 목록에 없어 공통안전기준이 적용되는 경우.
+    # 시행규칙 별표 3 제2호가 명시한 사실을 옮긴 것이지 위험 발견이
+    # 아니다. ITEM_GRADE_MATCHED 를 0 으로 둔 것과 같은 이유다 -
+    # 등급을 아는 것은 인증번호 부재의 의미를 설명하는 재료다.
+    FindingKind.CHILD_CATCH_ALL: 0,
     FindingKind.OUT_OF_SCOPE: 0,
     FindingKind.AGE_OUT_OF_CHILD_RANGE: 0,
     FindingKind.INFO_REQUEST: 0,
