@@ -1405,7 +1405,19 @@ def _item_grade_findings(
     #
     # ⚠ 어느 경로로 걸렸는지 남긴다(matched_by). 오답이 나면 정확 일치에서
     #   온 것인지 포함에서 온 것인지 가려야 한다.
-    for cand in book.lookup_legal_name(legal_name):
+    # ⚠ **폴백이다.** 규칙 경로가 후보를 하나라도 냈으면 법령 경로를 얹지
+    #   않는다. 더 구체적인 답이 있는데 상위 개념의 형제를 얹는 것이 이상하다 -
+    #   킥보드 헬멧에서 규칙이 '자전거용 안전모' 를 맞췄는데 LLM 답 '안전모'
+    #   로 스키용·야구용까지 6개를 얹어 셀러가 자기 상품이 아닌 것을 읽었다.
+    #
+    #   contains 경로가 이미 쓰는 "긴 이름 우선"('자전거용 안전모' > '안전모')
+    #   을 경로 사이로 넓힌 것이지 새 원칙이 아니다.
+    #
+    # ⚠ 조건은 **"규칙 경로가 0건"** 이지 "규칙 경로가 약하다" 가 아니다.
+    #   규칙이 possible 로 하나만 찾았어도 얹지 않는다. 두 경로를 신뢰도로
+    #   비교하기 시작하면 어느 쪽이 옳은지 우리가 판정하게 되는데, 그건 우리가
+    #   할 수 있는 일이 아니다 (R1).
+    for cand in book.lookup_legal_name(legal_name) if not found else ():
         if (cand.item, cand.grade) in {(g.item, g.grade) for g in found}:
             continue
         exact = cand.matched_by == "legal_name"
