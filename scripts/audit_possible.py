@@ -24,7 +24,8 @@ import pathlib
 from sourcing_guard.item_grades import ItemGradeBook
 from sourcing_guard.matcher import Confidence
 
-_SAMPLE = pathlib.Path("tests/fixtures/도매꾹239.txt")
+# ⚠ 기본 표본을 새표본235 로 옮겼다. 도매꾹239 는 별칭을 만들 때 쓴 표본이다.
+_SAMPLE = pathlib.Path("tests/fixtures/새표본235.txt")
 
 
 def main() -> None:
