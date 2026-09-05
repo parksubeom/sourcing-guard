@@ -1,0 +1,242 @@
+# 어린이제품 세부품목 등급표.
+#
+# 「어린이제품 안전 특별법 시행규칙」 별표 1~3 을 그대로 옮긴 것이다.
+# 별표 1 이 안전인증, 2 가 안전확인, 3 이 공급자적합성확인 대상이다.
+#
+# ⚠ **아직 판정에 연결하지 않았다.** item_grades.yaml(561건)만 verifier 가
+#   읽는다. 561건 표를 처음 넣을 때와 같은 순서다 - 먼저 자료를 넣고,
+#   합칠 때의 충돌을 실측한 뒤에 연결한다.
+#
+# ⚠ 스키마는 item_grades.yaml 과 같다. 나중에 합칠 때 변환이 없어야 한다.
+#   다만 category 값 'children' 은 ItemCategory 에 아직 없다 - 거기엔
+#   CHILDREN_TOY/STATIONERY/TEXTILE 셋만 있고 총칭이 없다. 어느 쪽으로
+#   맞출지는 연결할 때 정한다. 지금 enum 을 늘리면 추출 프롬프트까지
+#   건드리게 되고, 재봐야 아는 것을 미리 설계하는 셈이 된다.
+#
+# 생성: scripts/parse_child_item_grades.py
+
+# 목록에 없는 어린이제품이 어디로 가는지. 주석이 아니라 필드로 둔다 -
+# 화면이 이 문장을 그대로 쓸 수 있어야 한다.
+#
+# 전기·생활용품에서는 '표에 없음 = 비대상' 이 성립하지 않는다는 것을
+# 우리가 추론해야 했지만, 어린이제품은 원문이 명시한다. 그래서 목록에
+# 없어도 '판별 못 함' 이 아니라 확정된 답을 줄 수 있다.
+catch_all:
+  applies_to: 어린이제품
+  grade: 공급자적합성확인
+  standard: 어린이제품 공통안전기준
+  source: "어린이제품 안전 특별법 시행규칙 별표 3 제2호"
+  source_text: "개별 안전기준이 없는 공급자적합성확인대상어린이제품은 어린이제품 공통안전기준을 적용한다."
+  statement_ko: "목록에 없는 어린이제품도 안전관리 대상에서 빠지지 않습니다. 개별 안전기준이 없으면 어린이제품 공통안전기준이 적용되는 공급자적합성확인 대상입니다."
+
+items:
+  - item: "어린이용 물놀이기구"
+    grade: 안전인증
+    category: children
+    division: ""
+    scope_note: ""
+    source: "어린이제품 안전 특별법 시행규칙 별표 1"
+  - item: "어린이 놀이기구"
+    grade: 안전인증
+    category: children
+    division: ""
+    scope_note: ""
+    source: "어린이제품 안전 특별법 시행규칙 별표 1"
+  - item: "자동차용 어린이 보호장치"
+    grade: 안전인증
+    category: children
+    division: ""
+    scope_note: ""
+    source: "어린이제품 안전 특별법 시행규칙 별표 1"
+  - item: "어린이용 비비탄총"
+    grade: 안전인증
+    category: children
+    division: ""
+    scope_note: ""
+    source: "어린이제품 안전 특별법 시행규칙 별표 1"
+  - item: "유아용 섬유제품"
+    grade: 안전확인
+    category: children
+    division: ""
+    scope_note: ""
+    source: "어린이제품 안전 특별법 시행규칙 별표 2"
+  - item: "합성수지제 어린이제품"
+    grade: 안전확인
+    category: children
+    division: ""
+    scope_note: ""
+    source: "어린이제품 안전 특별법 시행규칙 별표 2"
+  - item: "어린이용 스포츠 보호용품(보호 장구 및 안전모)"
+    grade: 안전확인
+    category: children
+    division: ""
+    scope_note: ""
+    source: "어린이제품 안전 특별법 시행규칙 별표 2"
+  - item: "어린이용 스케이트보드"
+    grade: 안전확인
+    category: children
+    division: ""
+    scope_note: ""
+    source: "어린이제품 안전 특별법 시행규칙 별표 2"
+  - item: "아동용 이단침대"
+    grade: 안전확인
+    category: children
+    division: ""
+    scope_note: ""
+    source: "어린이제품 안전 특별법 시행규칙 별표 2"
+  - item: "완구"
+    grade: 안전확인
+    category: children
+    division: ""
+    scope_note: ""
+    source: "어린이제품 안전 특별법 시행규칙 별표 2"
+  - item: "유아용 삼륜차"
+    grade: 안전확인
+    category: children
+    division: ""
+    scope_note: ""
+    source: "어린이제품 안전 특별법 시행규칙 별표 2"
+  - item: "유아용 의자"
+    grade: 안전확인
+    category: children
+    division: ""
+    scope_note: ""
+    source: "어린이제품 안전 특별법 시행규칙 별표 2"
+  - item: "어린이용 자전거"
+    grade: 안전확인
+    category: children
+    division: ""
+    scope_note: ""
+    source: "어린이제품 안전 특별법 시행규칙 별표 2"
+  - item: "학용품"
+    grade: 안전확인
+    category: children
+    division: ""
+    scope_note: ""
+    source: "어린이제품 안전 특별법 시행규칙 별표 2"
+  - item: "보행기"
+    grade: 안전확인
+    category: children
+    division: ""
+    scope_note: ""
+    source: "어린이제품 안전 특별법 시행규칙 별표 2"
+  - item: "유모차"
+    grade: 안전확인
+    category: children
+    division: ""
+    scope_note: ""
+    source: "어린이제품 안전 특별법 시행규칙 별표 2"
+  - item: "유아용 침대"
+    grade: 안전확인
+    category: children
+    division: ""
+    scope_note: ""
+    source: "어린이제품 안전 특별법 시행규칙 별표 2"
+  - item: "어린이용 온열팩 (주머니난로 포함)"
+    grade: 안전확인
+    category: children
+    division: ""
+    scope_note: ""
+    source: "어린이제품 안전 특별법 시행규칙 별표 2"
+  - item: "유아용 캐리어"
+    grade: 안전확인
+    category: children
+    division: ""
+    scope_note: ""
+    source: "어린이제품 안전 특별법 시행규칙 별표 2"
+  - item: "어린이용 스포츠용 구명복"
+    grade: 안전확인
+    category: children
+    division: ""
+    scope_note: ""
+    source: "어린이제품 안전 특별법 시행규칙 별표 2"
+  - item: "비수면용 기울어진 요람"
+    grade: 안전확인
+    category: children
+    division: ""
+    scope_note: ""
+    source: "어린이제품 안전 특별법 시행규칙 별표 2"
+  - item: "어린이용 가죽제품"
+    grade: 공급자적합성확인
+    category: children
+    division: ""
+    scope_note: ""
+    source: "어린이제품 안전 특별법 시행규칙 별표 3"
+  - item: "어린이용 안경테(선글라스를 포함한다)"
+    grade: 공급자적합성확인
+    category: children
+    division: ""
+    scope_note: ""
+    source: "어린이제품 안전 특별법 시행규칙 별표 3"
+  - item: "어린이용 물안경"
+    grade: 공급자적합성확인
+    category: children
+    division: ""
+    scope_note: ""
+    source: "어린이제품 안전 특별법 시행규칙 별표 3"
+  - item: "어린이용 우산 및 양산"
+    grade: 공급자적합성확인
+    category: children
+    division: ""
+    scope_note: ""
+    source: "어린이제품 안전 특별법 시행규칙 별표 3"
+  - item: "어린이용 바퀴달린 운동화"
+    grade: 공급자적합성확인
+    category: children
+    division: ""
+    scope_note: ""
+    source: "어린이제품 안전 특별법 시행규칙 별표 3"
+  - item: "어린이용 롤러스케이트"
+    grade: 공급자적합성확인
+    category: children
+    division: ""
+    scope_note: ""
+    source: "어린이제품 안전 특별법 시행규칙 별표 3"
+  - item: "어린이용 스키용구"
+    grade: 공급자적합성확인
+    category: children
+    division: ""
+    scope_note: ""
+    source: "어린이제품 안전 특별법 시행규칙 별표 3"
+  - item: "어린이용 스노보드"
+    grade: 공급자적합성확인
+    category: children
+    division: ""
+    scope_note: ""
+    source: "어린이제품 안전 특별법 시행규칙 별표 3"
+  - item: "쇼핑카트 부속품"
+    grade: 공급자적합성확인
+    category: children
+    division: ""
+    scope_note: ""
+    source: "어린이제품 안전 특별법 시행규칙 별표 3"
+  - item: "어린이용 장신구"
+    grade: 공급자적합성확인
+    category: children
+    division: ""
+    scope_note: ""
+    source: "어린이제품 안전 특별법 시행규칙 별표 3"
+  - item: "어린이용 킥보드"
+    grade: 공급자적합성확인
+    category: children
+    division: ""
+    scope_note: ""
+    source: "어린이제품 안전 특별법 시행규칙 별표 3"
+  - item: "어린이용 인라인 롤러스케이트"
+    grade: 공급자적합성확인
+    category: children
+    division: ""
+    scope_note: ""
+    source: "어린이제품 안전 특별법 시행규칙 별표 3"
+  - item: "어린이용 가구"
+    grade: 공급자적합성확인
+    category: children
+    division: ""
+    scope_note: ""
+    source: "어린이제품 안전 특별법 시행규칙 별표 3"
+  - item: "아동용 섬유제품"
+    grade: 공급자적합성확인
+    category: children
+    division: ""
+    scope_note: ""
+    source: "어린이제품 안전 특별법 시행규칙 별표 3"
