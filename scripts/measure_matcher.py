@@ -28,7 +28,10 @@ from sourcing_guard.matcher import (
     judge,
 )
 
-_SAMPLE = pathlib.Path("tests/fixtures/도매꾹239.txt")
+# ⚠ 기본 표본을 새표본235 로 옮겼다. 도매꾹239 는 별칭을 만들 때 쓴 표본이라
+#   거기서 재면 우리가 맞춘 것을 다시 맞춘 숫자가 나온다 - 71% vs 24% 차이가
+#   그것이다. 옛 표본으로 재려면 --sample 로 지정한다.
+_SAMPLE = pathlib.Path("tests/fixtures/새표본235.txt")
 
 
 def main() -> None:
