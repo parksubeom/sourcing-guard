@@ -43,7 +43,11 @@ class NoRecalls:
         return []
 
 
-ACCESSORY = "무타공 전기면도기 스테인레스 거치대 면도기 홀더 욕실걸이"
+# ⚠ 예전에는 "무타공 전기면도기 … 홀더 욕실걸이" 를 썼다. 이름이 독립
+#   부속품명('욕실걸이')으로 끝나서 names_a_standalone_accessory 가 이제
+#   매칭 자체를 막는다 - 힌트 없이 고쳐진 것이라 이 검사의 재료가 못 된다.
+#   부속어가 끝에 오지 않아 여전히 붙는 것으로 바꿨다(끝이 '인테리어').
+ACCESSORY = "전기 면도기 거치대 꽂이 걸이 홀더 치약 정리 보관 수납 걸기 화장실걸이 욕실용품 전동칫솔 인테리어"
 UMBRELLA = "우산 양산 양우산 자동우산 골프우산 암막우산"
 
 
@@ -253,12 +257,26 @@ _WRONG = Path(__file__).resolve().parents[1] / "tests" / "fixtures" / "도매꾹
 
 
 def _wrong_rows() -> list[tuple[str, str, str]]:
+    """도매꾹239 실측 오답 중 **아직 매칭이 붙는 것**만.
+
+    ⚠ 이 검사들은 "힌트가 오답을 해소한다" 를 재는 것이라, 매칭이 아예 안 붙는
+      행은 재료가 안 된다. 2026-09-06 에 names_a_standalone_accessory 가
+      "무타공 전기면도기 … 욕실걸이" 1건을 힌트 없이 잡았다 - 5건 중 4건이
+      남는다. 걸러내지 않으면 "질문이 안 뜬다" 로 실패하는데, 그건 나빠진 것이
+      아니라 좋아진 것이다.
+    """
+    from sourcing_guard.item_grades import ItemGradeBook
+
+    book = ItemGradeBook()
     out = []
     for line in _WRONG.read_text(encoding="utf-8").splitlines():
         if not line or line.startswith("#"):
             continue
         name, item, why = line.split("\t")
+        if item not in [g.item for g in book.lookup_all(name)]:
+            continue          # 가드가 이미 잡았다
         out.append((name, item, why))
+    assert out, "오답이 하나도 안 붙는다 - 검사가 아무것도 재지 않는다"
     return out
 
 

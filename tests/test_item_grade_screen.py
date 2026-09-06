@@ -174,8 +174,12 @@ def test_accessory_answer_does_not_claim_children_parts_are_exempt():
     from sourcing_guard.models import ItemCategory, ProductFacts, SellerHints
     from sourcing_guard.verifier import _item_grade_findings
 
+    # ⚠ 예전 예("무타공 전기면도기 … 거치대 면도기 홀더")는 이름이 독립
+    #   부속품명('홀더')으로 끝나서 names_a_standalone_accessory 가 매칭 자체를
+    #   막는다. 힌트 경로를 재려면 여전히 붙는 이름이어야 한다.
     found = _item_grade_findings(
-        "무타공 전기면도기 스테인레스 거치대 면도기 홀더",
+        "전기 면도기 거치대 꽂이 걸이 홀더 치약 정리 보관 수납 걸기 "
+        "화장실걸이 욕실용품 전동칫솔 인테리어",
         TODAY,
         hints=SellerHints(is_accessory=True),
     )
