@@ -1003,10 +1003,10 @@ def test_the_audited_wrong_answers_are_the_only_ones_left():
 
     ⚠ 발표에 쓰는 숫자는 매칭률이 아니라 **정답률**이다.
     ⚠ 분모는 235 가 아니라 **안전관리대상 136** 이다 (새표본235_대상분류.tsv).
-        매칭   81/235
-        정답   75/136 = 55.1%   ← 대표값
-        애매    3 · 오답 2 · 미매칭 56
-        (235 기준으로는 75/235 = 31.9%)
+        매칭   89/235
+        정답   83/136 = 61.0%   ← 대표값 (상품명만 · 대상 136 기준)
+        애매    3 · 오답 2 · 미매칭 48
+        (상품명만 · 표본 235 전체 기준으로는 83/235 = 35.3%)
 
     이 검사가 실패하면 매칭이 바뀐 것이다 - 검수 파일을 다시 만들 것.
     """
@@ -1034,7 +1034,7 @@ def test_the_audited_wrong_answers_are_the_only_ones_left():
         )
 
     matched = [r for r in rows if book.lookup_all(r)]
-    assert len(matched) == 81
+    assert len(matched) == 89
     assert len([r for r in matched if r in wrong]) == 3
     assert len([r for r in matched if r in vague]) == 3
     # 검수 파일에 적힌 오답이 실제로 아직 매칭되고 있어야 한다 - 고쳐졌으면
@@ -1098,7 +1098,7 @@ def test_the_proposal_never_quotes_an_unaudited_rate_bare():
     import pathlib
 
     doc = pathlib.Path("01_기획서_안심소싱돋보기.md").read_text(encoding="utf-8")
-    assert "55.1%" in doc and "31.9%" in doc
+    assert "61.0%" in doc and "35.3%" in doc
     assert "두 분모를 나란히 적습니다" in doc
     if "71%" in doc:
         assert "만들 때 쓴 표본에서만 잘 듣는다" in doc
@@ -1173,3 +1173,54 @@ def test_cert_db_sourced_aliases_land_where_measured():
     from sourcing_guard.item_grades import ALIASES
     assert "로봇청소기" not in ALIASES   # '문턱 도어턱받침' 7건에 붙는다
     assert "훈증기" not in ALIASES       # '모기훈증기 … 리필' 에 붙는다
+
+
+def test_appendix24_mat_aliases_do_not_go_to_bed_mattress():
+    """매트류(화학)와 침대 매트리스(생활)는 별표 7 의 **다른 행**이다.
+
+    ⚠ 인증 DB 에서 '매트' 를 치면 "안전기준준수대상 생활용품 > 생활 >
+      침대 매트리스" 가 1,177건 나온다. 우리가 찾는 행이 아니다 - 함정이다.
+      부속서 24 가 적은 매트류는 "요가매트, 돗자리매트, 주방매트, 욕실 바닥
+      매트 등" 이다.
+    """
+    from sourcing_guard.item_grades import ItemGradeBook
+
+    book = ItemGradeBook()
+    for raw in ("퍼즐매트 EVA 우드 매트 층간소음방지 거실 놀이방 베란다",
+                "놀이방매트 층간소음방지 pvc놀이 유아거실바닥 어린이안전 아기방",
+                "무독성 사계절 다용도 방수매트 김장매트 180cm 특대형"):
+        got = [g.item for g in book.lookup_all(raw)]
+        assert got == ["매트류"], (raw, got)
+        assert "침대 매트리스" not in got
+
+
+def test_plastic_gate_keeps_us_from_asserting_a_material_we_do_not_know():
+    """부속서 24 는 "주 재질이 합성수지로 구성되는 제품에 한함" 이라고 적었다.
+
+    ⚠ 실측이 이 게이트를 요구했다. '슬리퍼'·'실내화' 를 조건 없이 열면 표본에서
+      8건이 붙는데 그중 5건이 우리가 **'애매' 로 분류한** 린넨·왕골·모직
+      실내화다. 붙이면 우리가 모르는 것을 안다고 말하게 된다.
+
+    ⚠ 매트류에는 이 게이트를 걸지 않았다 - 게이트 없이도 오답 0 · 애매 부착
+      0 이었다. 못 잰 것을 근거로 게이트를 설계하지 않는다.
+    """
+    from sourcing_guard.item_grades import ALIASES, ItemGradeBook
+
+    book = ItemGradeBook()
+    assert [g.item for g in book.lookup_all(
+        "가벼운 물빠짐 치즈욕실화 EVA소재 슬리퍼 실내화")] == ["신발류"]
+    for raw in ("2500배송 모직 린넨 거실 실내화 여름 남성 여성 사무실 슬리퍼",
+                "2500배송 고양이 왕골 슬리퍼 여름 샌들 린넨 마 실내화 거실화",
+                "지압슬리퍼 사무실 실내화 다이어트 슬리퍼"):
+        assert book.lookup_all(raw) == [], raw
+
+    # 무조건 별칭에는 없어야 한다.
+    for k in ("슬리퍼", "실내화", "거실화"):
+        assert k not in ALIASES
+
+    # ⚠ '욕실화' 는 절대 넣지 않는다 - "욕실 화장실" 이 정규화되면 '욕실화장실'
+    #   이 되어 '욕실화' 를 담는다. 낱말 용접이다.
+    assert "욕실화" not in ALIASES
+    from sourcing_guard.item_grades import ALIASES_IF_PLASTIC
+    assert "욕실화" not in ALIASES_IF_PLASTIC
+    assert book.lookup_all("8in1 전동 무선 청소솔 자동 브러쉬 욕실 화장실 바닥 솔") == []
