@@ -150,7 +150,12 @@ def test_alias_dictionary_stays_small():
     그중 보조배터리·건조대·토스터·청소기·고데기·제모기·안마기·믹서기 계열을
     넣었다.
     """
-    assert len(ALIASES) <= 70, f"사전이 {len(ALIASES)}건까지 커졌다 - 실제로 쓰이는지 확인하라"
+    assert len(ALIASES) <= 90, f"사전이 {len(ALIASES)}건까지 커졌다 - 실제로 쓰이는지 확인하라"
+    # ⚠ 상한을 70 → 90 으로 올렸다. 새로 든 8건은 우리 추정이 아니라
+    #   **KC인증 DB 에서 캔 것**이다(docs/인증DB_탐침결과.md). productName 이
+    #   "<법령 품목명>(<통칭>)" 으로 등록돼 있어 정부가 이미 적어 둔 사전을
+    #   옮긴 것이고, 한 건씩 새표본235 로 재서 오답 0 인 것만 남겼다.
+    #   손으로 짐작한 별칭과 성격이 다르다.
 
 
 def test_alias_targets_exist_in_the_table(book):
@@ -922,7 +927,9 @@ def test_only_the_measured_school_supply_alias_is_present():
     from sourcing_guard.item_grades import ALIASES
 
     assert ALIASES.get("크레파스") == "학용품"
-    for not_measured in ("지우개", "파스텔", "색연필", "연필류", "그림물감",
+    # ⚠ '색연필' 은 2026-09-06 에 들어왔다 - 인증 DB 가 "학용품(연필류 및
+    #   연필심)" 으로 등록해 뒀고 표본에서 +7 건 전부 정답이었다.
+    for not_measured in ("지우개", "파스텔", "연필류", "그림물감",
                          "스케치북", "색종이", "연필깎이", "마킹펜류"):
         assert not_measured not in ALIASES, (
             f"'{not_measured}' 는 실측 없이 들어왔다"
@@ -995,9 +1002,11 @@ def test_the_audited_wrong_answers_are_the_only_ones_left():
     """새표본235 의 매칭이 검수 파일과 어긋나지 않는지 잠근다.
 
     ⚠ 발표에 쓰는 숫자는 매칭률이 아니라 **정답률**이다.
-        매칭률 56/235 = 23.8%
-        정답률 50/235 = 21.3%   (오답 6 제외)
-        정답률 47/235 = 20.0%   (애매 3 도 오답으로 셀 때)
+    ⚠ 분모는 235 가 아니라 **안전관리대상 136** 이다 (새표본235_대상분류.tsv).
+        매칭   81/235
+        정답   75/136 = 55.1%   ← 대표값
+        애매    3 · 오답 2 · 미매칭 56
+        (235 기준으로는 75/235 = 31.9%)
 
     이 검사가 실패하면 매칭이 바뀐 것이다 - 검수 파일을 다시 만들 것.
     """
@@ -1025,8 +1034,8 @@ def test_the_audited_wrong_answers_are_the_only_ones_left():
         )
 
     matched = [r for r in rows if book.lookup_all(r)]
-    assert len(matched) == 56
-    assert len([r for r in matched if r in wrong]) == 6
+    assert len(matched) == 81
+    assert len([r for r in matched if r in wrong]) == 3
     assert len([r for r in matched if r in vague]) == 3
     # 검수 파일에 적힌 오답이 실제로 아직 매칭되고 있어야 한다 - 고쳐졌으면
     # [고쳐짐] 절로 옮길 것.
@@ -1077,21 +1086,90 @@ def test_water_play_alias_has_no_age_gate_on_purpose():
     assert "물놀이" not in ALIASES_IF_CHILD_MARKED
 
 
-def test_the_three_rates_are_kept_distinct_in_the_proposal():
-    """제출 문서가 71%·24%·20% 를 구분해 적는지 잠근다.
+def test_the_proposal_never_quotes_an_unaudited_rate_bare():
+    """제출 문서가 검수 전 숫자를 설명 없이 내밀지 않는지 잠근다.
 
     ⚠ 71% 는 별칭을 만들 때 쓴 표본(도매꾹239)의 매칭률이고, 24% 는 새 표본의
-      **검수 전** 매칭률이다. 둘 다 발표 숫자가 아니다. 발표 숫자는 새 표본
-      235건 전수 검수 정답률 20.0% 하나다.
+      **검수 전** 매칭률이다. 둘 다 발표 숫자가 아니다.
+
+    ⚠ 발표 숫자는 **두 분모를 나란히** 쓴다 - 안전관리대상 136 중 55.1%,
+      전체 235 중 31.9%. 한쪽만 내밀면 분모를 유리하게 바꾼 것이 된다.
     """
     import pathlib
 
     doc = pathlib.Path("01_기획서_안심소싱돋보기.md").read_text(encoding="utf-8")
-    assert "이것이 발표 숫자다" in doc
-    assert "20.0%" in doc
-    # 71% 가 나오면 반드시 "발표 숫자가 아니" 라는 설명과 함께여야 한다.
+    assert "55.1%" in doc and "31.9%" in doc
+    assert "두 분모를 나란히 적습니다" in doc
     if "71%" in doc:
-        assert "별칭을 만들 때 쓴 표본" in doc
-    # 애매를 정답에 넣은 값을 대표로 쓰지 않는다.
-    head = doc[: doc.index("**오답 6건은 세 갈래입니다.**")]
-    assert "21.3%" in head and "발표에 쓰는 숫자는 20.0%" in head
+        assert "만들 때 쓴 표본에서만 잘 듣는다" in doc
+    # 분모를 사람이 정했다는 사실을 밝힌다 (R3-b).
+    assert '화면에는 "비대상입니다"를 출력하지 않습니다' in doc
+
+
+def test_standalone_accessory_at_the_end_blocks_the_match():
+    """상품명이 독립 부속품명으로 **끝나면** 파는 물건이 그것이다.
+
+    ⚠ 인접 가드(names_the_subject)와 다르다. 저쪽은 키 바로 뒤만 보고 이건
+      이름 끝을 본다. "에어프라이어 토스터기 선반" 은 '선반' 이 키 바로 뒤에
+      없어서 인접 가드가 못 잡았다.
+
+    실측(새표본235): 오답 3건을 힌트 없이 잡았다 - 유모차 컵홀더→스마트폰,
+    다리미판 행거 지지대→스팀다리미, 전기면도기 거치대→전기면도기.
+    도매꾹239 에서도 오답 1건을 잡았다(170→169).
+    """
+    from sourcing_guard.item_grades import ItemGradeBook
+
+    book = ItemGradeBook()
+    for raw in ("핸디캐디 주방 정리 밥솥 에어프라이어 토스터기 선반",
+                "유모차 컵홀더 스마트폰 핸드폰 거치대 2in1 유모차 홀더",
+                "장갑 높이조절 스탠드 스팀 다리미판 행거 지지대",
+                "무타공 전기면도기 스테인레스 거치대 면도기 홀더 욕실걸이"):
+        assert book.lookup_all(raw) == [], (raw, [g.item for g in book.lookup_all(raw)])
+
+    # ⚠ 커버·케이스·필터·리필은 넣지 않았다. 본체와 함께 팔리는 포장·구성품이다.
+    assert [g.item for g in book.lookup_all("18색 우드 색연필 틴케이스")] == ["학용품"]
+
+    # ⚠ 품목명 자체가 그 말로 끝나면 예외다 - 표에 '간이 빨래걸이' 가 있다.
+    assert [g.item for g in book.lookup_all("실내 빨래걸이")] == ["간이 빨래걸이"]
+
+
+def test_the_particle_guard_keeps_goods_words_alive():
+    """'<품목명>용 <다른 물건>' 은 부속품이다. 다만 '용품' 은 예외다.
+
+    예외가 없으면 "물놀이 용품 성인용 튜브" 가 죽는다 - '물놀이용품' 은
+    "물놀이를 위한 물건" 이라는 한 낱말이지 "<물놀이>용 <품>" 이 아니다.
+    """
+    from sourcing_guard.item_grades import ItemGradeBook
+
+    book = ItemGradeBook()
+    assert book.lookup_all("사각 종이호일 다용도 에어프라이어용 대용량 화이트") == []
+    assert [g.item for g in book.lookup_all(
+        "프리미엄 클래식 파스텔 튜브 파도타기 물놀이 용품 성인용 튜브"
+    )] == ["공기주입물놀이기구"]
+
+
+def test_cert_db_sourced_aliases_land_where_measured():
+    """KC인증 DB 에서 캔 별칭이 실측대로 붙는지 잠근다.
+
+    productName 이 "<법령 품목명>(<통칭>)" 으로 등록돼 있다 -
+    "전기오븐기기(에어프라이어)" 224건, "학용품(필통)" 19건.
+    우리 추정이 아니라 정부가 적어 둔 사전이다 (docs/인증DB_탐침결과.md).
+    """
+    from sourcing_guard.item_grades import ItemGradeBook
+
+    book = ItemGradeBook()
+    cases = {
+        "에어프라이어 / 사은품 선물용": ["전기오븐기기"],
+        "특대형 와이드그릴 전기그릴 전기후라이팬 전기팬": ["전기거치식그릴", "전기휴대형그릴"],
+        "아크로 S5 포터블 블루투스 스피커 C-Type": ["앰프 내장형 스피커"],
+        "8800 조선문방구 12색 색연필 슬림 노크식": ["학용품"],
+        "하이라이트펜 스틱 층층이 고체 형광펜 볼펜": ["학용품"],
+        "모나미 18종 행복특가 문구세트": ["학용품"],
+    }
+    for raw, want in cases.items():
+        assert [g.item for g in book.lookup_all(raw)] == want, raw
+
+    # ⚠ 넣지 않은 것 - 인증 DB 에 있지만 표본에서 오답을 냈다.
+    from sourcing_guard.item_grades import ALIASES
+    assert "로봇청소기" not in ALIASES   # '문턱 도어턱받침' 7건에 붙는다
+    assert "훈증기" not in ALIASES       # '모기훈증기 … 리필' 에 붙는다
