@@ -368,10 +368,69 @@ def test_the_household_coverage_gap_is_recorded_as_intentional():
     assert book.covers(ItemCategory.CHILDREN_TOY) is True
     assert book.covers(ItemCategory.HOUSEHOLD) is False
 
-    # 그 사실과 (가)/(나) 선택지가 미완 목록에 적혀 있어야 한다.
-    log = (root / "docs" / "작업로그_2026-09-04.md").read_text(encoding="utf-8")
-    assert "`coverage` 선언에 `household` 가 없는 것은 의도다" in log
-    for rule_id in ("KC-LIFE-HELMET-PERF", "KC-LIFE-LASER-PERF"):
-        assert rule_id in log, rule_id
-    assert "(가) coverage 단위를 품목군 → 품목으로 좁힌다" in log
-    assert "(나) 그대로 둔다" in log
+    # ⚠ 정본은 **CLAUDE.md §5** 다. coverage 를 건드릴 사람이 읽는 문서가
+    #   거기이고, 날짜 붙은 작업로그는 계속 늘어나 아카이브되면 이 검사가
+    #   깨진다. 핸드오프는 한 줄 요약 + 포인터만 갖는다.
+    rules_doc = (root / "CLAUDE.md").read_text(encoding="utf-8")
+    assert "coverage` 에 `household` 를 한 줄 추가하지 마라" in rules_doc
+    for rule_id in ("KC-LIFE-HELMET-PERF", "KC-LIFE-LASER-PERF",
+                    "KC-LIFE-CURLER-VOLT", "KC-LIFE-CURLER-TEMP"):
+        assert rule_id in rules_doc, rule_id
+    assert "R3 위반" in rules_doc
+    # 승격이 선언을 자동으로 넓히지 않는다는 것까지 적혀 있어야 한다 -
+    # draft 42건 승격이 다음 작업이라 여기서 함께 오해하기 쉽다.
+    assert "승격해도 `coverage` 는 자동으로 넓히지" in rules_doc
+
+    handoff = (root / "00_프로젝트_핸드오프.md").read_text(encoding="utf-8")
+    assert "CLAUDE.md §5" in handoff
+
+
+def test_the_submission_draft_uses_only_the_audited_rate():
+    """제출문에 71%·24% 가 들어가지 않는지 잠근다.
+
+    ⚠ 71% 는 별칭을 만들 때 쓴 표본(도매꾹239)의 매칭률이고, 24% 는 새 표본의
+      **검수 전** 매칭률이다. 심사 서류에 검수 안 된 숫자를 쓰면 그대로
+      드러난다. 발표 숫자는 새표본235 전수 검수 정답률 20.0% 하나다.
+
+    ⚠ 세 항목·세 길이가 다 있어야 한다. 폼의 글자 수 제한을 아직 모르므로
+      확인될 때까지 셋을 유지한다.
+    """
+    root = Path(__file__).resolve().parents[1]
+    draft = (root / "docs" / "제출문_초안.md").read_text(encoding="utf-8")
+
+    body = draft[draft.index("## 1. 해결하려는 문제"):]
+    for banned in ("71%", "24%", "26%"):
+        assert banned not in body, f"제출문 본문에 검수 전 숫자 '{banned}' 가 있습니다"
+    assert "20.0%" in body
+
+    for item in ("## 1. 해결하려는 문제", "## 2. AI 활용 방식", "## 3. 사용한 AI 도구"):
+        assert item in draft, item
+    assert draft.count("### 200자") == 3
+    assert draft.count("### 500자") == 3
+    assert draft.count("### 1000자") == 3
+
+    # 제출 항목 넷 중 링크는 이미 있다.
+    assert "https://sourcing-guard.fly.dev" in draft
+
+    # R1 을 제약이 아니라 설계 선택으로 쓴다 - 심사 기준이 "AI 활용의 적절성" 이다.
+    assert "손해배상 사유" in draft
+
+
+def test_the_handoff_schedule_matches_the_real_contest_dates():
+    """핸드오프 일정표가 실제 대회 일정과 같은지 잠근다.
+
+    ⚠ 이전 판이 "9/19 제출, 9/20 예비일" 로 적고 **참가 신청 마감(9/18)을
+      아예 빠뜨렸다.** 신청을 놓치면 나머지가 전부 무의미하다.
+      날짜를 기억으로 적지 않는다 - R5 는 코드뿐 아니라 일정에도 해당한다.
+    """
+    root = Path(__file__).resolve().parents[1]
+    doc = (root / "00_프로젝트_핸드오프.md").read_text(encoding="utf-8")
+
+    schedule = doc[doc.index("## 8. 남은 일정"):]
+    assert "참가 신청 마감" in schedule
+    assert "**9/18**" in schedule
+    assert "프로젝트 제출 마감" in schedule
+    assert "**9/20**" in schedule
+    assert "event.wanted.co.kr" in schedule
+    # 폼을 직접 못 봤다는 사실이 남아 있어야 한다.
+    assert "폼 자체를 본 것이 아니다" in schedule
