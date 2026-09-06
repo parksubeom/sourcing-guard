@@ -331,3 +331,47 @@ def test_the_proposal_numbers_match_the_code():
 
     # 대량 검사 상한
     assert f"{MAX_ROWS}줄" in doc, MAX_ROWS
+
+
+def test_the_household_coverage_gap_is_recorded_as_intentional():
+    """`coverage` 에 household 가 없는 것이 의도임을 문서가 말하는지 잠근다.
+
+    ⚠ 이건 고치라는 검사가 아니다. household 는 verified 룰이 4건 있는데도
+      `covers()` 가 False 라, 아무 설명이 없으면 다음 사람이 "verified 룰이
+      있는데 왜 안 뜨지" 로 시간을 쓴다.
+
+    ⚠ **`coverage` 에 household 를 한 줄 추가하는 것은 R3 위반이다.**
+      생활용품 전체가 덮인다고 말하게 되는데 실제 룰은 셋뿐이라, 우산처럼
+      룰이 없는 품목이 GREEN 으로 갈 수 있다. 고치려면 커버리지 단위를
+      품목군 → 품목으로 좁혀야 한다(작업로그의 (가)안).
+
+    이 검사가 깨지면 상태가 바뀐 것이다 - 문서의 (가)/(나) 항목을 먼저 읽을 것.
+    """
+    import yaml as _yaml
+
+    from sourcing_guard.models import ItemCategory
+    from sourcing_guard.verifier import RuleBook
+
+    root = Path(__file__).resolve().parents[1]
+    data = _yaml.safe_load(
+        (root / "sourcing_guard" / "data" / "hazard_rules.yaml").read_text(encoding="utf-8")
+    )
+    declared = set(data["coverage"]["categories"])
+    verified = [r for r in data["rules"] if r.get("status") == "verified"]
+    household = [r for r in verified if "household" in (r.get("applies_to") or [])]
+
+    # 현재 상태: verified 룰은 있는데 선언에는 없다.
+    assert household, "household verified 룰이 사라졌다"
+    assert "household" not in declared
+
+    book = RuleBook()
+    assert book.covers(ItemCategory.CHILDREN_TOY) is True
+    assert book.covers(ItemCategory.HOUSEHOLD) is False
+
+    # 그 사실과 (가)/(나) 선택지가 미완 목록에 적혀 있어야 한다.
+    log = (root / "docs" / "작업로그_2026-09-04.md").read_text(encoding="utf-8")
+    assert "`coverage` 선언에 `household` 가 없는 것은 의도다" in log
+    for rule_id in ("KC-LIFE-HELMET-PERF", "KC-LIFE-LASER-PERF"):
+        assert rule_id in log, rule_id
+    assert "(가) coverage 단위를 품목군 → 품목으로 좁힌다" in log
+    assert "(나) 그대로 둔다" in log
