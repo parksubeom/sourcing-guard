@@ -990,9 +990,17 @@ def test_knee_pad_alias_lands_on_the_child_sports_gear_item():
         ("어린이용 스포츠 보호용품(보호 장구 및 안전모)", "안전확인", "alias", "possible")
     ]
 
-    for must_not in ("모서리보호대 코너가드 아기보호 충격방지 안전쿠션 문 벽 기둥 캡",
-                     "[겨울필수템] USB 포켓 발열무릎담요 플란넬 양털 극세사 대형 무릎담요"):
-        assert not book.lookup_all(must_not), must_not
+    assert not book.lookup_all("모서리보호대 코너가드 아기보호 충격방지 안전쿠션 문 벽 기둥 캡")
+
+    # ⚠ '무릎담요' 는 이제 별개 별칭으로 전기방석에 붙는다 - 인증 DB 의
+    #   "전기방석(전기무릎담요)" 3건이 근거다. 예전에는 이 줄이 아무것도 안 붙는
+    #   것을 잠갔는데 지금은 전기방석이 정답이다. 단언을 "이 줄에 스포츠
+    #   보호용품이 붙지 않는다" 로 좁힌다.
+    blanket = book.lookup_all(
+        "[겨울필수템] USB 포켓 발열무릎담요 플란넬 양털 극세사 대형 무릎담요"
+    )
+    assert all("스포츠 보호용품" not in g.item for g in blanket)
+    assert [g.item for g in blanket] == ["전기방석", "전기방석"]
 
     for not_measured in ("보호대", "팔꿈치보호대", "손목보호대", "손보호대"):
         assert not_measured not in ALIASES, f"'{not_measured}' 는 실측 없이 들어왔다"
@@ -1003,10 +1011,10 @@ def test_the_audited_wrong_answers_are_the_only_ones_left():
 
     ⚠ 발표에 쓰는 숫자는 매칭률이 아니라 **정답률**이다.
     ⚠ 분모는 235 가 아니라 **안전관리대상 136** 이다 (새표본235_대상분류.tsv).
-        매칭   89/235
-        정답   83/136 = 61.0%   ← 대표값 (상품명만 · 대상 136 기준)
-        애매    3 · 오답 2 · 미매칭 48
-        (상품명만 · 표본 235 전체 기준으로는 83/235 = 35.3%)
+        매칭   101/235
+        정답   95/136 = 69.9%   ← 대표값 (상품명만 · 대상 136 기준)
+        애매    3 · 오답 2 · 미매칭 36
+        (상품명만 · 표본 235 전체 기준으로는 95/235 = 40.4%)
 
     이 검사가 실패하면 매칭이 바뀐 것이다 - 검수 파일을 다시 만들 것.
     """
@@ -1034,7 +1042,7 @@ def test_the_audited_wrong_answers_are_the_only_ones_left():
         )
 
     matched = [r for r in rows if book.lookup_all(r)]
-    assert len(matched) == 89
+    assert len(matched) == 101
     assert len([r for r in matched if r in wrong]) == 3
     assert len([r for r in matched if r in vague]) == 3
     # 검수 파일에 적힌 오답이 실제로 아직 매칭되고 있어야 한다 - 고쳐졌으면
@@ -1063,6 +1071,12 @@ def test_knee_pad_alias_needs_a_child_marker_in_the_product_name():
     for raw in ("성인용 무릎보호대 작업용 니패드 2p",
                 "스포츠 무릎보호대 등산 러닝 관절보호"):
         assert not book.lookup_all(raw), raw
+
+    # ⚠ '무릎담요' 는 별개 별칭이다 - 인증 DB 의 "전기방석(전기무릎담요)" 3건에서
+    #   왔다. 예전에는 이 줄이 아무것도 안 붙는 것을 잠갔는데, 지금은 전기방석이
+    #   붙는 것이 정답이다. 단언을 "무릎보호대 별칭이 안 붙는다" 로 좁혔다.
+    blanket = book.lookup_all("[겨울필수템] USB 포켓 발열무릎담요 플란넬 양털 극세사")
+    assert all("스포츠 보호용품" not in g.item for g in blanket)
 
     # 무조건 별칭에는 없어야 한다.
     assert "무릎보호대" not in ALIASES
@@ -1098,7 +1112,7 @@ def test_the_proposal_never_quotes_an_unaudited_rate_bare():
     import pathlib
 
     doc = pathlib.Path("01_기획서_안심소싱돋보기.md").read_text(encoding="utf-8")
-    assert "61.0%" in doc and "35.3%" in doc
+    assert "69.9%" in doc and "40.4%" in doc
     assert "두 분모를 나란히 적습니다" in doc
     if "71%" in doc:
         assert "만들 때 쓴 표본에서만 잘 듣는다" in doc

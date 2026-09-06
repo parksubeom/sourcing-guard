@@ -324,6 +324,37 @@ ALIASES: dict[str, str | tuple[str, ...]] = {
     "연필심": "학용품",
     "형광펜": "학용품",
     "문구세트": "학용품",
+    # ⚠ **'물감' 이 아니라 '아크릴물감' 이다.** '물감' 을 열면 표본에서 5건이
+    #   붙는데 그중 4건이 오답이었다:
+    #     "워터 브러쉬 물펜 물붓 … 물감 재료"      붓이다
+    #     "말랑이 스퀴시 … 과일 물감 주물럭"        완구다
+    #     "일회용 방수 미술 물감 앞치마+팔토시"      앞치마(섬유제품)다
+    #     "**물감자** 슬랑이 물 반죽처럼"           낱말 용접이다 - '물감자'
+    #                                            안에 '물감' 이 들어 있다
+    #   부속서 11 서문의 이름은 '그림물감' 이고, 표본에서 실제로 걸리는 것은
+    #   '아크릴물감' 뿐이다. 좁은 쪽을 쓴다.
+    "아크릴물감": "학용품",
+    #   ⚠ '가민 전문가용 아크릴물감' 은 _ITEM_EXCLUSION_MARKERS 가 막는다 -
+    #     부속서 11 서문이 "사무용품 및 전문가용 … 제외" 라고 적은 조항이다.
+
+    # ── 인증 DB 2회차 (E-1) ──
+    # "전기오븐기기" 3,737건. 괄호 통칭으로 에어프라이어 224 · Air Fryer 118 ·
+    # 스팀오븐 44 · 전자레인지 겸용 등이 붙어 있다. 표본의 '광파 오븐렌지' 는
+    # 인증 DB 에 없지만("광파오븐" 2건 → 주방용전열기구, 표에 없음) 상품명에
+    # '전기오븐' 이 함께 적혀 있어 이 별칭으로 걸린다. 표본 +4.
+    "전기오븐": "전기오븐기기",
+
+    # "모발건조기" 4,906건. **셀러 어휘로는 못 찾는 자리다** - '헤어드라이어'
+    # 로 인증 DB 를 치면 0건이고 '모발건조기' 로 쳐야 나온다. 괄호 사전이
+    # 필요한 이유가 정확히 이것이다. 표본 +4.
+    "헤어드라이어": "모발건조기",
+    "드라이기": "모발건조기",
+
+    # "전기방석(전기무릎담요)" 3건. 표본 +1.
+    #   ⚠ '무릎담요' 단독은 섬유제품일 수 있는데, 표본의 1건은 "USB 포켓
+    #     발열무릎담요" 로 전기 표기가 있다. 전기 표기 없는 무릎담요가 표본에
+    #     0건이라 게이트의 필요를 재지 못했다 - 나오면 그때 잰다.
+    "무릎담요": "전기방석",
     # ── 안전기준준수 부속서 24(합성수지제품) 종류 표에서 옮긴 것 ──
     #
     # 표의 '매트류' 는 별표 7 화학 division 이고, 부속서 24 가 종류를 적었다:
@@ -391,6 +422,12 @@ ALIASES_IF_CHILD_MARKED: dict[str, str | tuple[str, ...]] = {
     # ⚠ 목적지는 괄호를 뗀 형태다. split_aliases 가 "괄호 안의 범위 한정은
     #   이름이 아니" 라며 떼고 색인하므로, 표의 원문 그대로 적으면 못 찾는다.
     "무릎보호대": "어린이용 스포츠 보호용품",
+    # 부속서 11 서문이 필통을 학용품으로 열거하고, 인증 DB 에도
+    # "학용품(필통)" 19건이 있다. 다만 학용품은 어린이제품이므로 연령 표기가
+    # 필요하다 - 조건 없이 열면 표본에서 8건이 붙는데 그중 6건이 우리가
+    # **'애매' 로 분류한** 중·고·대학생 필통이다. 붙이면 모르는 것을 안다고
+    # 말하게 된다. 표지어를 요구하면 1건만 남고 애매 부착이 0 이 된다.
+    "필통": "학용품",
 }
 
 
@@ -551,6 +588,10 @@ _ACCESSORY_SUFFIXES = (
     "내피", "차단막", "가리개", "차광막", "그늘이",
     # 그 밖에 실측에서 본 부속·소모품
     "스트랩", "브라켓", "정리대",
+    # "헤어드라이어 … 헤어드라이어 수납 유물" - 두 번째 출현이 '수납' 으로
+    # 이어져 인접 가드가 잡는다. 표에 '수납가구' 가 있지만 키가 그 자체라
+    # 영향받지 않는다.
+    "수납",
     # ⚠ 여기에 넣지 않은 말들 - 부속품처럼 보이지만 본체 품목명이기도 하다.
     #   파우치  "우산 … 파우치" 에서 우산 본체를 부속품으로 오판했다(실측 1건)
     #   매트    전기매트·전기온수매트가 표에 있는 품목이다
@@ -575,6 +616,15 @@ _NEGATION_SUFFIXES = ("없이", "없는", "없이도", "미포함", "제외")
 _ACCESSORY_PARTICLE = "용"
 _PARTICLE_EXCEPTIONS = ("용품",)
 
+# '<부속어>포함' 은 부속품이 아니라 **본체에 딸려 온다**는 뜻이다.
+#
+#   "무선 청소기 거치대포함 ZQ-VC300"      파는 것은 청소기다
+#   "미니가습기 [선풍기+여분필터 포함]"      파는 것은 가습기다
+#
+# 표 자신이 같은 개념을 쓴다 - '휴대전화 전지 충전기(충전 거치대를 포함한다)',
+# '어린이용 안경테(선글라스를 포함한다)'. 부속품을 포함한 본체는 본체다.
+_INCLUDED_MARKER = "포함"
+
 
 # 그 자체가 별개 상품인 부속품명. 상품명이 이 말로 **끝나면** 파는 물건이
 # 그것이라는 신호다 - 한국어 상품명은 머리 명사를 뒤에 두는 일이 잦다.
@@ -590,22 +640,80 @@ _PARTICLE_EXCEPTIONS = ("용품",)
 # ⚠ 인접 가드(names_the_subject)와 다르다. 저쪽은 **키 바로 뒤**만 보고,
 #   이건 **이름 끝**을 본다. "에어프라이어 토스터기 선반" 은 선반이 키 바로
 #   뒤에 없어서 인접 가드가 못 잡는다.
+# 품목별 제외 표지어. **원문 조항의 구체화이지 우리가 지어낸 규칙이 아니다.**
+#
+#   안전확인 부속서 11(학용품) 서문
+#   "학용품으로 볼 수 있는 제품 중 **사무용품 및 전문가용으로 사용되고 해당
+#    표시가 되어있는** 학용품은 검사대상에서 제외한다."
+#
+# 상품명에 이 표기가 있으면 학용품 별칭을 쓰지 않는다. 실측에서 "가민
+# 전문가용 아크릴물감" 1건이 걸리고 다른 줄은 영향받지 않았다.
+_ITEM_EXCLUSION_MARKERS: dict[str, tuple[str, ...]] = {
+    "학용품": ("전문가용", "사무용"),
+}
+
+
+def is_excluded_by_marker(product_name: str | None, item_name: str) -> bool:
+    """원문이 명시한 제외 표기가 상품명에 있는가."""
+    marks = _ITEM_EXCLUSION_MARKERS.get(item_name)
+    if not marks:
+        return False
+    return any(m in (product_name or "") for m in marks)
+
+
 _STANDALONE_ACCESSORIES = (
     "거치대", "홀더", "걸이", "행거", "보관함", "정리함", "선반",
     "받침대", "정리대", "브라켓", "지지대",
 )
 
 
-def names_a_standalone_accessory(product_name: str, item_name: str) -> bool:
-    """상품명이 독립 부속품명으로 끝나는가. 단, 품목명 자체가 그 말이면 아니다.
+def accessory_follows_the_key(product_name: str, normalized_key: str) -> bool:
+    """매칭된 말 **뒤에** 독립 부속품명이 나오는가.
 
-    ⚠ 예외가 없으면 '간이 빨래걸이' 같은 품목을 우리가 막게 된다 - 표에 있는
-      품목이 '걸이' 로 끝나기 때문이다.
+    "생활더봄 무타공 욕실 헤어드라이기 고데기 거치대 홀더 2 color" 는 거치대다.
+    이름 끝이 '2 color' 라 끝 검사로는 안 잡히고, 부속어가 키 바로 뒤도 아니라
+    인접 가드로도 안 잡힌다. 그런데 **키 뒤 어딘가**에 거치대·홀더가 있다.
+
+    ⚠ 코드베이스가 예전에 "부속어가 뒤쪽 어딘가에 있으면 보류" 를 시도했다가
+      정답 3건이 죽어 접었다. 그때와 다른 점은 **독립 부속품명으로 좁혔다**는
+      것이다 - 커버·케이스·필터는 여기 없다. 실측에서 새표본235 의 현재 매칭
+      101건 중 이 규칙에 걸리는 것이 0건이다.
+
+    ⚠ '<부속품명>포함' 은 본체에 딸려 온 것이라 세지 않는다.
     """
-    name = normalize(product_name)
+    name = normalize(product_name or "")
+    at = name.rfind(normalized_key)
+    if at < 0:
+        return False
+    rest = name[at + len(normalized_key):]
+    for tail in map(normalize, _STANDALONE_ACCESSORIES):
+        i = rest.find(tail)
+        if i >= 0 and not rest[i + len(tail):].startswith(_INCLUDED_MARKER):
+            return True
+    return False
+
+
+def names_a_standalone_accessory(product_name: str, item_name: str) -> bool:
+    """상품명이 독립 부속품명으로 **끝나거나 시작하는가**. 품목명 자체면 예외다.
+
+    한국어 상품명은 머리 명사를 뒤에 두는 일이 잦지만, 도매 상품명은 파는
+    물건을 앞에 내세우기도 한다 - "(기본형) 홀더 거치대 헤어 기수납 드라이기
+    욕실 드라이 헤어 드라이어" 는 홀더·거치대다. 실측에서 이 한 건이 끝
+    검사만으로는 안 잡혔다.
+
+    ⚠ 앞머리의 대괄호·괄호 표기([ABC0532]·(기본형))는 걷어내고 본다. 도매
+      상품명이 판매자 코드나 옵션을 앞에 붙이는 관행이 있다.
+
+    ⚠ 품목명 자체가 그 말로 끝나면 예외다. 없으면 '간이 빨래걸이' 같은 표의
+      품목을 우리가 막게 된다.
+    """
+    core = re.sub(r"^(?:[\[(][^\])]*[\])]\s*)+", "", product_name or "")
+    name = normalize(core)
     item = normalize(item_name)
     for tail in map(normalize, _STANDALONE_ACCESSORIES):
-        if name.endswith(tail) and not item.endswith(tail):
+        if not tail or item.endswith(tail):
+            continue
+        if name.endswith(tail) or name.startswith(tail):
             return True
     return False
 
@@ -622,7 +730,11 @@ def names_the_subject(normalized_name: str, normalized_key: str) -> bool:
         return False
     while at >= 0:
         rest = normalized_name[at + len(normalized_key):]
-        blocked = any(rest.startswith(t) for t in tails) or (
+        # '<부속어>포함' 이면 본체에 딸려 온 것이므로 막지 않는다.
+        hit = next((t for t in tails if rest.startswith(t)), None)
+        if hit is not None and rest[len(hit):].startswith(_INCLUDED_MARKER):
+            return True
+        blocked = hit is not None or (
             rest.startswith(_ACCESSORY_PARTICLE)
             and not rest.startswith(_PARTICLE_EXCEPTIONS)
         )
@@ -858,9 +970,13 @@ class ItemGradeBook:
                 # 상품명이 독립 부속품명으로 끝나면 파는 물건이 그것이다.
                 # 인접 가드가 못 잡는 자리를 막는다 - "에어프라이어 토스터기
                 # 선반" 은 '선반' 이 키 바로 뒤에 없다.
-                if how != "exact" and names_a_standalone_accessory(
-                    product_name or "", row["item"]
+                if how != "exact" and (
+                    names_a_standalone_accessory(product_name or "", row["item"])
+                    or accessory_follows_the_key(product_name or "", probe)
                 ):
+                    continue
+                # 원문이 명시한 제외 표기 - 부속서 11 의 "사무용품 및 전문가용".
+                if is_excluded_by_marker(product_name, row["item"]):
                     continue
                 verdict = judge(
                     normalized_name=intact,

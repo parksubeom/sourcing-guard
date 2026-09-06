@@ -408,7 +408,7 @@ def test_the_submission_draft_uses_only_the_audited_rate():
     for banned in ("71%", "24%"):
         assert banned not in body, f"제출문 본문에 검수 전 숫자 '{banned}' 가 있습니다"
     # 두 분모를 나란히 쓴다 - 한쪽만 쓰면 분모를 유리하게 바꾼 것이 된다.
-    assert "61.0%" in body and "35.3%" in body
+    assert "69.9%" in body and "40.4%" in body
 
     for item in ("## 1. 해결하려는 문제", "## 2. AI 활용 방식", "## 3. 사용한 AI 도구"):
         assert item in draft, item
