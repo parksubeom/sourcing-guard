@@ -354,9 +354,15 @@ def test_the_proposal_numbers_match_the_code():
     }
     assert single, "단건 원자료가 비었다"
     assert "단건 경로 · 대상 135 중" in doc
-    assert "정답     96건 (71.1%)" in doc
-    assert "**40.9%**" in doc
+    assert "정답    100건 (74.1%)" in doc
     assert '화면에는 "비대상입니다"를 출력하지 않습니다' in doc
+
+    # ⚠ 오부착률은 **실측한 값만** 적는다. 2026-09-07 까지 이 자리에 40.9% 가
+    #   있었는데 그것은 전체 235 기준 **매칭률**이었고 오부착률이 아니었다.
+    #   비대상 100건을 단건 경로로 실제로 돌린 값이 아래다 (docs/비대상_오부착_실측).
+    assert "비대상  53건 →  0건 부착" in doc
+    assert "애매    47건 →  2건 부착" in doc
+    assert "**40.9%**" not in doc, "안 잰 숫자가 돌아왔다"
 
     # 대량 검사 상한
     assert f"{MAX_ROWS}줄" in doc, MAX_ROWS

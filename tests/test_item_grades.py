@@ -1012,9 +1012,13 @@ def test_the_audited_wrong_answers_are_the_only_ones_left():
     ⚠ 발표에 쓰는 숫자는 매칭률이 아니라 **정답률**이다.
     ⚠ 분모는 235 가 아니라 **안전관리대상 136** 이다 (새표본235_대상분류.tsv).
     ⚠ 발표 숫자는 **단건 경로**다 (데모가 단건이다). 이 검사는 배치를 잠근다.
-        배치 · 상품명만 · 대상 135    정답 94 (69.6%) · 애매 3 · 오답 2
-        단건 · 상품명만 · 대상 135    정답 96 (71.1%) · 애매 3 · 오답 1  ← 발표
-        전체 매칭 101/235
+        배치 · 상품명만 · 대상 135    정답 99 (73.3%) · 애매 3 · 오답 2
+        단건 · 상품명만 · 대상 135    정답 100 (74.1%) · 애매 3 · 오답 1  ← 발표
+        전체 매칭 106/235
+
+    ⚠ 2026-09-07 101 → 106: '모기장 → 의류 이외의 섬유제품' 별칭 +5.
+      안전기준준수 부속서 1(가정용 섬유제품) '기타 제품류' 가 모기장을
+      직접 열거한다. 오답 증가 0건.
 
     이 검사가 실패하면 매칭이 바뀐 것이다 - 검수 파일을 다시 만들 것.
     """
@@ -1042,7 +1046,7 @@ def test_the_audited_wrong_answers_are_the_only_ones_left():
         )
 
     matched = [r for r in rows if book.lookup_all(r)]
-    assert len(matched) == 101
+    assert len(matched) == 106
     assert len([r for r in matched if r in wrong]) == 3
     assert len([r for r in matched if r in vague]) == 3
     # 검수 파일에 적힌 오답이 실제로 아직 매칭되고 있어야 한다 - 고쳐졌으면
@@ -1106,13 +1110,20 @@ def test_the_proposal_never_quotes_an_unaudited_rate_bare():
     ⚠ 71% 는 별칭을 만들 때 쓴 표본(도매꾹239)의 매칭률이고, 24% 는 새 표본의
       **검수 전** 매칭률이다. 둘 다 발표 숫자가 아니다.
 
-    ⚠ 발표 숫자는 **두 분모를 나란히** 쓴다 - 안전관리대상 136 중 55.1%,
-      전체 235 중 31.9%. 한쪽만 내밀면 분모를 유리하게 바꾼 것이 된다.
+    ⚠ 발표 숫자는 **분모와 경로를 함께** 쓴다 - "안전관리대상 135 중 74.1%,
+      단건 경로, 입력은 상품명만". 하나라도 빠지면 분모를 유리하게 바꾼 것이
+      된다.
+
+    ⚠ 2026-09-07: 전체 235 기준 매칭률(40.9%)을 함께 적던 것을 **실측 오부착**
+      으로 바꿨다. 40.9% 는 "대상 아닌 것에 안 붙인다" 를 재는 값이 아니라
+      그냥 다른 분모의 매칭률이었다. 비대상 100건을 실제로 돌려 0건·2건을
+      얻었고 그것만 적는다 (docs/비대상_오부착_실측_2026-09-07.md).
     """
     import pathlib
 
     doc = pathlib.Path("01_기획서_안심소싱돋보기.md").read_text(encoding="utf-8")
-    assert "71.1%" in doc and "40.9%" in doc
+    assert "74.1%" in doc
+    assert "0건 부착" in doc
     # 조건 없는 숫자를 쓰지 않는다 - 경로와 분모를 함께 적는다.
     assert "조건 없는 숫자를 쓰지 않습니다" in doc
     assert "단건 경로 · 대상 135 중" in doc
@@ -1300,3 +1311,41 @@ def test_raw_text_never_reaches_the_subject_check():
     )[0].split("gate_text")[-1]
     # 게이트 문자열이 별칭 조건 셋에만 쓰이는지 본다.
     assert src.count("gate_text") == 3   # 정의 1 + 어린이 1 + 합성수지 1
+
+
+def test_a_two_letter_legal_answer_is_not_widened_into_other_items():
+    """2글자 법령 답은 확장하지 않는다. 상위어가 하위 품목으로 승격한다.
+
+    ⚠ 실측 사고다. 비대상 100건 측정에서 오답 2건이 정확히 여기서 나왔다 -
+      '인덕션냄비 4중바닥 스텐냄비'(21·23번). LLM 은 '냄비' 라고 **정확히**
+      답했는데 우리가 그 2글자를 '전기냄비'·'가정용 압력냄비' 로 벌렸다.
+      스테인리스 냄비는 식품용 기구(식약처)이고 전기제품도 압력식도 아니다.
+
+    ⚠ 이 방향 자체는 필요하다 - 표 561건 중 75건에 법령 수식이 붙어 있어
+      '무선스피커' → '무선스피커 시스템' 을 못 따라잡으면 그 75건은 영원히
+      안 맞는다. 2글자에서만 수식이 아니라 **다른 품목**이 걸린다.
+
+    ⚠ 정확 일치는 이 가드 앞에 있으므로 '완구'·'의류'·'침대' 처럼 표에
+      그 이름 그대로 있는 2글자 품목은 잃지 않는다. 가드가 자르는 것은
+      확장뿐이다.
+    """
+    from sourcing_guard.item_grades import ItemGradeBook, _MIN_CONTAIN_LEN
+
+    assert _MIN_CONTAIN_LEN == 3
+
+    book = ItemGradeBook()
+
+    for short in ("냄비", "매트", "신발", "가전"):
+        assert book.lookup_legal_name(short) == [], short
+
+    # 정확 일치는 2글자여도 살아 있다.
+    for exact in ("완구", "의류", "침대"):
+        got = book.lookup_legal_name(exact)
+        assert [g.matched_by for g in got] == ["legal_name"], (exact, got)
+
+    # 3글자 이상의 확장은 그대로다.
+    assert [g.matched_by for g in book.lookup_legal_name("무선스피커")] == [
+        "legal_name_contains"
+    ]
+    # 여럿이 걸리면 갈림으로 확인을 요청하는 것이 정확한 동작이다 (R3).
+    assert len(book.lookup_legal_name("안전모")) > 1

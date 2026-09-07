@@ -185,3 +185,65 @@ def test_substance_keeps_the_exceedance_wording():
     assert "기준 (90mg/kg)이 적용됩니다" in lead or "기준(90mg/kg)이 적용됩니다" in lead \
         or "공통안전기준 (90mg/kg)이 적용됩니다" in lead
     assert "이하여야 합니다" not in lead
+
+
+def test_item_scoped_rules_do_not_spill_across_the_category():
+    """`scope: item` 룰은 그 품목에만 걸린다.
+
+    ⚠ 이 검사가 없으면 승격 후에 **우산에 마스크 기준이 붙는다.**
+      household 는 별표 4~7 의 수백 품목을 담는데 applies_to 가 [household]
+      하나뿐이기 때문이다.
+
+    ⚠ rule_type 과 다르다. 부속서 17(마스크)은 rule_type=substance 이면서
+      scope=item 이다 - 물질 기준치이지만 마스크에만 걸린다. 처음에 둘을
+      하나로 묶었다가 모든 household 상품에 마스크 기준을 붙일 뻔했다.
+
+    ⚠ KC-ANNEX 의 aliases 는 **물질 표기 변형**이다('formaldehyde'·'알루미늄').
+      품목 판별에 쓸 수 없으므로 scope=category 여야 한다 - 잘못 item 으로
+      두면 완구 부속서 25건이 통째로 죽는다.
+    """
+    import pathlib
+    import tempfile
+
+    import yaml
+
+    from sourcing_guard.models import ItemCategory, ProductFacts
+    from sourcing_guard.verifier import RuleBook
+
+    src = pathlib.Path("sourcing_guard/data/hazard_rules.yaml")
+    raw = yaml.safe_load(src.read_text(encoding="utf-8"))
+    assert all("scope" in r for r in raw["rules"]), [
+        r["id"] for r in raw["rules"] if "scope" not in r
+    ]
+    bad = [r["id"] for r in raw["rules"] if r["scope"] not in ("category", "item")]
+    assert not bad, bad
+
+    # 물질 별칭을 가진 룰은 category 여야 한다.
+    for rule in raw["rules"]:
+        if rule["id"].startswith(("KC-COMMON-", "KC-ANNEX")):
+            assert rule["scope"] == "category", rule["id"]
+        if rule["id"].startswith(("KC-LIFE-", "KC-ELEC-", "KC-SDOC")):
+            assert rule["scope"] == "item", rule["id"]
+
+    # 전부 승격했다고 가정하고 번짐을 본다.
+    for r in raw["rules"]:
+        r["status"] = "verified"
+    tmp = pathlib.Path(tempfile.mkstemp(suffix=".yaml")[1])
+    tmp.write_text(yaml.safe_dump(raw, allow_unicode=True), encoding="utf-8")
+    book = RuleBook(tmp)
+
+    def ids(name: str, cat: ItemCategory) -> set[str]:
+        facts = ProductFacts(product_name=name, category=cat)
+        return {r.id for r in book.applying_to(facts)}
+
+    mask = ids("멀티스카프 자전거마스크 넥워머", ItemCategory.HOUSEHOLD)
+    assert mask and all(i.startswith("KC-SDOC17") for i in mask), mask
+    # 같은 품목군의 다른 품목에는 안 붙는다.
+    assert ids("우산 양산 자동우산", ItemCategory.HOUSEHOLD) == set()
+    assert ids("치즈욕실화 EVA 슬리퍼 실내화", ItemCategory.HOUSEHOLD) == set()
+    assert ids("수납가구 서랍장", ItemCategory.HOUSEHOLD) == set()
+
+    # 공통안전기준과 품목 부속서는 함께 붙는다 - 품목군 = 품목인 경우다.
+    toy = ids("블록", ItemCategory.CHILDREN_TOY)
+    assert any(i.startswith("KC-COMMON-") for i in toy)
+    assert any(i.startswith("KC-ANNEX6") for i in toy)
