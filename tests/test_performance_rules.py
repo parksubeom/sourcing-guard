@@ -135,6 +135,9 @@ def test_every_rule_declares_its_type():
     assert req == {
         "KC-LIFE-HELMET-PERF", "KC-LIFE-LASER-PERF", "KC-LIFE-WATERPLAY-PERF",
         "KC-ELEC-LED-PERF", "KC-LIFE-CURLER-VOLT", "KC-LIFE-CURLER-TEMP",
+        # 2026-09-07 수집. 부속서 15 는 기준치가 있어도 전부 실물 시험이라
+        # 값을 담지 않고 통과해야 할 시험 이름만 담는다.
+        "KC-SDOC15-KICKBOARD-PERF",
     }
 
 

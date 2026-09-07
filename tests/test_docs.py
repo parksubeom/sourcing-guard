@@ -155,6 +155,16 @@ def test_rule_book_cites_the_current_gazette():
             assert "제2022-220호" in basis, f"{rule['id']}: 공통기준 고시 번호 없음"
         elif rule["id"].startswith("KC-ANNEX"):
             assert "부속서" in basis, f"{rule['id']}: 부속서 근거 없음"
+        elif rule["id"].startswith("KC-SDOC"):
+            # 공급자적합성확인 기준 부속서. 2026-09-07 에 부속서 17(마스크)·
+            # 15(킥보드)를 수집했다. 이 고시는 IEC 채택본이 아니라 한국어로
+            # 쓰인 구체 요건이라 기준치가 숫자로 나온다.
+            assert "공급자적합성확인대상생활용품" in basis, (
+                f"{rule['id']}: 공급자적합성확인 고시 근거 없음 - {basis!r}"
+            )
+            assert "부속서" in rule.get("clause", ""), (
+                f"{rule['id']}: clause 에 부속서 번호가 없다 - {rule.get('clause')!r}"
+            )
         elif rule["id"].startswith(("KC-LIFE-", "KC-ELEC-")):
             # 생활용품·전기용품(전안법). 원문을 확인하면 부속서 번호까지
             # 특정되므로 근거가 "부속서 52(승차용 안전모)" 형태가 되고,

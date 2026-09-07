@@ -1416,5 +1416,244 @@ rules:
 #
 # ⚠ 실제와 어긋나면 검사가 깨진다(tests/test_docs.py). 룰을 승격할 때 여기도
 #   갱신할 것.
+
+  # ── 2026-09-07 수집: 공급자적합성확인 기준 부속서 17 (마스크) ──
+  #
+  # 표본 235건에 마스크·넥워머·페이스커버·두건이 **대상 4건** 있다. 우리가
+  # 원하는 형태가 정확히 여기 있다 - [표 1] 유해물질 안전요건에 기준치가
+  # 숫자로 적혀 있고 시험방법도 조항으로 지목돼 있다.
+  #
+  # ⚠ 전부 status: draft 다 (CLAUDE.md §5). verified_by 는 비워 둔다.
+  #
+  # ⚠ 부속서 서문이 적용 제외를 명시한다 - "식품의약품안전처 「의료기기법」,
+  #   「약사법」 및 고용노동부 「산업안전보건법」 등 타법에서 별도 관리되고
+  #   있는 품목은 적용대상에서 제외한다". 보건용(KF94)·산업용 방진 마스크는
+  #   우리 소관이 아니다. 별칭에 'KF'·'방진'·'의약외품' 을 넣지 않은 이유다.
+  #
+  # ⚠ 각 기준치에 원문 각주의 적용 조건을 condition 에 그대로 담았다.
+  #   "섬유(부직포 포함)에 한하여 적용" 같은 한정을 버리면 가죽 마스크에
+  #   틀린 기준을 말하게 된다 (R5).
+
+  - id: KC-SDOC17-HCHO
+    rule_type: substance
+    substance: "폼알데하이드"
+    aliases: [마스크, 넥워머, 페이스커버, 바라클라바, 목토시, 두건, 방한마스크, 자전거마스크, 쿨마스크, 멀티스카프]
+    applies_to: [household]
+    limit_value: 75
+    unit: mg/kg
+    clause: "공급자적합성확인 기준 부속서 17(방한용·패션용·스포츠용 마스크) 제1부 3.1 [표 1]"
+    condition: "75 mg/kg 이하. 각주 1 - 섬유(부직포 포함)에 한하여 적용한다"
+    test_method: "KS K ISO 14184-1"
+    legal_basis: 전기용품 및 생활용품 안전관리법 (공급자적합성확인대상생활용품)
+    source_url: https://www.law.go.kr/행정규칙/공급자적합성확인대상생활용품의안전기준
+    status: draft
+    verified_by: null
+    verified_at: null
+  - id: KC-SDOC17-ARYLAMINE
+    rule_type: substance
+    substance: "아릴아민"
+    aliases: [마스크, 넥워머, 페이스커버, 바라클라바, 목토시, 두건, 방한마스크, 자전거마스크, 쿨마스크, 멀티스카프]
+    applies_to: [household]
+    limit_value: 30
+    unit: mg/kg
+    clause: "공급자적합성확인 기준 부속서 17(방한용·패션용·스포츠용 마스크) 제1부 3.1 [표 1]"
+    condition: "각각 30 mg/kg 이하. 각주 2 - 염색한 섬유(부직포 포함)부분에만 적용하며 대상물질은 KS K 0147, KS K 0739에 따른다"
+    test_method: "KS K 0147, KS K 0739"
+    legal_basis: 전기용품 및 생활용품 안전관리법 (공급자적합성확인대상생활용품)
+    source_url: https://www.law.go.kr/행정규칙/공급자적합성확인대상생활용품의안전기준
+    status: draft
+    verified_by: null
+    verified_at: null
+  - id: KC-SDOC17-PH
+    rule_type: substance
+    substance: "pH"
+    aliases: [마스크, 넥워머, 페이스커버, 바라클라바, 목토시, 두건, 방한마스크, 자전거마스크, 쿨마스크, 멀티스카프]
+    applies_to: [household]
+    limit_value: null
+    unit: null
+    # 상·하한이 모두 있는 룰. 크기 비교(어느 쪽이 더 엄격한가)에 쓴다.
+    range_min: 4.0
+    range_max: 7.5
+    clause: "공급자적합성확인 기준 부속서 17(방한용·패션용·스포츠용 마스크) 제1부 3.1 [표 1]"
+    condition: "4.0 ~ 7.5. 각주 1 - 섬유(부직포 포함)에 한하여 적용한다"
+    test_method: "KS K ISO 3071"
+    legal_basis: 전기용품 및 생활용품 안전관리법 (공급자적합성확인대상생활용품)
+    source_url: https://www.law.go.kr/행정규칙/공급자적합성확인대상생활용품의안전기준
+    status: draft
+    verified_by: null
+    verified_at: null
+  - id: KC-SDOC17-FWA
+    rule_type: substance
+    # 기준치가 숫자가 아니라 '나타나지 말 것' 인 전면 금지형이다. limit_value 를 null 로 둔다.
+    substance: "형광증백제"
+    aliases: [마스크, 넥워머, 페이스커버, 바라클라바, 목토시, 두건, 방한마스크, 자전거마스크, 쿨마스크, 멀티스카프]
+    applies_to: [household]
+    limit_value: null
+    unit: null
+    clause: "공급자적합성확인 기준 부속서 17(방한용·패션용·스포츠용 마스크) 제1부 3.1 [표 1]"
+    condition: "형광이 나타나지 말 것. 각주 1 - 섬유(부직포 포함)에 한하여 적용한다"
+    test_method: "의약외품에 관한 기준 및 시험방법 [별표 2] 부직포 순도시험 중 형광증백제시험방법"
+    legal_basis: 전기용품 및 생활용품 안전관리법 (공급자적합성확인대상생활용품)
+    source_url: https://www.law.go.kr/행정규칙/공급자적합성확인대상생활용품의안전기준
+    status: draft
+    verified_by: null
+    verified_at: null
+  - id: KC-SDOC17-TBT
+    rule_type: substance
+    substance: "유기주석화합물(TBT)"
+    aliases: [마스크, 넥워머, 페이스커버, 바라클라바, 목토시, 두건, 방한마스크, 자전거마스크, 쿨마스크, 멀티스카프]
+    applies_to: [household]
+    limit_value: 1.0
+    unit: mg/kg
+    clause: "공급자적합성확인 기준 부속서 17(방한용·패션용·스포츠용 마스크) 제1부 3.1 [표 1]"
+    condition: "1.0 mg/kg 이하. 각주 3 - 섬유(부직포 포함)원단 및 가죽재질에 코팅, 프린팅 등이 되어있는 경우만 적용한다"
+    test_method: "KS K 0737"
+    legal_basis: 전기용품 및 생활용품 안전관리법 (공급자적합성확인대상생활용품)
+    source_url: https://www.law.go.kr/행정규칙/공급자적합성확인대상생활용품의안전기준
+    status: draft
+    verified_by: null
+    verified_at: null
+  - id: KC-SDOC17-ALLERGEN
+    rule_type: substance
+    substance: "알러지성 염료"
+    aliases: [마스크, 넥워머, 페이스커버, 바라클라바, 목토시, 두건, 방한마스크, 자전거마스크, 쿨마스크, 멀티스카프]
+    applies_to: [household]
+    limit_value: 50
+    unit: mg/kg
+    clause: "공급자적합성확인 기준 부속서 17(방한용·패션용·스포츠용 마스크) 제1부 3.1 [표 1]"
+    condition: "각각 50 mg/kg 이하. 각주 4 - 적용 조성섬유는 폴리에스터, 나일론, 아크릴, 아세테이트, 트리아세테이트, 염화비닐 섬유이며 염색한 섬유(부직포 포함)부분에 한하여 적용한다"
+    test_method: "KS K 0736"
+    legal_basis: 전기용품 및 생활용품 안전관리법 (공급자적합성확인대상생활용품)
+    source_url: https://www.law.go.kr/행정규칙/공급자적합성확인대상생활용품의안전기준
+    status: draft
+    verified_by: null
+    verified_at: null
+  - id: KC-SDOC17-DMFU
+    rule_type: substance
+    substance: "다이메틸푸마레이트"
+    aliases: [마스크, 넥워머, 페이스커버, 바라클라바, 목토시, 두건, 방한마스크, 자전거마스크, 쿨마스크, 멀티스카프]
+    applies_to: [household]
+    limit_value: 0.1
+    unit: mg/kg
+    clause: "공급자적합성확인 기준 부속서 17(방한용·패션용·스포츠용 마스크) 제1부 3.1 [표 1]"
+    condition: "0.1 mg/kg 이하. 각주 5 - 가죽과 모피 소재에 적용한다"
+    test_method: "ISO 16186"
+    legal_basis: 전기용품 및 생활용품 안전관리법 (공급자적합성확인대상생활용품)
+    source_url: https://www.law.go.kr/행정규칙/공급자적합성확인대상생활용품의안전기준
+    status: draft
+    verified_by: null
+    verified_at: null
+  - id: KC-SDOC17-PB
+    rule_type: substance
+    # ⚠ 같은 물질에 값이 둘이다 - 일반 100, 페인팅·표면코팅 90. 조건을 condition 에 그대로 남긴다.
+    substance: "총 납"
+    aliases: [마스크, 넥워머, 페이스커버, 바라클라바, 목토시, 두건, 방한마스크, 자전거마스크, 쿨마스크, 멀티스카프]
+    applies_to: [household]
+    limit_value: 100
+    unit: mg/kg
+    clause: "공급자적합성확인 기준 부속서 17(방한용·패션용·스포츠용 마스크) 제1부 3.1 [표 1]"
+    condition: "100 mg/kg 이하. 각주 6 - 금속 기질, 고분자 기질, 페인팅 및 유사코팅, 기타 재료(목재 등)부분에 적용하며 섬유(부직포 포함)에는 적용하지 않는다. 페인팅 및 표면코팅의 경우 90 mg/kg 이하로 적용한다"
+    test_method: "어린이제품 공통안전기준 부록 A(시료 준비) · 부록 B"
+    legal_basis: 전기용품 및 생활용품 안전관리법 (공급자적합성확인대상생활용품)
+    source_url: https://www.law.go.kr/행정규칙/공급자적합성확인대상생활용품의안전기준
+    status: draft
+    verified_by: null
+    verified_at: null
+  - id: KC-SDOC17-CD
+    rule_type: substance
+    substance: "총 카드뮴"
+    aliases: [마스크, 넥워머, 페이스커버, 바라클라바, 목토시, 두건, 방한마스크, 자전거마스크, 쿨마스크, 멀티스카프]
+    applies_to: [household]
+    limit_value: 75
+    unit: mg/kg
+    clause: "공급자적합성확인 기준 부속서 17(방한용·패션용·스포츠용 마스크) 제1부 3.1 [표 1]"
+    condition: "75 mg/kg 이하. 각주 6 - 금속 기질, 고분자 기질, 페인팅 및 유사코팅, 기타 재료(목재 등)부분에 적용하며 섬유(부직포 포함)에는 적용하지 않는다"
+    test_method: "어린이제품 공통안전기준 부록 A(시료 준비) · 부록 B"
+    legal_basis: 전기용품 및 생활용품 안전관리법 (공급자적합성확인대상생활용품)
+    source_url: https://www.law.go.kr/행정규칙/공급자적합성확인대상생활용품의안전기준
+    status: draft
+    verified_by: null
+    verified_at: null
+  - id: KC-SDOC17-PHT
+    rule_type: substance
+    # 세 물질의 **총 합** 이다. 각각이 아니다 - 원문 표가 세 칸을 묶어 한 값을 준다.
+    substance: "프탈레이트계 가소제(DEHP·DBP·BBP)"
+    aliases: [마스크, 넥워머, 페이스커버, 바라클라바, 목토시, 두건, 방한마스크, 자전거마스크, 쿨마스크, 멀티스카프]
+    applies_to: [household]
+    limit_value: 0.1
+    unit: "%"
+    clause: "공급자적합성확인 기준 부속서 17(방한용·패션용·스포츠용 마스크) 제1부 3.1 [표 1]"
+    condition: "총 합 0.1 % 이하. 각주 7 - 섬유 원단(부직포 포함)에 합성수지(합성고무 포함) 소재로 코팅 또는 프린팅 등의 가공 처리를 한 경우 및 합성수지 소재의 부자재에만 적용한다. 단, 금속 및 고분자 기질 위에 페인트 코팅된 경우는 적용대상에서 제외한다"
+    test_method: "어린이제품 공통안전기준 부록 C"
+    legal_basis: 전기용품 및 생활용품 안전관리법 (공급자적합성확인대상생활용품)
+    source_url: https://www.law.go.kr/행정규칙/공급자적합성확인대상생활용품의안전기준
+    status: draft
+    verified_by: null
+    verified_at: null
+  - id: KC-SDOC17-DMF
+    rule_type: substance
+    substance: "디메틸포름아미드(DMF)"
+    aliases: [마스크, 넥워머, 페이스커버, 바라클라바, 목토시, 두건, 방한마스크, 자전거마스크, 쿨마스크, 멀티스카프]
+    applies_to: [household]
+    limit_value: 5
+    unit: mg/kg
+    clause: "공급자적합성확인 기준 부속서 17(방한용·패션용·스포츠용 마스크) 제1부 3.1 [표 1]"
+    condition: "5 mg/kg 이하. 각주 8 - 부직포 및 폴리우레탄 등으로 구성된 안감, 중간층, 겉감에 대해 제조공정 중에 유기용제를 사용한 경우 적용한다"
+    test_method: "ISO/TS 16189"
+    legal_basis: 전기용품 및 생활용품 안전관리법 (공급자적합성확인대상생활용품)
+    source_url: https://www.law.go.kr/행정규칙/공급자적합성확인대상생활용품의안전기준
+    status: draft
+    verified_by: null
+    verified_at: null
+  - id: KC-SDOC17-DMAC
+    rule_type: substance
+    substance: "디메틸아세트아미드(DMAc)"
+    aliases: [마스크, 넥워머, 페이스커버, 바라클라바, 목토시, 두건, 방한마스크, 자전거마스크, 쿨마스크, 멀티스카프]
+    applies_to: [household]
+    limit_value: 5
+    unit: mg/kg
+    clause: "공급자적합성확인 기준 부속서 17(방한용·패션용·스포츠용 마스크) 제1부 3.1 [표 1]"
+    condition: "5 mg/kg 이하. 각주 8 - 부직포 및 폴리우레탄 등으로 구성된 안감, 중간층, 겉감에 대해 제조공정 중에 유기용제를 사용한 경우 적용한다"
+    test_method: "ISO/TS 16189"
+    legal_basis: 전기용품 및 생활용품 안전관리법 (공급자적합성확인대상생활용품)
+    source_url: https://www.law.go.kr/행정규칙/공급자적합성확인대상생활용품의안전기준
+    status: draft
+    verified_by: null
+    verified_at: null
+
+  # ── 2026-09-07 수집: 공급자적합성확인 기준 부속서 15 (킥보드) ──
+  #
+  # ⚠ **표본에 킥보드 본체가 0건이다.** 상품명에 '킥보드' 가 든 7건은 전부
+  #   부속품(컵홀더·후미등·이름표·방한장갑)이거나 무릎보호대·헬멧이다.
+  #   그래도 넣는 이유는 표에 '킥보드' 품목이 있고 우리가 이미 등급을 말하고
+  #   있어서다 - 실제 킥보드가 오면 그 등급 위에 요건이 붙는다.
+  #   **표본으로 이득을 측정할 수 없다는 것을 알고 넣는다.**
+  #
+  # ⚠ 부속서 15 는 기준치가 있어도 **전부 실물 시험 결과**다 - 바퀴 경도
+  #   70/65 이상, 브레이크 제동력 7mm, 도금 내식성 R·N 9.0 이상, 손잡이
+  #   10N 당김. 상세페이지로 확인할 수 없으므로 값을 룰로 담지 않고
+  #   **통과해야 할 시험 이름만** 담는다 (requirement_type: performance).
+  #
+  # ⚠ 적용범위가 좁다 - "근육의 힘으로 추진력을 얻는 킥보드" 이고 "연료
+  #   또는 전기에너지를 사용하여 작동되는 것, 좌석이 있는 것은 제외" 다.
+  #   전동킥보드는 이 부속서가 아니다.
+  - id: KC-SDOC15-KICKBOARD-PERF
+    rule_type: requirement
+    requirement_type: performance
+    substance: "킥보드 안전요건"
+    aliases: [킥보드, 킥보드-]
+    applies_to: [household]
+    limit_value: null
+    unit: null
+    test_items: [핸들시험, 발판시험, 주행시험, 바퀴 경도, 바퀴 부착강도, 충격강도, 낙하강도, 접는 장치의 안전성, 브레이크 제동력]
+    annex_no: "15"
+    clause: "공급자적합성확인 기준 부속서 15(킥보드) 5. 안전요구사항"
+    condition: "사용자가 근육의 힘으로 추진력을 얻는 킥보드에 적용한다. 연료 또는 전기에너지를 사용하여 작동되는 것, 좌석이 있는 것은 제외한다"
+    test_method: "부속서 15 6. 시험방법"
+    legal_basis: 전기용품 및 생활용품 안전관리법 (공급자적합성확인대상생활용품)
+    source_url: https://www.law.go.kr/행정규칙/공급자적합성확인대상생활용품의안전기준
+    status: draft
+    verified_by: null
+    verified_at: null
 coverage:
   categories: [children_toy, children_stationery, children_textile, household]
