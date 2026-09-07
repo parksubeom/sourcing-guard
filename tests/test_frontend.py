@@ -469,3 +469,48 @@ def test_empty_extraction_is_explained_as_an_input_problem(pages):
     assert 'class="input-note"' in index
     # "이렇게 읽었습니다" 블록이 비는 자리를 대신한다 — 그 앞에 와야 한다
     assert index.index("data.input_note") < index.index("readBlock(data.extracted)")
+
+
+def test_axes_are_rendered_from_the_server_not_recomputed():
+    """축 셋은 서버가 정한 상태를 그대로 그린다.
+
+    프론트가 다시 판정하면 "우리가 한 행위이지 상품의 상태가 아니다" 라는
+    §3.2 원칙이 조용히 무너진다 - grouped_findings·headline 을 서버가 내리는
+    것과 같은 이유다.
+    """
+    html = (Path(__file__).resolve().parents[1] / "sourcing_guard" / "static"
+            / "index.html").read_text(encoding="utf-8")
+    assert "data.axes" in html
+    # 프론트가 축 라벨을 자기가 만들면 안 된다.
+    for banned in ("조회함", "대조함", "이 품목군 미수록", "일치 있음"):
+        assert banned not in html, f"프론트가 축 라벨 '{banned}' 을 직접 쓰고 있다"
+
+
+def test_unknown_badge_agrees_with_the_subtitle():
+    """배지가 "모름" 인데 부제목이 "일부만 확인" 이면 둘이 다른 말을 한다.
+
+    우리는 인증·리콜을 실제로 조회했다. 안 한 것은 유해물질 수록뿐이다.
+    """
+    html = (Path(__file__).resolve().parents[1] / "sourcing_guard" / "static"
+            / "index.html").read_text(encoding="utf-8")
+    assert 'UNKNOWN:"일부 확인"' in html
+    assert 'UNKNOWN:"모름"' not in html
+
+
+def test_watch_cta_is_raised_on_unknown_screens():
+    """"모름" 화면에서 감시 버튼이 확인 항목 바로 뒤에 온다.
+
+    그 화면에서 셀러에게 줄 수 있는 확정적 가치가 감시 하나뿐이다 (기획서 §3.3).
+    유해물질 접기 아래 맨 끝에 두면 스크롤 밖으로 밀려 없는 것과 같아진다.
+
+    ⚠ 두 번 그리면 button id 가 겹쳐 이벤트가 한쪽에만 붙는다. 조건을 나눠
+      한 번만 그리는지 함께 잠근다.
+    """
+    html = (Path(__file__).resolve().parents[1] / "sourcing_guard" / "static"
+            / "index.html").read_text(encoding="utf-8")
+    assert 'if (sig === "UNKNOWN") html += ctaHtml;' in html
+    assert 'if (sig !== "UNKNOWN") html += ctaHtml;' in html
+    assert html.count('id="cta"') == 1
+    assert html.count('id="watch"') == 1
+    # UNKNOWN 도 GREEN 처럼 강조한다.
+    assert 'sig === "GREEN" || sig === "UNKNOWN"' in html

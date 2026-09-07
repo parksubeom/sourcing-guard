@@ -391,6 +391,7 @@ def score(
         extracted=extracted,
         input_note=_input_note(extracted),
         grouped_findings=_grouped_findings(findings),
+        axes=_axes(findings, recall_data_as_of),
         recall_data_as_of=recall_data_as_of,
     )
 
@@ -444,6 +445,66 @@ def _signal_for(facts: ProductFacts, kinds: set[FindingKind]) -> Signal:
         return Signal.GREEN
 
     return Signal.UNKNOWN
+
+
+def _axes(findings: list[Finding], recall_as_of: str | None) -> list[dict]:
+    """검사 축 셋의 상태. **우리가 한 행위**를 적는다.
+
+    종합 배지 하나로는 "무엇을 했고 무엇을 못 했는지" 가 안 보인다. 배지가
+    "모름" 인데 부제목이 "일부만 확인" 이면 둘이 다른 말을 한다.
+
+    ⚠ **"안전"·"이상 없음" 으로 쓰지 않는다** (기획서 §3.2 · CLAUDE.md §9).
+      "리콜 대조함" 이지 "리콜 없음" 이 아니다. 우리는 공표된 목록과 대조했을
+      뿐이고, 공표되지 않은 결함은 대조할 수 없다. ✓ 를 크게 쓰면 셀러가
+      초록불로 읽는데 그게 우리가 회색불을 택한 이유다.
+
+    ⚠ scorer 는 순수 함수다 - 주어진 findings 만 읽는다.
+    """
+    kinds = {f.kind for f in findings}
+    failed = {
+        str((f.detail or {}).get("scope") or "")
+        for f in findings
+        if f.kind is FindingKind.LOOKUP_FAILED
+    }
+
+    # ① 인증 조회
+    if "인증" in failed:
+        cert = ("조회 실패", False)
+    elif kinds & {
+        FindingKind.KC_VERIFIED, FindingKind.KC_NOT_FOUND, FindingKind.KC_UNDER_ACTION,
+        FindingKind.KC_REVOKED, FindingKind.KC_EXPIRED, FindingKind.KC_SUSPENDED,
+    }:
+        cert = ("조회함", True)
+    else:
+        cert = ("번호 없음", False)
+
+    # ② 리콜 대조
+    if "리콜" in failed:
+        recall = ("조회 실패", False)
+    elif kinds & {FindingKind.RECALL_MATCH, FindingKind.RECALL_WEAK_MATCH}:
+        recall = ("일치 있음", True)
+    elif FindingKind.RECALL_CLEAR in kinds:
+        recall = ("대조함", True)
+    else:
+        recall = ("대조 못 함", False)
+
+    # ③ 유해물질
+    if FindingKind.HAZARD_RULE_APPLIES in kinds:
+        hazard = ("수록됨", True)
+    else:
+        hazard = ("이 품목군 미수록", False)
+
+    as_of = ""
+    if recall[1] and recall_as_of and len(recall_as_of) == 8 and recall_as_of.isdigit():
+        as_of = f"{recall_as_of[:4]}-{recall_as_of[4:6]}-{recall_as_of[6:]} 공표분까지"
+
+    return [
+        {"key": "cert", "name": "인증 조회", "label": cert[0], "done": cert[1], "note": ""},
+        {"key": "recall", "name": "리콜 대조", "label": recall[0], "done": recall[1],
+         "note": as_of},
+        {"key": "hazard", "name": "유해물질", "label": hazard[0], "done": hazard[1],
+         "note": ""},
+    ]
 
 
 def _coverage_note(facts: ProductFacts, kinds: set[FindingKind]) -> str | None:

@@ -107,7 +107,9 @@
 
 
   var SIGNAL_LABEL = { GREEN:"확인된 문제 없음", AMBER:"확인 필요", RED:"확인 필요 (중대)", UNKNOWN:"판단 근거 부족" };
-  var SIGNAL_SHORT = { GREEN:"정상", AMBER:"주의", RED:"위험", UNKNOWN:"모름" };
+  // 주의: UNKNOWN 을 "모름" 이라 쓰면 부제목("일부만 확인")과 다른 말을 한다.
+  //   우리는 인증·리콜을 실제로 조회했다. 안 한 것은 유해물질 수록뿐이다.
+  var SIGNAL_SHORT = { GREEN:"정상", AMBER:"주의", RED:"위험", UNKNOWN:"일부 확인" };
 
   var $ = function (id) { return document.getElementById(id); };
   var pt = $("pt"), res = $("res"), resSec = $("res-sec"), skel = $("skel"),
@@ -454,6 +456,18 @@
               '<span class="meta"><strong>' + esc(head) + "</strong>" +
               "<span>" + esc(asOfLabel(data.recall_data_as_of)) + "</span></span></div>";
 
+    // 축 셋. 서버가 상태를 정해 내려준다 — 프론트가 다시 판정하면 §3.2 의
+    // "우리가 한 행위이지 상품의 상태가 아니다" 가 조용히 무너진다.
+    if ((data.axes || []).length) {
+      html += '<div class="axes">' + data.axes.map(function (a) {
+        return '<span class="ax' + (a.done ? " done" : "") + '">' +
+               '<span class="n">' + esc(a.name) + "</span>" +
+               '<span class="v">' + esc(a.label) + "</span>" +
+               (a.note ? '<span class="note">' + esc(a.note) + "</span>" : "") +
+               "</span>";
+      }).join("") + "</div>";
+    }
+
     if (data.extraction_note) html += '<p class="scope">' + esc(data.extraction_note) + "</p>";
     if (data.coverage_note) html += '<p class="scope">' + esc(data.coverage_note) + "</p>";
 
@@ -478,6 +492,31 @@
       html += '<ul class="findings">' + main.map(findingRow).join("") + "</ul>";
     }
 
+    // 감시 제안. 문구는 서버가 신호별로 내려준다 — 프론트가 다시 쓰면 GREEN 의
+    // "조회 시점 기준" 같은 6.1 한계가 조용히 사라진다.
+    //
+    // GREEN 과 UNKNOWN 둘 다 강조한다. GREEN 은 셀러가 '안전' 으로 읽을 위험이
+    // 크고, UNKNOWN 은 유일하게 남는 확정적 가치가 감시이기 때문이다 -
+    // 유해물질이 미수록인 상품에서 "지금 괜찮음" 은 못 보증해도 "나중에 리콜
+    // 공표되면 알림" 은 보증할 수 있다 (기획서 3.3).
+    var ws = data.watch_suggestion;
+    var canWatch = ws ? ws.can_watch : true;
+    var reason = (ws && ws.reason) ||
+      "검사는 이 시점의 판단입니다. 저장해두면 새로 공표되는 리콜과 매일 대조합니다.";
+    var lead = canWatch && (sig === "GREEN" || sig === "UNKNOWN") ? " lead" : "";
+    var ctaHtml = '<div class="watch-cta' + (canWatch ? lead : " off") + '" id="cta">' +
+            "<p>" + esc(reason) + "</p>" +
+            (canWatch
+              ? '<button class="btn-t" id="watch" type="button">이 상품 감시하기</button>'
+              : "") +
+            "</div>";
+
+    // 주의: UNKNOWN 이면 감시 버튼을 **확인 항목 바로 뒤**로 올린다. 유해물질
+    // 접기 아래 맨 끝에 두면 "모름" 화면에서 출구가 스크롤 밖으로 밀린다 -
+    // 그 화면에서 셀러에게 줄 수 있는 확정적 가치가 감시 하나뿐인데
+    // 안 보이면 없는 것과 같다.
+    if (sig === "UNKNOWN") html += ctaHtml;
+
     if (rules.length) {
       html += '<details class="rules"><summary>' +
               '<svg class="chev" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
@@ -487,20 +526,8 @@
               rules.map(ruleRow).join("") + "</ul></details>";
     }
 
-    // 감시 제안. 문구는 서버가 신호별로 내려준다 — 프론트가 다시 쓰면 GREEN 의
-    // "조회 시점 기준" 같은 §6.1 한계가 조용히 사라진다. GREEN 은 가장 약한
-    // 신호라 강조한다: 셀러가 '안전'으로 읽으면 우리가 가장 크게 빗나간다.
-    var ws = data.watch_suggestion;
-    var canWatch = ws ? ws.can_watch : true;
-    var reason = (ws && ws.reason) ||
-      "검사는 이 시점의 판단입니다. 저장해두면 새로 공표되는 리콜과 매일 대조합니다.";
-    var lead = canWatch && sig === "GREEN" ? " lead" : "";
-    html += '<div class="watch-cta' + (canWatch ? lead : " off") + '" id="cta">' +
-            "<p>" + esc(reason) + "</p>" +
-            (canWatch
-              ? '<button class="btn-t" id="watch" type="button">이 상품 감시하기</button>'
-              : "") +
-            "</div>";
+    // UNKNOWN 은 위에서 이미 그렸다 - 두 번 그리면 버튼 id 가 겹친다.
+    if (sig !== "UNKNOWN") html += ctaHtml;
 
     if (data.disclaimer) html += '<p class="disclaimer">' + esc(data.disclaimer) + "</p>";
     html += "</div>";

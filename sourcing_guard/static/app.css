@@ -179,6 +179,20 @@ textarea:focus{border-color:var(--primary-50); outline:2px solid var(--border-fo
   .verdict{flex-direction:column; align-items:flex-start; gap:var(--s3); padding:var(--s5)}
   .verdict .badge{width:100%}
 }
+/* 축 셋. 종합 배지 하나로는 "무엇을 했고 무엇을 못 했는지" 가 안 보인다.
+   주의: done 을 초록 체크로 크게 그리지 않는다 - 셀러가 "안전" 으로 읽는다.
+      점 하나와 글자만 쓴다. 축 이름은 우리가 한 행위이지 상품 상태가 아니다. */
+.axes{display:flex; flex-wrap:wrap; gap:var(--s3) var(--s6);
+  padding:var(--s4) var(--s6); border-bottom:1px solid var(--border-default);
+  background:var(--bg-subtle)}
+.axes .ax{display:flex; align-items:baseline; gap:var(--s2); font-size:14px; min-width:0}
+.axes .ax .n{color:var(--fg-3)}
+.axes .ax .v{color:var(--fg-2); font-weight:600}
+.axes .ax .v::before{content:"·"; margin-right:var(--s2); color:var(--gray-60)}
+.axes .ax.done .v::before{color:var(--fg-2)}
+.axes .ax .note{color:var(--fg-3); font-size:12px; font-variant-numeric:tabular-nums}
+@media (max-width:520px){ .axes{flex-direction:column; gap:var(--s2)} }
+
 .scope{margin:0; padding:var(--s4) var(--s6); background:var(--bg-subtle); border-bottom:1px solid var(--border-default); font-size:15px; color:var(--fg-2)}
 
 /* 읽은 값이 하나도 없을 때. 판정이 아니라 입력 문제라 "이렇게 읽었습니다"
