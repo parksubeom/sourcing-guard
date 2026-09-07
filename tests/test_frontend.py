@@ -482,7 +482,7 @@ def test_axes_are_rendered_from_the_server_not_recomputed():
             / "index.html").read_text(encoding="utf-8")
     assert "data.axes" in html
     # 프론트가 축 라벨을 자기가 만들면 안 된다.
-    for banned in ("조회함", "대조함", "이 품목군 미수록", "일치 있음"):
+    for banned in ("조회함", "대조함", "이 품목 미수록", "일치 있음"):
         assert banned not in html, f"프론트가 축 라벨 '{banned}' 을 직접 쓰고 있다"
 
 

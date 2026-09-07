@@ -41,6 +41,7 @@ rules:
   #       어린이제품 중 제품의 도장면(코팅 포함) 또는 합성수지제, 종이제에 적용
   # 시험방법 4.1.1: KS G ISO 8124-3 (완구의 안전성-제3부: 특정 원소의 용출)
   - id: KC-COMMON-3.1.1-SB
+    rule_type: substance
     substance: "안티모니"
     aliases: ["Sb", "antimony", "안티몬", "锑"]
     applies_to: [children_toy, children_stationery, children_textile]
@@ -57,6 +58,7 @@ rules:
     verified_at: "2026-09-02"
 
   - id: KC-COMMON-3.1.1-AS
+    rule_type: substance
     substance: "비소"
     aliases: ["As", "arsenic", "砷"]
     applies_to: [children_toy, children_stationery, children_textile]
@@ -73,6 +75,7 @@ rules:
     verified_at: "2026-09-02"
 
   - id: KC-COMMON-3.1.1-BA
+    rule_type: substance
     substance: "바륨"
     aliases: ["Ba", "barium", "钡"]
     applies_to: [children_toy, children_stationery, children_textile]
@@ -89,6 +92,7 @@ rules:
     verified_at: "2026-09-02"
 
   - id: KC-COMMON-3.1.1-CD
+    rule_type: substance
     substance: "카드뮴"
     aliases: ["Cd", "cadmium", "镉"]
     applies_to: [children_toy, children_stationery, children_textile]
@@ -105,6 +109,7 @@ rules:
     verified_at: "2026-09-02"
 
   - id: KC-COMMON-3.1.1-CR
+    rule_type: substance
     substance: "크로뮴"
     aliases: ["Cr", "chromium", "크롬", "铬"]
     applies_to: [children_toy, children_stationery, children_textile]
@@ -121,6 +126,7 @@ rules:
     verified_at: "2026-09-02"
 
   - id: KC-COMMON-3.1.1-PB
+    rule_type: substance
     substance: "납(용출)"
     aliases: ["Pb", "lead", "铅"]
     applies_to: [children_toy, children_stationery, children_textile]
@@ -141,6 +147,7 @@ rules:
       기획서 문구를 고치거나, 300 의 출처(다른 부속서/구버전/해외기준)를 확인해야 한다.
 
   - id: KC-COMMON-3.1.1-HG
+    rule_type: substance
     substance: "수은"
     aliases: ["Hg", "mercury", "汞"]
     applies_to: [children_toy, children_stationery, children_textile]
@@ -157,6 +164,7 @@ rules:
     verified_at: "2026-09-02"
 
   - id: KC-COMMON-3.1.1-SE
+    rule_type: substance
     substance: "셀레늄"
     aliases: ["Se", "selenium", "硒"]
     applies_to: [children_toy, children_stationery, children_textile]
@@ -175,6 +183,7 @@ rules:
   # --- 3.1.2 유해원소 함유량 (원문 p.3) -----------------------------------
   # 시험방법 4.1.2: 부록 A 로 시험시료 준비 후 부록 B
   - id: KC-COMMON-3.1.2-PB
+    rule_type: substance
     substance: "총 납(함유량)"
     aliases: ["Pb", "lead", "총 납", "铅"]
     applies_to: [children_toy, children_stationery, children_textile]
@@ -202,6 +211,7 @@ rules:
     verified_at: "2026-09-02"
 
   - id: KC-COMMON-3.1.2-CD
+    rule_type: substance
     substance: "총 카드뮴(함유량)"
     aliases: ["Cd", "cadmium", "총 카드뮴", "镉"]
     applies_to: [children_toy, children_stationery, children_textile]
@@ -222,6 +232,7 @@ rules:
   # 6종의 "총 합" 이 0.1 % 이하. 물질별 개별 한도가 아니다.
   # 시험방법 4.1.3: 부록 C (원문 p.8). 분석기법은 부록 본문에 있고 미확보다.
   - id: KC-COMMON-3.1.3-PHT
+    rule_type: substance
     substance: "프탈레이트계 가소제"
     aliases:
       ["phthalate", "프탈레이트", "가소제", "邻苯二甲酸酯",
@@ -260,6 +271,7 @@ rules:
   # --- 3.1.4 니트로사민류 (원문 p.4) --------------------------------------
   # 한도가 적용대상에 따라 두 값으로 갈린다. 원문 각주 1)/2) 참조.
   - id: KC-COMMON-3.1.4-NITROSAMINE
+    rule_type: substance
     substance: "니트로사민류"
     aliases: ["nitrosamine", "니트로사민", "N-니트로소"]
     applies_to: [children_toy, children_stationery, children_textile]
@@ -292,6 +304,7 @@ rules:
     verified_at: "2026-09-02"
 
   - id: KC-COMMON-3.1.4-NITROSATABLE
+    rule_type: substance
     substance: "니트로사민류 생성 가능물질"
     aliases: ["N-nitrosatable", "니트로사민 생성"]
     applies_to: [children_toy, children_stationery, children_textile]
@@ -318,6 +331,7 @@ rules:
   # --- 3.1.5 폼알데하이드, 아릴아민, pH (원문 p.4) ------------------------
   # 셋 다 "개별안전기준이 없는 섬유제품" 으로 한정된다.
   - id: KC-COMMON-3.1.5-HCHO
+    rule_type: substance
     substance: "폼알데하이드"
     aliases: ["formaldehyde", "포름알데히드", "포름알데하이드", "甲醛"]
     applies_to: [children_textile]
@@ -334,6 +348,7 @@ rules:
     verified_at: "2026-09-02"
 
   - id: KC-COMMON-3.1.5-ARYLAMINE
+    rule_type: substance
     substance: "아릴아민"
     aliases: ["arylamine", "아릴아민", "아조염료"]
     applies_to: [children_textile]
@@ -351,6 +366,7 @@ rules:
     verified_at: "2026-09-02"
 
   - id: KC-COMMON-3.1.5-PH
+    rule_type: substance
     substance: "pH"
     aliases: ["pH", "산도"]
     applies_to: [children_textile]
@@ -373,6 +389,7 @@ rules:
 
   # --- 3.1.6 사용금지 물질 (원문 p.4) -------------------------------------
   - id: KC-COMMON-3.1.6-ASBESTOS
+    rule_type: substance
     substance: "석면"
     aliases: ["asbestos", "석면", "石棉"]
     applies_to: [children_toy, children_stationery, children_textile]
@@ -409,6 +426,7 @@ rules:
   #     단 면적 5% 이하 또는 전체 중량 1% 미만이면 이 기준을 적용한다.
   # ==========================================================================
   - id: KC-ANNEX1-TEXTILE-HCHO
+    rule_type: substance
     substance: 폼알데하이드
     aliases: [formaldehyde, 포름알데히드, 폼알데히드, 甲醛]
     applies_to: [children_textile]
@@ -428,6 +446,7 @@ rules:
       3.75배 엄격하다. 공통기준을 적용하면 느슨한 값을 보여주게 된다.
 
   - id: KC-ANNEX1-TEXTILE-DBT
+    rule_type: substance
     substance: 유기주석화합물 DBT
     aliases: [DBT, dibutyltin, 디부틸주석, 유기주석]
     applies_to: [children_textile]
@@ -445,6 +464,7 @@ rules:
     note: 공통안전기준에 없는 물질이다.
 
   - id: KC-ANNEX1-TEXTILE-TBT
+    rule_type: substance
     substance: 유기주석화합물 TBT
     aliases: [TBT, tributyltin, 트리부틸주석, 유기주석]
     applies_to: [children_textile]
@@ -462,6 +482,7 @@ rules:
     note: 공통안전기준에 없는 물질이다.
 
   - id: KC-ANNEX1-TEXTILE-ARYLAMINE
+    rule_type: substance
     substance: 아릴아민
     aliases: [arylamine, 아릴아민, 芳香胺]
     applies_to: [children_textile]
@@ -480,6 +501,7 @@ rules:
     note: 공통안전기준 3.1.5 와 같은 값(각각 30)이다.
 
   - id: KC-ANNEX1-TEXTILE-PHT
+    rule_type: substance
     substance: 프탈레이트계 가소제
     aliases: [phthalate, 프탈레이트, 가소제, DEHP, DBP, BBP, DINP, DIDP, DnOP, DIBP, PVC]
     applies_to: [children_textile]
@@ -498,6 +520,7 @@ rules:
     note: 대상물질과 기준치는 공통안전기준 3.1.3(7종 총합 0.1%)을 그대로 따른다.
 
   - id: KC-ANNEX1-TEXTILE-FLAME
+    rule_type: substance
     substance: 방염제
     aliases: [방염제, TDBPP, PentaBDE, OctaBDE, flame retardant]
     applies_to: [children_textile]
@@ -518,6 +541,7 @@ rules:
       공통안전기준에 없는 항목이다.
 
   - id: KC-ANNEX1-TEXTILE-PB
+    rule_type: substance
     substance: 총 납 함유량
     aliases: [Pb, lead, 총납, 铅]
     applies_to: [children_textile]
@@ -535,6 +559,7 @@ rules:
     note: 공통안전기준 3.1.2 와 같은 값(100)이다. 적용 부위 단서가 더 구체적이다.
 
   - id: KC-ANNEX1-TEXTILE-CD
+    rule_type: substance
     substance: 총 카드뮴 함유량
     aliases: [Cd, cadmium, 총카드뮴, 镉]
     applies_to: [children_textile]
@@ -552,6 +577,7 @@ rules:
     note: 공통안전기준 3.1.2 와 같은 값(75)이다.
 
   - id: KC-ANNEX1-TEXTILE-AZODYE
+    rule_type: substance
     substance: 알러지성 염료
     aliases: [알러지성 염료, allergenic dye, 알레르기성 염료]
     applies_to: [children_textile]
@@ -570,6 +596,7 @@ rules:
     note: 공통안전기준에 없는 물질이다.
 
   - id: KC-ANNEX1-TEXTILE-PH
+    rule_type: substance
     substance: pH
     aliases: [pH, 산도]
     applies_to: [children_textile]
@@ -590,6 +617,7 @@ rules:
     note: 공통안전기준 3.1.5 와 같은 범위(4.0~7.5)다.
 
   - id: KC-ANNEX1-TEXTILE-NI
+    rule_type: substance
     substance: 니켈 용출량
     aliases: [Ni, nickel, 니켈, 镍]
     applies_to: [children_textile]
@@ -609,6 +637,7 @@ rules:
       단위면적·주당 용출량이다.
 
   - id: KC-ANNEX1-TEXTILE-NP
+    rule_type: substance
     substance: 노닐페놀
     aliases: [NP, NPEO, nonylphenol, 노닐페놀]
     applies_to: [children_textile]
@@ -639,6 +668,7 @@ rules:
   #   - 향료·급성경구독성·유전독성은 크레용·크레파스·지우개에만 걸린다
   # ==========================================================================
   - id: KC-ANNEX11-SCHOOL-HCHO-INK
+    rule_type: substance
     substance: 폼알데하이드(잉크류)
     aliases: [formaldehyde, 포름알데히드, 폼알데히드, 마킹펜, 잉크]
     applies_to: [children_stationery]
@@ -656,6 +686,7 @@ rules:
     note: 공통안전기준 3.1.5 의 75 는 섬유제품 전용이라 학용품 잉크에는 이 값이 쓰인다.
 
   - id: KC-ANNEX11-SCHOOL-HCHO-GLUE
+    rule_type: substance
     substance: 폼알데하이드(문구용 풀)
     aliases: [formaldehyde, 포름알데히드, 폼알데히드, 문구용 풀, 접착제]
     applies_to: [children_stationery]
@@ -675,6 +706,7 @@ rules:
       모두 다르므로 한 룰로 합치면 안 된다.
 
   - id: KC-ANNEX11-SCHOOL-PH
+    rule_type: substance
     substance: pH(액상풀)
     aliases: [pH, 산도, 액상풀]
     applies_to: [children_stationery]
@@ -714,6 +746,7 @@ rules:
   # ==========================================================================
 
   - id: KC-ANNEX6-TOY-MIG-AL
+    rule_type: substance
     substance: 알루미늄(완구 용출)
     aliases: ["Al", "aluminium", "알루미늄", "铝"]
     applies_to: [children_toy]
@@ -731,6 +764,7 @@ rules:
     verified_at: null
 
   - id: KC-ANNEX6-TOY-MIG-SB
+    rule_type: substance
     substance: 안티모니(완구 용출)
     aliases: ["Sb", "antimony", "안티몬"]
     applies_to: [children_toy]
@@ -748,6 +782,7 @@ rules:
     verified_at: null
 
   - id: KC-ANNEX6-TOY-MIG-AS
+    rule_type: substance
     substance: 비소(완구 용출)
     aliases: ["As", "arsenic", "비소", "砷"]
     applies_to: [children_toy]
@@ -765,6 +800,7 @@ rules:
     verified_at: null
 
   - id: KC-ANNEX6-TOY-MIG-BA
+    rule_type: substance
     substance: 바륨(완구 용출)
     aliases: ["Ba", "barium", "바륨", "钡"]
     applies_to: [children_toy]
@@ -782,6 +818,7 @@ rules:
     verified_at: null
 
   - id: KC-ANNEX6-TOY-MIG-CD
+    rule_type: substance
     substance: 카드뮴(완구 용출)
     aliases: ["Cd", "cadmium", "카드뮴", "镉"]
     applies_to: [children_toy]
@@ -799,6 +836,7 @@ rules:
     verified_at: null
 
   - id: KC-ANNEX6-TOY-MIG-CR3
+    rule_type: substance
     substance: 3가 크로뮴(완구 용출)
     aliases: ["Cr(III)", "크로뮴", "크롬"]
     applies_to: [children_toy]
@@ -816,6 +854,7 @@ rules:
     verified_at: null
 
   - id: KC-ANNEX6-TOY-MIG-CR6
+    rule_type: substance
     substance: 6가 크로뮴(완구 용출)
     aliases: ["Cr(VI)", "6가크롬", "육가크롬"]
     applies_to: [children_toy]
@@ -833,6 +872,7 @@ rules:
     verified_at: null
 
   - id: KC-ANNEX6-TOY-MIG-PB
+    rule_type: substance
     substance: 납(완구 용출)
     aliases: ["Pb", "lead", "납", "铅"]
     applies_to: [children_toy]
@@ -850,6 +890,7 @@ rules:
     verified_at: null
 
   - id: KC-ANNEX6-TOY-MIG-HG
+    rule_type: substance
     substance: 수은(완구 용출)
     aliases: ["Hg", "mercury", "수은", "汞"]
     applies_to: [children_toy]
@@ -867,6 +908,7 @@ rules:
     verified_at: null
 
   - id: KC-ANNEX6-TOY-MIG-SE
+    rule_type: substance
     substance: 셀레늄(완구 용출)
     aliases: ["Se", "selenium", "셀레늄", "硒"]
     applies_to: [children_toy]
@@ -884,6 +926,7 @@ rules:
     verified_at: null
 
   - id: KC-ANNEX6-TOY-MIG-B
+    rule_type: substance
     substance: 붕소(완구 용출)
     aliases: ["B", "boron", "붕소", "硼"]
     applies_to: [children_toy]
@@ -901,6 +944,7 @@ rules:
     verified_at: null
 
   - id: KC-ANNEX6-TOY-MIG-CO
+    rule_type: substance
     substance: 코발트(완구 용출)
     aliases: ["Co", "cobalt", "코발트", "钴"]
     applies_to: [children_toy]
@@ -918,6 +962,7 @@ rules:
     verified_at: null
 
   - id: KC-ANNEX6-TOY-MIG-CU
+    rule_type: substance
     substance: 구리(완구 용출)
     aliases: ["Cu", "copper", "구리", "铜"]
     applies_to: [children_toy]
@@ -935,6 +980,7 @@ rules:
     verified_at: null
 
   - id: KC-ANNEX6-TOY-MIG-MN
+    rule_type: substance
     substance: 망간(완구 용출)
     aliases: ["Mn", "manganese", "망간", "锰"]
     applies_to: [children_toy]
@@ -952,6 +998,7 @@ rules:
     verified_at: null
 
   - id: KC-ANNEX6-TOY-MIG-NI
+    rule_type: substance
     substance: 니켈(완구 용출)
     aliases: ["Ni", "nickel", "니켈", "镍"]
     applies_to: [children_toy]
@@ -969,6 +1016,7 @@ rules:
     verified_at: null
 
   - id: KC-ANNEX6-TOY-MIG-SR
+    rule_type: substance
     substance: 스트론튬(완구 용출)
     aliases: ["Sr", "strontium", "스트론튬", "锶"]
     applies_to: [children_toy]
@@ -986,6 +1034,7 @@ rules:
     verified_at: null
 
   - id: KC-ANNEX6-TOY-MIG-SN
+    rule_type: substance
     substance: 주석(완구 용출)
     aliases: ["Sn", "tin", "주석", "锡"]
     applies_to: [children_toy]
@@ -1003,6 +1052,7 @@ rules:
     verified_at: null
 
   - id: KC-ANNEX6-TOY-MIG-ORGSN
+    rule_type: substance
     substance: 유기주석 화합물(완구 용출)
     aliases: ["organic tin", "유기주석", "organotin"]
     applies_to: [children_toy]
@@ -1020,6 +1070,7 @@ rules:
     verified_at: null
 
   - id: KC-ANNEX6-TOY-MIG-ZN
+    rule_type: substance
     substance: 아연(완구 용출)
     aliases: ["Zn", "zinc", "아연", "锌"]
     applies_to: [children_toy]
@@ -1037,6 +1088,7 @@ rules:
     verified_at: null
 
   - id: KC-ANNEX6-TOY-PB-TOTAL
+    rule_type: substance
     substance: 총 납(완구)
     aliases: ["Pb", "lead", "총납", "铅"]
     applies_to: [children_toy]
@@ -1055,6 +1107,7 @@ rules:
     note: 공통안전기준 3.1.2 와 같은 값(100 / 코팅 90)이다.
 
   - id: KC-ANNEX6-TOY-CD-TOTAL
+    rule_type: substance
     substance: 총 카드뮴(완구)
     aliases: ["Cd", "cadmium", "총카드뮴", "镉"]
     applies_to: [children_toy]
@@ -1072,6 +1125,7 @@ rules:
     note: 공통안전기준 3.1.2 와 같은 값(75)이다.
 
   - id: KC-ANNEX6-TOY-NI-MIG
+    rule_type: substance
     substance: 니켈 용출량(완구)
     aliases: ["Ni", "nickel", "니켈", "镍"]
     applies_to: [children_toy]
@@ -1089,6 +1143,7 @@ rules:
     note: 부속서 1(유아용 섬유제품)의 니켈 용출량과 같은 값·단위다.
 
   - id: KC-ANNEX6-TOY-PHT
+    rule_type: substance
     substance: 프탈레이트계 가소제(완구)
     aliases: [phthalate, 프탈레이트, 가소제, DEHP, DBP, BBP, DINP, DIDP, DnOP, DIBP, PVC]
     applies_to: [children_toy]
@@ -1109,6 +1164,7 @@ rules:
       6종)와 달리 현행 공통기준과 일치한다.
 
   - id: KC-ANNEX6-TOY-NITROSAMINE
+    rule_type: substance
     substance: 니트로사민류(완구)
     aliases: [nitrosamine, 니트로사민, N-니트로소, 亚硝胺]
     applies_to: [children_toy]
@@ -1130,6 +1186,7 @@ rules:
       제4부에 있다. 값(0.01/0.05, 생성가능물질 0.1/1.0)은 공통기준과 같다.
 
   - id: KC-ANNEX6-TOY-NITROSATABLE
+    rule_type: substance
     substance: 니트로사민류 생성 가능물질(완구)
     aliases: [nitrosatable, 니트로사민 생성, N-nitrosatable]
     applies_to: [children_toy]
@@ -1166,6 +1223,7 @@ rules:
   #   채우고 승격한다. 지금은 구조 증명용 draft 다.
   # ==========================================================================
   - id: KC-LIFE-WATERPLAY-PERF
+    rule_type: requirement
     requirement_type: performance
     substance: 공기주입 물놀이기구 안전요건
     aliases: [물놀이기구, 튜브, 수영링, 에어매트, 워터슬라이드, inflatable]
@@ -1189,6 +1247,7 @@ rules:
     verified_at: null
 
   - id: KC-LIFE-HELMET-PERF
+    rule_type: requirement
     requirement_type: performance
     substance: 승차용 안전모 안전요건
     aliases: [안전모, 헬멧, helmet, 이륜차 안전모, 오토바이 헬멧, 승차용 안전모]
@@ -1220,6 +1279,7 @@ rules:
       ⚠ 부속서 53(운동용 안전모)은 별개 기준이다. 자전거·스포츠용은 53 이다.
 
   - id: KC-LIFE-LASER-PERF
+    rule_type: requirement
     requirement_type: performance
     substance: 휴대용 레이저용품 안전요건
     aliases: [레이저, laser, 레이저포인터, 레이저 거리측정기, 휴대용 레이저]
@@ -1248,6 +1308,7 @@ rules:
       등급 분류라 limit_value 로 담지 않는다.
 
   - id: KC-ELEC-LED-PERF
+    rule_type: requirement
     requirement_type: performance
     substance: LED등기구 안전요건
     aliases: [LED, 등기구, 조명, 램프, LED조명, luminaire]
@@ -1274,6 +1335,7 @@ rules:
   # 그래서 performance 가 아니라 substance 스키마로 담는다 - 구분 기준은
   # "값 하나로 떨어지는가" 이지 "물질인가" 가 아니다.
   - id: KC-LIFE-CURLER-VOLT
+    rule_type: requirement
     substance: 속눈썹 열 성형기 정격전압
     aliases: [속눈썹, 뷰러, 열성형기, eyelash curler, 속눈썹 고데기]
     applies_to: [household]
@@ -1296,6 +1358,7 @@ rules:
       공급자적합성확인 부속서 9 4.2 '기기의 정격전압은 DC 24 V를 넘지 않아야 한다' 원문 대조
 
   - id: KC-LIFE-CURLER-TEMP
+    rule_type: requirement
     substance: 속눈썹 열 성형기 이상온도
     aliases: [속눈썹, 뷰러, 열성형기, eyelash curler, 속눈썹 고데기]
     applies_to: [household]
@@ -1323,5 +1386,15 @@ rules:
       인증번호가 없는 것이 정상이다(R3-b). 부적합률 최상위 품목인데 등급은
       가장 낮다 - 셀러가 "번호가 없으니 괜찮다" 로 읽으면 안 되는 대표 사례다.
 
+# 어느 품목군에 verified 룰이 있는지 적어 둔 것. **서술용이다.**
+#
+# ⚠ covers() 는 이 선언을 보지 않는다. "이 상품에 적용되는 verified 룰이
+#   있는가" 를 본다 (verifier.RuleBook.covers). 선언만 보면 룰 없는 품목이
+#   초록불로 갈 수 있어 R3 위반이 된다 - household 에 verified 룰이 4건
+#   있지만 그 룰은 안전모·레이저·속눈썹기 셋에만 걸린다. 우산에는 걸리는
+#   룰이 없고, 그 사실이 화면에 회색으로 남아야 한다.
+#
+# ⚠ 실제와 어긋나면 검사가 깨진다(tests/test_docs.py). 룰을 승격할 때 여기도
+#   갱신할 것.
 coverage:
-  categories: [children_toy, children_stationery, children_textile]
+  categories: [children_toy, children_stationery, children_textile, household]

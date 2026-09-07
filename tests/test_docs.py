@@ -339,56 +339,37 @@ def test_the_proposal_numbers_match_the_code():
     assert f"{MAX_ROWS}줄" in doc, MAX_ROWS
 
 
-def test_the_household_coverage_gap_is_recorded_as_intentional():
-    """`coverage` 에 household 가 없는 것이 의도임을 문서가 말하는지 잠근다.
+def test_the_coverage_unit_change_is_recorded_in_the_rules_doc():
+    """커버리지 단위가 품목군 → 품목으로 바뀐 것을 CLAUDE.md §5 가 말하는지 잠근다.
 
-    ⚠ 이건 고치라는 검사가 아니다. household 는 verified 룰이 4건 있는데도
-      `covers()` 가 False 라, 아무 설명이 없으면 다음 사람이 "verified 룰이
-      있는데 왜 안 뜨지" 로 시간을 쓴다.
+    ⚠ 이 검사는 예전에 "household 를 coverage 에 넣지 않는 것이 의도다" 를
+      잠갔다. 2026-09-07 에 단위를 좁혀 상태가 바뀌었다 - 이제 household 의
+      verified 룰 4건이 실제로 쓰이고, 룰 없는 품목은 계속 회색이다.
 
-    ⚠ **`coverage` 에 household 를 한 줄 추가하는 것은 R3 위반이다.**
-      생활용품 전체가 덮인다고 말하게 되는데 실제 룰은 셋뿐이라, 우산처럼
-      룰이 없는 품목이 GREEN 으로 갈 수 있다. 고치려면 커버리지 단위를
-      품목군 → 품목으로 좁혀야 한다(작업로그의 (가)안).
-
-    이 검사가 깨지면 상태가 바뀐 것이다 - 문서의 (가)/(나) 항목을 먼저 읽을 것.
+    ⚠ 정본은 CLAUDE.md §5 다. coverage 를 건드릴 사람이 읽는 문서가 거기다.
     """
-    import yaml as _yaml
-
-    from sourcing_guard.models import ItemCategory
+    from sourcing_guard.models import ItemCategory, ProductFacts
     from sourcing_guard.verifier import RuleBook
 
     root = Path(__file__).resolve().parents[1]
-    data = _yaml.safe_load(
-        (root / "sourcing_guard" / "data" / "hazard_rules.yaml").read_text(encoding="utf-8")
-    )
-    declared = set(data["coverage"]["categories"])
-    verified = [r for r in data["rules"] if r.get("status") == "verified"]
-    household = [r for r in verified if "household" in (r.get("applies_to") or [])]
-
-    # 현재 상태: verified 룰은 있는데 선언에는 없다.
-    assert household, "household verified 룰이 사라졌다"
-    assert "household" not in declared
-
-    book = RuleBook()
-    assert book.covers(ItemCategory.CHILDREN_TOY) is True
-    assert book.covers(ItemCategory.HOUSEHOLD) is False
-
-    # ⚠ 정본은 **CLAUDE.md §5** 다. coverage 를 건드릴 사람이 읽는 문서가
-    #   거기이고, 날짜 붙은 작업로그는 계속 늘어나 아카이브되면 이 검사가
-    #   깨진다. 핸드오프는 한 줄 요약 + 포인터만 갖는다.
     rules_doc = (root / "CLAUDE.md").read_text(encoding="utf-8")
-    assert "coverage` 에 `household` 를 한 줄 추가하지 마라" in rules_doc
-    for rule_id in ("KC-LIFE-HELMET-PERF", "KC-LIFE-LASER-PERF",
-                    "KC-LIFE-CURLER-VOLT", "KC-LIFE-CURLER-TEMP"):
-        assert rule_id in rules_doc, rule_id
-    assert "R3 위반" in rules_doc
-    # 승격이 선언을 자동으로 넓히지 않는다는 것까지 적혀 있어야 한다 -
-    # draft 42건 승격이 다음 작업이라 여기서 함께 오해하기 쉽다.
-    assert "승격해도 `coverage` 는 자동으로 넓히지" in rules_doc
 
-    handoff = (root / "00_프로젝트_핸드오프.md").read_text(encoding="utf-8")
-    assert "CLAUDE.md §5" in handoff
+    assert "커버리지 단위는 **품목**이다" in rules_doc
+    assert "coverage.categories` 는 **서술용으로만 남겼다.**" in rules_doc
+    assert "R3 위반" in rules_doc
+    # GREEN 조건을 건드리지 않았다는 사실이 남아야 한다.
+    assert "GREEN 조건은 건드리지 않았다" in rules_doc
+    # rule_type 갈래도 같은 절에 적혀 있어야 한다.
+    assert "rule_type` 으로 나눈다" in rules_doc
+    for rule_id in ("KC-LIFE-HELMET-PERF",):
+        assert rule_id in rules_doc or "안전모" in rules_doc
+
+    # 문서가 말하는 대로 코드가 동작하는가.
+    book = RuleBook()
+    assert book.covers(ProductFacts(product_name="승차용 안전모",
+                                    category=ItemCategory.HOUSEHOLD))
+    assert not book.covers(ProductFacts(product_name="우산 양산",
+                                        category=ItemCategory.HOUSEHOLD))
 
 
 def test_the_submission_draft_uses_only_the_audited_rate():
