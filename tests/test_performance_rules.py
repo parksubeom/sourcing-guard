@@ -104,3 +104,81 @@ def test_annex_number_implies_a_cited_clause():
         assert rule["annex_no"] in rule["clause"], (
             f"{rule['id']}: annex_no({rule['annex_no']})와 clause 가 어긋난다"
         )
+
+
+# ---------------------------------------------------------------------------
+# rule_type — 물질과 요건은 셀러에게 다른 일을 시킨다
+# ---------------------------------------------------------------------------
+
+
+def test_every_rule_declares_its_type():
+    """rule_type 이 빠진 룰이 있으면 문장이 조용히 물질 쪽으로 간다.
+
+    substance 필드에 "승차용 안전모 안전요건"·"속눈썹 열 성형기 정격전압" 같은
+    비물질이 섞여 있었고, 그걸 "'…정격전압' 기준이 적용됩니다" 로 내보냈다.
+    """
+    import yaml
+    from pathlib import Path
+
+    import sourcing_guard
+
+    path = Path(sourcing_guard.__file__).parent / "data" / "hazard_rules.yaml"
+    doc = yaml.safe_load(path.read_text(encoding="utf-8"))
+    missing = [r["id"] for r in doc["rules"] if "rule_type" not in r]
+    assert not missing, missing
+    bad = [r["id"] for r in doc["rules"]
+           if r["rule_type"] not in ("substance", "requirement")]
+    assert not bad, bad
+
+    # 요건 룰 6건 - 안전모·레이저·물놀이·LED·속눈썹 2
+    req = {r["id"] for r in doc["rules"] if r["rule_type"] == "requirement"}
+    assert req == {
+        "KC-LIFE-HELMET-PERF", "KC-LIFE-LASER-PERF", "KC-LIFE-WATERPLAY-PERF",
+        "KC-ELEC-LED-PERF", "KC-LIFE-CURLER-VOLT", "KC-LIFE-CURLER-TEMP",
+    }
+
+
+def test_requirement_says_must_be_within_not_applies():
+    """요건은 "충족 여부" 다. "…이하여야 합니다" 로 쓴다.
+
+    물질은 "납 100mg/kg 기준이 적용됩니다" - 초과 가능성이라 시험성적서를
+    봐야 안다. 요건은 "정격전압 24V 이하여야 합니다" - 규격표로 확인된다.
+    두 문장이 셀러에게 시키는 일이 다르다.
+    """
+    from unittest.mock import MagicMock
+
+    from sourcing_guard.models import ItemCategory, ProductFacts
+    from sourcing_guard.verifier import RuleBook, verify
+
+    kats = MagicMock()
+    kats.lookup_certification_cached.return_value = MagicMock(record=None)
+    facts = ProductFacts(product_name="속눈썹 열 성형기 뷰러",
+                         category=ItemCategory.HOUSEHOLD)
+    said = [f.statement_ko for f in verify(facts, kats, RuleBook())
+            if f.kind.value == "hazard_rule_applies"]
+    assert said, "요건 룰이 하나도 안 붙었다"
+    volt = next(s for s in said if "정격전압" in s)
+    assert "24V(DC) 이하여야 합니다" in volt
+    # 원문 문장과 확인방법을 함께 낸다 - 값만으로는 무엇을 어떻게 확인하는지 모른다.
+    assert "원문 기준은" in volt
+    assert "확인방법:" in volt
+    # 물질 문장의 어투를 쓰지 않는다.
+    assert "기준이 적용됩니다" not in volt
+
+
+def test_substance_keeps_the_exceedance_wording():
+    """물질은 "적용됩니다" 를 유지한다 - 값을 우리가 확인해 준 것이 아니다."""
+    from unittest.mock import MagicMock
+
+    from sourcing_guard.models import ItemCategory, ProductFacts
+    from sourcing_guard.verifier import RuleBook, verify
+
+    kats = MagicMock()
+    kats.lookup_certification_cached.return_value = MagicMock(record=None)
+    facts = ProductFacts(product_name="블록", category=ItemCategory.CHILDREN_TOY)
+    said = [f.statement_ko for f in verify(facts, kats, RuleBook())
+            if f.kind.value == "hazard_rule_applies"]
+    lead = next(s for s in said if "납(용출)" in s)
+    assert "기준 (90mg/kg)이 적용됩니다" in lead or "기준(90mg/kg)이 적용됩니다" in lead \
+        or "공통안전기준 (90mg/kg)이 적용됩니다" in lead
+    assert "이하여야 합니다" not in lead

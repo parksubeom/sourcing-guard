@@ -654,4 +654,4 @@ def test_hazard_axis_says_coverage_not_safety():
     on = {a["key"]: a for a in _axes([f(FindingKind.HAZARD_RULE_APPLIES, Signal.UNKNOWN)], None)}
     off = {a["key"]: a for a in _axes([f(FindingKind.COVERAGE_GAP, Signal.UNKNOWN)], None)}
     assert on["hazard"]["label"] == "수록됨"
-    assert off["hazard"]["label"] == "이 품목군 미수록"
+    assert off["hazard"]["label"] == "이 품목 미수록"

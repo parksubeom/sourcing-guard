@@ -144,7 +144,7 @@ _UNKNOWN_HEADLINE_FIRST: list[tuple[FindingKind, str]] = [
 _UNKNOWN_HEADLINE: list[tuple[FindingKind, str]] = [
     (
         FindingKind.COVERAGE_GAP,
-        "일부만 확인 — 인증·리콜은 대조했으나, 이 품목군의 유해물질 기준은 아직 "
+        "일부만 확인 — 인증·리콜은 대조했으나, 이 품목의 유해물질 기준은 아직 "
         "수록되지 않았습니다. 확인된 범위는 아래를 보세요.",
     ),
     # 조회 실패는 맨 뒤다. 축 하나가 빠진 것이지 품목 판단 자체를 못 한 것이
@@ -182,7 +182,7 @@ def _absence_expected_headline(kinds: set[FindingKind], grade: str) -> str:
     else:
         recall = ""
     gap = (
-        " 이 품목군의 유해물질 기준은 아직 수록되지 않았습니다."
+        " 이 품목의 유해물질 기준은 아직 수록되지 않았습니다."
         if FindingKind.COVERAGE_GAP in kinds
         else ""
     )
@@ -492,7 +492,7 @@ def _axes(findings: list[Finding], recall_as_of: str | None) -> list[dict]:
     if FindingKind.HAZARD_RULE_APPLIES in kinds:
         hazard = ("수록됨", True)
     else:
-        hazard = ("이 품목군 미수록", False)
+        hazard = ("이 품목 미수록", False)
 
     as_of = ""
     if recall[1] and recall_as_of and len(recall_as_of) == 8 and recall_as_of.isdigit():
@@ -518,7 +518,7 @@ def _coverage_note(facts: ProductFacts, kinds: set[FindingKind]) -> str | None:
         return "품목군을 특정하지 못해 적용 기준을 확정할 수 없습니다."
     if FindingKind.COVERAGE_GAP in kinds:
         return (
-            f"현재 규칙 DB는 이 품목군({facts.category.value})의 유해물질 기준을 "
+            f"현재 규칙 DB는 이 품목(품목군 {facts.category.value})의 유해물질 기준을 "
             "아직 수록하지 않았습니다. 인증·리콜 조회 결과만 반영되었습니다."
         )
     if facts.category not in _REGULATED:
@@ -527,7 +527,7 @@ def _coverage_note(facts: ProductFacts, kinds: set[FindingKind]) -> str | None:
         # 초록불은 "안 걸린다"는 보증이 아니다 (기획서 §6.1). 우리는 상세페이지
         # 텍스트를 읽고 단속은 실물을 수거해 시험한다. 그 간극을 화면이 말해야 한다.
         return (
-            "이 품목군에는 유해물질 기준이 적용됩니다. 실제 함유량은 시험성적서로만 "
+            "이 품목에는 유해물질 기준이 적용됩니다. 실제 함유량은 시험성적서로만 "
             "확인되며, 인증번호 도용·상표권·수입요건은 확인 대상이 아닙니다."
         )
     return None

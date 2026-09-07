@@ -141,12 +141,55 @@ class HazardRule:
     #
     # 그래서 값 대신 **어떤 시험을 통과해야 하는지**를 담는다. 화면에서 하는
     # 일은 유해물질과 같다 - "이걸 확인하라" 는 안내다.
+    # 갈래를 나눈다. 화면 문구가 달라진다.
+    #
+    #   substance    물질 · 기준치 · 단위            "납 100mg/kg 기준이 적용됩니다"
+    #   requirement  요건명 · 기준치 · 단위 · 확인방법  "정격전압 24V 이하여야 합니다"
+    #
+    # ⚠ 두 문장은 셀러에게 다른 일을 시킨다 - 앞은 **초과 가능성**이라 시험
+    #   성적서를 봐야 하고, 뒤는 **충족 여부**라 규격표로 확인된다.
+    #   substance 필드에 "승차용 안전모 안전요건"·"속눈썹 열 성형기 정격전압"
+    #   같은 비물질이 섞여 있어 한 문장으로 내보내고 있었다.
+    #
+    # ⚠ requirement_type 과 다르다. 저쪽은 "값이 없는 시험 절차 규격인가"
+    #   (performance)를 가리고, 이쪽은 "물질인가 요건인가" 를 가린다.
+    #   속눈썹 룰 2건은 rule_type=requirement 이면서 기준치가 있다.
+    rule_type: str = "substance"          # substance | requirement
     requirement_type: str = "substance"   # substance | performance
     test_items: tuple[str, ...] = ()      # 충격흡수성, 관통성 ...
     annex_no: str | None = None           # 부속서 번호
     # 정부 조사에서 이 품목이 어떻게 나왔는지. 비율만 두면 표본 8개짜리가
     # 통계처럼 읽히므로 표본을 반드시 함께 담는다 (test_failure_rate_honesty).
     failure_rate: dict | None = None
+    # 요건 룰의 원문 조건과 확인방법. 화면이 "무엇을 어떻게 확인하나" 를
+    # 말하려면 값만으로는 안 된다.
+    condition: str | None = None
+    test_method: str | None = None
+
+
+def _requirement_statement(rule: "HazardRule") -> str:
+    """요건 룰의 화면 문구. 기준치가 있을 때 쓴다.
+
+    물질 문장과 시키는 일이 다르다.
+
+      substance    "납 100mg/kg 기준이 적용됩니다"      초과 가능성 - 시험성적서
+      requirement  "정격전압 24V(DC) 이하여야 합니다"    충족 여부 - 규격표
+
+    ⚠ 요건명에 품목명이 이미 들어 있다("속눈썹 열 성형기 정격전압"). 문장에서
+      품목을 다시 말하면 같은 사실을 두 번 말하게 된다 (test_no_repeated_facts).
+    """
+    if rule.limit_value is not None:
+        value = f"{rule.limit_value:g}{rule.unit or ''}"
+        parts = [f"'{rule.substance}' 은 {value} 이하여야 합니다."]
+    else:
+        parts = [f"'{rule.substance}' 요건이 적용됩니다."]
+    if rule.condition:
+        tail = rule.condition.rstrip(". ")
+        parts.append(f"원문 기준은 \"{tail}\" 입니다.")
+    if rule.test_method:
+        parts.append(f"확인방법: {rule.test_method}.")
+    parts.append("공급처에 규격표 또는 시험성적서를 요구하세요.")
+    return " ".join(parts)
 
 
 def _performance_statement(rule: "HazardRule") -> str:
@@ -223,6 +266,7 @@ class RuleBook:
                     id=r["id"],
                     substance=r["substance"],
                     aliases=tuple(r.get("aliases", [])),
+                    rule_type=r.get("rule_type", "substance"),
                     applies_to=tuple(r.get("applies_to", [])),
                     limit_value=r.get("limit_value"),
                     unit=r.get("unit"),
@@ -234,6 +278,8 @@ class RuleBook:
                     test_items=tuple(r.get("test_items", [])),
                     annex_no=r.get("annex_no"),
                     failure_rate=r.get("failure_rate"),
+                    condition=r.get("condition"),
+                    test_method=r.get("test_method"),
                 )
             )
 
@@ -279,12 +325,48 @@ class RuleBook:
 
         return [r for r in applicable if r.id not in dropped]
 
-    def covers(self, cat: ItemCategory) -> bool:
-        """Declared coverage is not enough: it must be backed by verified rules.
+    def applying_to(self, facts: ProductFacts) -> list[HazardRule]:
+        """이 **상품**에 실제로 적용되는 verified 룰.
 
-        Otherwise an empty rule book would silently produce GREEN (violates R3).
+        커버리지 단위를 품목군에서 품목으로 좁힌 자리다. 예전에는 품목군이
+        선언돼 있으면 그 품목군의 룰을 전부 붙였는데, 그러면 두 방향으로 틀린다.
+
+          선언 없으면   verified 룰이 있어도 안 쓰인다. household 의 안전모·
+                        레이저·속눈썹기 룰 4건이 그렇게 죽어 있었다.
+          선언 있으면   룰 없는 품목이 "커버된다" 가 된다. 우산에 걸리는 룰이
+                        없는데 초록불로 갈 수 있다 - **R3 위반이다.**
+
+        갈래가 둘이다.
+
+          substance   공통안전기준이다. 스스로 "만 13세 이하 어린이가 사용하는
+                      물품과 그 부분품·부속품에 공통 적용" 이라 적으므로 품목군
+                      전체에 걸린다. 품목을 가리지 않는다.
+          requirement 품목별 부속서다. 그 품목이어야 적용된다 - 승차용 안전모
+                      부속서 52 가 우산에 걸릴 이유가 없다. aliases 로 가린다.
+
+        ⚠ GREEN 조건은 건드리지 않는다. 초록불은 인증·리콜 두 축의 적극적
+          증거로만 나오고, 이 함수는 유해물질 축의 수록 여부만 답한다.
         """
-        return cat.value in self.covered and bool(self.for_category(cat))
+        hay = " ".join(
+            [facts.product_name or ""] + list(facts.materials)
+            + list(facts.substances_mentioned)
+        ).lower()
+        out: list[HazardRule] = []
+        for rule in self.for_category(facts.category):
+            if rule.rule_type == "requirement" or rule.requirement_type == "performance":
+                names = [rule.substance, *rule.aliases]
+                if not any(a.lower() in hay for a in names if a):
+                    continue
+            out.append(rule)
+        return out
+
+    def covers(self, facts: ProductFacts) -> bool:
+        """이 상품에 적용되는 verified 룰이 있는가.
+
+        ⚠ 선언(coverage.categories)을 보지 않는다. 선언만 보면 룰 없는 품목이
+          조용히 GREEN 으로 간다 (R3). 선언은 서술용으로만 남겼다.
+        """
+        return bool(self.applying_to(facts))
 
 
 _LOOKUP_FAILED_SOURCE = "https://www.safetykorea.kr/"
@@ -1113,12 +1195,14 @@ def verify(
     # --- (c) hazard rules ------------------------------------------------
     if age is AgeScope.DECLARED_NOT_CHILD and facts.category in CHILDREN_CATEGORIES:
         pass  # 표기상 대상이 아니므로 어린이제품 기준을 적용하지 않는다.
-    elif not rules.covers(facts.category):
+    elif not rules.covers(facts):
         findings.append(
             Finding(
                 kind=FindingKind.COVERAGE_GAP,
                 signal=Signal.UNKNOWN,
-                statement_ko="이 품목군의 유해물질 기준은 아직 규칙 DB에 수록되지 않았습니다.",
+                # 단위가 품목군에서 품목으로 좁아졌다 - "이 품목군은" 이라고 쓰면
+                # 같은 품목군의 다른 품목에 룰이 있는데도 없다고 말하게 된다.
+                statement_ko="이 품목의 유해물질 기준은 아직 규칙 DB에 수록되지 않았습니다.",
                 source_label="규칙 DB 커버리지",
                 source_url="https://www.safetykorea.kr/policy/targetsSafetyCheck3",
                 checked_at=today,
@@ -1126,7 +1210,7 @@ def verify(
         )
     else:
         haystack = " ".join(facts.materials + facts.substances_mentioned).lower()
-        for rule in rules.for_category(facts.category):
+        for rule in rules.applying_to(facts):
             # 지금 규칙 DB 에는 공통안전기준만 들어 있다(17건 전부). 품목별
             # 부속서 - 완구 6 · 학용품 11 · 유아용 섬유제품 1 - 가 같은 물질에
             # 더 엄격한 값을 정하는 경우가 있어서, 공통기준 값을 최종 적용값처럼
@@ -1134,7 +1218,23 @@ def verify(
             # 가 아니라 "틀렸다" 라서, 부속서를 수록할 때까지 그 한계를 문장에
             # 적어둔다. 값을 지어내지 않고 단정만 걷어내는 것이다 (R5·§1).
             if rule.requirement_type == "performance":
+                # 값이 없는 시험 절차 규격이다 - 통과해야 할 시험 이름만 낸다.
                 statement = _performance_statement(rule)
+            elif rule.rule_type == "requirement":
+                # 요건이고 기준치가 있다 - "충족 여부" 를 말한다.
+                findings.append(
+                    Finding(
+                        kind=FindingKind.HAZARD_RULE_APPLIES,
+                        signal=Signal.UNKNOWN,
+                        statement_ko=_requirement_statement(rule),
+                        source_label=rule.legal_basis,
+                        source_url=rule.source_url,
+                        legal_basis=rule.legal_basis,
+                        detail={"rule_id": rule.id, "rule_type": "requirement"},
+                        checked_at=today,
+                    )
+                )
+                continue
                 findings.append(
                     Finding(
                         kind=FindingKind.HAZARD_RULE_APPLIES,
@@ -1157,13 +1257,13 @@ def verify(
             limit = f" ({rule.limit_value}{rule.unit})" if rule.limit_value else ""
             if "공통안전기준" in (rule.legal_basis or ""):
                 statement = (
-                    f"이 품목군에는 '{rule.substance}' 공통안전기준{limit}이 적용됩니다. "
+                    f"이 품목에는 '{rule.substance}' 공통안전기준{limit}이 적용됩니다. "
                     "품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, "
                     "시험성적서로 확인이 필요합니다."
                 )
             else:
                 statement = (
-                    f"이 품목군에는 '{rule.substance}' 기준{limit}이 적용됩니다. "
+                    f"이 품목에는 '{rule.substance}' 기준{limit}이 적용됩니다. "
                     "시험성적서로 확인이 필요합니다."
                 )
             findings.append(

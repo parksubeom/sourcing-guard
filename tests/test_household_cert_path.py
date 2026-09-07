@@ -129,15 +129,43 @@ def test_the_two_sets_stay_disjoint():
 
 
 # --- 승격했다고 커버리지를 선언하지는 않는다 -------------------------------
-def test_household_is_not_declared_covered_yet():
-    """생활용품 규칙 4건을 승격했지만 coverage 에 넣지 않는다.
+def test_household_coverage_is_decided_per_product_not_per_category():
+    """생활용품 룰 4건은 승차용 안전모·레이저·속눈썹기 세 품목뿐이다.
 
-    승격한 것은 승차용 안전모·휴대용 레이저용품·속눈썹 열 성형기 세 품목뿐이다.
-    그런데 applies_to 가 [household] 로 광범위해서, coverage 에 household 를
-    넣으면 우산·가구·섬유·합성수지 등 나머지 생활용품에도 COVERAGE_GAP 이
-    사라진다 — "이 품목군의 유해물질 기준을 다 봤다" 는 잘못된 안심이 된다.
+    ⚠ 예전에는 이 검사가 "coverage 에 household 를 넣지 않는다" 를 잠갔다.
+      선언에 넣으면 우산·가구·섬유에도 COVERAGE_GAP 이 사라져 "이 품목군을 다
+      봤다" 는 잘못된 안심이 되기 때문이었다. 그런데 넣지 않으면 verified 룰
+      4건이 아예 안 쓰였다 - 두 방향으로 틀린 상태였다.
 
-    부속서가 74번대까지 있으니, 주요 품목이 채워질 때까지는 선언하지 않는다.
+    2026-09-07 에 **단위를 품목으로 좁혔다.** covers() 는 선언을 보지 않고
+    "이 상품에 적용되는 verified 룰이 있는가" 를 본다.
+    """
+    from sourcing_guard.models import ItemCategory, ProductFacts
+    from sourcing_guard.verifier import RuleBook
+
+    book = RuleBook()
+
+    def covers(name: str, cat: ItemCategory = ItemCategory.HOUSEHOLD) -> bool:
+        return book.covers(ProductFacts(product_name=name, category=cat))
+
+    # 룰이 있는 품목은 커버된다 - 4건이 이제 실제로 쓰인다.
+    assert covers("승차용 안전모 오토바이 헬멧")
+    assert covers("속눈썹 열 성형기 뷰러")
+
+    # 룰이 없는 품목은 회색으로 남는다. 그게 맞다 (R3).
+    assert not covers("우산 양산 자동우산")
+    assert not covers("수납가구 서랍장")
+    assert not covers("전기주전자 1.8L", ItemCategory.ELECTRICAL)
+
+    # 공통안전기준은 품목을 가리지 않는다 - 스스로 공통 적용이라 적는다.
+    assert covers("블록", ItemCategory.CHILDREN_TOY)
+
+
+def test_coverage_declaration_matches_reality():
+    """coverage.categories 는 서술용이다. 실제와 어긋나면 조용히 오해를 남긴다.
+
+    게이트에는 쓰지 않지만, 어긋난 채 두면 다음 사람이 "household 는 미수록"
+    으로 읽는다. verified 룰이 있는 품목군과 같은지 잠근다.
     """
     import yaml
     from pathlib import Path
@@ -146,8 +174,12 @@ def test_household_is_not_declared_covered_yet():
 
     path = Path(sourcing_guard.__file__).parent / "data" / "hazard_rules.yaml"
     doc = yaml.safe_load(path.read_text(encoding="utf-8"))
-    assert "household" not in doc["coverage"]["categories"]
-    assert "electrical" not in doc["coverage"]["categories"]
+    declared = set(doc["coverage"]["categories"])
+    actual = {
+        c for r in doc["rules"] if r.get("status") == "verified"
+        for c in r.get("applies_to", [])
+    }
+    assert declared == actual, (sorted(declared), sorted(actual))
 
 
 def test_promoted_household_rules_name_the_annex_they_came_from():
