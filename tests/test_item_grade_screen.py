@@ -313,3 +313,44 @@ def test_opening_the_gate_does_not_demand_a_certificate():
                          category=ItemCategory.UNCLASSIFIED)
     kinds = [x.kind.value for x in verify(facts, kats, RuleBook())]
     assert "kc_missing_but_required" not in kinds
+
+
+def test_a_child_marker_alone_yields_neither_a_grade_nor_the_catch_all():
+    """'초등학생 책가방' 화면에 실제로 무엇이 남는지 사실로 적어 둔다.
+
+    ⚠ ALIASES_IF_NO_CHILD_MARKER 를 만들 때 "품목을 안 붙여도 어린이제품
+      포괄 규정이 받는다" 고 적었는데 **틀렸다.** catch-all 은
+      age is CHILD_PRODUCT 를 요구하고, 그 값은 페이지가 대상연령을
+      표기했을 때만 채워진다. '초등학생' 은 용도 설명이라 추출이
+      target_age 로 옮기지 않는다 - verifier 주석이 "UNKNOWN 에는 안
+      붙인다" 라고 이미 못박아 둔 의도된 동작이다.
+
+    그래서 이 검사는 "고쳐야 할 결함" 이 아니라 **현재 동작의 기록**이다.
+    바꾸려면 표지어를 연령 표기로 승격시켜야 하고, 그건 우리가
+    "어린이제품이다" 를 판정하는 쪽으로 한 걸음 가는 일이라 별도 결정이다.
+    """
+    from unittest.mock import MagicMock
+
+    from sourcing_guard.models import FindingKind, ItemCategory, ProductFacts
+    from sourcing_guard.verifier import RuleBook, verify
+
+    kats = MagicMock()
+    kats.lookup_certification_cached.return_value = MagicMock(record=None)
+    facts = ProductFacts(
+        product_name="EVERYGOOD 학생용 대용량 책가방 백팩 초등학생 선물 추천",
+        category=ItemCategory.UNCLASSIFIED,
+        target_age=None,
+    )
+    kinds = [f.kind for f in verify(facts, kats, RuleBook())]
+
+    assert FindingKind.ITEM_GRADE_MATCHED not in kinds
+    assert FindingKind.CHILD_CATCH_ALL not in kinds
+    # 남는 것은 확인 요청이다 - 셀러가 대상연령을 채우면 그때 갈린다.
+    assert FindingKind.INFO_REQUEST in kinds
+
+    # 대상연령이 표기되면 포괄 규정이 받는다.
+    facts_aged = facts.model_copy(
+        update={"target_age": "만 7세 이상", "category": ItemCategory.CHILDREN_TEXTILE}
+    )
+    kinds_aged = [f.kind for f in verify(facts_aged, kats, RuleBook())]
+    assert FindingKind.CHILD_CATCH_ALL in kinds_aged
