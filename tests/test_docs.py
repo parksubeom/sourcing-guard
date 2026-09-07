@@ -343,7 +343,15 @@ def test_the_proposal_numbers_match_the_code():
     b_vague = len([n for n in matched if n in vague])
     b_ok = len(matched) - b_wrong - b_vague
     b_pct = round(b_ok / len(target) * 100, 1)
-    assert f"정답     {b_ok}건 ({b_pct}%) · 애매 {b_vague} · 오답 {b_wrong}" in doc, (b_ok, b_pct)
+    # ⚠ 정렬 공백은 자릿수에 따라 달라진다 - 숫자가 세 자리가 되면 한 칸
+    #   줄어든다. 표 정렬을 지키려고 문서 쪽을 억지로 맞추지 말고 여기서
+    #   공백을 접어 비교한다.
+    def _flat(t: str) -> str:
+        return " ".join(t.split())
+
+    assert _flat(f"정답 {b_ok}건 ({b_pct}%) · 애매 {b_vague} · 오답 {b_wrong}") in _flat(
+        doc
+    ), (b_ok, b_pct)
 
     # 단건 경로 - 발표 숫자다. 문서에 적힌 값이 원자료와 맞는지 본다.
     single = {
@@ -354,7 +362,7 @@ def test_the_proposal_numbers_match_the_code():
     }
     assert single, "단건 원자료가 비었다"
     assert "단건 경로 · 대상 135 중" in doc
-    assert "정답    100건 (74.1%)" in doc
+    assert _flat("정답 105건 (77.8%)") in _flat(doc)
     assert '화면에는 "비대상입니다"를 출력하지 않습니다' in doc
 
     # ⚠ 오부착률은 **실측한 값만** 적는다. 2026-09-07 까지 이 자리에 40.9% 가
