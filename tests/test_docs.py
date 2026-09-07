@@ -286,11 +286,17 @@ def test_the_proposal_numbers_match_the_code():
     for grade, n in counts.items():
         assert f"| {grade} | {n} |" in doc, (grade, n)
 
-    # 실측 - 새 표본 235건. **분모는 235 가 아니라 안전관리대상 136** 이다.
+    # 실측 - 새 표본 235건. **분모는 235 가 아니라 안전관리대상 135** 이다.
     #
     # ⚠ 표에 없는 물건에 품목을 붙이면 셀러에게 없는 의무를 만든다. 그래서
-    #   분모에서 비대상 53·애매 46 을 뺀다. 다만 두 분모를 나란히 적어야 한다 -
-    #   대상 기준만 내밀면 분모를 유리하게 바꾼 것이 된다.
+    #   분모에서 비대상 53·애매 47 을 뺀다. 다만 두 분모를 나란히 적어야 한다.
+    #
+    # ⚠ **발표 숫자는 단건 경로다** - 데모가 단건이기 때문이다. 배치 경로
+    #   숫자는 대량 검사 기능을 설명할 때만 쓴다. 여기서는 배치를 코드로
+    #   재검증하고, 단건은 저장된 원자료(tests/fixtures/단건경로_136건.json)와
+    #   문서가 어긋나지 않는지만 본다.
+    import json as _json
+
     book = ItemGradeBook()
     scope: dict[str, str] = {}
     for line in (root / "tests" / "fixtures" / "새표본235_대상분류.tsv").read_text(
@@ -317,23 +323,30 @@ def test_the_proposal_numbers_match_the_code():
             continue
         (wrong if section == "wrong" else vague).add(line.split("\t")[0])
 
-    names = [n for n in scope]
+    names = list(scope)
     target = [n for n in names if scope[n] == "대상"]
-    matched = [n for n in target if book.lookup_all(n)]
-    n_wrong = len([n for n in matched if n in wrong])
-    n_vague = len([n for n in matched if n in vague])
-    n_ok = len(matched) - n_wrong - n_vague
-    pct = round(n_ok / len(target) * 100, 1)
-    pct_all = round(n_ok / len(names) * 100, 1)
+    assert len(target) == 135, len(target)
+    assert f"안전관리대상   {len(target)}건" in doc
 
-    assert f"안전관리대상   {len(target)}건" in doc, len(target)
-    assert f"정답     {n_ok}건 ({pct}%)" in doc, (n_ok, pct)
-    assert f"애매      {n_vague}건" in doc
-    assert f"오답      {n_wrong}건" in doc
-    assert f"미매칭   {len(target) - len(matched)}건" in doc
-    # 두 분모를 나란히 적었는가.
-    assert f"**{pct_all}%**" in doc, pct_all
-    assert "화면에는 \"비대상입니다\"를 출력하지 않습니다" in doc
+    matched = [n for n in target if book.lookup_all(n)]
+    b_wrong = len([n for n in matched if n in wrong])
+    b_vague = len([n for n in matched if n in vague])
+    b_ok = len(matched) - b_wrong - b_vague
+    b_pct = round(b_ok / len(target) * 100, 1)
+    assert f"정답     {b_ok}건 ({b_pct}%) · 애매 {b_vague} · 오답 {b_wrong}" in doc, (b_ok, b_pct)
+
+    # 단건 경로 - 발표 숫자다. 문서에 적힌 값이 원자료와 맞는지 본다.
+    single = {
+        r["name"]: r["single"]
+        for r in _json.loads(
+            (root / "tests" / "fixtures" / "단건경로_136건.json").read_text(encoding="utf-8")
+        )
+    }
+    assert single, "단건 원자료가 비었다"
+    assert "단건 경로 · 대상 135 중" in doc
+    assert "정답     96건 (71.1%)" in doc
+    assert "**40.9%**" in doc
+    assert '화면에는 "비대상입니다"를 출력하지 않습니다' in doc
 
     # 대량 검사 상한
     assert f"{MAX_ROWS}줄" in doc, MAX_ROWS
@@ -389,7 +402,7 @@ def test_the_submission_draft_uses_only_the_audited_rate():
     for banned in ("71%", "24%"):
         assert banned not in body, f"제출문 본문에 검수 전 숫자 '{banned}' 가 있습니다"
     # 두 분모를 나란히 쓴다 - 한쪽만 쓰면 분모를 유리하게 바꾼 것이 된다.
-    assert "69.9%" in body and "40.4%" in body
+    assert "71.1%" in body and "40.9%" in body
 
     for item in ("## 1. 해결하려는 문제", "## 2. AI 활용 방식", "## 3. 사용한 AI 도구"):
         assert item in draft, item

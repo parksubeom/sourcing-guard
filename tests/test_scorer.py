@@ -714,3 +714,49 @@ def test_scorer_never_reads_the_clock_itself():
         [f(FindingKind.RECALL_CLEAR, Signal.GREEN)], "20260904",
         "2026-09-07T10:10:52+00:00", None)}
     assert got["recall"]["note"] == "2026-09-04 공표분까지 · 2026-09-07 10:10 갱신"
+
+
+def test_electrical_coverage_gap_names_the_reason_not_our_laziness():
+    """전기용품은 "아직 안 수록" 이 아니라 "실물 시험으로만 확인" 이다.
+
+    전기용품 안전기준은 감전·발열·절연이고 상세페이지에 절대 안 적힌다.
+    KC 60335-2-29 본문을 읽어 확인했다 - "테스트 코너에 배치한다", "정격
+    전압의 1.06배의 전압만 공급한다". 유해물질처럼 "재질에 PVC → 프탈레이트
+    기준" 같은 다리도 없다.
+
+    ⚠ 그런데 "아직 수록되지 않았습니다" 라고만 쓰면 **우리가 게으른 것처럼
+      읽힌다.** 우리 DB 의 공백이 아니라 제도의 성격이다.
+
+    ⚠ household·children 은 현재 문구를 유지한다 - 그건 실제로 우리가 아직
+      안 수록한 것이다. 두 경우를 같은 말로 쓰면 하나는 거짓말이 된다.
+    """
+    from unittest.mock import MagicMock
+
+    from sourcing_guard.models import ItemCategory, ProductFacts
+    from sourcing_guard.verifier import RuleBook, verify
+
+    kats = MagicMock()
+    kats.lookup_certification_cached.return_value = MagicMock(record=None)
+    book = RuleBook()
+
+    def gap(name: str, cat: ItemCategory):
+        facts = ProductFacts(product_name=name, category=cat)
+        return next(
+            x for x in verify(facts, kats, book) if x.kind.value == "coverage_gap"
+        )
+
+    elec = gap("전기주전자 1.8L", ItemCategory.ELECTRICAL)
+    assert "유해물질 기준이 아니라 전기 안전기준" in elec.statement_ko
+    assert "실물 시험으로만 확인" in elec.statement_ko
+    # 확인 항목을 함께 낸다 - 셀러가 할 일이 있어야 한다.
+    assert "시험성적서를 공급처에 요청" in elec.statement_ko
+    # 근거를 붙인다 (R2). 규칙 DB 커버리지가 아니라 그 고시를 가리켜야 한다.
+    assert elec.source_label == "전기용품 안전기준"
+    assert "전기용품안전기준" in elec.source_url
+    # 단정하지 않는다.
+    for banned in ("안전합니다", "문제 없습니다", "이상 없", "합법"):
+        assert banned not in elec.statement_ko
+
+    house = gap("우산 양산 자동우산", ItemCategory.HOUSEHOLD)
+    assert house.statement_ko == "이 품목의 유해물질 기준은 아직 규칙 DB에 수록되지 않았습니다."
+    assert house.source_label == "규칙 DB 커버리지"
