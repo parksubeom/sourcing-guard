@@ -6,6 +6,8 @@ CLAUDE.md R3: absence of data yields UNKNOWN, never GREEN.
 
 from __future__ import annotations
 
+from datetime import date, datetime
+
 from .models import Finding, FindingKind, ProductFacts, ScanResult, Signal, ItemCategory, WatchSuggestion, ExtractedField, FindingGroup
 
 # Weights are intentionally boring and auditable. Any change must be
@@ -338,6 +340,13 @@ def score(
     findings: list[Finding],
     *,
     recall_data_as_of: str | None = None,
+    # 우리가 마지막으로 동기화한 시각(ISO). 정부 공표일과 다른 값이다 -
+    # "2026-09-04 공표분까지" 만 적으면 셀러가 "3일 전 데이터" 로 읽는다.
+    # 주말·공휴일에는 공표가 없으므로 공표일은 며칠 전이 정상이다.
+    recall_synced_at: str | None = None,
+    # ⚠ scorer 는 순수 함수다 - 현재시각을 스스로 읽지 않는다 (CLAUDE.md §6).
+    #   "오늘 갱신" 을 말하려면 오늘이 언제인지 부르는 쪽이 알려줘야 한다.
+    today: "date | None" = None,
 ) -> ScanResult:
     """Combine findings into a display score and a signal.
 
@@ -391,7 +400,7 @@ def score(
         extracted=extracted,
         input_note=_input_note(extracted),
         grouped_findings=_grouped_findings(findings),
-        axes=_axes(findings, recall_data_as_of),
+        axes=_axes(findings, recall_data_as_of, recall_synced_at, today),
         recall_data_as_of=recall_data_as_of,
     )
 
@@ -447,7 +456,29 @@ def _signal_for(facts: ProductFacts, kinds: set[FindingKind]) -> Signal:
     return Signal.UNKNOWN
 
 
-def _axes(findings: list[Finding], recall_as_of: str | None) -> list[dict]:
+def _sync_label(synced_at: str | None, today: "date | None") -> str:
+    """마지막 동기화 시각을 사람이 읽는 말로. 없으면 빈 문자열.
+
+    ⚠ 순수하다 - today 를 인자로 받는다. 스스로 시계를 읽지 않는다.
+    """
+    if not synced_at:
+        return ""
+    try:
+        when = datetime.fromisoformat(synced_at)
+    except ValueError:
+        return ""
+    hhmm = when.strftime("%H:%M")
+    if today is not None and when.date() == today:
+        return f"오늘 {hhmm} 갱신"
+    return f"{when.strftime('%Y-%m-%d')} {hhmm} 갱신"
+
+
+def _axes(
+    findings: list[Finding],
+    recall_as_of: str | None,
+    recall_synced_at: str | None = None,
+    today: "date | None" = None,
+) -> list[dict]:
     """검사 축 셋의 상태. **우리가 한 행위**를 적는다.
 
     종합 배지 하나로는 "무엇을 했고 무엇을 못 했는지" 가 안 보인다. 배지가
@@ -494,9 +525,15 @@ def _axes(findings: list[Finding], recall_as_of: str | None) -> list[dict]:
     else:
         hazard = ("이 품목 미수록", False)
 
-    as_of = ""
+    # 두 값을 함께 적는다. 공표일만 적으면 "3일 전 데이터" 로 읽히는데,
+    # 주말·공휴일에는 정부 공표가 없어서 공표일이 며칠 전인 것이 정상이다.
+    note = ""
     if recall[1] and recall_as_of and len(recall_as_of) == 8 and recall_as_of.isdigit():
-        as_of = f"{recall_as_of[:4]}-{recall_as_of[4:6]}-{recall_as_of[6:]} 공표분까지"
+        note = f"{recall_as_of[:4]}-{recall_as_of[4:6]}-{recall_as_of[6:]} 공표분까지"
+        synced = _sync_label(recall_synced_at, today)
+        if synced:
+            note = f"{note} · {synced}"
+    as_of = note
 
     return [
         {"key": "cert", "name": "인증 조회", "label": cert[0], "done": cert[1], "note": ""},

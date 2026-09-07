@@ -785,12 +785,33 @@ def verify(
     # 세부품목 등급을 먼저 알아본다. 생활용품은 이 결과가 인증 경로 진입
     # 여부를 정한다 - 등급을 모르면 부재를 해석할 수 없고, 해석 못 하는
     # 부재를 경고로 내보내면 정상 상품에 노란불이 반복된다 (R3-b).
+    # 등급표 조회를 열어 두는 범위. **UNCLASSIFIED 도 연다.**
+    #
+    #   UNCLASSIFIED  "판별 못 함" 이다. 등급표는 품목명으로 조회하는 결정론적
+    #                 경로이고 facts.category 와 독립이다 - 상품명에
+    #                 '무릎보호대' 가 있으면 표에서 찾을 수 있다. LLM 이
+    #                 품목군을 모른다고 **우리가 확실히 아는 것을 버리는 것은
+    #                 R3 정신과 반대다** - R3 은 "모르면 UNKNOWN" 이지
+    #                 "LLM 이 모르면 아는 것도 버려라" 가 아니다.
+    #
+    #   OUT_OF_SCOPE  "우리 소관 아님" 이다. 계속 막는다. 정수기컵(식약처)·
+    #                 목발형 보행기(의료기기)에 전안법 등급을 붙이면 오답이고
+    #                 셀러에게 없는 의무를 만든다.
+    #
+    # ⚠ 실측(단건 경로 30건): category 게이트에 10건(33%)이 막혀 있었다 -
+    #   unclassified 7 · out_of_scope 3. 그중 unclassified 는 전부 대상이었다.
+    #
+    # ⚠ 아래 _CERT_REQUIRED 계열 판정은 facts.category 를 키로 쓰므로 이
+    #   변경에 움직이지 않는다. 등급표 조회만 연다.
+    _GRADE_LOOKUP_OPEN = (
+        _CERT_REQUIRED | _CERT_REQUIRED_IF_GRADED | {ItemCategory.UNCLASSIFIED}
+    )
     _graded = (
         _item_grade_findings(
             facts.product_name, today,
             hints=hints, legal_name=facts.legal_item_name,
         )
-        if facts.category in (_CERT_REQUIRED | _CERT_REQUIRED_IF_GRADED)
+        if facts.category in _GRADE_LOOKUP_OPEN
         else []
     )
     if facts.category in _CERT_REQUIRED_IF_GRADED and _graded:
@@ -1002,6 +1023,19 @@ def verify(
                         checked_at=today,
                     )
                 )
+
+    # 등급표가 답을 냈는데 위 어느 경로도 내보내지 않았으면 여기서 낸다.
+    #
+    # UNCLASSIFIED 가 그 자리다. _cert_required_here 는 facts.category 를 키로
+    # 쓰므로 품목군을 모르면 False 이고, 그러면 등급 finding 이 조용히 버려졌다.
+    # **우리가 표에서 확실히 찾은 것을 LLM 이 품목군을 몰랐다는 이유로 버리는
+    # 것은 R3 정신과 반대다.**
+    #
+    # ⚠ 인증 요구는 하지 않는다. _cert_required_here 를 건드리지 않았으므로
+    #   KC_MISSING_BUT_REQUIRED 는 안 붙는다. 등급 finding 자신이 "안전확인
+    #   대상으로 조회됩니다 … 공급처에 인증 구분을 요청하세요" 라고 말한다.
+    if _graded and not any(f in findings for f in _graded):
+        findings.extend(_graded)
 
     # --- (b) recall matching --------------------------------------------
     #

@@ -233,3 +233,83 @@ def test_generic_tier_sentence_stays_when_the_grade_is_unknown():
     """등급을 모르면 일반론이 셀러가 가진 유일한 단서다."""
     unknown = _missing("곰돌이 인형 키링 9종", grade=None)
     assert _GENERIC_TIERS in unknown
+
+
+# ---------------------------------------------------------------------------
+# [O] category 게이트 부분 개방 — unclassified 는 열고 out_of_scope 는 막는다
+# ---------------------------------------------------------------------------
+
+
+def test_unclassified_still_gets_the_grade_table():
+    """LLM 이 품목군을 몰라도 등급표는 조회한다.
+
+    등급표는 품목명으로 찾는 결정론적 경로이고 facts.category 와 독립이다.
+    상품명에 '무릎보호대' 가 있으면 표에서 찾을 수 있다.
+
+    ⚠ **우리가 확실히 아는 것을 LLM 이 몰랐다는 이유로 버리는 것은 R3 정신과
+      반대다.** R3 은 "모르면 UNKNOWN" 이지 "LLM 이 모르면 아는 것도 버려라"
+      가 아니다.
+
+    실측(단건 경로 30건): category 게이트에 10건(33%)이 막혀 있었다 -
+    unclassified 7 · out_of_scope 3. 개방 후 2건이 회복되고 오답은 0건이었다.
+    """
+    from unittest.mock import MagicMock
+
+    from sourcing_guard.models import ItemCategory, ProductFacts
+    from sourcing_guard.verifier import RuleBook, verify
+
+    kats = MagicMock()
+    kats.lookup_certification_cached.return_value = MagicMock(record=None)
+    facts = ProductFacts(product_name="킥보드 보호 헬멧 로봇 플라워",
+                         category=ItemCategory.UNCLASSIFIED)
+    got = [
+        c["item"]
+        for x in verify(facts, kats, RuleBook())
+        for c in (x.detail or {}).get("candidates", [])
+    ]
+    assert "자전거용 안전모" in got
+
+
+def test_out_of_scope_never_gets_the_grade_table():
+    """"우리 소관 아님" 에는 전안법 등급을 붙이지 않는다.
+
+    정수기컵(식약처 식품용 기구)·목발형 보행기(의료기기)에 등급을 말하면
+    오답이고 셀러에게 **없는 의무를 만든다**.
+    """
+    from unittest.mock import MagicMock
+
+    from sourcing_guard.models import ItemCategory, ProductFacts
+    from sourcing_guard.verifier import RuleBook, verify
+
+    kats = MagicMock()
+    kats.lookup_certification_cached.return_value = MagicMock(record=None)
+    for name in ("나도컵 꼬깔컵 생수컵 정수기컵 2000매 디스펜서",
+                 "목발형 접이식 보행기 깁스 보조 지팡이 이동",
+                 "자동차 시트커버 여름 메쉬 차량용 등받이 방석"):
+        facts = ProductFacts(product_name=name, category=ItemCategory.OUT_OF_SCOPE)
+        got = [
+            c["item"]
+            for x in verify(facts, kats, RuleBook())
+            for c in (x.detail or {}).get("candidates", [])
+        ]
+        assert got == [], (name, got)
+
+
+def test_opening_the_gate_does_not_demand_a_certificate():
+    """등급을 냈다고 인증번호를 요구하지는 않는다.
+
+    _cert_required_here 는 facts.category 를 키로 쓰므로 unclassified 에서는
+    False 다. 등급 finding 자신이 "공급처에 인증 구분을 요청하세요" 라고 말하고,
+    우리가 "번호가 있어야 한다" 로 단정하지 않는다 (R3-b).
+    """
+    from unittest.mock import MagicMock
+
+    from sourcing_guard.models import ItemCategory, ProductFacts
+    from sourcing_guard.verifier import RuleBook, verify
+
+    kats = MagicMock()
+    kats.lookup_certification_cached.return_value = MagicMock(record=None)
+    facts = ProductFacts(product_name="킥보드 보호 헬멧 로봇 플라워",
+                         category=ItemCategory.UNCLASSIFIED)
+    kinds = [x.kind.value for x in verify(facts, kats, RuleBook())]
+    assert "kc_missing_but_required" not in kinds
