@@ -589,3 +589,69 @@ def test_unknown_reasons_produce_different_headlines():
         _headline_for(ProductFacts()),
     }
     assert len(headlines) == 4
+
+
+# ---------------------------------------------------------------------------
+# 축 셋 — 우리가 한 행위이지 상품의 상태가 아니다
+# ---------------------------------------------------------------------------
+
+
+def test_axes_name_our_actions_not_the_product_state():
+    """"리콜 대조함" 이지 "리콜 없음" 이 아니다.
+
+    ⚠ ✓ 를 크게 쓰거나 "안전"·"이상 없음" 으로 쓰면 셀러가 초록불로 읽는다 -
+      그게 우리가 회색불을 택한 이유다 (기획서 §3.2 · CLAUDE.md §9).
+    """
+    from sourcing_guard.scorer import _axes
+
+    got = _axes([f(FindingKind.RECALL_CLEAR, Signal.GREEN)], "20260906")
+    labels = {a["name"]: a["label"] for a in got}
+    assert labels["리콜 대조"] == "대조함"
+    for a in got:
+        for banned in ("안전", "이상 없음", "문제 없음", "합법"):
+            assert banned not in a["label"] and banned not in a["name"]
+
+
+def test_axes_distinguish_lookup_failure_from_absence():
+    """"조회했는데 없음" 과 "조회를 못 함" 은 셀러에게 다른 정보다."""
+    from sourcing_guard.models import Finding
+    from sourcing_guard.scorer import _axes
+
+    failed = Finding(
+        kind=FindingKind.LOOKUP_FAILED, signal=Signal.UNKNOWN,
+        statement_ko="조회 실패", source_label="국가기술표준원",
+        source_url="https://www.safetykorea.kr/", detail={"scope": "인증"},
+        checked_at=date(2026, 1, 1),
+    )
+    got = {a["key"]: a for a in _axes([failed], None)}
+    assert got["cert"]["label"] == "조회 실패"
+    assert got["cert"]["done"] is False
+
+    got2 = {a["key"]: a for a in _axes([f(FindingKind.KC_VERIFIED, Signal.GREEN)], None)}
+    assert got2["cert"]["label"] == "조회함"
+    assert got2["cert"]["done"] is True
+
+
+def test_axes_carry_the_recall_as_of_date():
+    """"대조함" 이라는 말의 유효기간을 함께 적는다."""
+    from sourcing_guard.scorer import _axes
+
+    got = {a["key"]: a for a in _axes([f(FindingKind.RECALL_CLEAR, Signal.GREEN)], "20260906")}
+    assert got["recall"]["note"] == "2026-09-06 공표분까지"
+    # 대조를 못 했으면 기준일을 적지 않는다 - 안 한 일에 날짜를 붙이면 거짓말이다.
+    none = {a["key"]: a for a in _axes([], "20260906")}
+    assert none["recall"]["note"] == ""
+    assert none["recall"]["label"] == "대조 못 함"
+
+
+def test_hazard_axis_says_coverage_not_safety():
+    """유해물질 축은 "수록됨/미수록" 이다. "검출 없음" 이 아니다.
+
+    우리는 상세페이지 텍스트를 읽고 단속은 실물을 수거해 시험한다.
+    """
+    from sourcing_guard.scorer import _axes
+
+    on = {a["key"]: a for a in _axes([f(FindingKind.HAZARD_RULE_APPLIES, Signal.UNKNOWN)], None)}
+    off = {a["key"]: a for a in _axes([f(FindingKind.COVERAGE_GAP, Signal.UNKNOWN)], None)}
+    assert on["hazard"]["label"] == "수록됨"
+    assert off["hazard"]["label"] == "이 품목군 미수록"

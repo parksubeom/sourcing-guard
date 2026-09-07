@@ -350,6 +350,21 @@ class WatchSuggestion(BaseModel):
     reason: str
 
 
+class ResultAxis(BaseModel):
+    """검사 축 하나의 상태.
+
+    ⚠ label 은 **우리가 한 행위**를 적는다. "대조함" 이지 "이상 없음" 이 아니다.
+    ⚠ ok=True 는 "문제 없음" 이 아니라 "그 축을 우리가 수행했다" 는 뜻이다.
+      화면이 이걸 초록 체크로 크게 그리면 안 된다.
+    """
+
+    key: str            # cert | recall | hazard
+    name: str           # 인증 조회 · 리콜 대조 · 유해물질
+    label: str          # 조회함 · 번호 없음 · 조회 실패 · 대조함 · 일치 있음 · …
+    done: bool          # 그 축을 수행했는가 (상품이 안전한가가 아니다)
+    note: str = ""      # 기준일 같은 한정
+
+
 class ScanResult(BaseModel):
     signal: Signal
     # 셀러의 질문은 "이거 소싱해도 돼?" 다. 신호(RED/AMBER/GREEN)와 개별 근거만으로는
@@ -375,6 +390,13 @@ class ScanResult(BaseModel):
     # "우리가 페이지에서 이렇게 읽었습니다." 판정 위에 입력을 먼저 보여줘야
     # 셀러가 "제대로 봤구나" 를 믿는다. 잘못 읽었으면 여기서 바로 잡아낸다.
     extracted: list["ExtractedField"] = Field(default_factory=list)
+    # 축 셋의 상태. 종합 배지 하나로는 "무엇을 했고 무엇을 못 했는지" 가 안
+    # 보인다 - 배지가 "모름" 인데 부제목이 "일부만 확인" 이면 둘이 다른 말을 한다.
+    #
+    # ⚠ **축 이름은 우리가 한 행위이지 상품의 상태가 아니다.** "리콜 대조함"
+    #   이지 "리콜 없음/안전" 이 아니다. ✓ 를 크게 쓰면 셀러가 초록불로 읽는데,
+    #   그게 우리가 회색불을 택한 이유다 (기획서 §3.2 · CLAUDE.md §9).
+    axes: list["ResultAxis"] = Field(default_factory=list)
     # findings 를 셀러 관점 구획(확인할 것 / 확인된 문제 / 참고)으로 묶은 것.
     # findings 원본도 그대로 두어 하위호환을 유지한다. 프론트는 grouped 를 그린다.
     grouped_findings: list[dict] = Field(default_factory=list)
