@@ -676,6 +676,33 @@ _TIER_SYSTEMS: dict[ItemCategory, tuple[str, str]] = {
 }
 
 
+def _coverage_gap_statement(category: ItemCategory) -> str:
+    """유해물질 룰이 없을 때의 문구. **전기용품은 이유가 다르다.**
+
+    전기용품 안전기준은 감전·발열·절연이고 **실물 시험으로만** 확인된다.
+    KC 60335-2-29 본문을 읽어 확인했다 - "테스트 코너에 배치한다", "정격
+    전압의 1.06배의 전압만 공급한다", "누설 전류 및 절연 내력은 제1부를
+    적용한다". 상세페이지에는 절대 안 적히고, 유해물질처럼 "재질에 PVC →
+    프탈레이트 기준" 같은 다리도 없다.
+
+    그런데 "아직 수록되지 않았습니다" 라고만 쓰면 **우리가 게으른 것처럼
+    읽힌다.** 우리 DB 의 공백이 아니라 제도의 성격이다.
+
+    ⚠ household·children 에서는 현재 문구를 유지한다 - 그건 **실제로 우리가
+      아직 안 수록한 것**이다. 두 경우를 같은 말로 쓰면 하나는 거짓말이 된다.
+
+    ⚠ "안전합니다"·"문제 없습니다" 로 가지 않는다 (CLAUDE.md §9).
+    """
+    if category is ItemCategory.ELECTRICAL:
+        return (
+            "이 품목에는 유해물질 기준이 아니라 전기 안전기준(감전·발열·절연)이 "
+            "적용됩니다. 그 기준은 실물 시험으로만 확인되며 상세페이지로는 "
+            "판단할 수 없습니다. 안전인증 또는 안전확인 번호와 시험성적서를 "
+            "공급처에 요청하세요."
+        )
+    return "이 품목의 유해물질 기준은 아직 규칙 DB에 수록되지 않았습니다."
+
+
 def _tier_unknown_statement(category: ItemCategory) -> str:
     """인증 구분을 못 가렸을 때의 문구.
 
@@ -704,6 +731,10 @@ def verify(
     rra: "RraClient | None" = None,
     noncompliant: "NoncompliantIndex | None" = None,
     hints: SellerHints | None = None,
+    # 페이지 원본 텍스트. **표지어 게이트 전용**이다 - 매칭이나 본체 검사에는
+    # 쓰지 않는다. LLM 이 요약하면서 떨어뜨린 '초등'·'EVA'·'물놀이' 를 게이트가
+    # 다시 볼 수 있게 한다.
+    raw_text: str | None = None,
 ) -> list[Finding]:
     # 힌트는 셀러가 답해 준 사실이지 필수 입력이 아니다. 없으면 힌트 도입
     # 전과 완전히 같이 동작한다 (tests/test_seller_hints.py 가 강제한다).
@@ -810,6 +841,7 @@ def verify(
         _item_grade_findings(
             facts.product_name, today,
             hints=hints, legal_name=facts.legal_item_name,
+            raw_text=raw_text,
         )
         if facts.category in _GRADE_LOOKUP_OPEN
         else []
@@ -1236,9 +1268,20 @@ def verify(
                 signal=Signal.UNKNOWN,
                 # 단위가 품목군에서 품목으로 좁아졌다 - "이 품목군은" 이라고 쓰면
                 # 같은 품목군의 다른 품목에 룰이 있는데도 없다고 말하게 된다.
-                statement_ko="이 품목의 유해물질 기준은 아직 규칙 DB에 수록되지 않았습니다.",
-                source_label="규칙 DB 커버리지",
-                source_url="https://www.safetykorea.kr/policy/targetsSafetyCheck3",
+                statement_ko=_coverage_gap_statement(facts.category),
+                # ⚠ 전기용품은 근거가 다르다. "우리가 아직 안 수록" 이 아니라
+                #   "제도가 실물 시험으로만 확인한다" 이므로 그 고시를 가리켜야
+                #   한다 (R2 - 근거 없는 출력은 없다).
+                source_label=(
+                    "전기용품 안전기준"
+                    if facts.category is ItemCategory.ELECTRICAL
+                    else "규칙 DB 커버리지"
+                ),
+                source_url=(
+                    "https://www.law.go.kr/행정규칙/전기용품안전기준"
+                    if facts.category is ItemCategory.ELECTRICAL
+                    else "https://www.safetykorea.kr/policy/targetsSafetyCheck3"
+                ),
                 checked_at=today,
             )
         )
@@ -1543,6 +1586,9 @@ def _item_grade_findings(
     *,
     hints: SellerHints | None = None,
     legal_name: str | None = None,
+    # 표지어 게이트 전용 원본 텍스트. **매칭 자체에는 쓰지 않는다** -
+    # 게이트 조건(어린이·합성수지·전원)만 이걸 함께 본다.
+    raw_text: str | None = None,
 ) -> list[Finding]:
     """세부품목 등급표에서 품목을 찾아 인증번호 부재의 의미를 말해 준다.
 
@@ -1563,7 +1609,7 @@ def _item_grade_findings(
     # '안마기'·'마사지기' 는 그 자체로 전동인지 수동인지 알 수 없어서,
     # 답이 있어야 붙일 수 있다.
     extra = ALIASES_IF_MAINS if (hints and hints.says_mains()) else None
-    found = book.lookup_all(product_name, extra_aliases=extra)
+    found = book.lookup_all(product_name, extra_aliases=extra, raw_text=raw_text)
 
     # LLM 이 옮긴 법령 품목명을 표에서 조회한다.
     #

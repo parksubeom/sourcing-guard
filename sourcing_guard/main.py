@@ -316,6 +316,9 @@ def scan(req: ScanRequest, request: Request) -> ScanResult:
     findings = verify(
         facts, _kats, _rules, _recalls, _rra, _noncompliant,
         hints=req.seller_hints,
+        # 표지어 게이트 전용. LLM 이 요약하면서 떨어뜨린 '초등'·'EVA'·'물놀이'
+        # 를 게이트가 다시 볼 수 있게 한다 - 셀러가 페이지에 적은 사실이다.
+        raw_text=req.page_text,
     )
     # 공표일과 갱신 시각을 함께 넘긴다. 공표일만 화면에 적으면 셀러가
     # "3일 전 데이터" 로 읽는데, 주말·공휴일에는 정부 공표가 없어서 공표일이

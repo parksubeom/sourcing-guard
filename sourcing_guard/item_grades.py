@@ -922,7 +922,11 @@ class ItemGradeBook:
         return len(self._rows)
 
     def lookup_all(
-        self, product_name: str | None, *, extra_aliases: dict | None = None
+        self,
+        product_name: str | None,
+        *,
+        extra_aliases: dict | None = None,
+        raw_text: str | None = None,
     ) -> list[ItemGrade]:
         """상품명에서 보이는 품목 후보를 **전부** 돌려준다. 강한 순.
 
@@ -1057,11 +1061,30 @@ class ItemGradeBook:
         alias_table = dict(ALIASES)
         # 상품명에 어린이 표지어가 있으면 어린이제품 전용 별칭을 연다.
         # 셀러에게 새로 묻는 것이 아니라 상품명에 이미 적힌 것을 읽는다.
-        if has_child_marker(product_name):
+        # ⚠ **게이트 조건만 원본을 함께 본다.** 표지어(초등·EVA·물놀이)는
+        #   셀러가 페이지에 적은 사실이고, LLM 이 요약하면서 떨어뜨린 것을
+        #   복구하는 것은 값을 지어내는 것이 아니다. 원본에 '초등' 이 있는데
+        #   요약본에 없다고 학용품을 안 붙이면 아는 것을 버리는 것이고 R3
+        #   정신과 반대다.
+        #
+        #   실측(단건 경로 136건): LLM 요약이 표지어를 떨어뜨려 6건을 잃었다.
+        #     181  '초등'필통  → '메쉬필통'
+        #     200  EVA         → '왕골슬리퍼/거실화/…/실내화'
+        #     201  EVA소재      → '치즈욕실화 슬리퍼 실내화'
+        #     138  '물놀이' 튜브 → '특대형 성인용 파인애플 튜브'
+        #
+        # ⚠ **매처의 본체 검사(names_the_subject)에는 원본을 넣지 않는다.**
+        #   09-04 경쟁 양보 버그가 정확히 그 자리였다 - 검사 입력을 잘못 바꿔
+        #   후보가 전부 거부됐다. 게이트 조건만이다.
+        #
+        # ⚠ 09-04 에 "원본 병행" 을 재봤을 때는 이득이 0 이었다. 그때는 조건부
+        #   별칭이 없었다 - 전제가 바뀌었다.
+        gate_text = f"{product_name or ''} {raw_text or ''}"
+        if has_child_marker(gate_text):
             alias_table.update(ALIASES_IF_CHILD_MARKED)
         # 부속서 24 가 "주 재질이 합성수지로 구성되는 제품에 한함" 이라 적었다.
-        # 재질을 우리가 단정하지 않고, 상품명에 적혀 있을 때만 연다.
-        if has_plastic_marker(product_name):
+        # 재질을 우리가 단정하지 않고, 적혀 있을 때만 연다.
+        if has_plastic_marker(gate_text):
             alias_table.update(ALIASES_IF_PLASTIC)
         if extra_aliases:
             # 셀러가 답해 준 사실이 있을 때만 열리는 별칭. 기본 사전을

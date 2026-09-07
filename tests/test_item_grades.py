@@ -1011,10 +1011,10 @@ def test_the_audited_wrong_answers_are_the_only_ones_left():
 
     ⚠ 발표에 쓰는 숫자는 매칭률이 아니라 **정답률**이다.
     ⚠ 분모는 235 가 아니라 **안전관리대상 136** 이다 (새표본235_대상분류.tsv).
-        매칭   101/235
-        정답   95/136 = 69.9%   ← 대표값 (상품명만 · 대상 136 기준)
-        애매    3 · 오답 2 · 미매칭 36
-        (상품명만 · 표본 235 전체 기준으로는 95/235 = 40.4%)
+    ⚠ 발표 숫자는 **단건 경로**다 (데모가 단건이다). 이 검사는 배치를 잠근다.
+        배치 · 상품명만 · 대상 135    정답 94 (69.6%) · 애매 3 · 오답 2
+        단건 · 상품명만 · 대상 135    정답 96 (71.1%) · 애매 3 · 오답 1  ← 발표
+        전체 매칭 101/235
 
     이 검사가 실패하면 매칭이 바뀐 것이다 - 검수 파일을 다시 만들 것.
     """
@@ -1112,8 +1112,11 @@ def test_the_proposal_never_quotes_an_unaudited_rate_bare():
     import pathlib
 
     doc = pathlib.Path("01_기획서_안심소싱돋보기.md").read_text(encoding="utf-8")
-    assert "69.9%" in doc and "40.4%" in doc
-    assert "두 분모를 나란히 적습니다" in doc
+    assert "71.1%" in doc and "40.9%" in doc
+    # 조건 없는 숫자를 쓰지 않는다 - 경로와 분모를 함께 적는다.
+    assert "조건 없는 숫자를 쓰지 않습니다" in doc
+    assert "단건 경로 · 대상 135 중" in doc
+    assert "배치 경로 · 대상 135 중" in doc
     if "71%" in doc:
         assert "만들 때 쓴 표본에서만 잘 듣는다" in doc
     # 분모를 사람이 정했다는 사실을 밝힌다 (R3-b).
@@ -1238,3 +1241,62 @@ def test_plastic_gate_keeps_us_from_asserting_a_material_we_do_not_know():
     from sourcing_guard.item_grades import ALIASES_IF_PLASTIC
     assert "욕실화" not in ALIASES_IF_PLASTIC
     assert book.lookup_all("8in1 전동 무선 청소솔 자동 브러쉬 욕실 화장실 바닥 솔") == []
+
+
+def test_marker_gates_also_read_the_raw_page_text():
+    """표지어 게이트만 원본을 함께 본다.
+
+    표지어(초등·EVA·물놀이)는 **셀러가 페이지에 적은 사실**이다. LLM 이
+    요약하면서 떨어뜨린 것을 복구하는 것은 값을 지어내는 것이 아니다 -
+    원본에 '초등' 이 있는데 요약본에 없다고 학용품을 안 붙이면 우리가 아는
+    것을 버리는 것이고 R3 정신과 반대다.
+
+    실측(단건 경로 135건): 68.9% → 71.1%, 오답 1 그대로, 대상 밖 부착 0.
+    회복된 3건 - 초등필통 → 학용품, EVA 슬리퍼 2건 → 신발류.
+
+    ⚠ 09-04 에 "원본 병행" 을 재봤을 때는 이득이 0 이었다. 그때는 조건부
+      별칭이 없었다 - 전제가 바뀌었다.
+    """
+    from sourcing_guard.item_grades import ItemGradeBook
+
+    book = ItemGradeBook()
+    # LLM 요약본에는 표지어가 없다.
+    assert book.lookup_all("메쉬필통") == []
+    assert book.lookup_all("치즈욕실화 슬리퍼 실내화") == []
+
+    # 원본을 게이트에 함께 주면 걸린다.
+    assert [g.item for g in book.lookup_all(
+        "메쉬필통",
+        raw_text="메쉬필통 메시필통 초등필통 중학생필통 초등학생필통",
+    )] == ["학용품"]
+    assert [g.item for g in book.lookup_all(
+        "치즈욕실화 슬리퍼 실내화",
+        raw_text="가벼운 물빠짐 치즈욕실화 EVA소재 슬리퍼 실내화",
+    )] == ["신발류"]
+
+
+def test_raw_text_never_reaches_the_subject_check():
+    """매처의 본체 검사에는 원본을 넣지 않는다.
+
+    ⚠ 09-04 경쟁 양보 버그가 정확히 그 자리였다 - 검사 입력을 잘못 바꿔
+      후보가 전부 거부됐다. 게이트 조건만이다.
+
+    원본에 부속어가 있어도 요약본이 본체를 가리키면 매칭은 유지되고, 반대로
+    원본에 품목명이 있어도 요약본에 없으면 **매칭이 생기지 않는다** -
+    원본은 게이트 조건에만 쓰이기 때문이다.
+    """
+    import inspect
+
+    from sourcing_guard.item_grades import ItemGradeBook
+
+    book = ItemGradeBook()
+    # 원본에만 '전기주전자' 가 있다. 게이트용이므로 매칭이 생기면 안 된다.
+    assert book.lookup_all("무언가", raw_text="전기주전자 1.8L 무선포트") == []
+
+    src = inspect.getsource(ItemGradeBook.lookup_all)
+    body = src[src.index("gate_text"):]
+    assert "names_the_subject(intact" not in body or "raw_text" not in body.split(
+        "names_the_subject(intact"
+    )[0].split("gate_text")[-1]
+    # 게이트 문자열이 별칭 조건 셋에만 쓰이는지 본다.
+    assert src.count("gate_text") == 3   # 정의 1 + 어린이 1 + 합성수지 1
