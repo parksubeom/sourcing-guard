@@ -80,6 +80,10 @@ def main() -> None:
     ap.add_argument("--url", default="https://sourcing-guard.fly.dev")
     ap.add_argument("--gap", type=float, default=6.5)  # 12/분 제한에 5.5 로는 걸렸다
     ap.add_argument("--limit", type=int, default=0, help="0이면 전부")
+    # ⚠ 비대상·애매도 재야 한다. "우리는 비대상에 딱지를 붙이지 않는다" 가
+    #   핵심 주장인데 발표 경로(단건)에서 미측정이면 그 주장을 못 쓴다.
+    ap.add_argument("--scope", default="대상",
+                    help="대상 | 비대상 | 애매 | 밖(비대상+애매) | 전부")
     ap.add_argument("--out", default="/tmp/kid/single_full.json")
     args = ap.parse_args()
 
@@ -89,7 +93,10 @@ def main() -> None:
             continue
         no, verdict, name, why = line.split("\t")
         scope[int(no)] = (verdict, name, why)
-    target = [(n, name) for n, (v, name, _w) in sorted(scope.items()) if v == "대상"]
+    want = {"밖": {"비대상", "애매"}, "전부": {"대상", "비대상", "애매"}}.get(
+        args.scope, {args.scope}
+    )
+    target = [(n, name) for n, (v, name, _w) in sorted(scope.items()) if v in want]
     if args.limit:
         target = target[: args.limit]
 

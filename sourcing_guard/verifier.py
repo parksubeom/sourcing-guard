@@ -155,6 +155,20 @@ class HazardRule:
     #   (performance)를 가리고, 이쪽은 "물질인가 요건인가" 를 가린다.
     #   속눈썹 룰 2건은 rule_type=requirement 이면서 기준치가 있다.
     rule_type: str = "substance"          # substance | requirement
+    # 이 룰이 품목군 전체에 걸리는가, 그 품목에만 걸리는가.
+    #
+    #   category  applies_to 가 곧 적용 범위다. 공통안전기준(품목군 전체)과
+    #             부속서 1·6·11 처럼 품목군 = 품목인 경우다. aliases 는
+    #             **물질 표기 변형**이라 품목 판별에 쓸 수 없다
+    #             ('formaldehyde'·'알루미늄' 이 상품명에 있을 리 없다).
+    #   item      applies_to 가 너무 넓다. household 는 별표 4~7 의 수백
+    #             품목을 담으므로 우산에 마스크 기준을 말하게 된다.
+    #             aliases 가 **품목 이름**이므로 그걸로 가린다.
+    #
+    # ⚠ rule_type 과 다르다. 부속서 17(마스크)은 rule_type=substance 이면서
+    #   scope=item 이다 - 물질 기준치이지만 마스크에만 걸린다. 둘을 하나로
+    #   묶으려다 모든 household 상품에 마스크 기준을 붙일 뻔했다.
+    scope: str = "category"               # category | item
     requirement_type: str = "substance"   # substance | performance
     test_items: tuple[str, ...] = ()      # 충격흡수성, 관통성 ...
     annex_no: str | None = None           # 부속서 번호
@@ -267,6 +281,7 @@ class RuleBook:
                     substance=r["substance"],
                     aliases=tuple(r.get("aliases", [])),
                     rule_type=r.get("rule_type", "substance"),
+                    scope=r.get("scope", "category"),
                     applies_to=tuple(r.get("applies_to", [])),
                     limit_value=r.get("limit_value"),
                     unit=r.get("unit"),
@@ -353,7 +368,9 @@ class RuleBook:
         ).lower()
         out: list[HazardRule] = []
         for rule in self.for_category(facts.category):
-            if rule.rule_type == "requirement" or rule.requirement_type == "performance":
+            if rule.scope == "item":
+                # applies_to 가 너무 넓은 룰이다. aliases 가 품목 이름이므로
+                # 그 품목이 상품명에 있어야 적용한다.
                 names = [rule.substance, *rule.aliases]
                 if not any(a.lower() in hay for a in names if a):
                     continue
