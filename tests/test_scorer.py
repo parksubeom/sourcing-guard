@@ -655,3 +655,62 @@ def test_hazard_axis_says_coverage_not_safety():
     off = {a["key"]: a for a in _axes([f(FindingKind.COVERAGE_GAP, Signal.UNKNOWN)], None)}
     assert on["hazard"]["label"] == "수록됨"
     assert off["hazard"]["label"] == "이 품목 미수록"
+
+
+def test_axis_note_shows_both_publish_date_and_sync_time():
+    """공표일만 적으면 셀러가 "3일 전 데이터" 로 읽는다.
+
+    주말·공휴일에는 정부 공표가 없어서 공표일이 며칠 전인 것이 정상이다.
+    우리가 오늘 돌았다는 사실을 함께 적어야 그 오해가 안 생긴다.
+    /healthz 가 이미 last_sync_at 을 준다 - 없는 값을 만드는 것이 아니다.
+    """
+    from sourcing_guard.scorer import _axes
+
+    got = {
+        a["key"]: a
+        for a in _axes(
+            [f(FindingKind.RECALL_CLEAR, Signal.GREEN)],
+            "20260904",
+            "2026-09-07T10:10:52+00:00",
+            date(2026, 9, 7),
+        )
+    }
+    assert got["recall"]["note"] == "2026-09-04 공표분까지 · 오늘 10:10 갱신"
+
+
+def test_axis_note_dates_an_older_sync_explicitly():
+    """어제 갱신이면 "오늘" 이라고 쓰지 않는다."""
+    from sourcing_guard.scorer import _axes
+
+    got = {
+        a["key"]: a
+        for a in _axes(
+            [f(FindingKind.RECALL_CLEAR, Signal.GREEN)],
+            "20260904",
+            "2026-09-05T23:00:00+00:00",
+            date(2026, 9, 7),
+        )
+    }
+    assert got["recall"]["note"] == "2026-09-04 공표분까지 · 2026-09-05 23:00 갱신"
+
+
+def test_scorer_never_reads_the_clock_itself():
+    """scorer 는 순수 함수다 (CLAUDE.md §6).
+
+    "오늘 갱신" 을 말하려면 오늘이 언제인지 부르는 쪽이 알려줘야 한다.
+    today 를 안 주면 절대 날짜로 적고, 스스로 시계를 읽지 않는다.
+    """
+    import inspect
+
+    from sourcing_guard import scorer
+
+    src = inspect.getsource(scorer)
+    for banned in ("date.today()", "datetime.now()", "datetime.utcnow()"):
+        assert banned not in src, f"scorer 가 시계를 읽는다: {banned}"
+
+    from sourcing_guard.scorer import _axes
+
+    got = {a["key"]: a for a in _axes(
+        [f(FindingKind.RECALL_CLEAR, Signal.GREEN)], "20260904",
+        "2026-09-07T10:10:52+00:00", None)}
+    assert got["recall"]["note"] == "2026-09-04 공표분까지 · 2026-09-07 10:10 갱신"

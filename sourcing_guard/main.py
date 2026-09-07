@@ -317,7 +317,16 @@ def scan(req: ScanRequest, request: Request) -> ScanResult:
         facts, _kats, _rules, _recalls, _rra, _noncompliant,
         hints=req.seller_hints,
     )
-    result = score(facts, findings, recall_data_as_of=_recalls.as_of)
+    # 공표일과 갱신 시각을 함께 넘긴다. 공표일만 화면에 적으면 셀러가
+    # "3일 전 데이터" 로 읽는데, 주말·공휴일에는 정부 공표가 없어서 공표일이
+    # 며칠 전인 것이 정상이다. /healthz 가 이미 주는 값이다.
+    result = score(
+        facts,
+        findings,
+        recall_data_as_of=_recalls.as_of,
+        recall_synced_at=_store.get_sync_state("last_sync_at"),
+        today=date.today(),
+    )
     if not allow_llm:
         result.extraction_note = (
             "오늘 분석 한도에 도달해 간이 추출로 처리했습니다. "
