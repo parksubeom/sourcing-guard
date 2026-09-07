@@ -1012,13 +1012,15 @@ def test_the_audited_wrong_answers_are_the_only_ones_left():
     ⚠ 발표에 쓰는 숫자는 매칭률이 아니라 **정답률**이다.
     ⚠ 분모는 235 가 아니라 **안전관리대상 136** 이다 (새표본235_대상분류.tsv).
     ⚠ 발표 숫자는 **단건 경로**다 (데모가 단건이다). 이 검사는 배치를 잠근다.
-        배치 · 상품명만 · 대상 135    정답 99 (73.3%) · 애매 3 · 오답 2
-        단건 · 상품명만 · 대상 135    정답 100 (74.1%) · 애매 3 · 오답 1  ← 발표
-        전체 매칭 106/235
+        배치 · 상품명만 · 대상 135    정답 104 (77.0%) · 애매 3 · 오답 2
+        단건 · 상품명만 · 대상 135    정답 105 (77.8%) · 애매 3 · 오답 1  ← 발표
+        전체 매칭 111/235
 
-    ⚠ 2026-09-07 101 → 106: '모기장 → 의류 이외의 섬유제품' 별칭 +5.
-      안전기준준수 부속서 1(가정용 섬유제품) '기타 제품류' 가 모기장을
-      직접 열거한다. 오답 증가 0건.
+    ⚠ 2026-09-07 101 → 111: 안전기준준수 부속서 1(가정용 섬유제품)
+      '기타 제품류' 가 "가방, 쿠션류, 방석류, **모기장**, 커튼, 수의,
+      덮개 등" 을 열거한다. 모기장 +5, 가방 계열 +5. 오답 증가 0건.
+      가방은 부속서 1 이 만 14세 이상이라 어린이 표지어가 없을 때만 연다
+      (ALIASES_IF_NO_CHILD_MARKER).
 
     이 검사가 실패하면 매칭이 바뀐 것이다 - 검수 파일을 다시 만들 것.
     """
@@ -1036,7 +1038,11 @@ def test_the_audited_wrong_answers_are_the_only_ones_left():
         if line.startswith("#"):
             if "[애매]" in line:
                 section = "vague"
-            elif "[고쳐짐]" in line:
+            # ⚠ [검수했고 정답] 절을 모르면 그 절의 행이 조용히 애매로 센다.
+            #   지금은 그 절이 주석뿐이라 드러나지 않지만, 데이터 행을 한 줄
+            #   넣는 순간 카운트가 틀어진다 - 파일을 고치는 사람이 검사를
+            #   같이 고쳐야 한다는 뜻이라 여기서 미리 받는다.
+            elif "[고쳐짐" in line or "[검수했고 정답]" in line:
                 section = "fixed"
             continue
         if not line.strip():
@@ -1046,7 +1052,7 @@ def test_the_audited_wrong_answers_are_the_only_ones_left():
         )
 
     matched = [r for r in rows if book.lookup_all(r)]
-    assert len(matched) == 106
+    assert len(matched) == 111
     assert len([r for r in matched if r in wrong]) == 3
     assert len([r for r in matched if r in vague]) == 3
     # 검수 파일에 적힌 오답이 실제로 아직 매칭되고 있어야 한다 - 고쳐졌으면
@@ -1122,7 +1128,7 @@ def test_the_proposal_never_quotes_an_unaudited_rate_bare():
     import pathlib
 
     doc = pathlib.Path("01_기획서_안심소싱돋보기.md").read_text(encoding="utf-8")
-    assert "74.1%" in doc
+    assert "77.8%" in doc
     assert "0건 부착" in doc
     # 조건 없는 숫자를 쓰지 않는다 - 경로와 분모를 함께 적는다.
     assert "조건 없는 숫자를 쓰지 않습니다" in doc
@@ -1349,3 +1355,43 @@ def test_a_two_letter_legal_answer_is_not_widened_into_other_items():
     ]
     # 여럿이 걸리면 갈림으로 확인을 요청하는 것이 정확한 동작이다 (R3).
     assert len(book.lookup_legal_name("안전모")) > 1
+
+
+def test_the_adult_bag_table_closes_when_a_child_marker_is_present():
+    """부속서 1 은 만 14세 이상이다. 표지어가 있으면 붙이지 않는다.
+
+    ⚠ ALIASES_IF_CHILD_MARKED 의 **반대 방향**이다. 저쪽은 표의 품목이
+      '어린이용~' 이라 표지어가 있어야 열리고, 이쪽은 표의 품목이 만 14세
+      이상이라 표지어가 있으면 닫힌다.
+
+    ⚠ 어린이용 가방이 어느 품목인지는 「공급자적합성확인대상 어린이제품의
+      안전기준」 부속서를 봐야 알 수 있고 아직 원문을 못 봤다. 확인 전에
+      '아동용 섬유제품' 으로 짐작해 매핑하지 않는다 (R5). 품목을 안 붙이면
+      어린이제품 포괄 규정이 받는다 - 회색으로 남는 것이 맞다.
+    """
+    from sourcing_guard.item_grades import ALIASES_IF_NO_CHILD_MARKER, ItemGradeBook
+
+    book = ItemGradeBook()
+
+    # 표지어 없음 → 부속서 1 이 열린다.
+    for raw in ("[CU] 에어핏 트레일 러닝 조끼 백팩 마라톤 런닝 등산 트래킹 자전거",
+                "핏미업 러닝벨트 힙색 슬링백 벨트백 스포츠 러닝 자전거 등산 가방"):
+        assert [g.item for g in book.lookup_all(raw)] == ["의류 이외의 섬유제품"], raw
+
+    # 표지어 있음 → 닫힌다.
+    for raw in ("EVERYGOOD 학생용 대용량 책가방 백팩 초등학생 선물 추천",
+                "키즈 백팩 어린이 가방"):
+        assert not book.lookup_all(raw), raw
+
+    # 기저귀 가방은 보호자가 드는 물건이라 표지어와 무관하게 열린다.
+    for raw in ("아기 기저귀 가방 백팩 출산가방 유모차 보냉백",
+                "(올라이프) 접이식 기저귀 가방 아기침대 휴대용 기저귀가방"):
+        assert [g.item for g in book.lookup_all(raw)] == ["의류 이외의 섬유제품"], raw
+
+    # ⚠ '가방'·'책가방' 을 넣지 않은 이유를 잠근다 - 실측에서 '책가방' 은
+    #   "책가방 걸이"·"책가방 장식" 같은 열쇠고리 4건에 붙었다.
+    assert "가방" not in ALIASES_IF_NO_CHILD_MARKER
+    assert "책가방" not in ALIASES_IF_NO_CHILD_MARKER
+    for raw in ("귀여운 파차 열쇠고리 실리콘 2원 책가방 열쇠고리 도매 만화 열쇠고리",
+                "열쇠고리 산리오 인형 책가방 장식 자동차 열쇠고리 정교함"):
+        assert not book.lookup_all(raw), raw
