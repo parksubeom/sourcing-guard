@@ -18,7 +18,17 @@
   한 줄씩 즉시 흘려보낸다(`python -u`) - 2026-09-07 에 버퍼링 때문에 같은
   측정을 두 번 돌려 429 를 맞았다 (CLAUDE.md §6).
 
-⚠ 응답 원문을 **가공하지 않고** 저장한다. 텍스트 조립은 A-4 가 한다.
+⚠ **원문을 저장하지 않는다 (2026-09-08 변경).** 도매꾹 응답에는 제3자
+  사업자·개인정보가 들어온다 - `seller.company.*` 100% · 반품주소 100% ·
+  A/S 전화 17%. 저장은 `domeggook_pii.write_sanitized()` 를 거치고, 그것이
+  이 스크립트의 **유일한 저장 경로다.** 정제 뒤에도 패턴이 남으면 파일을
+  만들지 않고 던진다.
+
+  전 판은 원문을 그대로 쓰고 `.gitignore` 로 막았다. 그것은 "커밋하지
+  않는다" 일 뿐 원문이 디스크에 남는 구조는 그대로였다. 저장 경로 자체를
+  바꾼 이유다.
+
+⚠ 그 외의 가공은 하지 않는다. 텍스트 조립은 A-4 가 한다.
 """
 from __future__ import annotations
 
@@ -41,6 +51,7 @@ from sourcing_guard.domeggook_client import (  # noqa: E402
     DomeggookClient,
     DomeggookRateLimited,
 )
+from sourcing_guard.domeggook_pii import residual, write_sanitized  # noqa: E402
 
 _SAMPLE = Path("tests/fixtures/새표본235.txt")
 
@@ -76,7 +87,9 @@ def main() -> None:
     if args.limit:
         names = names[: args.limit]
 
-    out_dir = Path(args.out or f"tests/fixtures/도매꾹_원문_{date.today():%Y-%m-%d}")
+    # ⚠ 디렉터리 이름이 정제본임을 말한다. `도매꾹_원문_*` 은 이제 만들지
+    #   않는다 - 이름이 내용과 어긋나면 다음 사람이 원문이라고 믿는다.
+    out_dir = Path(args.out or f"tests/fixtures/도매꾹_정제_{date.today():%Y-%m-%d}")
     out_dir.mkdir(parents=True, exist_ok=True)
 
     client = DomeggookClient(key)
@@ -125,9 +138,7 @@ def main() -> None:
         print(f"  [{i:3}/{len(names)}] {mark:<6} 검색결과 {str(total):>6} · {name[:40]}",
               flush=True)
 
-    (out_dir / "검색.json").write_text(
-        json.dumps(searches, ensure_ascii=False, indent=1), encoding="utf-8"
-    )
+    search_counts = write_sanitized(out_dir / "검색.json", searches)
 
     # ── 상세 ────────────────────────────────────────────────────────
     views: list[dict] = []
@@ -151,13 +162,14 @@ def main() -> None:
         print(f"  [{bi}/{len(batches)}] {len(batch)}개 요청 → {len(got)}개 응답",
               flush=True)
 
-    (out_dir / "상세.json").write_text(
-        json.dumps(views, ensure_ascii=False, indent=1), encoding="utf-8"
-    )
+    view_counts = write_sanitized(out_dir / "상세.json", views)
 
     # ── 보고 ────────────────────────────────────────────────────────
+    # ⚠ 보고는 **정제본을 다시 읽어서** 낸다. 메모리의 원문으로 세면
+    #   "저장된 것" 과 "보고한 것" 이 갈라질 수 있다.
+    saved_views = json.loads((out_dir / "상세.json").read_text(encoding="utf-8"))
     detail_items: list[dict] = []
-    for v in views:
+    for v in saved_views:
         got = ((v.get("response", {}).get("domeggook") or {}).get("item")) or []
         detail_items += [got] if isinstance(got, dict) else got
 
@@ -182,10 +194,19 @@ def main() -> None:
     print(f"  channel         {channel}")
     print(f"  호출 수         {client.calls}회 · {time.time() - started:.0f}초")
 
+    print("\n  개인정보 제거·치환 (사이드카에 같이 적었다)")
+    for label, counts in (("검색", search_counts), ("상세", view_counts)):
+        for k, v in sorted(counts.items()):
+            print(f"    {label:<4} {k:<28} {v}")
+
+    # 채택 목록은 우리가 만든 것이고 상품명·상품번호뿐이다. 그래도 검사는
+    # 건다 - 상품명 안에 전화번호를 넣은 셀러가 있을 수 있다.
+    adopted = {"picked": picked, "zero": zero, "multi": multi}
+    left = residual(adopted)
+    if left:
+        raise SystemExit(f"채택 목록에 개인정보 패턴이 남았습니다: {left}")
     (out_dir / "채택.json").write_text(
-        json.dumps({"picked": picked, "zero": zero, "multi": multi},
-                   ensure_ascii=False, indent=1),
-        encoding="utf-8",
+        json.dumps(adopted, ensure_ascii=False, indent=1), encoding="utf-8"
     )
     print(f"\n  채택 목록 → {out_dir / '채택.json'}")
 
