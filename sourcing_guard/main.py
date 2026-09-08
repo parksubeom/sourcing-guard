@@ -21,7 +21,7 @@ from uuid import uuid4
 
 from .config import settings
 from .batch import MAX_ROWS, BatchReport, screen
-from .extractor import extract
+from .extractor import extract, stats as extraction_stats
 from .kats_client import KatsClient, health
 from .noncompliant_index import NoncompliantIndex
 from .rra_client import RraClient
@@ -172,6 +172,20 @@ def healthz() -> dict:
         "kats": health.snapshot(),
         "sync": {"enabled": settings.sync_enabled, **_store.sync_snapshot()},
         "limits": _limiter.snapshot(),
+        # ⚠ **추출이 실제로 어느 경로로 갔는지 여기서 보여야 한다.**
+        #   2026-09-08 에 Claude 크레딧이 소진돼 배포본이 매 스캔마다 400 을
+        #   받고 휴리스틱으로 떨어졌는데, 그 사실을 로그를 뒤져서야 알았다.
+        #   그 사이 휴리스틱 결과를 "실물 확인" 으로 보고했다. 응답 모양으로
+        #   추론하지 말고(ExtractionStats 주석) 이 값을 볼 것.
+        #
+        #   ⚠ 프로세스 메모리라 재배포하면 0 이 된다. 누적 통계가 아니라
+        #     "지금 뜬 이 프로세스가 어느 경로를 쓰고 있나" 를 보는 값이다.
+        "extraction": {
+            "order": list(settings.extractor_order),
+            "claude_key": bool(settings.anthropic_api_key),
+            "gpt_key": bool(settings.gpt_api_key),
+            **extraction_stats.snapshot(),
+        },
     }
 
 

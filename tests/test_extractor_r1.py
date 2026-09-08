@@ -105,16 +105,32 @@ def test_extraction_path_is_counted_not_inferred():
     LLM 이 정직하게 None 을 내거나 상품명이 마침 첫 줄과 같은 경우다.
 
     추론을 다른 추론으로 바꾸지 않는다.
+
+    ⚠ **같은 함정을 두 번 밟았다.** 2026-09-08 에 Claude 크레딧이 소진돼
+      배포본이 매 스캔마다 400 을 받고 휴리스틱으로 떨어졌는데, 그 상태의
+      결과를 "실물 확인 완료" 로 보고했다. 위 docstring 이 "키가 400 을
+      돌려주는 상태에서 전부 폴백된 결과를 LLM 정확도로 읽을 뻔했다" 고
+      이미 적어 둔 그 함정이다. 이번에는 뻔한 게 아니라 실제로 읽었다.
+
+      그래서 /healthz 에 `extraction` 을 노출했다 - 로그를 뒤지지 않고
+      "지금 이 프로세스가 어느 경로를 쓰나" 를 볼 수 있어야 한다.
     """
     import sourcing_guard.extractor as ex
 
     ex.stats.reset()
-    assert ex.stats.snapshot() == {"llm": 0, "heuristic": 0, "llm_failures": 0}
+    assert ex.stats.snapshot() == {
+        "llm": 0, "heuristic": 0, "llm_failures": 0,
+        "by_vendor": {}, "failures_by_vendor": {},
+    }
 
     ex.extract("완구 장난감 KC CB061R2170-3018", allow_llm=False)
     ex.extract("완구 장난감 KC CB061R2170-3018", allow_llm=False)
 
-    assert ex.stats.snapshot() == {"llm": 0, "heuristic": 2, "llm_failures": 0}
+    assert ex.stats.snapshot() == {
+        "llm": 0, "heuristic": 2, "llm_failures": 0,
+        # 휴리스틱은 벤더가 없다 - 빈 dict 여야 한다.
+        "by_vendor": {}, "failures_by_vendor": {},
+    }
     ex.stats.reset()
 
 
@@ -209,3 +225,62 @@ def test_scope_markers_do_not_decide_scope_by_themselves():
     # ⚠ 이름 언급이 아니라 호출을 본다. 이 규칙을 설명하는 docstring 이
     #   out_of_scope_reason 을 언급하기 때문이다 - 가드가 자기 설명에 걸린다.
     assert "out_of_scope_reason(" not in body
+
+
+def test_a_dead_vendor_falls_through_to_the_next_one(monkeypatch):
+    """앞 벤더가 죽으면 다음 벤더가 받는다. 둘 다 죽으면 휴리스틱이다.
+
+    ⚠ R7 을 개정해 추출기를 두 벌로 둔 목적이 **가용성**이다 (CLAUDE.md).
+      2026-09-08 에 Claude 크레딧이 소진돼 추출이 통째로 죽었고, 앱은 살았지만
+      product_name·legal_item_name·category 가 비어 등급표 조회가 원본
+      상품명으로 되돌아갔다 - 발표 숫자가 화면과 어긋나는 상태였다.
+
+    ⚠ 어느 벤더가 뽑았는지 **센다.** 출력 모양으로 추론하지 않는다.
+    """
+    import sys
+    from dataclasses import replace
+
+    import sourcing_guard.extractor as ex
+
+    monkeypatch.setattr(
+        ex,
+        "settings",
+        replace(
+            ex.settings,
+            mock_mode=False,
+            anthropic_api_key="sk-claude-test",
+            gpt_api_key="sk-gpt-test",
+            extractor_order=("claude", "gpt"),
+        ),
+    )
+
+    def boom(_user_content):
+        raise RuntimeError("credit balance is too low")
+
+    def ok(_user_content):
+        return '{"product_name":"완구 장난감","category":"children_toy",' \
+               '"category_confidence":0.9,"raw_language":"ko"}'
+
+    # 앞이 죽고 뒤가 산다.
+    monkeypatch.setitem(ex._VENDOR_CALLS, "claude", boom)
+    monkeypatch.setitem(ex._VENDOR_CALLS, "gpt", ok)
+    ex.stats.reset()
+    facts = ex.extract("완구 장난감 블록")
+    assert facts.product_name == "완구 장난감"
+    snap = ex.stats.snapshot()
+    assert snap["by_vendor"] == {"gpt": 1}, snap
+    assert snap["failures_by_vendor"] == {"claude": 1}, snap
+    assert snap["heuristic"] == 0, snap
+
+    # 둘 다 죽으면 휴리스틱이다 - 빈 ProductFacts 가 아니다 (R3).
+    monkeypatch.setitem(ex._VENDOR_CALLS, "gpt", boom)
+    ex.stats.reset()
+    facts = ex.extract("완구 장난감 KC CB061R2170-3018")
+    snap = ex.stats.snapshot()
+    assert snap["heuristic"] == 1, snap
+    assert snap["llm_failures"] == 1, snap
+    assert snap["failures_by_vendor"] == {"claude": 1, "gpt": 1}, snap
+    # 휴리스틱은 정규식이라 인증번호는 그대로 잡는다.
+    assert facts.kc_numbers == ["CB061R2170-3018"], facts.kc_numbers
+
+    del sys

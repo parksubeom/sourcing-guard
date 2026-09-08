@@ -26,9 +26,15 @@ extract() 는 ANTHROPIC_API_KEY 가 있고 MOCK_MODE=false 면 실제 Anthropic 
     python scripts/golden_report.py                 # 필드별 정확도 리포트
 
 ⚠ 이 픽스처는 mock_mode 만 켠다. 키를 지우지는 않는다 - test_extractor_image_cache
-  처럼 "LLM 경로가 어떻게 구성되는지" 를 검증하는 테스트는 Anthropic 클라이언트를
-  직접 목킹한 채 mock_mode=False 로 되돌려 쓴다. autouse 픽스처가 먼저 돌고
-  그 위에 테스트의 _live 픽스처가 덮으므로 그 경로는 그대로 산다.
+  처럼 "LLM 경로가 어떻게 구성되는지" 를 검증하는 테스트는 클라이언트를 직접
+  목킹한 채 mock_mode=False 로 되돌려 쓴다. autouse 픽스처가 먼저 돌고 그 위에
+  테스트의 _live 픽스처가 덮으므로 그 경로는 그대로 산다.
+
+⚠ **추출기가 두 벌이 된 뒤(CLAUDE.md R7, 2026-09-08) 키를 안 지우는 것이
+  위험해졌다.** 한 벤더를 목킹하고 mock_mode=False 로 되돌리면, 순서상 뒤에
+  있는 **다른 벤더가 실제로 불린다** - 목킹 안 된 쪽은 진짜 키로 나간다.
+  그래서 여기서 두 키를 모두 지운다. 벤더별 경로를 검증하는 테스트는 자기가
+  필요한 키만 다시 세우면 된다(그때 그 벤더는 목킹돼 있다).
 """
 
 import os
@@ -43,4 +49,14 @@ def _no_live_llm(monkeypatch):
         return
     import sourcing_guard.extractor as ex
 
-    monkeypatch.setattr(ex, "settings", replace(ex.settings, mock_mode=True))
+    monkeypatch.setattr(
+        ex,
+        "settings",
+        replace(
+            ex.settings,
+            mock_mode=True,
+            # 목킹 안 된 벤더가 진짜 키로 나가는 것을 막는다.
+            anthropic_api_key=None,
+            gpt_api_key=None,
+        ),
+    )

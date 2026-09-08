@@ -43,6 +43,19 @@ class Settings:
     mock_mode: bool
     anthropic_api_key: str | None
     extractor_model: str
+    # ── 추출기 두 벌 (2026-09-08, CLAUDE.md R7 개정) ──
+    #
+    # Claude 크레딧이 소진돼 배포본이 매 스캔마다 400 을 받고 휴리스틱으로
+    # 떨어지고 있었다. 추출이 죽으면 product_name·legal_item_name·category
+    # 세 필드가 비고, 그러면 등급표 조회가 원본 상품명으로 돌아간다 -
+    # 발표 숫자(단건 83.7%)가 화면과 어긋난다.
+    #
+    # ⚠ 순서를 환경변수로 둔다. 지금은 Claude 잔액이 0 이라 gpt 를 앞에
+    #   세운다 - 그렇지 않으면 매 스캔이 실패가 확정인 왕복을 한 번 더 한다.
+    #   Claude 를 충전하면 EXTRACTOR_ORDER=claude,gpt 로 되돌린다.
+    gpt_api_key: str | None
+    gpt_model: str
+    extractor_order: tuple[str, ...]
     kats_base_url: str | None
     kats_service_key: str | None
     watchlist_db_path: str
@@ -56,6 +69,16 @@ class Settings:
             mock_mode=_flag("MOCK_MODE", True),
             anthropic_api_key=os.getenv("ANTHROPIC_API_KEY") or None,
             extractor_model=os.getenv("EXTRACTOR_MODEL", "claude-sonnet-5"),
+            gpt_api_key=os.getenv("GPT_API_KEY") or None,
+            # ⚠ 실제 /v1/models 목록에서 고른 이름이다. 추측이 아니다 (R5).
+            #   추출은 짧은 입력·짧은 JSON 출력이라 mini 급으로 충분한지
+            #   대조 측정으로 확인한다.
+            gpt_model=os.getenv("GPT_MODEL", "gpt-5.4-mini"),
+            extractor_order=tuple(
+                v.strip().lower()
+                for v in os.getenv("EXTRACTOR_ORDER", "gpt,claude").split(",")
+                if v.strip()
+            ),
             kats_base_url=os.getenv("KATS_BASE_URL") or None,
             kats_service_key=os.getenv("KATS_SERVICE_KEY") or None,
             # 배포 시 반드시 영구 볼륨 경로를 지정한다. 컨테이너 기본 파일시스템에
