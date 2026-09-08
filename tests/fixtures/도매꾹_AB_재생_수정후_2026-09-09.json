@@ -1,0 +1,3431 @@
+{
+ "라벨": "4-c·4-d-3·4-d-1·4-d-2 전부 적용 · 로컬 재생",
+ "원자료": "tests/fixtures/도매꾹_AB_2026-09-08.json",
+ "리콜_as_of": "20260908",
+ "조건별": [
+  {
+   "조건": "상품명만",
+   "집계": {
+    "matched": 92,
+    "ok": 88,
+    "vague": 2,
+    "wrong": 2,
+    "kc": 0,
+    "rf": 0,
+    "kc_verified": 0,
+    "kc_revoked": 0,
+    "kc_expired": 0,
+    "kc_not_found": 0,
+    "rf_not_found": 0,
+    "recall_match": 0,
+    "out_of_scope": 0
+   },
+   "신호등": {
+    "UNKNOWN": 79,
+    "AMBER": 30
+   },
+   "RED": [],
+   "행별": {
+    "2": {
+     "signal": "UNKNOWN",
+     "items": [
+      "전기매트",
+      "전기요"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "5": {
+     "signal": "UNKNOWN",
+     "items": [
+      "전기방석",
+      "전기방석"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_split": 1,
+      "recall_clear": 1,
+      "info_request": 1,
+      "coverage_gap": 1
+     }
+    },
+    "6": {
+     "signal": "UNKNOWN",
+     "items": [],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "kc_tier_unknown": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "7": {
+     "signal": "UNKNOWN",
+     "items": [],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "kc_tier_unknown": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "8": {
+     "signal": "AMBER",
+     "items": [],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "kc_tier_unknown": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "hazard_rule_applies": 17
+     }
+    },
+    "27": {
+     "signal": "UNKNOWN",
+     "items": [
+      "전기오븐기기"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "28": {
+     "signal": "UNKNOWN",
+     "items": [
+      "전기오븐기기"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "29": {
+     "signal": "UNKNOWN",
+     "items": [
+      "전기오븐기기"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "39": {
+     "signal": "UNKNOWN",
+     "items": [
+      "앰프 내장형 스피커"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_absence_expected": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "rf_wireless_unverified": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "40": {
+     "signal": "UNKNOWN",
+     "items": [
+      "앰프 내장형 스피커"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_absence_expected": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "rf_wireless_unverified": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "41": {
+     "signal": "UNKNOWN",
+     "items": [
+      "앰프 내장형 스피커"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_absence_expected": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "rf_wireless_unverified": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "42": {
+     "signal": "UNKNOWN",
+     "items": [
+      "앰프 내장형 스피커"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_absence_expected": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "rf_wireless_unverified": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "43": {
+     "signal": "UNKNOWN",
+     "items": [
+      "무선스피커 시스템"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_absence_expected": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "rf_wireless_unverified": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "44": {
+     "signal": "UNKNOWN",
+     "items": [
+      "LED램프 (모듈)"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "rf_wireless_unverified": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "45": {
+     "signal": "UNKNOWN",
+     "items": [
+      "진공청소기",
+      "물흡입청소기",
+      "전기바닥청소기",
+      "스팀청소기"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "46": {
+     "signal": "UNKNOWN",
+     "items": [
+      "진공청소기",
+      "물흡입청소기",
+      "전기바닥청소기",
+      "스팀청소기"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "47": {
+     "signal": "UNKNOWN",
+     "items": [
+      "진공청소기",
+      "물흡입청소기",
+      "전기바닥청소기",
+      "스팀청소기"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "48": {
+     "signal": "UNKNOWN",
+     "items": [
+      "진공청소기",
+      "물흡입청소기",
+      "전기바닥청소기",
+      "스팀청소기"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "49": {
+     "signal": "UNKNOWN",
+     "items": [
+      "진공청소기",
+      "물흡입청소기",
+      "전기바닥청소기",
+      "스팀청소기"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "50": {
+     "signal": "UNKNOWN",
+     "items": [
+      "진공청소기",
+      "물흡입청소기",
+      "전기바닥청소기",
+      "스팀청소기"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "51": {
+     "signal": "UNKNOWN",
+     "items": [
+      "진공청소기",
+      "물흡입청소기",
+      "전기바닥청소기",
+      "스팀청소기"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "52": {
+     "signal": "UNKNOWN",
+     "items": [],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "kc_tier_unknown": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "53": {
+     "signal": "UNKNOWN",
+     "items": [
+      "진공청소기",
+      "물흡입청소기",
+      "전기바닥청소기",
+      "스팀청소기"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "62": {
+     "signal": "UNKNOWN",
+     "items": [
+      "전기다리미",
+      "스팀다리미"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "65": {
+     "signal": "UNKNOWN",
+     "items": [
+      "스팀다리미"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "66": {
+     "signal": "UNKNOWN",
+     "items": [
+      "스팀다리미"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "67": {
+     "signal": "UNKNOWN",
+     "items": [
+      "전기거치식그릴",
+      "전기휴대형그릴"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "69": {
+     "signal": "UNKNOWN",
+     "items": [
+      "전기프라이팬"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "71": {
+     "signal": "UNKNOWN",
+     "items": [
+      "전기거치식그릴",
+      "전기휴대형그릴"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "73": {
+     "signal": "UNKNOWN",
+     "items": [
+      "전기오븐기기"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "74": {
+     "signal": "UNKNOWN",
+     "items": [
+      "전기오븐기기"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "75": {
+     "signal": "UNKNOWN",
+     "items": [
+      "전기오븐기기"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "76": {
+     "signal": "UNKNOWN",
+     "items": [
+      "전기오븐기기"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "77": {
+     "signal": "UNKNOWN",
+     "items": [
+      "전기오븐기기"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "79": {
+     "signal": "UNKNOWN",
+     "items": [
+      "전기오븐기기"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "81": {
+     "signal": "UNKNOWN",
+     "items": [
+      "전기주전자"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "82": {
+     "signal": "UNKNOWN",
+     "items": [
+      "전기주전자"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "83": {
+     "signal": "UNKNOWN",
+     "items": [
+      "전기주전자"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 1,
+      "coverage_gap": 1
+     }
+    },
+    "84": {
+     "signal": "UNKNOWN",
+     "items": [
+      "전기주전자"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 1,
+      "coverage_gap": 1
+     }
+    },
+    "85": {
+     "signal": "UNKNOWN",
+     "items": [
+      "전기주전자"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 1,
+      "coverage_gap": 1
+     }
+    },
+    "86": {
+     "signal": "UNKNOWN",
+     "items": [
+      "전기주전자"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "87": {
+     "signal": "UNKNOWN",
+     "items": [
+      "전기주전자"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "88": {
+     "signal": "UNKNOWN",
+     "items": [
+      "의류"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_absence_expected": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "hazard_rule_applies": 17
+     }
+    },
+    "89": {
+     "signal": "AMBER",
+     "items": [],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "kc_tier_unknown": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "hazard_rule_applies": 17
+     }
+    },
+    "91": {
+     "signal": "UNKNOWN",
+     "items": [
+      "의류 이외의 섬유제품"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 3,
+      "coverage_gap": 1
+     }
+    },
+    "92": {
+     "signal": "UNKNOWN",
+     "items": [
+      "의류 이외의 섬유제품"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 3,
+      "coverage_gap": 1
+     }
+    },
+    "94": {
+     "signal": "UNKNOWN",
+     "items": [
+      "의류"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_absence_expected": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "hazard_rule_applies": 17
+     }
+    },
+    "95": {
+     "signal": "AMBER",
+     "items": [],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "kc_tier_unknown": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "hazard_rule_applies": 17
+     }
+    },
+    "97": {
+     "signal": "AMBER",
+     "items": [
+      "어린이용 스포츠 보호용품(보호 장구 및 안전모)"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "hazard_rule_applies": 17
+     }
+    },
+    "99": {
+     "signal": "UNKNOWN",
+     "items": [
+      "자전거용 안전모"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "102": {
+     "signal": "UNKNOWN",
+     "items": [
+      "의류"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_absence_expected": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "hazard_rule_applies": 17
+     }
+    },
+    "103": {
+     "signal": "UNKNOWN",
+     "items": [
+      "의류"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_absence_expected": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "hazard_rule_applies": 17
+     }
+    },
+    "127": {
+     "signal": "UNKNOWN",
+     "items": [
+      "의류 이외의 섬유제품"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 3,
+      "coverage_gap": 1
+     }
+    },
+    "128": {
+     "signal": "AMBER",
+     "items": [],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "kc_tier_unknown": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "hazard_rule_applies": 14
+     }
+    },
+    "131": {
+     "signal": "UNKNOWN",
+     "items": [
+      "의류 이외의 섬유제품"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 3,
+      "coverage_gap": 1
+     }
+    },
+    "132": {
+     "signal": "UNKNOWN",
+     "items": [
+      "의류 이외의 섬유제품"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_absence_expected": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "133": {
+     "signal": "UNKNOWN",
+     "items": [
+      "의류 이외의 섬유제품"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_absence_expected": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "hazard_rule_applies": 17
+     }
+    },
+    "134": {
+     "signal": "AMBER",
+     "items": [
+      "공기주입물놀이기구"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "hazard_rule_applies": 14
+     }
+    },
+    "136": {
+     "signal": "AMBER",
+     "items": [
+      "공기주입물놀이기구"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "hazard_rule_applies": 14
+     }
+    },
+    "137": {
+     "signal": "UNKNOWN",
+     "items": [
+      "공기주입물놀이기구"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "138": {
+     "signal": "UNKNOWN",
+     "items": [],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "recall_clear": 1,
+      "info_request": 3,
+      "coverage_gap": 1
+     }
+    },
+    "140": {
+     "signal": "UNKNOWN",
+     "items": [
+      "공기주입물놀이기구"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 3,
+      "coverage_gap": 1
+     }
+    },
+    "142": {
+     "signal": "AMBER",
+     "items": [
+      "공기주입물놀이기구"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "hazard_rule_applies": 14
+     }
+    },
+    "143": {
+     "signal": "UNKNOWN",
+     "items": [
+      "매트류"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_absence_expected": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 1,
+      "hazard_rule_applies": 17
+     }
+    },
+    "144": {
+     "signal": "UNKNOWN",
+     "items": [
+      "매트류"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_absence_expected": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 1,
+      "hazard_rule_applies": 14
+     }
+    },
+    "145": {
+     "signal": "UNKNOWN",
+     "items": [
+      "의류"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_absence_expected": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "hazard_rule_applies": 17
+     }
+    },
+    "146": {
+     "signal": "UNKNOWN",
+     "items": [
+      "매트류"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_absence_expected": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "147": {
+     "signal": "UNKNOWN",
+     "items": [
+      "매트류"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 3,
+      "coverage_gap": 1
+     }
+    },
+    "148": {
+     "signal": "AMBER",
+     "items": [
+      "매트류"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_absence_expected": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 1,
+      "hazard_rule_applies": 17,
+      "substance_mentioned": 1
+     }
+    },
+    "149": {
+     "signal": "UNKNOWN",
+     "items": [
+      "매트류"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_absence_expected": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "hazard_rule_applies": 17
+     }
+    },
+    "150": {
+     "signal": "AMBER",
+     "items": [
+      "학용품"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "hazard_rule_applies": 14
+     }
+    },
+    "152": {
+     "signal": "AMBER",
+     "items": [
+      "학용품"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "hazard_rule_applies": 14
+     }
+    },
+    "153": {
+     "signal": "AMBER",
+     "items": [
+      "학용품"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 1,
+      "hazard_rule_applies": 14
+     }
+    },
+    "154": {
+     "signal": "AMBER",
+     "items": [
+      "학용품"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 1,
+      "hazard_rule_applies": 14
+     }
+    },
+    "155": {
+     "signal": "AMBER",
+     "items": [
+      "학용품"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 1,
+      "hazard_rule_applies": 14
+     }
+    },
+    "157": {
+     "signal": "AMBER",
+     "items": [
+      "학용품"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "hazard_rule_applies": 14
+     }
+    },
+    "158": {
+     "signal": "AMBER",
+     "items": [
+      "학용품"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 1,
+      "hazard_rule_applies": 14
+     }
+    },
+    "159": {
+     "signal": "AMBER",
+     "items": [
+      "학용품"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "hazard_rule_applies": 14
+     }
+    },
+    "160": {
+     "signal": "AMBER",
+     "items": [
+      "학용품"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 1,
+      "hazard_rule_applies": 14
+     }
+    },
+    "161": {
+     "signal": "AMBER",
+     "items": [
+      "학용품"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "hazard_rule_applies": 14
+     }
+    },
+    "162": {
+     "signal": "AMBER",
+     "items": [
+      "학용품"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "hazard_rule_applies": 14
+     }
+    },
+    "164": {
+     "signal": "AMBER",
+     "items": [],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "kc_tier_unknown": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "hazard_rule_applies": 14
+     }
+    },
+    "165": {
+     "signal": "UNKNOWN",
+     "items": [
+      "의류"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_absence_expected": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "hazard_rule_applies": 17
+     }
+    },
+    "167": {
+     "signal": "AMBER",
+     "items": [
+      "학용품"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "hazard_rule_applies": 14
+     }
+    },
+    "169": {
+     "signal": "AMBER",
+     "items": [
+      "학용품"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "hazard_rule_applies": 14
+     }
+    },
+    "171": {
+     "signal": "AMBER",
+     "items": [],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "kc_tier_unknown": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "hazard_rule_applies": 14
+     }
+    },
+    "172": {
+     "signal": "AMBER",
+     "items": [],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "kc_tier_unknown": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "hazard_rule_applies": 14
+     }
+    },
+    "174": {
+     "signal": "AMBER",
+     "items": [
+      "학용품"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "hazard_rule_applies": 14
+     }
+    },
+    "179": {
+     "signal": "AMBER",
+     "items": [],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "kc_tier_unknown": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "hazard_rule_applies": 14
+     }
+    },
+    "181": {
+     "signal": "AMBER",
+     "items": [
+      "학용품"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "hazard_rule_applies": 14
+     }
+    },
+    "189": {
+     "signal": "AMBER",
+     "items": [],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "kc_tier_unknown": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "hazard_rule_applies": 17
+     }
+    },
+    "200": {
+     "signal": "UNKNOWN",
+     "items": [
+      "신발류"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_absence_expected": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 1,
+      "coverage_gap": 1
+     }
+    },
+    "201": {
+     "signal": "UNKNOWN",
+     "items": [
+      "신발류"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_absence_expected": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 1,
+      "coverage_gap": 1
+     }
+    },
+    "202": {
+     "signal": "UNKNOWN",
+     "items": [],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "207": {
+     "signal": "AMBER",
+     "items": [],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "kc_tier_unknown": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "hazard_rule_applies": 14
+     }
+    },
+    "210": {
+     "signal": "UNKNOWN",
+     "items": [
+      "직류전원장치"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "212": {
+     "signal": "UNKNOWN",
+     "items": [
+      "전기스팀쿠커",
+      "전기냄비",
+      "전기밥솥"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "213": {
+     "signal": "UNKNOWN",
+     "items": [
+      "전기스팀쿠커",
+      "전기냄비",
+      "전기밥솥"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "217": {
+     "signal": "UNKNOWN",
+     "items": [
+      "모발건조기"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "219": {
+     "signal": "UNKNOWN",
+     "items": [
+      "모발건조기"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "220": {
+     "signal": "UNKNOWN",
+     "items": [
+      "모발건조기"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "221": {
+     "signal": "UNKNOWN",
+     "items": [
+      "모발건조기"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "223": {
+     "signal": "UNKNOWN",
+     "items": [
+      "전기면도기"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "225": {
+     "signal": "UNKNOWN",
+     "items": [],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "kc_tier_unknown": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "226": {
+     "signal": "UNKNOWN",
+     "items": [],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "kc_tier_unknown": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "230": {
+     "signal": "UNKNOWN",
+     "items": [
+      "가습기"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "231": {
+     "signal": "UNKNOWN",
+     "items": [
+      "가습기"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "232": {
+     "signal": "UNKNOWN",
+     "items": [
+      "가습기"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "234": {
+     "signal": "UNKNOWN",
+     "items": [
+      "가습기"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    }
+   }
+  },
+  {
+   "조건": "상세",
+   "집계": {
+    "matched": 93,
+    "ok": 89,
+    "vague": 2,
+    "wrong": 2,
+    "kc": 25,
+    "rf": 9,
+    "kc_verified": 22,
+    "kc_revoked": 2,
+    "kc_expired": 6,
+    "kc_not_found": 2,
+    "rf_not_found": 0,
+    "recall_match": 7,
+    "out_of_scope": 5
+   },
+   "신호등": {
+    "UNKNOWN": 79,
+    "RED": 3,
+    "AMBER": 25,
+    "GREEN": 2
+   },
+   "RED": [
+    {
+     "no": 48,
+     "name": "차량용 무선 휴대용 핸디 청소기 에어건 2in1",
+     "kinds": [
+      "recall_match",
+      "recall_match",
+      "recall_match",
+      "recall_match"
+     ]
+    },
+    {
+     "no": 67,
+     "name": "그릴 후라이팬 고기 불판 와이드 전기 그릴 48cm 사은품 / 판촉물",
+     "kinds": [
+      "kc_revoked"
+     ]
+    },
+    {
+     "no": 137,
+     "name": "프리미엄 클래식 파스텔 튜브 파도타기 물놀이 용품 성인용 튜브",
+     "kinds": [
+      "kc_revoked",
+      "recall_match"
+     ]
+    }
+   ],
+   "행별": {
+    "2": {
+     "signal": "UNKNOWN",
+     "items": [
+      "전기매트",
+      "전기요"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "5": {
+     "signal": "UNKNOWN",
+     "items": [
+      "전기방석",
+      "전기방석"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_split": 1,
+      "recall_clear": 1,
+      "info_request": 1,
+      "coverage_gap": 1
+     }
+    },
+    "6": {
+     "signal": "UNKNOWN",
+     "items": [
+      "전기장판"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 1,
+      "coverage_gap": 1
+     }
+    },
+    "7": {
+     "signal": "UNKNOWN",
+     "items": [],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "kc_tier_unknown": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "8": {
+     "signal": "UNKNOWN",
+     "items": [],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "27": {
+     "signal": "UNKNOWN",
+     "items": [
+      "전기오븐기기"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "28": {
+     "signal": "UNKNOWN",
+     "items": [
+      "전기오븐기기"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "29": {
+     "signal": "UNKNOWN",
+     "items": [
+      "전기오븐기기"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "39": {
+     "signal": "UNKNOWN",
+     "items": [
+      "앰프 내장형 스피커"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_absence_expected": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "rf_wireless_unverified": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "40": {
+     "signal": "UNKNOWN",
+     "items": [
+      "앰프 내장형 스피커"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_absence_expected": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "rf_wireless_unverified": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "41": {
+     "signal": "UNKNOWN",
+     "items": [
+      "앰프 내장형 스피커"
+     ],
+     "kc": [],
+     "rf": [
+      "MSIP-CMI-YOU-SOUND-T"
+     ],
+     "kinds": {
+      "kc_absence_expected": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "rf_cert_verified": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "42": {
+     "signal": "UNKNOWN",
+     "items": [
+      "앰프 내장형 스피커"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_absence_expected": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "rf_wireless_unverified": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "43": {
+     "signal": "UNKNOWN",
+     "items": [
+      "무선스피커 시스템"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_absence_expected": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "rf_wireless_unverified": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "44": {
+     "signal": "UNKNOWN",
+     "items": [
+      "LED램프 (모듈)"
+     ],
+     "kc": [],
+     "rf": [
+      "MSIP-CMI-DVT-Rainbow"
+     ],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_match": 1,
+      "rf_cert_verified": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "45": {
+     "signal": "UNKNOWN",
+     "items": [
+      "진공청소기",
+      "물흡입청소기",
+      "전기바닥청소기",
+      "스팀청소기"
+     ],
+     "kc": [],
+     "rf": [
+      "R-R-Sjn-UPE054"
+     ],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "rf_cert_verified": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "46": {
+     "signal": "UNKNOWN",
+     "items": [
+      "진공청소기",
+      "물흡입청소기",
+      "전기바닥청소기",
+      "스팀청소기"
+     ],
+     "kc": [
+      "YU101649-22001"
+     ],
+     "rf": [
+      "R-R-DKr-DC-CCCV-01"
+     ],
+     "kinds": {
+      "kc_verified": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "rf_cert_verified": 1,
+      "info_request": 1,
+      "coverage_gap": 1
+     }
+    },
+    "47": {
+     "signal": "UNKNOWN",
+     "items": [
+      "진공청소기",
+      "물흡입청소기",
+      "전기바닥청소기",
+      "스팀청소기"
+     ],
+     "kc": [
+      "YU102043-24001"
+     ],
+     "rf": [
+      "R-R-Jy5-Q-108"
+     ],
+     "kinds": {
+      "kc_verified": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "rf_cert_verified": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "48": {
+     "signal": "RED",
+     "items": [
+      "진공청소기",
+      "물흡입청소기",
+      "전기바닥청소기",
+      "스팀청소기"
+     ],
+     "kc": [
+      "XU103198-23003B",
+      "XU103198-23003B"
+     ],
+     "rf": [],
+     "kinds": {
+      "kc_verified": 2,
+      "item_grade_matched": 1,
+      "recall_match": 4,
+      "rf_wireless_unverified": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "49": {
+     "signal": "UNKNOWN",
+     "items": [
+      "진공청소기",
+      "물흡입청소기",
+      "전기바닥청소기",
+      "스팀청소기"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "50": {
+     "signal": "UNKNOWN",
+     "items": [
+      "진공청소기",
+      "물흡입청소기",
+      "전기바닥청소기",
+      "스팀청소기"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "51": {
+     "signal": "UNKNOWN",
+     "items": [
+      "진공청소기",
+      "물흡입청소기",
+      "전기바닥청소기",
+      "스팀청소기"
+     ],
+     "kc": [
+      "XU102377-20001A"
+     ],
+     "rf": [],
+     "kinds": {
+      "kc_verified": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "52": {
+     "signal": "UNKNOWN",
+     "items": [],
+     "kc": [
+      "XU102215-20004A"
+     ],
+     "rf": [],
+     "kinds": {
+      "kc_verified": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "53": {
+     "signal": "UNKNOWN",
+     "items": [
+      "진공청소기",
+      "물흡입청소기",
+      "전기바닥청소기",
+      "스팀청소기"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "62": {
+     "signal": "UNKNOWN",
+     "items": [
+      "전기다리미",
+      "스팀다리미"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "65": {
+     "signal": "UNKNOWN",
+     "items": [
+      "스팀다리미"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "66": {
+     "signal": "UNKNOWN",
+     "items": [
+      "스팀다리미"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "67": {
+     "signal": "RED",
+     "items": [
+      "전기거치식그릴",
+      "전기휴대형그릴"
+     ],
+     "kc": [
+      "HU072693-20003J"
+     ],
+     "rf": [],
+     "kinds": {
+      "kc_revoked": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "69": {
+     "signal": "UNKNOWN",
+     "items": [
+      "전기프라이팬"
+     ],
+     "kc": [
+      "HU073519-24001"
+     ],
+     "rf": [],
+     "kinds": {
+      "kc_verified": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "71": {
+     "signal": "UNKNOWN",
+     "items": [
+      "전기거치식그릴",
+      "전기휴대형그릴"
+     ],
+     "kc": [
+      "HU072034-17002D"
+     ],
+     "rf": [],
+     "kinds": {
+      "kc_verified": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "73": {
+     "signal": "UNKNOWN",
+     "items": [
+      "전기오븐기기"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "74": {
+     "signal": "UNKNOWN",
+     "items": [
+      "전기오븐기기"
+     ],
+     "kc": [
+      "HU073506-24001",
+      "HU073506-24001"
+     ],
+     "rf": [],
+     "kinds": {
+      "kc_verified": 2,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "75": {
+     "signal": "UNKNOWN",
+     "items": [
+      "전기오븐기기"
+     ],
+     "kc": [
+      "HU071406-18008A",
+      "HU071406-18008A"
+     ],
+     "rf": [],
+     "kinds": {
+      "kc_verified": 2,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "76": {
+     "signal": "UNKNOWN",
+     "items": [
+      "전기거치식그릴",
+      "전기휴대형그릴",
+      "전기오븐기기"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1,
+      "out_of_scope": 1
+     }
+    },
+    "77": {
+     "signal": "UNKNOWN",
+     "items": [
+      "전기오븐기기"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1,
+      "out_of_scope": 1
+     }
+    },
+    "79": {
+     "signal": "UNKNOWN",
+     "items": [
+      "전기오븐기기"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1,
+      "out_of_scope": 1
+     }
+    },
+    "81": {
+     "signal": "UNKNOWN",
+     "items": [
+      "전기주전자"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 1,
+      "coverage_gap": 1
+     }
+    },
+    "82": {
+     "signal": "UNKNOWN",
+     "items": [
+      "전기주전자"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1,
+      "out_of_scope": 1
+     }
+    },
+    "83": {
+     "signal": "UNKNOWN",
+     "items": [
+      "전기주전자"
+     ],
+     "kc": [
+      "SU071354-12001"
+     ],
+     "rf": [],
+     "kinds": {
+      "kc_expired": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 1,
+      "coverage_gap": 1
+     }
+    },
+    "84": {
+     "signal": "UNKNOWN",
+     "items": [
+      "전기주전자"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 1,
+      "coverage_gap": 1,
+      "out_of_scope": 1
+     }
+    },
+    "85": {
+     "signal": "UNKNOWN",
+     "items": [
+      "전기주전자"
+     ],
+     "kc": [
+      "SU07654-12004C"
+     ],
+     "rf": [],
+     "kinds": {
+      "kc_verified": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 1,
+      "coverage_gap": 1
+     }
+    },
+    "86": {
+     "signal": "UNKNOWN",
+     "items": [
+      "전기주전자"
+     ],
+     "kc": [
+      "HU072921-21001L"
+     ],
+     "rf": [
+      "R-R-fUh-FHJ-8803"
+     ],
+     "kinds": {
+      "kc_verified": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "rf_cert_verified": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "87": {
+     "signal": "UNKNOWN",
+     "items": [
+      "전기주전자"
+     ],
+     "kc": [
+      "HU073519-24001",
+      "HU073519-24001"
+     ],
+     "rf": [],
+     "kinds": {
+      "kc_verified": 2,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "88": {
+     "signal": "UNKNOWN",
+     "items": [
+      "의류"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_absence_expected": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "hazard_rule_applies": 17
+     }
+    },
+    "89": {
+     "signal": "AMBER",
+     "items": [],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "kc_tier_unknown": 1,
+      "recall_weak_match": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "hazard_rule_applies": 17
+     }
+    },
+    "91": {
+     "signal": "UNKNOWN",
+     "items": [
+      "의류 이외의 섬유제품"
+     ],
+     "kc": [
+      "HY26-02"
+     ],
+     "rf": [],
+     "kinds": {
+      "kc_not_found": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 3,
+      "coverage_gap": 1
+     }
+    },
+    "92": {
+     "signal": "UNKNOWN",
+     "items": [
+      "의류 이외의 섬유제품"
+     ],
+     "kc": [
+      "HY25-05"
+     ],
+     "rf": [],
+     "kinds": {
+      "kc_not_found": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 3,
+      "coverage_gap": 1
+     }
+    },
+    "94": {
+     "signal": "UNKNOWN",
+     "items": [
+      "의류"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_absence_expected": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "hazard_rule_applies": 17
+     }
+    },
+    "95": {
+     "signal": "UNKNOWN",
+     "items": [],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "recall_clear": 1,
+      "info_request": 3,
+      "coverage_gap": 1
+     }
+    },
+    "97": {
+     "signal": "UNKNOWN",
+     "items": [
+      "어린이용 스포츠 보호용품(보호 장구 및 안전모)"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "item_grade_matched": 1,
+      "recall_match": 1,
+      "info_request": 3,
+      "coverage_gap": 1
+     }
+    },
+    "99": {
+     "signal": "AMBER",
+     "items": [
+      "자전거용 안전모"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "maker_other_recalls": 1,
+      "info_request": 2,
+      "hazard_rule_applies": 14
+     }
+    },
+    "102": {
+     "signal": "UNKNOWN",
+     "items": [
+      "진공청소기",
+      "물흡입청소기",
+      "전기바닥청소기",
+      "스팀청소기"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "item_grade_matched": 1,
+      "info_request": 3,
+      "coverage_gap": 1
+     }
+    },
+    "103": {
+     "signal": "UNKNOWN",
+     "items": [
+      "의류"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 3,
+      "coverage_gap": 1
+     }
+    },
+    "127": {
+     "signal": "UNKNOWN",
+     "items": [
+      "의류 이외의 섬유제품"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 3,
+      "coverage_gap": 1
+     }
+    },
+    "128": {
+     "signal": "GREEN",
+     "items": [],
+     "kc": [
+      "CB063R10777-3001"
+     ],
+     "rf": [],
+     "kinds": {
+      "child_catch_all": 1,
+      "kc_verified": 1,
+      "recall_clear": 1,
+      "hazard_rule_applies": 14
+     }
+    },
+    "131": {
+     "signal": "UNKNOWN",
+     "items": [
+      "의류 이외의 섬유제품"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_absence_expected": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "132": {
+     "signal": "UNKNOWN",
+     "items": [
+      "의류 이외의 섬유제품"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_absence_expected": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "133": {
+     "signal": "UNKNOWN",
+     "items": [
+      "의류 이외의 섬유제품"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 3,
+      "coverage_gap": 1
+     }
+    },
+    "134": {
+     "signal": "UNKNOWN",
+     "items": [
+      "공기주입물놀이기구"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 3,
+      "coverage_gap": 1
+     }
+    },
+    "136": {
+     "signal": "UNKNOWN",
+     "items": [
+      "공기주입물놀이기구"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 3,
+      "coverage_gap": 1
+     }
+    },
+    "137": {
+     "signal": "RED",
+     "items": [
+      "공기주입물놀이기구"
+     ],
+     "kc": [
+      "A071R018-24003",
+      "A071R018-24004",
+      "CA011R021-4001"
+     ],
+     "rf": [],
+     "kinds": {
+      "kc_verified": 2,
+      "kc_revoked": 1,
+      "item_grade_matched": 1,
+      "recall_match": 1,
+      "info_request": 3,
+      "coverage_gap": 1
+     }
+    },
+    "138": {
+     "signal": "UNKNOWN",
+     "items": [],
+     "kc": [
+      "A071R033-23001"
+     ],
+     "rf": [],
+     "kinds": {
+      "kc_expired": 1,
+      "recall_clear": 1,
+      "info_request": 3,
+      "coverage_gap": 1
+     }
+    },
+    "140": {
+     "signal": "AMBER",
+     "items": [
+      "공기주입물놀이기구"
+     ],
+     "kc": [
+      "CA011R017-7002",
+      "CA011R017-7001"
+     ],
+     "rf": [],
+     "kinds": {
+      "kc_expired": 2,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "hazard_rule_applies": 14
+     }
+    },
+    "142": {
+     "signal": "AMBER",
+     "items": [
+      "공기주입물놀이기구"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "hazard_rule_applies": 14
+     }
+    },
+    "143": {
+     "signal": "UNKNOWN",
+     "items": [
+      "매트류"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_absence_expected": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 1,
+      "coverage_gap": 1
+     }
+    },
+    "144": {
+     "signal": "UNKNOWN",
+     "items": [
+      "매트류"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_absence_expected": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 1,
+      "coverage_gap": 1
+     }
+    },
+    "145": {
+     "signal": "UNKNOWN",
+     "items": [
+      "의류"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_absence_expected": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "hazard_rule_applies": 17
+     }
+    },
+    "146": {
+     "signal": "UNKNOWN",
+     "items": [],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "147": {
+     "signal": "UNKNOWN",
+     "items": [
+      "매트류"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_absence_expected": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "148": {
+     "signal": "AMBER",
+     "items": [
+      "매트류"
+     ],
+     "kc": [
+      "CB025H0054-4001"
+     ],
+     "rf": [],
+     "kinds": {
+      "kc_verified": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 1,
+      "hazard_rule_applies": 14,
+      "substance_mentioned": 1
+     }
+    },
+    "149": {
+     "signal": "GREEN",
+     "items": [
+      "매트류"
+     ],
+     "kc": [
+      "CB025H0054-4001"
+     ],
+     "rf": [],
+     "kinds": {
+      "kc_verified": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "hazard_rule_applies": 14
+     }
+    },
+    "150": {
+     "signal": "AMBER",
+     "items": [
+      "학용품"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "hazard_rule_applies": 14
+     }
+    },
+    "152": {
+     "signal": "AMBER",
+     "items": [
+      "학용품"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "hazard_rule_applies": 14
+     }
+    },
+    "153": {
+     "signal": "AMBER",
+     "items": [
+      "학용품"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 1,
+      "hazard_rule_applies": 14
+     }
+    },
+    "154": {
+     "signal": "AMBER",
+     "items": [
+      "학용품"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 1,
+      "hazard_rule_applies": 14
+     }
+    },
+    "155": {
+     "signal": "AMBER",
+     "items": [
+      "학용품"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 1,
+      "hazard_rule_applies": 14
+     }
+    },
+    "157": {
+     "signal": "AMBER",
+     "items": [
+      "학용품"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "hazard_rule_applies": 14
+     }
+    },
+    "158": {
+     "signal": "AMBER",
+     "items": [
+      "학용품"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 1,
+      "hazard_rule_applies": 14
+     }
+    },
+    "159": {
+     "signal": "AMBER",
+     "items": [
+      "학용품"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "hazard_rule_applies": 14
+     }
+    },
+    "160": {
+     "signal": "AMBER",
+     "items": [
+      "학용품"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 1,
+      "hazard_rule_applies": 14
+     }
+    },
+    "161": {
+     "signal": "AMBER",
+     "items": [
+      "학용품"
+     ],
+     "kc": [
+      "b362r241-8002a"
+     ],
+     "rf": [],
+     "kinds": {
+      "kc_expired": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "hazard_rule_applies": 14
+     }
+    },
+    "162": {
+     "signal": "AMBER",
+     "items": [
+      "학용품"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "hazard_rule_applies": 14
+     }
+    },
+    "164": {
+     "signal": "AMBER",
+     "items": [],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "kc_tier_unknown": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "hazard_rule_applies": 14
+     }
+    },
+    "165": {
+     "signal": "UNKNOWN",
+     "items": [],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "167": {
+     "signal": "AMBER",
+     "items": [
+      "학용품"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "hazard_rule_applies": 14
+     }
+    },
+    "169": {
+     "signal": "UNKNOWN",
+     "items": [
+      "학용품"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 3,
+      "coverage_gap": 1
+     }
+    },
+    "171": {
+     "signal": "AMBER",
+     "items": [],
+     "kc": [
+      "b362r241-8002a"
+     ],
+     "rf": [],
+     "kinds": {
+      "kc_expired": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "hazard_rule_applies": 14
+     }
+    },
+    "172": {
+     "signal": "AMBER",
+     "items": [],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "kc_tier_unknown": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "hazard_rule_applies": 14
+     }
+    },
+    "174": {
+     "signal": "AMBER",
+     "items": [
+      "학용품"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "hazard_rule_applies": 14
+     }
+    },
+    "179": {
+     "signal": "AMBER",
+     "items": [
+      "학용품"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "hazard_rule_applies": 14
+     }
+    },
+    "181": {
+     "signal": "AMBER",
+     "items": [
+      "학용품"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "hazard_rule_applies": 14
+     }
+    },
+    "189": {
+     "signal": "AMBER",
+     "items": [],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "kc_tier_unknown": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "hazard_rule_applies": 17
+     }
+    },
+    "200": {
+     "signal": "UNKNOWN",
+     "items": [
+      "신발류"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_absence_expected": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 1,
+      "coverage_gap": 1
+     }
+    },
+    "201": {
+     "signal": "UNKNOWN",
+     "items": [
+      "신발류"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_absence_expected": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 1,
+      "coverage_gap": 1
+     }
+    },
+    "202": {
+     "signal": "UNKNOWN",
+     "items": [],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "207": {
+     "signal": "AMBER",
+     "items": [],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "kc_tier_unknown": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "hazard_rule_applies": 14
+     }
+    },
+    "210": {
+     "signal": "UNKNOWN",
+     "items": [
+      "직류전원장치"
+     ],
+     "kc": [
+      "HU101339-24004"
+     ],
+     "rf": [],
+     "kinds": {
+      "kc_verified": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "212": {
+     "signal": "UNKNOWN",
+     "items": [
+      "전기스팀쿠커",
+      "전기냄비",
+      "전기밥솥"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "213": {
+     "signal": "UNKNOWN",
+     "items": [
+      "전기스팀쿠커",
+      "전기냄비",
+      "전기밥솥"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "217": {
+     "signal": "UNKNOWN",
+     "items": [
+      "모발건조기"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "219": {
+     "signal": "UNKNOWN",
+     "items": [
+      "모발건조기"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 1,
+      "coverage_gap": 1
+     }
+    },
+    "220": {
+     "signal": "UNKNOWN",
+     "items": [
+      "모발건조기"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "221": {
+     "signal": "UNKNOWN",
+     "items": [
+      "모발건조기"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "223": {
+     "signal": "UNKNOWN",
+     "items": [
+      "전기면도기"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "225": {
+     "signal": "UNKNOWN",
+     "items": [],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "kc_tier_unknown": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "226": {
+     "signal": "UNKNOWN",
+     "items": [
+      "전기면도기"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "230": {
+     "signal": "UNKNOWN",
+     "items": [
+      "가습기"
+     ],
+     "kc": [],
+     "rf": [
+      "R-R-JPn-JP-985"
+     ],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "rf_cert_verified": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "231": {
+     "signal": "UNKNOWN",
+     "items": [
+      "가습기"
+     ],
+     "kc": [],
+     "rf": [
+      "R-R-DKr-BUYON-SK002A"
+     ],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "rf_cert_verified": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "232": {
+     "signal": "UNKNOWN",
+     "items": [
+      "가습기"
+     ],
+     "kc": [],
+     "rf": [],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    },
+    "234": {
+     "signal": "UNKNOWN",
+     "items": [
+      "가습기"
+     ],
+     "kc": [],
+     "rf": [
+      "R-R-nDC-A205"
+     ],
+     "kinds": {
+      "kc_missing_but_required": 1,
+      "item_grade_matched": 1,
+      "recall_clear": 1,
+      "rf_cert_verified": 1,
+      "info_request": 2,
+      "coverage_gap": 1
+     }
+    }
+   }
+  }
+ ]
+}
