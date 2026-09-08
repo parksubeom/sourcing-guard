@@ -124,13 +124,92 @@ def test_long_recall_model_lists_are_truncated():
 
 
 @pytest.mark.parametrize("strength", [MatchStrength.EXACT, MatchStrength.STRONG])
-def test_model_and_cert_matches_are_confirmed_problems(strength):
+def test_model_name_only_match_across_different_items_is_amber_not_red(strength):
+    """**"펜을 검사했는데 왜 블라인드가 뜨나" 가 바로 이 경우다** (4-d-2).
+
+    우리 상품은 모나미 153 볼펜(모나미)이고 리콜은 LED 전등(Greenline)이다.
+    맞은 것은 모델명 '153' 하나뿐이고 제조사도 품목도 다르다.
+
+    ⚠ 2026-09-08 까지 이 자리가 RED 를 요구했다. 실측(A-5 · 대상 109건)에서
+      RED 5건 중 3건이 이런 우연 충돌이었다 - '레인보우'↔승차용 안전모,
+      '진공 청소기'↔전지, 'hope'↔전기자전거. R3-b 가 금지한 "항상 켜지는
+      경고" 이고, 빨간불이 반복되면 셀러가 진짜 인증취소도 안 보게 된다.
+
+    ⚠ **버리지는 않는다.** finding 은 그대로 나오고 문구도 R6 대로 "유사 일치
+      … 원문 확인이 필요합니다" 다. 바뀌는 것은 **색**이다.
+    """
     findings, result = run(PEN, [(rec(), Match(strength, "model_name"))])
-    f = next(x for x in findings if x.kind is FindingKind.RECALL_MATCH)
+
+    # ⚠ **경계가 여기 있다.** verifier 는 근거를 모으고 RED 로 만든다. 색을
+    #   내리는 것은 scorer 다(R1: 판정은 scorer). 그래서 화면이 읽는 것은
+    #   `result.findings` 이고, `verify()` 원본은 내려가지 않는다.
+    raw = next(x for x in findings if x.kind is FindingKind.RECALL_MATCH)
+    assert raw.signal is Signal.RED, "verifier 는 근거 수집만 한다"
+
+    f = next(x for x in result.findings if x.kind is FindingKind.RECALL_MATCH)
+    assert f.signal is Signal.AMBER
+    assert f.group is FindingGroup.FINDING, "구획은 그대로 - 참고로 밀지 않는다"
+    assert "원문 확인이 필요합니다" in f.statement_ko
+    assert result.signal is not Signal.RED
+
+
+@pytest.mark.parametrize("strength", [MatchStrength.EXACT, MatchStrength.STRONG])
+def test_certificate_number_match_is_still_red(strength):
+    """인증번호가 같은 것은 추정이 아니다."""
+    facts = PEN.model_copy(update={"kc_numbers": ["CB067R317-5002"]})
+    _findings, result = run(facts, [(rec(), Match(strength, "kc_number"))])
+    f = next(x for x in result.findings if x.kind is FindingKind.RECALL_MATCH)
 
     assert f.signal is Signal.RED
-    assert f.group is FindingGroup.FINDING
     assert result.signal is Signal.RED
+
+
+@pytest.mark.parametrize("strength", [MatchStrength.EXACT, MatchStrength.STRONG])
+def test_model_name_match_with_the_same_maker_is_red(strength):
+    """모델명 + 제조사가 함께 맞으면 우연으로 보기 어렵다."""
+    _findings, result = run(
+        PEN, [(rec(maker="모나미"), Match(strength, "model_name"))]
+    )
+    f = next(x for x in result.findings if x.kind is FindingKind.RECALL_MATCH)
+
+    assert f.signal is Signal.RED
+    assert result.signal is Signal.RED
+
+
+@pytest.mark.parametrize("strength", [MatchStrength.EXACT, MatchStrength.STRONG])
+def test_model_name_match_with_the_same_item_is_red(strength):
+    """모델명 + 품목이 함께 맞으면 우연으로 보기 어렵다.
+
+    리콜 쪽 제품명이 우리가 본 품목을 담고 있으면 같은 물건일 개연이 크다.
+    """
+    _findings, result = run(
+        PEN.model_copy(update={"legal_item_name": "볼펜"}),
+        [(rec(product_name="볼펜"), Match(strength, "model_name"))],
+    )
+    f = next(x for x in result.findings if x.kind is FindingKind.RECALL_MATCH)
+
+    assert f.signal is Signal.RED
+    assert result.signal is Signal.RED
+
+
+def test_the_watchlist_sweep_is_not_touched_by_the_scan_gate():
+    """⚠ R6: 알림에서는 **놓친 쪽이 더 비싸다.** 두 경로의 오류 비대칭이 반대다.
+
+    `watchlist.sweep()` 은 `verify()`·`score()` 를 거치지 않는 별개 경로이고
+    자기 `MatchStrength` 로 판단한다. 스캔 게이트가 거기 닿지 않는 것이
+    의도다 - 두 곳을 한 규칙으로 묶으려는 다음 사람은 R6 을 먼저 읽을 것.
+    """
+    import inspect
+
+    from sourcing_guard import watchlist
+
+    src = inspect.getsource(watchlist.sweep)
+    assert "recall_match_earns_red" not in src
+    assert "score(" not in src and "verify(" not in src
+    # sweep 은 약한 일치도 기본으로 알린다.
+    assert "min_strength: MatchStrength = MatchStrength.WEAK" in inspect.getsource(
+        watchlist.sweep
+    )
 
 
 def test_weak_match_is_context_not_a_confirmed_problem():

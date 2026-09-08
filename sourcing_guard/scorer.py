@@ -6,6 +6,8 @@ CLAUDE.md R3: absence of data yields UNKNOWN, never GREEN.
 
 from __future__ import annotations
 
+import re
+import unicodedata
 from datetime import date, datetime
 
 from .models import Finding, FindingKind, ProductFacts, ScanResult, Signal, ItemCategory, WatchSuggestion, ExtractedField, FindingGroup
@@ -353,6 +355,9 @@ def score(
     The score is a UI affordance, not a legal judgement. The signal is what
     matters and it is derived from findings, never from the score alone.
     """
+    # 근거가 약한 리콜 매칭의 색을 먼저 내린다 (4-d-2). 문구는 그대로다.
+    findings = downgrade_unqualified_recall_reds(facts, findings)
+
     kinds = {f.kind for f in findings}
 
     # --- 소관 안내가 병기인가 단독인가 (4-d-1) -----------------------------
@@ -386,7 +391,7 @@ def score(
     penalty = sum(_PENALTY[f.kind] for f in findings)
     value = max(0, 100 - penalty)
 
-    signal = _signal_for(facts, kinds)
+    signal = _signal_for(facts, kinds, findings)
     if signal is Signal.UNKNOWN:
         # Do not present a reassuring number next to "we don't know".
         value = 0
@@ -433,8 +438,139 @@ def score(
     )
 
 
-def _signal_for(facts: ProductFacts, kinds: set[FindingKind]) -> Signal:
-    if kinds & _HARD_RED:
+# ---------------------------------------------------------------------------
+# 리콜 매칭이 RED 자격이 있는가 (4-d-2)
+# ---------------------------------------------------------------------------
+#
+# 실측 (A-5 · 대상 109건): 상품명만 조건은 RED 0건이었는데 상세를 넣자
+# `model_name` 추출이 16 → 104건으로 6.5배가 되고 리콜 모델명 매칭이 생겼다.
+# RED 5건 중 3건이 **품목이 다른 우연 충돌**이었다:
+#
+#     [44] LED 무드등·스피커   모델명 '레인보우'   ↔ 리콜 품목 승차용 안전모
+#     [48] 차량용 핸디청소기   모델명 '진공 청소기' ↔ 리콜 품목 전지(충전지)
+#     [97] 어린이 무릎보호대   모델명 'hope'       ↔ 리콜 품목 전기자전거
+#
+# 문구는 R6 대로 "유사 일치 … 원문 확인이 필요합니다" 다. 문제는 **신호가
+# RED** 라는 점이고, R3-b 가 금지한 "항상 켜지는 경고" 에 그대로 걸린다 -
+# 정상 상품에 빨간불이 반복되면 셀러가 [67]·[137] 의 진짜 인증취소도 안 보게
+# 된다.
+#
+# ⚠ **3자 미만 모델명을 빼는 R6 의 가드는 여기서 듣지 않는다.** `레인보우`(4자)
+#   `hope`(4자) `진공 청소기`(6자) 가 전부 통과한다. 길이가 아니라 **품목**이
+#   문제다.
+#
+# 그래서 RED 자격을 이렇게 둔다:
+#
+#     (a) 인증번호 일치                        - 번호가 같다. 추정이 아니다
+#     (b) 모델명 일치 + (제조사 일치 or 품목 일치)
+#     (c) 인증상태 취소·정지 (KC_REVOKED · KC_SUSPENDED - 이 함수 밖)
+#
+# **모델명만 맞은 것**은 AMBER 다. 근거 줄은 그대로 남고 색만 바뀐다.
+#
+# ⚠ 구현은 "자격이 있으면 RED" 가 아니라 **"모델명만 맞았다고 확실히 알 때만
+#   내린다"** 다. 방향이 중요하다 - `matched_on` 이 비어 있는 것은 근거가 약한
+#   것이 아니라 코드 공백이고, 그때 조용히 색을 내리면 진짜 리콜을 놓치는 쪽으로
+#   틀린다.
+#
+# ⚠⚠ **워치리스트 sweep 은 건드리지 않는다.** R6 이 못 박아 뒀다 - 스캔에서는
+#   잘못 안심시키는 것이 비싼 오류이지만 **알림에서는 놓친 알림이 우리가 하는
+#   유일한 약속을 깨뜨린다.** 그래서 둘의 오류 비대칭이 반대다:
+#
+#       스캔(여기)        약한 근거로 RED 를 주면 셀러가 모든 RED 를 무시한다
+#       sweep(watchlist)  약한 일치도 알린다. MatchStrength 를 함께 노출한다
+#
+#   `watchlist.sweep()` 은 `verify()`·`score()` 를 거치지 않는 별개 경로이고
+#   자기 `MatchStrength` 로 판단한다. 이 변경이 거기 닿지 않는다 - 그것이
+#   의도다. 두 곳을 한 규칙으로 묶으려는 다음 사람은 R6 을 먼저 읽을 것.
+#
+# ⚠ `KC_EXPIRED` 는 여기에도 위 `_HARD_RED` 에도 **넣지 않았다.** 기간만료·반납은
+#   정부 DB 가 "문제가 있다" 고 적은 것이 아니라 인증의 수명이 끝났다고 적은
+#   것이고, 완구 인증의 67% 가 기간만료다(2026-09-01 실측). RED 로 두면 정상
+#   상품 대부분에 빨간불이 뜬다.
+
+
+def _norm_name(value: str | None) -> str:
+    """품목·제조사 비교용. 공백·기호를 지운다.
+
+    ⚠ 기호를 지우는 이유는 리콜 원문이 `전지(충전지만 해당)` 처럼 괄호를 쓰고
+      우리 쪽은 `전지` 로 오기 때문이다. 숫자·영문은 남긴다 - 모델명이 아니라
+      품목명 비교이므로 우연 충돌보다 놓침이 더 비싸다.
+    """
+    if not value:
+        return ""
+    return re.sub(r"[\s\-_/·,.()\[\]{}]+", "", unicodedata.normalize("NFKC", value)).upper()
+
+
+def _our_item_names(facts: ProductFacts, findings: list[Finding]) -> set[str]:
+    """우리가 이 상품을 무엇으로 봤는가. 등급 후보 + 법령 품목명."""
+    names = {facts.legal_item_name or ""}
+    for f in findings:
+        for cand in (f.detail or {}).get("candidates", []) or []:
+            item = cand.get("item") if isinstance(cand, dict) else None
+            if item:
+                names.add(item)
+    return {n for n in names if n}
+
+
+def _overlaps(a: str | None, b: str | None) -> bool:
+    """정규화 후 한쪽이 다른 쪽을 담고 있으면 겹친 것으로 본다."""
+    x, y = _norm_name(a), _norm_name(b)
+    if not x or not y:
+        return False
+    return x in y or y in x
+
+
+def recall_match_earns_red(
+    facts: ProductFacts, findings: list[Finding], finding: Finding
+) -> bool:
+    """이 리콜 매칭에 RED 를 줄 수 있는가.
+
+    ⚠ **기본값은 RED 다.** 내리는 것은 "모델명만 맞았다" 를 **확실히 아는**
+      경우 하나뿐이다.
+
+      처음에는 반대로 짰다 - (a)·(b) 에 해당할 때만 RED. 그러면 `matched_on`
+      이 비어 있는 finding 이 조용히 AMBER 로 내려간다. 그건 **근거가 약한
+      것이 아니라 코드 공백**이다(그 축을 만든 곳이 detail 을 안 채운 것).
+      조용히 신호를 낮추면 진짜 리콜을 놓치는 쪽으로 틀리므로, 모르면 시끄러운
+      쪽으로 둔다 - "미조회를 GREEN 으로 반올림하지 않는다"(R3)와 같은 방향이다.
+      실제로 검사 5개가 이 차이에서 깨졌다.
+    """
+    detail = finding.detail or {}
+    if detail.get("matched_on") != "model_name":
+        return True
+    if _overlaps(facts.maker, detail.get("maker")):
+        return True
+    recalled = detail.get("recalled_product_name")
+    return any(_overlaps(name, recalled) for name in _our_item_names(facts, findings))
+
+
+def downgrade_unqualified_recall_reds(
+    facts: ProductFacts, findings: list[Finding]
+) -> list[Finding]:
+    """자격 없는 리콜 매칭의 **색만** 내린다. 문구·근거는 그대로 (R6)."""
+    out: list[Finding] = []
+    for f in findings:
+        if (
+            f.kind is FindingKind.RECALL_MATCH
+            and f.signal is Signal.RED
+            and not recall_match_earns_red(facts, findings, f)
+        ):
+            out.append(f.model_copy(update={"signal": Signal.AMBER}))
+        else:
+            out.append(f)
+    return out
+
+
+def _signal_for(
+    facts: ProductFacts, kinds: set[FindingKind], findings: list[Finding]
+) -> Signal:
+    # ⚠ **kind 만 보지 않는다.** `_HARD_RED` 는 "RED 자격이 있는 종류" 이고,
+    #   그 종류라도 근거가 약하면 finding 자체가 AMBER 로 내려와 있다
+    #   (`downgrade_unqualified_recall_reds`). 종류만 보면 내린 색이 무시된다.
+    #
+    #   _HARD_RED 의 네 종류는 전부 Signal.RED 로 생성되므로, 내려온 것이
+    #   없으면 동작이 전과 같다.
+    if any(f.kind in _HARD_RED and f.signal is Signal.RED for f in findings):
         return Signal.RED
 
     # 조회를 못 했으면 아무것도 확인하지 못한 것이다. GREEN 이 나오면 확인하지
