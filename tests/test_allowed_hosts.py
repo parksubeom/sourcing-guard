@@ -59,24 +59,50 @@ def test_ensure_allowed_raises_before_going_out():
     assert host_of("https://example.com/x") == "example.com"
 
 
-def test_both_adapters_go_through_the_gate():
+def test_every_adapter_goes_through_the_gate():
     """어댑터가 나가기 전에 게이트를 부르는지 소스로 확인한다.
 
-    ⚠ 런타임으로 잡기 어렵다 - 실제 호출을 해야 한다. 그래서 소스에서
-      `ensure_allowed` 호출 존재를 본다. 어댑터가 셋이 되면 여기 추가한다.
+    ⚠ 어댑터가 넷이 되면 여기 추가한다. 소스 검사인 이유는 실제 호출 없이
+      "부르는가" 를 확인해야 하기 때문이고, 아래 런타임 검사가 그 짝이다.
     """
     root = Path(__file__).resolve().parents[1] / "sourcing_guard"
-    dome = (root / "domeggook_client.py").read_text(encoding="utf-8")
-    assert "ensure_allowed(" in dome
+    for name in ("domeggook_client.py", "kats_client.py"):
+        src = (root / name).read_text(encoding="utf-8")
+        assert "ensure_allowed(" in src, f"{name} 에 게이트가 없다"
 
-    # ⚠ kats_client 는 게이트 도입 전에 만들어졌다. 그 어댑터가 도는 호스트는
-    #   설정에서 오므로(kats_base_url 오버라이드 가능) 게이트를 붙이는 것이
-    #   맞지만, 이번 변경에서는 손대지 않았다 - 별건이다.
-    #   미완 목록에 적어 두고 여기서 사실만 잠근다.
-    kats = (root / "kats_client.py").read_text(encoding="utf-8")
-    assert "ensure_allowed(" not in kats, (
-        "kats_client 에 게이트가 붙었다면 이 검사와 미완 목록을 갱신할 것"
-    )
+
+def test_kats_client_is_blocked_when_the_base_url_is_overridden_badly():
+    """**런타임으로도 확인한다.** `KATS_BASE_URL` 오버라이드가 구멍이었다.
+
+    이 어댑터의 호스트는 설정에서 온다. env 를 잘못 넣으면 승인되지 않은
+    호스트로 나갈 수 있었고, 게이트 도입 전에는 코드가 막지 않았다.
+
+    ⚠ 던지는 것은 `KatsApiError` 가 **아니다.** 설정 오류를 조회 실패로
+      삼키면 UNKNOWN 으로 반올림되고, 잘못된 호스트를 부르고 있다는 사실이
+      화면에서 사라진다.
+    """
+    import httpx
+
+    from sourcing_guard.kats_client import KatsApiError, KatsClient
+
+    called = []
+
+    def handler(request):
+        called.append(str(request.url))
+        return httpx.Response(200, json={"resultCode": "2000", "resultData": []})
+
+    client = KatsClient("https://evil.example.com/api", "KEY123", mock=False)
+    client._client = httpx.Client(transport=httpx.MockTransport(handler))
+    with pytest.raises(HostNotAllowedError):
+        client.lookup_certification("CB061R2170-3018")
+    assert called == [], "게이트가 나간 뒤에 걸렸다 - 나가기 전이어야 한다"
+
+    # 기본값(매핑 파일의 safetykorea.kr)은 통과한다.
+    ok_client = KatsClient(None, "KEY123", mock=False)
+    ok_client._client = httpx.Client(transport=httpx.MockTransport(handler))
+    assert ok_client.lookup_certification("CB061R2170-3018") is None
+    assert called and "safetykorea.kr" in called[0]
+    assert KatsApiError is not HostNotAllowedError
 
 
 def test_the_domeggook_client_is_not_wired_into_the_deployed_app():

@@ -30,6 +30,8 @@ from typing import Any
 import httpx
 import yaml
 
+from .allowed_hosts import ensure_allowed
+
 _MAP_PATH = Path(__file__).parent / "data" / "kats_field_map.yaml"
 _CFG: dict[str, Any] = yaml.safe_load(_MAP_PATH.read_text(encoding="utf-8")) or {}
 _MOCK_STATES: dict[str, list[str]] = _CFG.get("cert_states", {})
@@ -585,11 +587,30 @@ class KatsClient:
 
     def _call(self, op: str, params: dict[str, str]) -> list[dict]:
         cfg = self._op(op)
+        url = f"{self._base}/{cfg['path'].lstrip('/')}"
+        # 나가기 **전에** 승인 호스트를 확인한다 (CLAUDE.md R4).
+        #
+        # ⚠ 이 어댑터의 호스트는 **설정에서 온다.** 기본값은 매핑 파일이지만
+        #   `KATS_BASE_URL` 로 덮을 수 있다. 즉 env 를 잘못 넣으면 승인되지
+        #   않은 호스트로 나갈 수 있고, 게이트 없이는 코드가 그것을 막지
+        #   않았다. 어댑터 계층이 사실상의 게이트였던 시절의 잔재다.
+        #
+        # ⚠ **여기서 던지는 것은 KatsApiError 가 아니다.** 설정 오류이고
+        #   재시도로 낫지 않으므로, 조회 실패로 삼켜서 UNKNOWN 으로 만들지
+        #   않는다 - 그러면 잘못된 호스트를 부르고 있다는 사실이 화면에서
+        #   사라진다.
+        #
+        # ⚠ 시험용 오버라이드에는 예외를 두지 않았다. 테스트는 `mock=True`
+        #   이거나 `httpx.MockTransport` 를 끼우고 base_url 은 매핑 기본값
+        #   (safetykorea.kr)을 그대로 쓰므로 게이트를 통과한다. 로컬 목
+        #   서버를 붙이고 싶으면 `mock=True` 를 쓸 것 - 게이트에 구멍을
+        #   내는 것보다 낫다.
+        ensure_allowed(url)
         # 인증은 HTTP 헤더 AuthKey. 쿼리 파라미터가 아니며 대소문자를 구분한다
         # (설계서 v2.0 p.2).
         query = {**cfg.get("defaults", {}), **params}
         resp = self._client.get(
-            f"{self._base}/{cfg['path'].lstrip('/')}",
+            url,
             params=query,
             headers={_AUTH_HEADER: self._key or ""},
         )
