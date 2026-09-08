@@ -1,0 +1,3344 @@
+[
+ {
+  "no": 1,
+  "name": "1인용 사무실 usb방석 온열 전기 방석 발열 강아지 고양이",
+  "vendor": "gpt",
+  "product_name": "1인용 사무실 usb방석 온열 전기 방석",
+  "category": "electrical",
+  "legal": "전기방석",
+  "single": [
+   "전기방석"
+  ],
+  "batch": [
+   "전기방석",
+   "전기방석"
+  ],
+  "single_claude": [
+   "전기방석",
+   "전기방석"
+  ]
+ },
+ {
+  "no": 2,
+  "name": "한미메리노 프리미엄급 온열 탄소매트 3세대 전기매트 전기매트 전기요 발열매트",
+  "vendor": "gpt",
+  "product_name": "한미메리노 프리미엄급 온열 탄소매트 3세대 전기매트 전기매트 전기요 발열매트",
+  "category": "electrical",
+  "legal": "전기매트",
+  "single": [
+   "전기매트",
+   "전기요"
+  ],
+  "batch": [
+   "전기매트",
+   "전기요"
+  ],
+  "single_claude": [
+   "전기매트"
+  ]
+ },
+ {
+  "no": 3,
+  "name": "자미니 프리미엄 그레이 카본 온열매트 천연 탄소 전자파없는 전기매트 전기요",
+  "vendor": "gpt",
+  "product_name": "자미니 프리미엄 그레이 카본 온열매트 천연 탄소 전자파없는 전기매트 전기요",
+  "category": "household",
+  "legal": "전기매트",
+  "single": [
+   "전기매트",
+   "전기요"
+  ],
+  "batch": [
+   "전기매트",
+   "전기요"
+  ],
+  "single_claude": [
+   "전기매트",
+   "전기요"
+  ]
+ },
+ {
+  "no": 4,
+  "name": "해피홈 15시간지속 모기훈증기 파워 매트 리필 30매입",
+  "vendor": "gpt",
+  "product_name": "해피홈 15시간지속 모기훈증기 파워 매트 리필 30매입",
+  "category": "unclassified",
+  "legal": null,
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 5,
+  "name": "[겨울필수템] USB 포켓 발열무릎담요 플란넬 양털 극세사 대형 무릎담요 사무실 차안 가정용 따뜻한 보온담",
+  "vendor": "gpt",
+  "product_name": "USB 포켓 발열무릎담요",
+  "category": "electrical",
+  "legal": "전기담요",
+  "single": [
+   "전기방석"
+  ],
+  "batch": [
+   "전기방석",
+   "전기방석"
+  ],
+  "single_claude": []
+ },
+ {
+  "no": 6,
+  "name": "라이프 EMF 카본탄소매트 4color",
+  "vendor": "gpt",
+  "product_name": "라이프 EMF 카본탄소매트 4color",
+  "category": "electrical",
+  "legal": null,
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 7,
+  "name": "헨켈 홈매트 전자모기향 코드롤러 코드형 모기매트 훈증기 본체",
+  "vendor": "gpt",
+  "product_name": "헨켈 홈매트 전자모기향 코드롤러 코드형 모기매트 훈증기 본체",
+  "category": "household",
+  "legal": "훈증기",
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 8,
+  "name": "들꽃 소프트 마이크로 온수매트커버 / 매트카바",
+  "vendor": "gpt",
+  "product_name": "들꽃 소프트 마이크로 온수매트커버",
+  "category": "children_textile",
+  "legal": null,
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 9,
+  "name": "[큰손할인] 정수기컵 디스펜서 무타공 일회용컵 벽걸이 거치대 종이컵 보관함 홀더 케이스 하향식 스탠드",
+  "vendor": "gpt",
+  "product_name": "정수기컵 디스펜서 무타공 일회용컵 벽걸이 거치대 종이컵 보관함 홀더 케이스 하향식 스탠드",
+  "category": "out_of_scope",
+  "legal": null,
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 10,
+  "name": "[개미물류] 컵홀더 디스펜서 사무실 탕비실 보관함 정수기 꽂이 거치대 종이컵 케이스",
+  "vendor": "gpt",
+  "product_name": "컵홀더 디스펜서 사무실 탕비실 보관함 정수기 꽂이 거치대 종이컵 케이스",
+  "category": "household",
+  "legal": null,
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 11,
+  "name": "정수기 종이컵거치대 1구/2구 종이컵 디스펜서 종이컵정리함",
+  "vendor": "gpt",
+  "product_name": "정수기 종이컵거치대 1구/2구 종이컵 디스펜서 종이컵정리함",
+  "category": "out_of_scope",
+  "legal": "종이컵거치대",
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 12,
+  "name": "한모금컵 두모금컵 세모금컵 500매 정수기컵 미니컵 생수컵 일회용컵",
+  "vendor": "gpt",
+  "product_name": "한모금컵 두모금컵 세모금컵",
+  "category": "out_of_scope",
+  "legal": null,
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 13,
+  "name": "한모금컵 2000매 정수기컵 생수컵 두모금컵 전용 디스펜서 세트",
+  "vendor": "gpt",
+  "product_name": "한모금컵 2000매 정수기컵 생수컵 두모금컵 전용 디스펜서 세트",
+  "category": "out_of_scope",
+  "legal": null,
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 14,
+  "name": "나도컵 꼬깔컵 생수컵 4000매 + 전용 디스펜서 포함 원터치 정수기컵 위생컵",
+  "vendor": "gpt",
+  "product_name": "나도컵 꼬깔컵 생수컵 4000매 + 전용 디스펜서 포함 원터치 정수기컵 위생컵",
+  "category": "out_of_scope",
+  "legal": null,
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 15,
+  "name": "나도컵 꼬깔컵 생수컵 정수기컵 2000매 + 전용 원터치 디스펜서 세트 국산 위생컵",
+  "vendor": "gpt",
+  "product_name": "나도컵 꼬깔컵 생수컵 정수기컵 2000매 + 전용 원터치 디스펜서 세트 국산 위생컵",
+  "category": "household",
+  "legal": "컵",
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 16,
+  "name": "세모금컵 2000매 + 하향식 디스펜서 세트 정수기컵 생수컵 일회용컵",
+  "vendor": "gpt",
+  "product_name": "세모금컵 2000매 + 하향식 디스펜서 세트 정수기컵 생수컵 일회용컵",
+  "category": "out_of_scope",
+  "legal": "디스펜서",
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 17,
+  "name": "인덕션냄비 2단 찜솥 28cm 찜냄비 찜기 답례품 판촉물 사은품 주방용품 추석 선물세트 전골 냄비 양수냄비",
+  "vendor": "gpt",
+  "product_name": "인덕션냄비 2단 찜솥 28cm 찜냄비",
+  "category": "out_of_scope",
+  "legal": null,
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 18,
+  "name": "인덕션냄비 4중바닥 편수냄비 양수냄비 냄비세트 선물세트 사은품 판촉물 답례품 선물세트 집들이선물 냄비",
+  "vendor": "gpt",
+  "product_name": "인덕션냄비",
+  "category": "out_of_scope",
+  "legal": null,
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 19,
+  "name": "IH 인덕션 후라이팬 무쇠팬 궁중팬 볶음팬 사은품 판촉물 답례품 선물세트 판촉 집들이선물 프라이팬",
+  "vendor": "gpt",
+  "product_name": "IH 인덕션 후라이팬 무쇠팬 궁중팬 볶음팬 사은품 판촉물 답례품 선물세트 판촉 집들이선물 프라이팬",
+  "category": "household",
+  "legal": "프라이팬",
+  "single": [
+   "전기프라이팬"
+  ],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 20,
+  "name": "인덕션냄비 편수냄비 라면냄비 냄비세트 양수냄비 냄비셋트 판촉물 사은품 선물세트 답례품 스텐냄비 냄비",
+  "vendor": "gpt",
+  "product_name": "인덕션냄비 편수냄비 라면냄비 냄비세트 양수냄비 냄비셋트",
+  "category": "household",
+  "legal": "냄비",
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 21,
+  "name": "인덕션냄비 4중바닥 냄비세트 편수냄비 양수 전골 선물세트 집들이선물 사은품 판촉물 답례품 스텐냄비",
+  "vendor": "gpt",
+  "product_name": "인덕션냄비",
+  "category": "household",
+  "legal": null,
+  "single": [],
+  "batch": [],
+  "single_claude": [
+   "전기냄비",
+   "가정용 압력냄비"
+  ]
+ },
+ {
+  "no": 22,
+  "name": "3중바닥 인덕션냄비 냄비세트 양수 편수 전골 설날선물 구정 판촉물 사은품 답례품 냄비 집들이 선물세트",
+  "vendor": "gpt",
+  "product_name": "3중바닥 인덕션냄비 냄비세트",
+  "category": "household",
+  "legal": "냄비",
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 23,
+  "name": "인덕션냄비 4중바닥 편수냄비 양수 냄비세트 사은품 판촉물 답례품 선물세트 집들이선물 스텐냄비 라면냄비",
+  "vendor": "gpt",
+  "product_name": "인덕션냄비",
+  "category": "household",
+  "legal": null,
+  "single": [],
+  "batch": [],
+  "single_claude": [
+   "전기냄비",
+   "가정용 압력냄비"
+  ]
+ },
+ {
+  "no": 24,
+  "name": "인덕션 겸용 스테인리스 후라이팬 엠보바닥 조리용 프라이팬",
+  "vendor": "gpt",
+  "product_name": "인덕션 겸용 스테인리스 후라이팬 엠보바닥 조리용 프라이팬",
+  "category": "household",
+  "legal": null,
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 25,
+  "name": "고속회전 미니 에어프라이어 분리형 거름망 에어프라이기 집들이선물 사은품 답례품 선물세트 공기튀김기",
+  "vendor": "gpt",
+  "product_name": "고속회전 미니 에어프라이어",
+  "category": "electrical",
+  "legal": "전기튀김기",
+  "single": [
+   "전기오븐기기"
+  ],
+  "batch": [
+   "전기오븐기기"
+  ],
+  "single_claude": [
+   "전기오븐기기"
+  ]
+ },
+ {
+  "no": 26,
+  "name": "아임명작 청정 북유럽 에어프라이어 종이호일 유해성분 NO 프라이팬 오븐 찜기 전자렌지 겸용",
+  "vendor": "gpt",
+  "product_name": "아임명작 청정 북유럽 에어프라이어 종이호일",
+  "category": "out_of_scope",
+  "legal": null,
+  "single": [],
+  "batch": [
+   "전기오븐기기"
+  ],
+  "single_claude": []
+ },
+ {
+  "no": 27,
+  "name": "에어프라이어 / 선물용 사은품용 주방용",
+  "vendor": "gpt",
+  "product_name": "에어프라이어",
+  "category": "household",
+  "legal": null,
+  "single": [
+   "전기오븐기기"
+  ],
+  "batch": [
+   "전기오븐기기"
+  ],
+  "single_claude": [
+   "전기오븐기기"
+  ]
+ },
+ {
+  "no": 28,
+  "name": "에어프라이어 / 선물용 사은품용",
+  "vendor": "gpt",
+  "product_name": "에어프라이어",
+  "category": "electrical",
+  "legal": "전기튀김기",
+  "single": [
+   "전기오븐기기"
+  ],
+  "batch": [
+   "전기오븐기기"
+  ],
+  "single_claude": [
+   "전기오븐기기"
+  ]
+ },
+ {
+  "no": 29,
+  "name": "에어프라이어 / 사은품 선물용",
+  "vendor": "gpt",
+  "product_name": "에어프라이어",
+  "category": "electrical",
+  "legal": null,
+  "single": [
+   "전기오븐기기"
+  ],
+  "batch": [
+   "전기오븐기기"
+  ],
+  "single_claude": [
+   "전기오븐기기"
+  ]
+ },
+ {
+  "no": 30,
+  "name": "사각 종이호일 다용도 에어프라이어용 대용량 화이트 33cmx 36cm 1000개",
+  "vendor": "gpt",
+  "product_name": "사각 종이호일 다용도 에어프라이어용 대용량 화이트",
+  "category": "out_of_scope",
+  "legal": null,
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 31,
+  "name": "사각 종이호일 다용도 에어프라이어용 대용량 화이트 15cmx 18cm 1000개",
+  "vendor": "gpt",
+  "product_name": "사각 종이호일 다용도 에어프라이어용 대용량 화이트",
+  "category": "out_of_scope",
+  "legal": null,
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 32,
+  "name": "사각 종이호일 다용도 에어프라이어용 대용량 화이트 15cmx 15cm 1000개",
+  "vendor": "gpt",
+  "product_name": "사각 종이호일 다용도 에어프라이어용 대용량 화이트",
+  "category": "out_of_scope",
+  "legal": null,
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 33,
+  "name": "커피머신클리너 세정제 세척 석회질제거 청소 석회제거제 세제",
+  "vendor": "gpt",
+  "product_name": "커피머신클리너",
+  "category": "out_of_scope",
+  "legal": "커피메이커",
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 34,
+  "name": "커피 찌꺼기통 넉박스 홈 카페 바리스타 커피머신 통",
+  "vendor": "gpt",
+  "product_name": "커피 찌꺼기통 넉박스 홈 카페 바리스타 커피머신 통",
+  "category": "household",
+  "legal": null,
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 35,
+  "name": "넉박스 커피 찌꺼기통 홈카페 바리스타 커피머신",
+  "vendor": "gpt",
+  "product_name": "넉박스 커피 찌꺼기통 홈카페 바리스타 커피머신",
+  "category": "household",
+  "legal": "커피메이커",
+  "single": [
+   "커피메이커"
+  ],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 36,
+  "name": "홈카페 넉박스 커피찌꺼기통 바리스타 커피머신",
+  "vendor": "gpt",
+  "product_name": "홈카페 넉박스 커피찌꺼기통 바리스타 커피머신",
+  "category": "household",
+  "legal": "커피메이커",
+  "single": [
+   "커피메이커"
+  ],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 37,
+  "name": "전자렌지 수납선반 W04 슬라이딩 주방 선반 2단형 밥솥 커피머신 렌지대 수납 공간활용",
+  "vendor": "gpt",
+  "product_name": "전자렌지 수납선반 W04",
+  "category": "household",
+  "legal": null,
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 38,
+  "name": "커피머신 청소솔 그라인더 원형 커피 브러쉬",
+  "vendor": "gpt",
+  "product_name": "커피머신 청소솔 그라인더 원형 커피 브러쉬",
+  "category": "unclassified",
+  "legal": null,
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 39,
+  "name": "아크로 S5 포터블 블루투스 스피커 C-Type",
+  "vendor": "gpt",
+  "product_name": "아크로 S5 포터블 블루투스 스피커 C-Type",
+  "category": "electrical",
+  "legal": "무선스피커",
+  "single": [
+   "앰프 내장형 스피커"
+  ],
+  "batch": [
+   "앰프 내장형 스피커"
+  ],
+  "single_claude": [
+   "앰프 내장형 스피커"
+  ]
+ },
+ {
+  "no": 40,
+  "name": "아크로 S1/S2 블루투스 스피커 6컬러 C타입충전",
+  "vendor": "gpt",
+  "product_name": "아크로 S1/S2 블루투스 스피커",
+  "category": "electrical",
+  "legal": "무선스피커",
+  "single": [
+   "앰프 내장형 스피커"
+  ],
+  "batch": [
+   "앰프 내장형 스피커"
+  ],
+  "single_claude": [
+   "앰프 내장형 스피커"
+  ]
+ },
+ {
+  "no": 41,
+  "name": "LED 무드등 블루투스 스피커 3W 휴대용 아웃도어 하이킹 등산 캠핑 차박",
+  "vendor": "gpt",
+  "product_name": "LED 무드등 블루투스 스피커 3W 휴대용",
+  "category": "electrical",
+  "legal": "무선스피커",
+  "single": [
+   "앰프 내장형 스피커"
+  ],
+  "batch": [
+   "앰프 내장형 스피커"
+  ],
+  "single_claude": [
+   "앰프 내장형 스피커"
+  ]
+ },
+ {
+  "no": 42,
+  "name": "유리 블루투스 스피커 고품질 무선 서브우퍼 자동차 데스크탑 범용",
+  "vendor": "gpt",
+  "product_name": "유리 블루투스 스피커",
+  "category": "electrical",
+  "legal": "무선스피커",
+  "single": [
+   "앰프 내장형 스피커"
+  ],
+  "batch": [
+   "앰프 내장형 스피커"
+  ],
+  "single_claude": [
+   "앰프 내장형 스피커"
+  ]
+ },
+ {
+  "no": 43,
+  "name": "블루투스 무선 마이크 스피커 휴대용 듀얼 노래방 블루투스마이크 20W",
+  "vendor": "gpt",
+  "product_name": "블루투스 무선 마이크 스피커 휴대용 듀얼 노래방 블루투스마이크 20W",
+  "category": "electrical",
+  "legal": "무선스피커",
+  "single": [
+   "무선스피커 시스템"
+  ],
+  "batch": [],
+  "single_claude": [
+   "무선스피커 시스템"
+  ]
+ },
+ {
+  "no": 44,
+  "name": "엔보우 레인보우 무드등 수유등 LED램프 휴대용 캠핑용 감성 블루투스 무선 스피커",
+  "vendor": "gpt",
+  "product_name": "엔보우 레인보우 무드등 수유등 LED램프 휴대용 캠핑용 감성 블루투스 무선 스피커",
+  "category": "electrical",
+  "legal": "무선스피커",
+  "single": [
+   "LED램프 (모듈)"
+  ],
+  "batch": [
+   "LED램프 (모듈)"
+  ],
+  "single_claude": [
+   "LED램프 (모듈)"
+  ]
+ },
+ {
+  "no": 45,
+  "name": "지니큐 휴대용 차량용 초강력 무선 청소기 거치대포함 ZQ-VC300",
+  "vendor": "gpt",
+  "product_name": "지니큐 휴대용 차량용 초강력 무선 청소기 거치대포함 ZQ-VC300",
+  "category": "electrical",
+  "legal": "진공청소기",
+  "single": [
+   "물흡입청소기",
+   "스팀청소기",
+   "전기바닥청소기",
+   "진공청소기"
+  ],
+  "batch": [
+   "진공청소기",
+   "물흡입청소기",
+   "전기바닥청소기",
+   "스팀청소기"
+  ],
+  "single_claude": [
+   "진공청소기",
+   "물흡입청소기",
+   "전기바닥청소기",
+   "스팀청소기"
+  ]
+ },
+ {
+  "no": 46,
+  "name": "싸이클론 차량용 미니 무선 청소기 에어건 세차 핸디형 캠핑 컴퓨터",
+  "vendor": "gpt",
+  "product_name": "싸이클론 차량용 미니 무선 청소기 에어건 세차 핸디형 캠핑 컴퓨터",
+  "category": "electrical",
+  "legal": "진공청소기",
+  "single": [
+   "물흡입청소기",
+   "스팀청소기",
+   "전기바닥청소기",
+   "진공청소기"
+  ],
+  "batch": [
+   "진공청소기",
+   "물흡입청소기",
+   "전기바닥청소기",
+   "스팀청소기"
+  ],
+  "single_claude": [
+   "진공청소기",
+   "물흡입청소기",
+   "전기바닥청소기",
+   "스팀청소기"
+  ]
+ },
+ {
+  "no": 47,
+  "name": "[일상잡화] 허리케인 무선 차량용 청소기 에어건",
+  "vendor": "gpt",
+  "product_name": "허리케인 무선 차량용 청소기 에어건",
+  "category": "electrical",
+  "legal": "진공청소기",
+  "single": [
+   "물흡입청소기",
+   "스팀청소기",
+   "전기바닥청소기",
+   "진공청소기"
+  ],
+  "batch": [
+   "진공청소기",
+   "물흡입청소기",
+   "전기바닥청소기",
+   "스팀청소기"
+  ],
+  "single_claude": [
+   "진공청소기",
+   "물흡입청소기",
+   "전기바닥청소기",
+   "스팀청소기"
+  ]
+ },
+ {
+  "no": 48,
+  "name": "차량용 무선 휴대용 핸디 청소기 에어건 2in1",
+  "vendor": "gpt",
+  "product_name": "차량용 무선 휴대용 핸디 청소기 에어건 2in1",
+  "category": "electrical",
+  "legal": "진공청소기",
+  "single": [
+   "물흡입청소기",
+   "스팀청소기",
+   "전기바닥청소기",
+   "진공청소기"
+  ],
+  "batch": [
+   "진공청소기",
+   "물흡입청소기",
+   "전기바닥청소기",
+   "스팀청소기"
+  ],
+  "single_claude": [
+   "진공청소기",
+   "물흡입청소기",
+   "전기바닥청소기",
+   "스팀청소기"
+  ]
+ },
+ {
+  "no": 49,
+  "name": "혼시티 핸디 무선 욕실청소기 블루",
+  "vendor": "gpt",
+  "product_name": "혼시티 핸디 무선 욕실청소기 블루",
+  "category": "unclassified",
+  "legal": null,
+  "single": [
+   "물흡입청소기",
+   "스팀청소기",
+   "전기바닥청소기",
+   "진공청소기"
+  ],
+  "batch": [
+   "진공청소기",
+   "물흡입청소기",
+   "전기바닥청소기",
+   "스팀청소기"
+  ],
+  "single_claude": [
+   "진공청소기",
+   "물흡입청소기",
+   "전기바닥청소기",
+   "스팀청소기"
+  ]
+ },
+ {
+  "no": 50,
+  "name": "나비 NV92-ECL77 무선 전동 클리너 전동브러쉬 주방욕실청소기",
+  "vendor": "gpt",
+  "product_name": "나비 NV92-ECL77 무선 전동 클리너 전동브러쉬 주방욕실청소기",
+  "category": "electrical",
+  "legal": "전동청소기",
+  "single": [
+   "물흡입청소기",
+   "스팀청소기",
+   "전기바닥청소기",
+   "진공청소기"
+  ],
+  "batch": [
+   "진공청소기",
+   "물흡입청소기",
+   "전기바닥청소기",
+   "스팀청소기"
+  ],
+  "single_claude": [
+   "진공청소기",
+   "물흡입청소기",
+   "전기바닥청소기",
+   "스팀청소기"
+  ]
+ },
+ {
+  "no": 51,
+  "name": "무선 진공 차량용 청소기 차량 초강력 자동차 핸디 휴대용 에어건 대용량배터리",
+  "vendor": "gpt",
+  "product_name": "무선 진공 차량용 청소기 차량 초강력 자동차 핸디 휴대용 에어건 대용량배터리",
+  "category": "electrical",
+  "legal": "진공청소기",
+  "single": [
+   "물흡입청소기",
+   "스팀청소기",
+   "전기바닥청소기",
+   "진공청소기"
+  ],
+  "batch": [
+   "진공청소기",
+   "물흡입청소기",
+   "전기바닥청소기",
+   "스팀청소기"
+  ],
+  "single_claude": [
+   "진공청소기",
+   "물흡입청소기",
+   "전기바닥청소기",
+   "스팀청소기"
+  ]
+ },
+ {
+  "no": 52,
+  "name": "8in1 전동 무선 청소솔 자동 브러쉬 욕실 화장실 바닥 솔",
+  "vendor": "gpt",
+  "product_name": "8in1 전동 무선 청소솔 자동 브러쉬 욕실 화장실 바닥 솔",
+  "category": "household",
+  "legal": "전동청소기",
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 53,
+  "name": "이에스 로봇청소기 무선청소기 충전청소기 물걸레 청소걸레 밀대",
+  "vendor": "gpt",
+  "product_name": "이에스 로봇청소기",
+  "category": "electrical",
+  "legal": "진공청소기",
+  "single": [
+   "진공청소기"
+  ],
+  "batch": [
+   "진공청소기",
+   "물흡입청소기",
+   "전기바닥청소기",
+   "스팀청소기"
+  ],
+  "single_claude": [
+   "진공청소기",
+   "물흡입청소기",
+   "전기바닥청소기",
+   "스팀청소기"
+  ]
+ },
+ {
+  "no": 54,
+  "name": "셀링온 로봇청소기 문턱 경사로",
+  "vendor": "gpt",
+  "product_name": "셀링온 로봇청소기 문턱 경사로",
+  "category": "household",
+  "legal": null,
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 55,
+  "name": "로봇청소기 문턱 도어턱받침 1cm 화이트 1m",
+  "vendor": "gpt",
+  "product_name": "로봇청소기 문턱 도어턱받침",
+  "category": "household",
+  "legal": null,
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 56,
+  "name": "로봇청소기 문턱 도어턱받침 1.5x100cm 화이트",
+  "vendor": "gpt",
+  "product_name": "로봇청소기 문턱 도어턱받침",
+  "category": "household",
+  "legal": null,
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 57,
+  "name": "로봇청소기 문턱 도어턱받침 1.5x100cm 블랙",
+  "vendor": "gpt",
+  "product_name": "로봇청소기 문턱 도어턱받침 1.5x100cm 블랙",
+  "category": "household",
+  "legal": null,
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 58,
+  "name": "로봇청소기 문턱 도어턱받침 1cm 그레이 1m",
+  "vendor": "gpt",
+  "product_name": "로봇청소기 문턱 도어턱받침",
+  "category": "household",
+  "legal": null,
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 59,
+  "name": "로봇청소기 문턱 도어턱받침 1.2x100cm 화이트",
+  "vendor": "gpt",
+  "product_name": "로봇청소기 문턱 도어턱받침",
+  "category": "household",
+  "legal": null,
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 60,
+  "name": "로봇청소기 문턱 도어턱받침 0.6cm 화이트 1m",
+  "vendor": "gpt",
+  "product_name": "로봇청소기 문턱 도어턱받침",
+  "category": "household",
+  "legal": null,
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 61,
+  "name": "가정용 원룸 스탠드형 고압 스팀다리미 RC530",
+  "vendor": "gpt",
+  "product_name": "가정용 원룸 스탠드형 고압 스팀다리미 RC530",
+  "category": "electrical",
+  "legal": "스팀다리미",
+  "single": [
+   "스팀다리미"
+  ],
+  "batch": [
+   "스팀다리미"
+  ],
+  "single_claude": [
+   "스팀다리미"
+  ]
+ },
+ {
+  "no": 62,
+  "name": "전기다리미 무선 세라믹 스팀다리미 세척법 생활 무선다리미",
+  "vendor": "gpt",
+  "product_name": "전기다리미 무선 세라믹 스팀다리미",
+  "category": "electrical",
+  "legal": "전기다리미",
+  "single": [
+   "스팀다리미",
+   "전기다리미"
+  ],
+  "batch": [
+   "전기다리미",
+   "스팀다리미"
+  ],
+  "single_claude": [
+   "전기다리미",
+   "스팀다리미"
+  ]
+ },
+ {
+  "no": 63,
+  "name": "장갑 높이조절 스탠드 스팀 다리미판 행거 지지대",
+  "vendor": "gpt",
+  "product_name": "장갑 높이조절 스탠드 스팀 다리미판 행거 지지대",
+  "category": "household",
+  "legal": null,
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 64,
+  "name": "포워드테크 휴대용 접이식 다림질 매트 다리미판 좌식 걸이형 스팀 다리미 시트",
+  "vendor": "gpt",
+  "product_name": "포워드테크 휴대용 접이식 다림질 매트 다리미판 좌식 걸이형 스팀 다리미 시트",
+  "category": "unclassified",
+  "legal": null,
+  "single": [
+   "스팀다리미"
+  ],
+  "batch": [
+   "스팀다리미"
+  ],
+  "single_claude": [
+   "스팀다리미"
+  ]
+ },
+ {
+  "no": 65,
+  "name": "[보만] 접이식 스팀다리미 FDB1411B",
+  "vendor": "gpt",
+  "product_name": "[보만] 접이식 스팀다리미 FDB1411B",
+  "category": "electrical",
+  "legal": "스팀다리미",
+  "single": [
+   "스팀다리미"
+  ],
+  "batch": [
+   "스팀다리미"
+  ],
+  "single_claude": [
+   "스팀다리미"
+  ]
+ },
+ {
+  "no": 66,
+  "name": "테팔 2in1 스팀&프레스 핸디형 스팀다리미",
+  "vendor": "gpt",
+  "product_name": "테팔 2in1 스팀&프레스 핸디형 스팀다리미",
+  "category": "electrical",
+  "legal": "전기다리미",
+  "single": [
+   "스팀다리미"
+  ],
+  "batch": [
+   "스팀다리미"
+  ],
+  "single_claude": [
+   "스팀다리미"
+  ]
+ },
+ {
+  "no": 67,
+  "name": "그릴 후라이팬 고기 불판 와이드 전기 그릴 48cm 사은품 / 판촉물",
+  "vendor": "gpt",
+  "product_name": "그릴 후라이팬 고기 불판 와이드 전기 그릴",
+  "category": "household",
+  "legal": "전기그릴",
+  "single": [
+   "전기거치식그릴",
+   "전기휴대형그릴"
+  ],
+  "batch": [
+   "전기거치식그릴",
+   "전기휴대형그릴"
+  ],
+  "single_claude": [
+   "전기거치식그릴",
+   "전기휴대형그릴"
+  ]
+ },
+ {
+  "no": 68,
+  "name": "특대형 와이드그릴 전기그릴 전기후라이팬 전기팬 사은품 답례품 판촉물 설날선물 집들이선물 설선물",
+  "vendor": "gpt",
+  "product_name": "특대형 와이드그릴 전기그릴 전기후라이팬 전기팬",
+  "category": "electrical",
+  "legal": "전기팬",
+  "single": [
+   "전기거치식그릴",
+   "전기휴대형그릴"
+  ],
+  "batch": [
+   "전기거치식그릴",
+   "전기휴대형그릴"
+  ],
+  "single_claude": [
+   "전기거치식그릴",
+   "전기휴대형그릴"
+  ]
+ },
+ {
+  "no": 69,
+  "name": "특대형 와이드그릴 전기그릴 전기후라이팬 전기팬 사은품 답례품 판촉물 추석선물 집들이선물 추석선물세트",
+  "vendor": "gpt",
+  "product_name": "특대형 와이드그릴 전기그릴 전기후라이팬 전기팬",
+  "category": "electrical",
+  "legal": "전기그릴",
+  "single": [
+   "전기거치식그릴",
+   "전기휴대형그릴"
+  ],
+  "batch": [
+   "전기거치식그릴",
+   "전기휴대형그릴"
+  ],
+  "single_claude": [
+   "전기거치식그릴",
+   "전기휴대형그릴"
+  ]
+ },
+ {
+  "no": 70,
+  "name": "후라이팬 인덕션 겸용 구이팬 28cm 인케이스 / 사은품 / 판촉물",
+  "vendor": "gpt",
+  "product_name": "후라이팬 인덕션 겸용 구이팬",
+  "category": "out_of_scope",
+  "legal": null,
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 71,
+  "name": "리빙센스2440G/1350W 논스틱코팅 미니 바베큐 그릴 사각 전기그릴 삼겹살 구이팬 가정용",
+  "vendor": "gpt",
+  "product_name": "리빙센스2440G/1350W 논스틱코팅 미니 바베큐 그릴 사각 전기그릴 삼겹살 구이팬 가정용",
+  "category": "electrical",
+  "legal": "전기그릴",
+  "single": [
+   "전기거치식그릴",
+   "전기휴대형그릴"
+  ],
+  "batch": [
+   "전기거치식그릴",
+   "전기휴대형그릴"
+  ],
+  "single_claude": [
+   "전기거치식그릴",
+   "전기휴대형그릴"
+  ]
+ },
+ {
+  "no": 72,
+  "name": "리브리움 전자레인지선반 밥솥다이 밥통수납장 슬림오븐 주방렌지대",
+  "vendor": "gpt",
+  "product_name": "리브리움 전자레인지선반",
+  "category": "household",
+  "legal": null,
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 73,
+  "name": "대용량 4단 전기오븐 베이킹 제과 제빵 피자 토스트 사은품 답례품 판촉물 집들이선물 그릴 토스터 바베큐",
+  "vendor": "gpt",
+  "product_name": "4단 전기오븐",
+  "category": "household",
+  "legal": "전기오븐",
+  "single": [
+   "전기오븐기기"
+  ],
+  "batch": [
+   "전기오븐기기"
+  ],
+  "single_claude": [
+   "전기오븐기기"
+  ]
+ },
+ {
+  "no": 74,
+  "name": "12L 초대용량 3단 에어오븐 전기오븐 튀김기 답례품 판촉물 에어프라이어 사은품 집들이선물 선물세트",
+  "vendor": "gpt",
+  "product_name": "12L 초대용량 3단 에어오븐",
+  "category": "electrical",
+  "legal": "전기오븐",
+  "single": [
+   "전기오븐기기"
+  ],
+  "batch": [
+   "전기오븐기기"
+  ],
+  "single_claude": [
+   "전기오븐기기"
+  ]
+ },
+ {
+  "no": 75,
+  "name": "대용량 12리터 전기오븐 제과 제빵 생선구이 피자 토스트 사은품 답례품 집들이선물 전기그릴 오븐기 오븐",
+  "vendor": "gpt",
+  "product_name": "12리터 전기오븐",
+  "category": "electrical",
+  "legal": "전기오븐",
+  "single": [
+   "전기오븐기기"
+  ],
+  "batch": [
+   "전기거치식그릴",
+   "전기휴대형그릴",
+   "전기오븐기기"
+  ],
+  "single_claude": [
+   "전기오븐기기"
+  ]
+ },
+ {
+  "no": 76,
+  "name": "키친아트C32 전기오븐 20L 강화유리도어 전기그릴 바베큐 구이 제빵",
+  "vendor": "gpt",
+  "product_name": "키친아트C32 전기오븐 20L",
+  "category": "electrical",
+  "legal": "전기오븐",
+  "single": [
+   "전기오븐기기"
+  ],
+  "batch": [
+   "전기거치식그릴",
+   "전기휴대형그릴",
+   "전기오븐기기"
+  ],
+  "single_claude": [
+   "전기거치식그릴",
+   "전기휴대형그릴",
+   "전기오븐기기"
+  ]
+ },
+ {
+  "no": 77,
+  "name": "리빙센스1203 대용량 광파 오븐렌지 12L 전기오븐",
+  "vendor": "gpt",
+  "product_name": "리빙센스1203 대용량 광파 오븐렌지 12L 전기오븐",
+  "category": "electrical",
+  "legal": "전기오븐",
+  "single": [
+   "전기오븐기기"
+  ],
+  "batch": [
+   "전기오븐기기"
+  ],
+  "single_claude": [
+   "전기오븐기기"
+  ]
+ },
+ {
+  "no": 78,
+  "name": "키친아트121 겉바속촉 기름쏙 광파 전기 오븐렌지 12L",
+  "vendor": "gpt",
+  "product_name": "키친아트121 겉바속촉 기름쏙 광파 전기 오븐렌지 12L",
+  "category": "electrical",
+  "legal": "전기오븐기",
+  "single": [
+   "전기오븐기기"
+  ],
+  "batch": [
+   "전기오븐기기"
+  ],
+  "single_claude": [
+   "전기오븐기기"
+  ]
+ },
+ {
+  "no": 79,
+  "name": "신일120KP 할로겐 광파 전기 오븐렌지 12L대용량",
+  "vendor": "gpt",
+  "product_name": "신일120KP 할로겐 광파 전기 오븐렌지 12L대용량",
+  "category": "electrical",
+  "legal": "전기오븐",
+  "single": [
+   "전기오븐기기"
+  ],
+  "batch": [
+   "전기오븐기기"
+  ],
+  "single_claude": [
+   "전기오븐기기"
+  ]
+ },
+ {
+  "no": 80,
+  "name": "키친플라워 알파 전기주전자 KEK-TP1801S 무선 포트",
+  "vendor": "gpt",
+  "product_name": "키친플라워 알파 전기주전자 KEK-TP1801S 무선 포트",
+  "category": "electrical",
+  "legal": "전기주전자",
+  "single": [
+   "전기주전자"
+  ],
+  "batch": [
+   "전기주전자"
+  ],
+  "single_claude": [
+   "전기주전자"
+  ]
+ },
+ {
+  "no": 81,
+  "name": "전기포트 유리전기주전자 1.5L 가정용 티포트 물끓이기 주방용",
+  "vendor": "gpt",
+  "product_name": "전기포트 유리전기주전자 1.5L 가정용 티포트 물끓이기 주방용",
+  "category": "electrical",
+  "legal": "전기주전자",
+  "single": [
+   "전기주전자"
+  ],
+  "batch": [
+   "전기주전자"
+  ],
+  "single_claude": [
+   "전기주전자"
+  ]
+ },
+ {
+  "no": 82,
+  "name": "테팔 블랙필 무선주전자 KO2998",
+  "vendor": "gpt",
+  "product_name": "테팔 블랙필 무선주전자 KO2998",
+  "category": "electrical",
+  "legal": "전기주전자",
+  "single": [
+   "전기주전자"
+  ],
+  "batch": [
+   "전기주전자"
+  ],
+  "single_claude": [
+   "전기주전자"
+  ]
+ },
+ {
+  "no": 83,
+  "name": "리빙센스 스텐 전기 무선포트 1.8L/커피포트/전기포트/전기주전자/선물세트/판촉물/사은품/답례품/행사용품",
+  "vendor": "gpt",
+  "product_name": "리빙센스 스텐 전기 무선포트",
+  "category": "electrical",
+  "legal": "전기주전자",
+  "single": [
+   "전기주전자"
+  ],
+  "batch": [
+   "전기주전자"
+  ],
+  "single_claude": [
+   "전기주전자"
+  ]
+ },
+ {
+  "no": 84,
+  "name": "새로운 디자인 1.5리터 1.5L 스테인레스 무선전기포트 무선주전자 무선전기주전자 스텐전기포트",
+  "vendor": "gpt",
+  "product_name": "스테인레스 무선전기포트",
+  "category": "electrical",
+  "legal": "전기주전자",
+  "single": [
+   "전기주전자"
+  ],
+  "batch": [
+   "전기주전자"
+  ],
+  "single_claude": [
+   "전기주전자"
+  ]
+ },
+ {
+  "no": 85,
+  "name": "키친아트G18KP/1.8L 포이베 전기주전자 내열유리 무선포트 티포트 커피 포트",
+  "vendor": "gpt",
+  "product_name": "키친아트G18KP/1.8L 포이베 전기주전자",
+  "category": "electrical",
+  "legal": "전기주전자",
+  "single": [
+   "전기주전자"
+  ],
+  "batch": [
+   "전기주전자"
+  ],
+  "single_claude": [
+   "전기주전자"
+  ]
+ },
+ {
+  "no": 86,
+  "name": "키친아트15DK 쏘렐 드립 멀티포트 1.5L 전기주전자 주전자 전기",
+  "vendor": "gpt",
+  "product_name": "키친아트15DK 쏘렐 드립 멀티포트 1.5L 전기주전자 주전자 전기",
+  "category": "electrical",
+  "legal": "전기주전자",
+  "single": [
+   "전기주전자"
+  ],
+  "batch": [
+   "전기주전자"
+  ],
+  "single_claude": [
+   "전기주전자"
+  ]
+ },
+ {
+  "no": 87,
+  "name": "프리볼트 여행겸용 접이식 멀티포트 3단보온 전기주전자 무선주전자 사은품 답례품 판촉물 캠핑 차박",
+  "vendor": "gpt",
+  "product_name": "프리볼트 여행겸용 접이식 멀티포트 3단보온 전기주전자 무선주전자",
+  "category": "electrical",
+  "legal": "전기주전자",
+  "single": [
+   "전기주전자"
+  ],
+  "batch": [
+   "전기주전자"
+  ],
+  "single_claude": [
+   "전기주전자"
+  ]
+ },
+ {
+  "no": 88,
+  "name": "[민메이커] 여름두건 머리 쿨링 냉감 자전거 등산 바이크 이너 모자 스포츠 반다나 헤어밴드 (당일출고)",
+  "vendor": "gpt",
+  "product_name": "여름두건 머리 쿨링 냉감 자전거 등산 바이크 이너 모자 스포츠 반다나 헤어밴드",
+  "category": "children_textile",
+  "legal": "두건",
+  "single": [
+   "의류"
+  ],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 89,
+  "name": "UPF200+ 냉감 UV차단 페이스커버 여름 골프 등산 자전거 얼굴 목 마스크",
+  "vendor": "gpt",
+  "product_name": "UPF200+ 냉감 UV차단 페이스커버 여름 골프 등산 자전거 얼굴 목 마스크",
+  "category": "children_textile",
+  "legal": "마스크",
+  "single": [
+   "LED마스크"
+  ],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 90,
+  "name": "[큰손할인] 고글선글라스 스포츠 자전거 마라톤 골프 테니스 러닝 낚시 고글 패션 자외선차단 초경량",
+  "vendor": "gpt",
+  "product_name": "고글선글라스 스포츠 자전거 마라톤 골프 테니스 러닝 낚시 고글 패션 자외선차단 초경량",
+  "category": "unclassified",
+  "legal": null,
+  "single": [
+   "선글라스"
+  ],
+  "batch": [
+   "선글라스"
+  ],
+  "single_claude": [
+   "선글라스"
+  ]
+ },
+ {
+  "no": 91,
+  "name": "[CU] 에어핏 트레일 러닝 조끼 백팩 마라톤 런닝 등산 트래킹 자전거 운동 라이딩 방수 메쉬 스포츠 가방",
+  "vendor": "gpt",
+  "product_name": "에어핏 트레일 러닝 조끼 백팩",
+  "category": "unclassified",
+  "legal": null,
+  "single": [
+   "의류 이외의 섬유제품"
+  ],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 92,
+  "name": "[CU] 핏미업 러닝벨트 힙색 슬링백 벨트백 스포츠 러닝 자전거 등산 가방 러닝용품 힙쌕",
+  "vendor": "gpt",
+  "product_name": "핏미업 러닝벨트 힙색 슬링백 벨트백 스포츠 러닝 자전거 등산 가방 러닝용품 힙쌕",
+  "category": "unclassified",
+  "legal": null,
+  "single": [
+   "의류 이외의 섬유제품"
+  ],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 93,
+  "name": "IS 태극 9P 육각렌치 소 용품 악세 기타 스포츠 자전거 운동",
+  "vendor": "gpt",
+  "product_name": "IS 태극 9P 육각렌치",
+  "category": "unclassified",
+  "legal": null,
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 94,
+  "name": "멀티스카프 자전거마스크 쿨마스크 바라클라바 넥워머 목토시",
+  "vendor": "gpt",
+  "product_name": "멀티스카프 자전거마스크 쿨마스크 바라클라바 넥워머 목토시",
+  "category": "children_textile",
+  "legal": "목토시",
+  "single": [
+   "의류"
+  ],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 95,
+  "name": "일체형 숄더 마스크 자외선 차단 얼굴 햇빛가리개 러닝 자전거 골프 마스크",
+  "vendor": "gpt",
+  "product_name": "일체형 숄더 마스크 자외선 차단 얼굴 햇빛가리개 러닝 자전거 골프 마스크",
+  "category": "children_textile",
+  "legal": null,
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 96,
+  "name": "집게 업그레이드 2 in 1유모차 컵홀더 자전거 킥보드 오토바이 호환",
+  "vendor": "gpt",
+  "product_name": "집게 업그레이드 2 in 1유모차 컵홀더 자전거 킥보드 오토바이 호환",
+  "category": "unclassified",
+  "legal": null,
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 97,
+  "name": "주니어 어린이 초등학생 쿠션무릎보호대 (2p 1set) / 인라인 킥보드",
+  "vendor": "gpt",
+  "product_name": "주니어 어린이 초등학생 쿠션무릎보호대",
+  "category": "children_stationery",
+  "legal": null,
+  "single": [
+   "어린이용 스포츠 보호용품(보호 장구 및 안전모)"
+  ],
+  "batch": [
+   "어린이용 스포츠 보호용품(보호 장구 및 안전모)"
+  ],
+  "single_claude": [
+   "어린이용 스포츠 보호용품(보호 장구 및 안전모)"
+  ]
+ },
+ {
+  "no": 98,
+  "name": "USB충전식 방수 자전거 킥보드 안전 후미등",
+  "vendor": "gpt",
+  "product_name": "USB충전식 방수 자전거 킥보드 안전 후미등",
+  "category": "electrical",
+  "legal": "전등",
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 99,
+  "name": "[21st ScooTer] 21세기 킥보드 보호 헬멧 로봇 플라워",
+  "vendor": "gpt",
+  "product_name": "21세기 킥보드 보호 헬멧 로봇 플라워",
+  "category": "children_stationery",
+  "legal": "보호헬멧",
+  "single": [
+   "자전거용 안전모"
+  ],
+  "batch": [
+   "자전거용 안전모"
+  ],
+  "single_claude": [
+   "자전거용 안전모"
+  ]
+ },
+ {
+  "no": 100,
+  "name": "[별별창고] 네임택 러기지택 킥보드이름표 캐리어 킥보드 꼬리표 낮잠이불 가방 케리어 가방 미니 여행",
+  "vendor": "gpt",
+  "product_name": "네임택 러기지택",
+  "category": "unclassified",
+  "legal": null,
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 101,
+  "name": "[퀵도매] 미니 자전거 벨 싸이클 자전거 종 경적 클락션 악세사리 자전거용품 KN-08001",
+  "vendor": "gpt",
+  "product_name": "미니 자전거 벨 싸이클 자전거 종 경적 클락션 악세사리 자전거용품 KN-08001",
+  "category": "out_of_scope",
+  "legal": null,
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 102,
+  "name": "[ABC0532] 핸드워머 자전거 킥보드 방한장갑 핸드머프 한국당일발송",
+  "vendor": "gpt",
+  "product_name": "핸드워머 자전거 킥보드 방한장갑 핸드머프",
+  "category": "children_textile",
+  "legal": "장갑",
+  "single": [
+   "의류"
+  ],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 103,
+  "name": "[ABC0532] 자전거 킥보드 핸드워머 방한장갑 핸드머프 한국당일발송",
+  "vendor": "gpt",
+  "product_name": "자전거 킥보드 핸드워머 방한장갑 핸드머프",
+  "category": "children_textile",
+  "legal": null,
+  "single": [
+   "의류"
+  ],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 104,
+  "name": "내맘대로 360도 회전 유모차 자전거 컵홀더 음료 커피 물통 텀블러 바이크 오토바이 거치대 케이지",
+  "vendor": "gpt",
+  "product_name": "내맘대로 360도 회전 유모차 자전거 컵홀더 음료 커피 물통 텀블러 바이크 오토바이 거치대 케이지",
+  "category": "unclassified",
+  "legal": "거치대",
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 105,
+  "name": "[마이도매]메이토쿠 유모차고리/2P 행거/가방수납/유모차 홀더",
+  "vendor": "gpt",
+  "product_name": "메이토쿠 유모차고리",
+  "category": "unclassified",
+  "legal": null,
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 106,
+  "name": "[이거찜]유모차 메쉬 모기장 벌레퇴치/차박 모기장",
+  "vendor": "gpt",
+  "product_name": "유모차 메쉬 모기장",
+  "category": "children_textile",
+  "legal": "유모차용 모기장",
+  "single": [
+   "의류 이외의 섬유제품"
+  ],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 107,
+  "name": "유모차 컵홀더 스마트폰 핸드폰 거치대 2in1 유모차 홀더",
+  "vendor": "gpt",
+  "product_name": "유모차 컵홀더 스마트폰 핸드폰 거치대 2in1 유모차 홀더",
+  "category": "unclassified",
+  "legal": "거치대",
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 108,
+  "name": "아기 기저귀 가방 백팩 출산가방 유모차 보냉백 방수 이너백 파우치",
+  "vendor": "gpt",
+  "product_name": "아기 기저귀 가방 백팩",
+  "category": "children_textile",
+  "legal": null,
+  "single": [
+   "의류 이외의 섬유제품"
+  ],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 109,
+  "name": "거치형 유모차 자전거 컵홀더 자유 회전 텀블러 커피 거치대 1P",
+  "vendor": "gpt",
+  "product_name": "거치형 유모차 자전거 컵홀더 자유 회전 텀블러 커피 거치대",
+  "category": "unclassified",
+  "legal": "컵홀더",
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 110,
+  "name": "안전벨트 연장 클립 길이 확장 카시트설치시 유용",
+  "vendor": "gpt",
+  "product_name": "안전벨트 연장 클립 길이 확장 카시트설치시 유용",
+  "category": "unclassified",
+  "legal": null,
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 111,
+  "name": "예펫 강아지 대형견 카시트 중형견 하우스 이동 가방 훈련 접이식 케이지 천 소프트 켄넬 이동장",
+  "vendor": "gpt",
+  "product_name": "예펫 강아지 대형견 카시트 중형견 하우스 이동 가방 훈련 접이식 케이지 천 소프트 켄넬 이동장",
+  "category": "unclassified",
+  "legal": null,
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 112,
+  "name": "[싸더라] 강아지 카시트 차량용 애견 반려동물 드라이빙 시트",
+  "vendor": "gpt",
+  "product_name": "강아지 카시트 차량용 애견 반려동물 드라이빙 시트",
+  "category": "unclassified",
+  "legal": null,
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 113,
+  "name": "[지앤지] 자동차 시트커버 여름 메쉬 차량용 등받이 방석 카시트 보호 매트 시원한 시트",
+  "vendor": "gpt",
+  "product_name": "[지앤지] 자동차 시트커버 여름 메쉬 차량용 등받이 방석 카시트 보호 매트 시원한 시트",
+  "category": "unclassified",
+  "legal": null,
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 114,
+  "name": "차량용 후방거울 보조미러 룸미러 뒷좌석 확인 카시트 안전운전 SW71005",
+  "vendor": "gpt",
+  "product_name": "차량용 후방거울 보조미러 룸미러 뒷좌석 확인 카시트 안전운전 SW71005",
+  "category": "unclassified",
+  "legal": null,
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 115,
+  "name": "안전벨트락 스토퍼 고정 클립 임산부 어린이 카시트 홀더",
+  "vendor": "gpt",
+  "product_name": "안전벨트락 스토퍼 고정 클립 임산부 어린이 카시트 홀더",
+  "category": "unclassified",
+  "legal": null,
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 116,
+  "name": "[싸더라] 애견매트 애완동물 차량용 뒷좌석 시트",
+  "vendor": "gpt",
+  "product_name": "애견매트 애완동물 차량용 뒷좌석 시트",
+  "category": "unclassified",
+  "legal": null,
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 117,
+  "name": "자동차 킥매트 등받이 보호 시트",
+  "vendor": "gpt",
+  "product_name": "자동차 킥매트 등받이 보호 시트",
+  "category": "unclassified",
+  "legal": null,
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 118,
+  "name": "세트 젖병 강아지 애완동물 반려동물 60ml 고양이 세트 물병",
+  "vendor": "gpt",
+  "product_name": "세트 젖병 강아지 애완동물 반려동물 60ml 고양이 세트 물병",
+  "category": "unclassified",
+  "legal": null,
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 119,
+  "name": "실리콘 텀블러 세척솔 물병 닦는솔 젖병 보틀 설거지 세척 브러쉬",
+  "vendor": "gpt",
+  "product_name": "실리콘 텀블러 세척솔",
+  "category": "household",
+  "legal": null,
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 120,
+  "name": "4 in 1 토끼 텀블러 세척솔 틈새 브러쉬 청소솔 틈새솔 주방 세척 솔 물병 젖병 컵 병 보온병",
+  "vendor": "gpt",
+  "product_name": "토끼 텀블러 세척솔",
+  "category": "household",
+  "legal": null,
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 121,
+  "name": "컵 세척솔 브러쉬 컵브러쉬 텀블러 세척브러쉬 텀블러솔 텀블러청소 컵닦는솔 컵세척솔 젖병솔 물병세",
+  "vendor": "gpt",
+  "product_name": "컵 세척솔 브러쉬",
+  "category": "unclassified",
+  "legal": null,
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 122,
+  "name": "3 in 1 당근 컵브러쉬 텀블러 컵 세척솔 세척브러쉬 텀블러솔 텀블러청소 컵닦는솔 컵세척솔 젖병솔 물병세",
+  "vendor": "gpt",
+  "product_name": "3 in 1 당근 컵브러쉬 텀블러 컵 세척솔",
+  "category": "household",
+  "legal": null,
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 123,
+  "name": "손잡이 빨대 스트로우 세척솔 브러쉬",
+  "vendor": "gpt",
+  "product_name": "손잡이 빨대 스트로우 세척솔 브러쉬",
+  "category": "household",
+  "legal": "세척솔",
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 124,
+  "name": "다기능 텀블러 세척솔 실리콘재질",
+  "vendor": "gpt",
+  "product_name": "다기능 텀블러 세척솔",
+  "category": "out_of_scope",
+  "legal": null,
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 125,
+  "name": "프리미엄꼭지솔 실리콘젖병솔 세척솔 젖꼭지솔 미니 소독솔",
+  "vendor": "gpt",
+  "product_name": "프리미엄꼭지솔 실리콘젖병솔 세척솔 젖꼭지솔 미니 소독솔",
+  "category": "unclassified",
+  "legal": null,
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 126,
+  "name": "1 2인용 원터치 대형 사각 패밀리 슈퍼싱글 아기침대 텐트 모기장",
+  "vendor": "gpt",
+  "product_name": "1 2인용 원터치 대형 사각 패밀리 슈퍼싱글 아기침대 텐트 모기장",
+  "category": "household",
+  "legal": "모기장",
+  "single": [
+   "의류 이외의 섬유제품"
+  ],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 127,
+  "name": "(올라이프) 접이식 기저귀 가방 아기침대 휴대용 기저귀가방",
+  "vendor": "gpt",
+  "product_name": "접이식 기저귀 가방 아기침대 휴대용 기저귀가방",
+  "category": "unclassified",
+  "legal": null,
+  "single": [
+   "의류 이외의 섬유제품"
+  ],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 128,
+  "name": "KC인증 정품 그로밋 인형 큰 대형 [40cm 월레스와그로밋 강아지 캐릭터 부드러운 동물 봉제 안고자는 선물]",
+  "vendor": "gpt",
+  "product_name": "그로밋 인형",
+  "category": "children_toy",
+  "legal": "봉제인형",
+  "single": [],
+  "batch": [],
+  "single_claude": [
+   "완구"
+  ]
+ },
+ {
+  "no": 129,
+  "name": "모서리보호대 코너가드 아기보호 충격방지 안전쿠션 문 벽 기둥 캡",
+  "vendor": "gpt",
+  "product_name": "모서리보호대 코너가드",
+  "category": "household",
+  "legal": "코너보호대",
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 130,
+  "name": "모서리보호대 코너가드 캡 식탁 책상 테이블 쿠션 투명 침대아기",
+  "vendor": "gpt",
+  "product_name": "모서리보호대 코너가드 캡",
+  "category": "household",
+  "legal": null,
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 131,
+  "name": "1인용 싱글 모기장 아기침대 미세 접이식 원터치 방충망",
+  "vendor": "gpt",
+  "product_name": "1인용 싱글 모기장 아기침대 미세 접이식 원터치 방충망",
+  "category": "household",
+  "legal": "모기장",
+  "single": [
+   "의류 이외의 섬유제품"
+  ],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 132,
+  "name": "원터치 접이식 모기장 텐트 아기 침대 방충망 단문 캐노피",
+  "vendor": "gpt",
+  "product_name": "원터치 접이식 모기장 텐트 아기 침대 방충망 단문 캐노피",
+  "category": "household",
+  "legal": "모기장",
+  "single": [
+   "의류 이외의 섬유제품"
+  ],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 133,
+  "name": "원터치모기장/캐노피 침대 아기 모기장 방충망 대형",
+  "vendor": "gpt",
+  "product_name": "원터치모기장/캐노피 침대 아기 모기장 방충망 대형",
+  "category": "household",
+  "legal": null,
+  "single": [
+   "의류 이외의 섬유제품"
+  ],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 134,
+  "name": "런웨이브 보행기튜브/플라밍고/독수리/물놀이튜브+미니펌프",
+  "vendor": "gpt",
+  "product_name": "런웨이브 보행기튜브/플라밍고/독수리/물놀이튜브+미니펌프",
+  "category": "unclassified",
+  "legal": null,
+  "single": [
+   "공기주입물놀이기구"
+  ],
+  "batch": [
+   "공기주입물놀이기구"
+  ],
+  "single_claude": [
+   "공기주입물놀이기구"
+  ]
+ },
+ {
+  "no": 135,
+  "name": "런웨이브 보행기튜브/플라밍고/독수리/물놀이튜브",
+  "vendor": "gpt",
+  "product_name": "런웨이브 보행기튜브",
+  "category": "unclassified",
+  "legal": null,
+  "single": [],
+  "batch": [
+   "공기주입물놀이기구"
+  ],
+  "single_claude": [
+   "공기주입물놀이기구"
+  ]
+ },
+ {
+  "no": 136,
+  "name": "보행기튜브 플라밍고 물놀이 튜브 어린이 아동 용품 아동용 수영 원형",
+  "vendor": "gpt",
+  "product_name": "보행기튜브 플라밍고 물놀이 튜브 어린이 아동 용품 아동용 수영 원형",
+  "category": "unclassified",
+  "legal": null,
+  "single": [
+   "공기주입물놀이기구"
+  ],
+  "batch": [
+   "공기주입물놀이기구"
+  ],
+  "single_claude": [
+   "공기주입물놀이기구"
+  ]
+ },
+ {
+  "no": 137,
+  "name": "프리미엄 클래식 파스텔 튜브 파도타기 물놀이 용품 성인용 튜브",
+  "vendor": "gpt",
+  "product_name": "프리미엄 클래식 파스텔 튜브 파도타기 물놀이 용품 성인용 튜브",
+  "category": "unclassified",
+  "legal": null,
+  "single": [
+   "공기주입물놀이기구"
+  ],
+  "batch": [
+   "공기주입물놀이기구"
+  ],
+  "single_claude": [
+   "공기주입물놀이기구"
+  ]
+ },
+ {
+  "no": 138,
+  "name": "특대형 성인용 파인애플 튜브 여름/바다/계곡/휴가철/라운지 물놀이 튜브",
+  "vendor": "gpt",
+  "product_name": "특대형 성인용 파인애플 튜브",
+  "category": "unclassified",
+  "legal": null,
+  "single": [],
+  "batch": [
+   "공기주입물놀이기구"
+  ],
+  "single_claude": []
+ },
+ {
+  "no": 139,
+  "name": "사이즈 업그레이드 라라데이빗 물놀이 원형 튜브 성인 아동 어린이 튜브 65cm 85cm 105cm 125cm",
+  "vendor": "gpt",
+  "product_name": "라라데이빗 물놀이 원형 튜브",
+  "category": "unclassified",
+  "legal": "튜브",
+  "single": [
+   "공기주입물놀이기구"
+  ],
+  "batch": [
+   "공기주입물놀이기구"
+  ],
+  "single_claude": [
+   "공기주입물놀이기구"
+  ]
+ },
+ {
+  "no": 140,
+  "name": "플라밍고/이글/ 아동튜브/유아튜브/어린이 물놀이튜브",
+  "vendor": "gpt",
+  "product_name": "플라밍고/이글/ 아동튜브/유아튜브/어린이 물놀이튜브",
+  "category": "unclassified",
+  "legal": null,
+  "single": [
+   "공기주입물놀이기구"
+  ],
+  "batch": [
+   "공기주입물놀이기구"
+  ],
+  "single_claude": [
+   "공기주입물놀이기구"
+  ]
+ },
+ {
+  "no": 141,
+  "name": "목발형 접이식 보행기 깁스 보조 지팡이 이동",
+  "vendor": "gpt",
+  "product_name": "목발형 접이식 보행기 깁스 보조 지팡이 이동",
+  "category": "out_of_scope",
+  "legal": null,
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 142,
+  "name": "야외 키즈 분수 놀이매트 물놀이 풀장 유아 어린이 아동 원형",
+  "vendor": "gpt",
+  "product_name": "야외 키즈 분수 놀이매트 물놀이 풀장 유아 어린이 아동 원형",
+  "category": "unclassified",
+  "legal": null,
+  "single": [
+   "공기주입물놀이기구"
+  ],
+  "batch": [
+   "공기주입물놀이기구"
+  ],
+  "single_claude": [
+   "공기주입물놀이기구"
+  ]
+ },
+ {
+  "no": 143,
+  "name": "퍼즐매트 EVA 우드 매트 층간소음방지 거실 놀이방 베란다 31cmX31cm 16장",
+  "vendor": "gpt",
+  "product_name": "퍼즐매트 EVA 우드 매트 층간소음방지 거실 놀이방 베란다",
+  "category": "children_stationery",
+  "legal": "매트",
+  "single": [
+   "매트류"
+  ],
+  "batch": [
+   "매트류"
+  ],
+  "single_claude": [
+   "매트류"
+  ]
+ },
+ {
+  "no": 144,
+  "name": "[이거찜] 국내 최저가 EVA 우드 퍼즐 조립매트(31cmX31cm 16장 1세트) 층간소음 없이 이웃과 행복하게 지내",
+  "vendor": "gpt",
+  "product_name": "EVA 우드 퍼즐 조립매트",
+  "category": "children_toy",
+  "legal": null,
+  "single": [
+   "매트류"
+  ],
+  "batch": [
+   "매트류"
+  ],
+  "single_claude": [
+   "매트류"
+  ]
+ },
+ {
+  "no": 145,
+  "name": "[큰손할인] 곰돌이비치타월 수건 물놀이 해변 샤워타올 소프트 가운 대형 귀여운 여름 수영 빅사이즈",
+  "vendor": "gpt",
+  "product_name": "곰돌이비치타월",
+  "category": "children_textile",
+  "legal": "수건",
+  "single": [
+   "의류"
+  ],
+  "batch": [
+   "공기주입물놀이기구"
+  ],
+  "single_claude": []
+ },
+ {
+  "no": 146,
+  "name": "무독성 사계절 다용도 방수매트 김장매트 180cm 특대형",
+  "vendor": "gpt",
+  "product_name": "무독성 사계절 다용도 방수매트 김장매트",
+  "category": "unclassified",
+  "legal": null,
+  "single": [
+   "매트류"
+  ],
+  "batch": [
+   "매트류"
+  ],
+  "single_claude": [
+   "매트류"
+  ]
+ },
+ {
+  "no": 147,
+  "name": "다용도 매트 원예 흙 잡초 방수 노랑 분갈이매트",
+  "vendor": "gpt",
+  "product_name": "다용도 매트 원예 흙 잡초 방수 노랑 분갈이매트",
+  "category": "household",
+  "legal": null,
+  "single": [
+   "매트류"
+  ],
+  "batch": [
+   "매트류"
+  ],
+  "single_claude": [
+   "매트류"
+  ]
+ },
+ {
+  "no": 148,
+  "name": "놀이방매트 층간소음방지 pvc놀이 유아거실바닥 어린이안전 아기방",
+  "vendor": "gpt",
+  "product_name": "놀이방매트 층간소음방지 pvc놀이 유아거실바닥 어린이안전 아기방",
+  "category": "children_textile",
+  "legal": null,
+  "single": [
+   "매트류"
+  ],
+  "batch": [
+   "매트류"
+  ],
+  "single_claude": [
+   "매트류"
+  ]
+ },
+ {
+  "no": 149,
+  "name": "놀이방매트 아기바닥 자동차도로 장판보온 유아용쿠션 북유럽풍거실",
+  "vendor": "gpt",
+  "product_name": "놀이방매트 아기바닥 자동차도로 장판보온 유아용쿠션 북유럽풍거실",
+  "category": "children_textile",
+  "legal": "매트",
+  "single": [
+   "매트류"
+  ],
+  "batch": [
+   "매트류"
+  ],
+  "single_claude": [
+   "매트류"
+  ]
+ },
+ {
+  "no": 150,
+  "name": "손에 묻지 않는 크레파스 12색 휴대성이 좋은 단체선물 답례품 색연필 필기도구",
+  "vendor": "gpt",
+  "product_name": "손에 묻지 않는 크레파스 12색",
+  "category": "children_stationery",
+  "legal": "크레파스",
+  "single": [
+   "학용품"
+  ],
+  "batch": [
+   "학용품"
+  ],
+  "single_claude": [
+   "학용품"
+  ]
+ },
+ {
+  "no": 151,
+  "name": "하이라이트펜 스틱 층층이 고체 형광펜 볼펜",
+  "vendor": "gpt",
+  "product_name": "하이라이트펜 스틱 층층이 고체 형광펜 볼펜",
+  "category": "children_stationery",
+  "legal": "형광펜",
+  "single": [
+   "학용품"
+  ],
+  "batch": [
+   "학용품"
+  ],
+  "single_claude": [
+   "학용품"
+  ]
+ },
+ {
+  "no": 152,
+  "name": "단색 크레파스 12개입 문교 유아 색칠 교구",
+  "vendor": "gpt",
+  "product_name": "단색 크레파스 12개입 문교 유아 색칠 교구",
+  "category": "children_stationery",
+  "legal": "크레파스",
+  "single": [
+   "학용품"
+  ],
+  "batch": [
+   "학용품"
+  ],
+  "single_claude": [
+   "학용품"
+  ]
+ },
+ {
+  "no": 153,
+  "name": "동아 빼꼼 크레파스 55색 60본 -PP/동아빼꼼크레파스55색60본/캐릭터/색칠도구/색칠/스케치북/어린이",
+  "vendor": "gpt",
+  "product_name": "동아 빼꼼 크레파스 55색 60본",
+  "category": "children_stationery",
+  "legal": "크레파스",
+  "single": [
+   "학용품"
+  ],
+  "batch": [
+   "학용품"
+  ],
+  "single_claude": [
+   "학용품"
+  ]
+ },
+ {
+  "no": 154,
+  "name": "동아 빼꼼 크레파스 18색 -PP/ 학습용품/18색/미술용품/싸인펜/사인펜/싸인팬/사인팬/연필",
+  "vendor": "gpt",
+  "product_name": "동아 빼꼼 크레파스 18색",
+  "category": "children_stationery",
+  "legal": "크레파스",
+  "single": [
+   "학용품"
+  ],
+  "batch": [
+   "학용품"
+  ],
+  "single_claude": [
+   "학용품"
+  ]
+ },
+ {
+  "no": 155,
+  "name": "샤프식 색연필(12색)-PP /크레옹/크레파스",
+  "vendor": "gpt",
+  "product_name": "샤프식 색연필",
+  "category": "children_stationery",
+  "legal": "색연필",
+  "single": [
+   "학용품"
+  ],
+  "batch": [
+   "학용품"
+  ],
+  "single_claude": [
+   "학용품"
+  ]
+ },
+ {
+  "no": 156,
+  "name": "8800 조선문방구 12색 색연필 슬림 노크식",
+  "vendor": "gpt",
+  "product_name": "12색 색연필 슬림 노크식",
+  "category": "children_stationery",
+  "legal": "색연필",
+  "single": [
+   "학용품"
+  ],
+  "batch": [
+   "학용품"
+  ],
+  "single_claude": [
+   "학용품"
+  ]
+ },
+ {
+  "no": 157,
+  "name": "컬러링 색연필 7색 미술 취미 그림그리기 아동 학생용 스케치 드로잉 선물",
+  "vendor": "gpt",
+  "product_name": "컬러링 색연필",
+  "category": "children_stationery",
+  "legal": "색연필",
+  "single": [
+   "학용품"
+  ],
+  "batch": [
+   "학용품"
+  ],
+  "single_claude": [
+   "학용품"
+  ]
+ },
+ {
+  "no": 158,
+  "name": "12색 미니 우드 색연필 미술용품 색연필 추천 신학기 선물 답례품",
+  "vendor": "gpt",
+  "product_name": "12색 미니 우드 색연필",
+  "category": "children_stationery",
+  "legal": "색연필",
+  "single": [
+   "학용품"
+  ],
+  "batch": [
+   "학용품"
+  ],
+  "single_claude": [
+   "학용품"
+  ]
+ },
+ {
+  "no": 159,
+  "name": "18색 우드 색연필 틴케이스",
+  "vendor": "gpt",
+  "product_name": "18색 우드 색연필 틴케이스",
+  "category": "children_stationery",
+  "legal": "색연필",
+  "single": [
+   "학용품"
+  ],
+  "batch": [
+   "학용품"
+  ],
+  "single_claude": [
+   "학용품"
+  ]
+ },
+ {
+  "no": 160,
+  "name": "12색 미니 우드 색연필 포켓용 단체선물 미술용품 색연필 추천 신학기",
+  "vendor": "gpt",
+  "product_name": "12색 미니 우드 색연필",
+  "category": "children_stationery",
+  "legal": "색연필",
+  "single": [
+   "학용품"
+  ],
+  "batch": [
+   "학용품"
+  ],
+  "single_claude": [
+   "학용품"
+  ]
+ },
+ {
+  "no": 161,
+  "name": "12색블럭색연필/조립식색연필/어린이날선물사은품",
+  "vendor": "gpt",
+  "product_name": "12색블럭색연필/조립식색연필/어린이날선물사은품",
+  "category": "children_stationery",
+  "legal": "색연필",
+  "single": [
+   "학용품"
+  ],
+  "batch": [
+   "학용품"
+  ],
+  "single_claude": [
+   "학용품"
+  ]
+ },
+ {
+  "no": 162,
+  "name": "(키즈몰)12색곰돌이색연필/문구/프랜즈",
+  "vendor": "gpt",
+  "product_name": "12색곰돌이색연필",
+  "category": "children_stationery",
+  "legal": "색연필",
+  "single": [
+   "학용품"
+  ],
+  "batch": [
+   "학용품"
+  ],
+  "single_claude": [
+   "학용품"
+  ]
+ },
+ {
+  "no": 163,
+  "name": "워터 브러쉬 물펜 물붓 워터펜 휴대용 수채화 용품 도구 물감 재료 어반스케치 미술 브러시",
+  "vendor": "gpt",
+  "product_name": "워터 브러쉬 물펜 물붓 워터펜 휴대용 수채화 용품 도구 물감 재료 어반스케치 미술 브러시",
+  "category": "children_stationery",
+  "legal": "붓",
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 164,
+  "name": "말랑이 스퀴시 크런치 망고스틴 비누 쫀득 바삭 슬랑이 크랑이 키위 샤베트 과일 물감 주물럭 스트레스볼",
+  "vendor": "gpt",
+  "product_name": "말랑이 스퀴시 크런치 망고스틴 비누 쫀득 바삭 슬랑이 크랑이 키위 샤베트 과일 물감 주물럭 스트레스볼",
+  "category": "children_toy",
+  "legal": "완구",
+  "single": [
+   "완구"
+  ],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 165,
+  "name": "[엘에스] 일회용 방수 미술 물감 앞치마+팔토시(2개) 세트",
+  "vendor": "gpt",
+  "product_name": "[엘에스] 일회용 방수 미술 물감 앞치마+팔토시(2개) 세트",
+  "category": "children_textile",
+  "legal": null,
+  "single": [
+   "의류"
+  ],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 166,
+  "name": "물감자 슬랑이 물 반죽처럼 착착 붙는 중독적인 모찌",
+  "vendor": "gpt",
+  "product_name": "물감자 슬랑이 물 반죽처럼 착착 붙는 중독적인 모찌",
+  "category": "unclassified",
+  "legal": null,
+  "single": [],
+  "batch": [],
+  "single_claude": [
+   "완구"
+  ]
+ },
+ {
+  "no": 167,
+  "name": "모나미 18종 행복특가 문구세트",
+  "vendor": "gpt",
+  "product_name": "모나미 18종 행복특가 문구세트",
+  "category": "children_stationery",
+  "legal": null,
+  "single": [
+   "학용품"
+  ],
+  "batch": [
+   "학용품"
+  ],
+  "single_claude": [
+   "학용품"
+  ]
+ },
+ {
+  "no": 168,
+  "name": "홀아트 젤스톤 P41-20 300ml GS300 색상선택",
+  "vendor": "gpt",
+  "product_name": "홀아트 젤스톤 P41-20 300ml GS300",
+  "category": "unclassified",
+  "legal": null,
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 169,
+  "name": "12색 미니 아크릴물감 붓 2개 세트",
+  "vendor": "gpt",
+  "product_name": "12색 미니 아크릴물감 붓 2개 세트",
+  "category": "children_stationery",
+  "legal": null,
+  "single": [
+   "학용품"
+  ],
+  "batch": [
+   "학용품"
+  ],
+  "single_claude": [
+   "학용품"
+  ]
+ },
+ {
+  "no": 170,
+  "name": "가민 전문가용 아크릴물감 대용량 물감 퍼포먼스미술 미술용품 500ml 29색",
+  "vendor": "gpt",
+  "product_name": "가민 전문가용 아크릴물감",
+  "category": "children_stationery",
+  "legal": null,
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 171,
+  "name": "(초특가)동물지우개/청소기장착/어린이날선물사은품/오백이하",
+  "vendor": "gpt",
+  "product_name": "동물지우개",
+  "category": "children_stationery",
+  "legal": "지우개",
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 172,
+  "name": "먹지마 지우개 세트 귀엽고 깜찍한 과일 디저트 모양 지우개",
+  "vendor": "gpt",
+  "product_name": "먹지마 지우개 세트",
+  "category": "children_stationery",
+  "legal": "지우개",
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 173,
+  "name": "언박싱 택배송장지우개 / 커터칼장착 / 2가지기능/ 개인정보보호",
+  "vendor": "gpt",
+  "product_name": "언박싱 택배송장지우개",
+  "category": "unclassified",
+  "legal": null,
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 174,
+  "name": "무한연필 깎지않는 무제한 연필심 지우개 내장 닳지않는 무제한 슬림",
+  "vendor": "gpt",
+  "product_name": "무한연필 깎지않는 무제한 연필심 지우개 내장 닳지않는 무제한 슬림",
+  "category": "children_stationery",
+  "legal": null,
+  "single": [
+   "학용품"
+  ],
+  "batch": [
+   "학용품"
+  ],
+  "single_claude": [
+   "학용품"
+  ]
+ },
+ {
+  "no": 175,
+  "name": "2 in 1 택배 칼 및 송장 지우개 10ML",
+  "vendor": "gpt",
+  "product_name": "2 in 1 택배 칼 및 송장 지우개 10ML",
+  "category": "children_stationery",
+  "legal": null,
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 176,
+  "name": "마법학교 랜덤 지우개 뽑기 귀여운 재미있는 단체선물",
+  "vendor": "gpt",
+  "product_name": "마법학교 랜덤 지우개",
+  "category": "children_stationery",
+  "legal": "지우개",
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 177,
+  "name": "택배송장지우개 개인정보보호 유출방지 리무버",
+  "vendor": "gpt",
+  "product_name": "택배송장지우개 개인정보보호 유출방지 리무버",
+  "category": "children_stationery",
+  "legal": "지우개",
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 178,
+  "name": "KC인증 얼룩제거펜 얼룩제거스틱 얼룩제거제 얼룩지우개 흰티",
+  "vendor": "gpt",
+  "product_name": "KC인증 얼룩제거펜 얼룩제거스틱 얼룩제거제 얼룩지우개 흰티",
+  "category": "out_of_scope",
+  "legal": null,
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 179,
+  "name": "(정품)산리오 포토카드보관겸용 필통/ 3종선택가능/ 학용품보관 / 다용도케이스",
+  "vendor": "gpt",
+  "product_name": "산리오 포토카드보관겸용 필통",
+  "category": "children_stationery",
+  "legal": null,
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 180,
+  "name": "대용량 삼각 필통 중학생 고등학생 대학생",
+  "vendor": "gpt",
+  "product_name": "대용량 삼각 필통",
+  "category": "children_stationery",
+  "legal": "필통",
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 181,
+  "name": "메쉬필통 메시필통 망사필통 그물필통 무지필통 시스루필통 초등필통 중학생필통 초등학생필통 예쁜필통 필",
+  "vendor": "gpt",
+  "product_name": "메쉬필통",
+  "category": "children_stationery",
+  "legal": "필통",
+  "single": [
+   "학용품"
+  ],
+  "batch": [
+   "학용품"
+  ],
+  "single_claude": []
+ },
+ {
+  "no": 182,
+  "name": "[큰손할인] 캐릭터 대용량 파우치 필통 문구 케이스 펜슬 패브릭 수납 연필 대형 보부상 오픈 화장품",
+  "vendor": "gpt",
+  "product_name": "캐릭터 대용량 파우치 필통",
+  "category": "children_stationery",
+  "legal": null,
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 183,
+  "name": "다용도 필통 파우치 6종 문구 연필통 케이스 연필꽂이",
+  "vendor": "gpt",
+  "product_name": "다용도 필통 파우치",
+  "category": "children_stationery",
+  "legal": null,
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 184,
+  "name": "라이트 카피바라 필통 다용도 파우치 펜케이스 문구 동물필통",
+  "vendor": "gpt",
+  "product_name": "라이트 카피바라 필통 다용도 파우치 펜케이스 문구 동물필통",
+  "category": "children_stationery",
+  "legal": null,
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 185,
+  "name": "[별별창고] 패턴 체크 필통 대학생 고등학생 중학생 펜파우치 귀여운 필수템",
+  "vendor": "gpt",
+  "product_name": "패턴 체크 필통",
+  "category": "children_stationery",
+  "legal": "필통",
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 186,
+  "name": "[지앤지] 가벼운 메쉬 필통 파우치 새학기 대학생 고등학생 펜파우치 펜슬 소지품 정리",
+  "vendor": "gpt",
+  "product_name": "가벼운 메쉬 필통 파우치",
+  "category": "children_stationery",
+  "legal": null,
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 187,
+  "name": "정품 캐릭터 짱구 간식 박스 스트레스 해소 키링 귀여운 책가방 걸이 커플 자동차 키링",
+  "vendor": "gpt",
+  "product_name": "짱구 간식 박스 스트레스 해소 키링",
+  "category": "unclassified",
+  "legal": null,
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 188,
+  "name": "귀여운 파차 열쇠고리 실리콘 2원 책가방 열쇠고리 도매 만화 열쇠고리",
+  "vendor": "gpt",
+  "product_name": "귀여운 파차 열쇠고리",
+  "category": "unclassified",
+  "legal": null,
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 189,
+  "name": "EVERYGOOD 학생용 대용량 책가방 백팩 초등학생 선물 추천",
+  "vendor": "gpt",
+  "product_name": "EVERYGOOD 학생용 대용량 책가방 백팩",
+  "category": "children_textile",
+  "legal": "배낭",
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 190,
+  "name": "오랑우탄인형가방 오랑이 고숭이 백팩 소풍가방 책가방",
+  "vendor": "gpt",
+  "product_name": "오랑우탄인형가방 오랑이 고숭이 백팩",
+  "category": "unclassified",
+  "legal": null,
+  "single": [
+   "의류 이외의 섬유제품"
+  ],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 191,
+  "name": "고양이 열쇠고리 가방 장식 배드민턴 라켓 아기 고양이 학생 책가방 액세서리 절친 선물",
+  "vendor": "gpt",
+  "product_name": "고양이 열쇠고리 가방 장식",
+  "category": "unclassified",
+  "legal": null,
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 192,
+  "name": "열쇠고리 산리오 인형 책가방 장식 자동차 열쇠고리 정교함",
+  "vendor": "gpt",
+  "product_name": "열쇠고리 산리오 인형 책가방 장식 자동차 열쇠고리",
+  "category": "unclassified",
+  "legal": null,
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 193,
+  "name": "고양이 붕어빵 책가방 지갑 에어팟 버즈 케이스 코인펄스 미니파우치 백참 키링",
+  "vendor": "gpt",
+  "product_name": "고양이 붕어빵 책가방 지갑 에어팟 버즈 케이스 코인펄스 미니파우치 백참 키링",
+  "category": "unclassified",
+  "legal": null,
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 194,
+  "name": "스티비 인형 피규어 열쇠고리 여 귀여운 캐릭터 한국 크리에이티브 스티비 책가방 걸이",
+  "vendor": "gpt",
+  "product_name": "스티비 인형 피규어 열쇠고리",
+  "category": "unclassified",
+  "legal": null,
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 195,
+  "name": "2500배송 모직 린넨 거실 실내화 여름 남성 여성 사무실 슬리퍼",
+  "vendor": "gpt",
+  "product_name": "모직 린넨 거실 실내화",
+  "category": "household",
+  "legal": null,
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 196,
+  "name": "런칭특가 토끼 리본 린넨 실내화 여자 남자 여름 슬리퍼 실내화 거실화",
+  "vendor": "gpt",
+  "product_name": "토끼 리본 린넨 실내화",
+  "category": "children_textile",
+  "legal": "실내화",
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 197,
+  "name": "2500배송 고양이 왕골 슬리퍼 여름 샌들 린넨 마 실내화 거실화",
+  "vendor": "gpt",
+  "product_name": "고양이 왕골 슬리퍼 여름 샌들 린넨 마 실내화 거실화",
+  "category": "unclassified",
+  "legal": "슬리퍼",
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 198,
+  "name": "런칭특가 뽀송뽀송 린넨 실내화 층간소음방지 거실화 남성 여성 여름 마 슬리퍼 샌들",
+  "vendor": "gpt",
+  "product_name": "뽀송뽀송 린넨 실내화",
+  "category": "household",
+  "legal": "실내화",
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 199,
+  "name": "리본 퀄트 거실 사무실 실내 어린이집 실내화 슬리퍼",
+  "vendor": "gpt",
+  "product_name": "리본 퀄트 거실 사무실 실내 어린이집 실내화 슬리퍼",
+  "category": "children_textile",
+  "legal": "실내화",
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 200,
+  "name": "[ANB7]왕골슬리퍼/거실화/바캉스용품/EVA/실내화/사은품/판촉물/신발",
+  "vendor": "gpt",
+  "product_name": "왕골슬리퍼",
+  "category": "unclassified",
+  "legal": null,
+  "single": [
+   "신발류"
+  ],
+  "batch": [
+   "신발류"
+  ],
+  "single_claude": []
+ },
+ {
+  "no": 201,
+  "name": "가벼운 물빠짐 치즈욕실화 EVA소재 슬리퍼 실내화",
+  "vendor": "gpt",
+  "product_name": "가벼운 물빠짐 치즈욕실화 EVA소재 슬리퍼 실내화",
+  "category": "household",
+  "legal": "욕실화",
+  "single": [
+   "신발류"
+  ],
+  "batch": [
+   "신발류"
+  ],
+  "single_claude": []
+ },
+ {
+  "no": 202,
+  "name": "지압슬리퍼 사무실 실내화 다이어트 슬리퍼",
+  "vendor": "gpt",
+  "product_name": "지압슬리퍼 사무실 실내화 다이어트 슬리퍼",
+  "category": "unclassified",
+  "legal": null,
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 203,
+  "name": "고급 실리콘 2in1 디지털 스마트 줄넘기 실내용 줄없는 줄넘기+실외용 줄넘기 4가지 모드 LCD창 중량추 포",
+  "vendor": "gpt",
+  "product_name": "고급 실리콘 2in1 디지털 스마트 줄넘기",
+  "category": "household",
+  "legal": null,
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 204,
+  "name": "실내 노라인 줄넘기 유산소 홈트 집에서 줄없는줄넘기",
+  "vendor": "gpt",
+  "product_name": "실내 노라인 줄넘기 유산소 홈트 집에서 줄없는줄넘기",
+  "category": "unclassified",
+  "legal": null,
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 205,
+  "name": "(덤핑) 캐치티니핑 카운터 줄넘기(정품) / 분홍 / 자주 / 70% 할인 판매 / 한정수량",
+  "vendor": "gpt",
+  "product_name": "캐치티니핑 카운터 줄넘기",
+  "category": "children_toy",
+  "legal": "줄넘기",
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 206,
+  "name": "(도매꾹최저가)고급어린이줄넘기/분리형끈저절가능/실내운동가능/스피드점프/한각12개",
+  "vendor": "gpt",
+  "product_name": "고급어린이줄넘기",
+  "category": "children_toy",
+  "legal": "줄넘기",
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 207,
+  "name": "(최저가판매)LED발목줄넘기/ s자 고급형/ 남녀노소/실내외사용가능/유치원/어린이집",
+  "vendor": "gpt",
+  "product_name": "LED발목줄넘기",
+  "category": "children_toy",
+  "legal": "줄넘기",
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 208,
+  "name": "길이조절 초경량 줄넘기 준비물 운동",
+  "vendor": "gpt",
+  "product_name": "길이조절 초경량 줄넘기",
+  "category": "children_toy",
+  "legal": null,
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 209,
+  "name": "악력기 완력기 카운터악력기 무소음악력기 실리콘패드부착 완력기 헬스기구 전완근운동 손목운동",
+  "vendor": "gpt",
+  "product_name": "악력기 완력기 카운터악력기 무소음악력기 실리콘패드부착 완력기 헬스기구 전완근운동 손목운동",
+  "category": "unclassified",
+  "legal": null,
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 210,
+  "name": "템플러 PD 2포트 가정용 충전기 25W 초고속충전",
+  "vendor": "gpt",
+  "product_name": "템플러 PD 2포트 가정용 충전기 25W 초고속충전",
+  "category": "electrical",
+  "legal": "충전기",
+  "single": [
+   "직류전원장치"
+  ],
+  "batch": [
+   "직류전원장치"
+  ],
+  "single_claude": [
+   "직류전원장치"
+  ]
+ },
+ {
+  "no": 211,
+  "name": "GAN PD 20W C포트 1구 초고속 가정용 충전기 (C to C 케이블 포함 DR-PD20W-T1-CP)",
+  "vendor": "gpt",
+  "product_name": "GAN PD 20W C포트 1구 초고속 가정용 충전기",
+  "category": "electrical",
+  "legal": "직류전원장치",
+  "single": [
+   "직류전원장치"
+  ],
+  "batch": [
+   "직류전원장치"
+  ],
+  "single_claude": [
+   "직류전원장치"
+  ]
+ },
+ {
+  "no": 212,
+  "name": "[키친아트] 큐티 멀티쿠커 MS-D10",
+  "vendor": "gpt",
+  "product_name": "큐티 멀티쿠커 MS-D10",
+  "category": "electrical",
+  "legal": "전기냄비",
+  "single": [
+   "전기냄비",
+   "전기밥솥",
+   "전기스팀쿠커"
+  ],
+  "batch": [
+   "전기스팀쿠커",
+   "전기냄비",
+   "전기밥솥"
+  ],
+  "single_claude": [
+   "전기스팀쿠커",
+   "전기냄비",
+   "전기밥솥"
+  ]
+ },
+ {
+  "no": 213,
+  "name": "[키친아트] 큐티 멀티쿠커 MS-D09",
+  "vendor": "gpt",
+  "product_name": "큐티 멀티쿠커",
+  "category": "electrical",
+  "legal": "전기쿠커",
+  "single": [
+   "전기냄비",
+   "전기밥솥",
+   "전기스팀쿠커"
+  ],
+  "batch": [
+   "전기스팀쿠커",
+   "전기냄비",
+   "전기밥솥"
+  ],
+  "single_claude": [
+   "전기스팀쿠커",
+   "전기냄비",
+   "전기밥솥"
+  ]
+ },
+ {
+  "no": 214,
+  "name": "헤어드라이어 거치대 펀치프리 욕실 벽걸이 휴대폰 거치대 다기능 욕실 헤어드라이어 수납 유물",
+  "vendor": "gpt",
+  "product_name": "헤어드라이어 거치대 펀치프리 욕실 벽걸이 휴대폰 거치대 다기능 욕실 헤어드라이어 수납 유물",
+  "category": "unclassified",
+  "legal": null,
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 215,
+  "name": "무타공 헤어 드라이기 거치대 욕실 화장실 드라이 드라이어 수납 홀더 정리대 정리함",
+  "vendor": "gpt",
+  "product_name": "무타공 헤어 드라이기 거치대",
+  "category": "household",
+  "legal": null,
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 216,
+  "name": "(기본형) 홀더 거치대 헤어 기수납 드라이기 욕실 드라이 헤어 드라이어",
+  "vendor": "gpt",
+  "product_name": "홀더 거치대 헤어 기수납 드라이기 욕실 드라이 헤어 드라이어",
+  "category": "electrical",
+  "legal": "헤어드라이어",
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 217,
+  "name": "유닉스 이온 접이식 드라이기 1600W 3단 헤어드라이어 3단 이온",
+  "vendor": "gpt",
+  "product_name": "유닉스 이온 접이식 드라이기 1600W 3단 헤어드라이어",
+  "category": "electrical",
+  "legal": "헤어드라이어",
+  "single": [
+   "모발건조기"
+  ],
+  "batch": [
+   "모발건조기"
+  ],
+  "single_claude": [
+   "모발건조기"
+  ]
+ },
+ {
+  "no": 218,
+  "name": "무타공 접착식 헤어 드라이어 소품 거치대",
+  "vendor": "gpt",
+  "product_name": "무타공 접착식 헤어 드라이어 소품 거치대",
+  "category": "household",
+  "legal": null,
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 219,
+  "name": "항공모터 BLDC 초강 110000rpm 헤어 드라이어 미용실 드라이기 판촉물 사은품 답례품 선물세트 집들이선물",
+  "vendor": "gpt",
+  "product_name": "항공모터 BLDC 초강 110000rpm 헤어 드라이어",
+  "category": "electrical",
+  "legal": "헤어드라이어",
+  "single": [
+   "모발건조기"
+  ],
+  "batch": [
+   "모발건조기"
+  ],
+  "single_claude": [
+   "모발건조기"
+  ]
+ },
+ {
+  "no": 220,
+  "name": "BLDC 모터 에어드랍 드라이기 헤어 드라이어 판촉물 사은품 답례품 집들이선물 여행용드라이기",
+  "vendor": "gpt",
+  "product_name": "BLDC 모터 에어드랍 드라이기",
+  "category": "electrical",
+  "legal": "헤어드라이어",
+  "single": [
+   "모발건조기"
+  ],
+  "batch": [
+   "모발건조기"
+  ],
+  "single_claude": [
+   "모발건조기"
+  ]
+ },
+ {
+  "no": 221,
+  "name": "슬림형 접이식 헤어드라이어 먼지망 분리형 미용실 드라이기 판촉물 사은품 답례품 선물세트 집들이선물",
+  "vendor": "gpt",
+  "product_name": "슬림형 접이식 헤어드라이어",
+  "category": "electrical",
+  "legal": "전기머리인두",
+  "single": [
+   "모발건조기"
+  ],
+  "batch": [
+   "모발건조기"
+  ],
+  "single_claude": [
+   "모발건조기"
+  ]
+ },
+ {
+  "no": 222,
+  "name": "FEISHI 휴대용 방수면도기/전기면도기/건전지/초소형",
+  "vendor": "gpt",
+  "product_name": "FEISHI 휴대용 방수면도기",
+  "category": "electrical",
+  "legal": "전기면도기",
+  "single": [
+   "전기면도기"
+  ],
+  "batch": [
+   "전기면도기"
+  ],
+  "single_claude": [
+   "전기면도기"
+  ]
+ },
+ {
+  "no": 223,
+  "name": "고급 Geemy 면도기 gm-595 휴대용 차량용 전기면도기 이발 코털 강력한커팅 깔끔한 면도3in1",
+  "vendor": "gpt",
+  "product_name": "고급 Geemy 면도기 gm-595",
+  "category": "electrical",
+  "legal": "전기면도기",
+  "single": [
+   "전기면도기"
+  ],
+  "batch": [
+   "전기면도기"
+  ],
+  "single_claude": [
+   "전기면도기"
+  ]
+ },
+ {
+  "no": 224,
+  "name": "무타공 전기면도기 스테인레스 거치대 면도기 홀더 욕실걸이",
+  "vendor": "gpt",
+  "product_name": "무타공 전기면도기 스테인레스 거치대 면도기 홀더 욕실걸이",
+  "category": "household",
+  "legal": null,
+  "single": [],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 225,
+  "name": "코털제거기[방수용 코털제거기]코털제거기/코털제거기/면도기/전기안전검사인증/우수한성능[효정무역]",
+  "vendor": "gpt",
+  "product_name": "코털제거기",
+  "category": "electrical",
+  "legal": "제모기",
+  "single": [],
+  "batch": [],
+  "single_claude": [
+   "전기면도기"
+  ]
+ },
+ {
+  "no": 226,
+  "name": "[방수용 코털제거기]코털제거기 방수형 전동식 쉐이버 전기안전인증 완료 제품",
+  "vendor": "gpt",
+  "product_name": "코털제거기 방수형 전동식 쉐이버",
+  "category": "electrical",
+  "legal": "전기면도기",
+  "single": [
+   "전기면도기"
+  ],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 227,
+  "name": "[ABC0749] 면도기 1회용면도기 면도기일회용 개별OPP포장 한국당일발송",
+  "vendor": "gpt",
+  "product_name": "면도기",
+  "category": "household",
+  "legal": null,
+  "single": [
+   "전기면도기"
+  ],
+  "batch": [],
+  "single_claude": []
+ },
+ {
+  "no": 228,
+  "name": "면도기 [애플면도기] 면도기/전기면도기/USB충전면도기/여행용면도기/휴대용면도기/충전식면도기/면도기",
+  "vendor": "gpt",
+  "product_name": "면도기",
+  "category": "electrical",
+  "legal": "전기면도기",
+  "single": [
+   "전기면도기"
+  ],
+  "batch": [
+   "전기면도기"
+  ],
+  "single_claude": [
+   "전기면도기"
+  ]
+ },
+ {
+  "no": 229,
+  "name": "휴대용 물병 가습기 X7 USB가습기 탁상용가습기 필터가습기",
+  "vendor": "gpt",
+  "product_name": "휴대용 물병 가습기 X7",
+  "category": "electrical",
+  "legal": "가습기",
+  "single": [
+   "가습기"
+  ],
+  "batch": [
+   "가습기"
+  ],
+  "single_claude": [
+   "가습기"
+  ]
+ },
+ {
+  "no": 230,
+  "name": "미니가습기 휴대용가습기 곰돌이가습기 필터1개추가증정 JP-985",
+  "vendor": "gpt",
+  "product_name": "미니가습기 휴대용가습기 곰돌이가습기",
+  "category": "electrical",
+  "legal": "가습기",
+  "single": [
+   "가습기"
+  ],
+  "batch": [
+   "가습기"
+  ],
+  "single_claude": [
+   "가습기"
+  ]
+ },
+ {
+  "no": 231,
+  "name": "NEO2M 간편세척 습도조절 세라믹 볼 필터 대용량 저소음 초음파 가습기 SK002A",
+  "vendor": "gpt",
+  "product_name": "NEO2M 간편세척 습도조절 세라믹 볼 필터 대용량 저소음 초음파 가습기 SK002A",
+  "category": "electrical",
+  "legal": "가습기",
+  "single": [
+   "가습기"
+  ],
+  "batch": [
+   "가습기"
+  ],
+  "single_claude": [
+   "가습기"
+  ]
+ },
+ {
+  "no": 232,
+  "name": "휴대용 저소음 이중필터 X7 물병 튜브 USB가습기",
+  "vendor": "gpt",
+  "product_name": "휴대용 저소음 이중필터 X7 물병 튜브 USB가습기",
+  "category": "electrical",
+  "legal": "가습기",
+  "single": [
+   "가습기"
+  ],
+  "batch": [
+   "가습기"
+  ],
+  "single_claude": [
+   "가습기"
+  ]
+ },
+ {
+  "no": 233,
+  "name": "네온T LED 무드등 미니캡슐 USB 멀티 미니가습기/기념품/판촉 [선풍기+여분필터 포함]",
+  "vendor": "gpt",
+  "product_name": "네온T LED 무드등 미니캡슐 USB 멀티 미니가습기",
+  "category": "electrical",
+  "legal": "전기가습기",
+  "single": [
+   "가습기"
+  ],
+  "batch": [
+   "선풍기",
+   "가습기"
+  ],
+  "single_claude": [
+   "가습기"
+  ]
+ },
+ {
+  "no": 234,
+  "name": "KC인증 대용량 무드등 미니 가습기 300ml(필터5개 포함)책상용 사무실 원룸 소형 USB 귀여운 고양이 가습기",
+  "vendor": "gpt",
+  "product_name": "KC인증 대용량 무드등 미니 가습기",
+  "category": "electrical",
+  "legal": "가습기",
+  "single": [
+   "가습기"
+  ],
+  "batch": [
+   "가습기"
+  ],
+  "single_claude": [
+   "가습기"
+  ]
+ },
+ {
+  "no": 235,
+  "name": "엔보우 워터에이지01 휴대용 무선 미니가습기",
+  "vendor": "gpt",
+  "product_name": "엔보우 워터에이지01 휴대용 무선 미니가습기",
+  "category": "electrical",
+  "legal": "가습기",
+  "single": [
+   "가습기"
+  ],
+  "batch": [
+   "가습기"
+  ],
+  "single_claude": [
+   "가습기"
+  ]
+ }
+]
