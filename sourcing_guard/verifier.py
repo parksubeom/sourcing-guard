@@ -1675,7 +1675,12 @@ def _item_grade_findings(
     #   규칙이 possible 로 하나만 찾았어도 얹지 않는다. 두 경로를 신뢰도로
     #   비교하기 시작하면 어느 쪽이 옳은지 우리가 판정하게 되는데, 그건 우리가
     #   할 수 있는 일이 아니다 (R1).
-    for cand in book.lookup_legal_name(legal_name) if not found else ():
+    # ⚠ haystack 은 동력 접두어 가드 전용이다 - 표가 붙인 '전기'·'전동' 을
+    #   원문에 근거 없이 따라가지 않게 한다.
+    _hay = f"{product_name or ''} {raw_text or ''}"
+    for cand in (
+        book.lookup_legal_name(legal_name, haystack=_hay) if not found else ()
+    ):
         if (cand.item, cand.grade) in {(g.item, g.grade) for g in found}:
             continue
         exact = cand.matched_by == "legal_name"

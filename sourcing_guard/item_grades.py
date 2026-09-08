@@ -83,14 +83,56 @@ def strip_modifiers(name: str) -> str:
 # 대신한다 - 사전을 작게 유지하는 것이 목표다.
 _PREFIXES = ("전기", "전동")
 
+# 상품이 **동력을 쓰는 물건**임을 셀러가 적어 둔 표지.
+#
+# ⚠ 왜 필요한가. 위 _PREFIXES 를 양방향으로 쓰면 '프라이팬' 에 '전기' 를
+#   붙여 표의 '전기프라이팬' 에 맞춰 버린다. 그러면 무쇠 프라이팬(식품용
+#   기구·식약처)과 1회용 면도기가 전기제품이 된다. 실측에서 비대상 2건이
+#   정확히 그렇게 붙었다:
+#
+#     19  IH 인덕션 후라이팬 무쇠팬 …  → 전기프라이팬
+#     227 면도기 1회용면도기 …        → 전기면도기
+#
+#   **떼는 방향은 안전하다** - 셀러가 '전기' 라 적었으면 전기제품이다.
+#   붙이는 방향만 "원문에 동력 표지가 있을 때" 로 좁힌다.
+#
+# ⚠ 목록은 **실측에서 뽑았다.** 새표본235 중 electrical·대상 64건의 상품명에
+#   실제로 나타난 빈도다:
+#
+#     전기 29(45%) · 무선 18(28%) · USB 6(9%) · 충전 5(8%)
+#     전동 2(3%) · BLDC 2(3%) · DC 2(3%) · 배터리 1 · 건전지 1
+#
+#   ⚠ 'W'(6건)·'V'(2건)는 **넣지 않았다.** 한 글자라 다른 낱말 안에서
+#     걸린다 - 오탐이 이득보다 크다. 필요하면 '220V'·'110V' 처럼 숫자와
+#     붙은 형태로 좁혀서 다시 볼 것.
+_POWER_MARKERS = (
+    "전기", "전동", "무선", "충전", "USB", "BLDC", "DC",
+    "배터리", "건전지", "코드리스", "플러그", "어댑터", "220V", "110V",
+)
 
-def prefix_variants(name: str) -> list[str]:
-    """접두어를 붙이거나 뗀 변형들. 원본이 맨 앞이다."""
+
+def has_power_marker(text: str | None) -> bool:
+    """상품명·원문에 동력 표지가 있는가. _POWER_MARKERS 의 조건이다."""
+    up = (text or "").upper()
+    return any(m.upper() in up for m in _POWER_MARKERS)
+
+
+def prefix_variants(name: str, *, haystack: str | None = None) -> list[str]:
+    """접두어를 붙이거나 뗀 변형들. 원본이 맨 앞이다.
+
+    ⚠ **붙이는 방향은 `haystack` 에 동력 표지가 있을 때만** 만든다.
+      `haystack` 이 None 이면 예전대로 무조건 붙인다 - 표 어휘 정렬처럼
+      상품명이 아닌 입력에 쓰는 자리를 깨지 않기 위해서다.
+
+    ⚠ 떼는 방향은 조건 없이 유지한다. 셀러가 '전기' 라 적은 것을 우리가
+      의심할 이유가 없다.
+    """
     out = [name]
+    add_ok = haystack is None or has_power_marker(haystack)
     for p in _PREFIXES:
         if name.startswith(p):
             out.append(name[len(p):].strip())
-        else:
+        elif add_ok:
             out.append(f"{p}{name}")
             out.append(f"{p} {name}")
     return [v for v in out if v]
@@ -1125,8 +1167,19 @@ class ItemGradeBook:
                 )
 
         # (1) 정확 일치
+        #
+        # ⚠ 접두어를 **붙여** 만든 변형은 동력 표지가 있을 때만 쓴다.
+        #   '면도기' 에 '전기' 를 붙여 표의 '전기면도기' 에 맞추면 1회용
+        #   면도기가 전기제품이 된다. 게다가 이 경로는 how="exact" 라
+        #   부속어·본체 검사가 전부 꺼지므로 다른 가드가 받아 주지 못한다.
+        #
+        # ⚠ 원문을 함께 보는 것은 **막는 판단을 완화하는 쪽**이다 - LLM 이
+        #   요약에서 '전기' 를 떨어뜨렸을 때 정답을 죽이지 않기 위해서다.
+        #   [Q] 가 금지한 것은 매처 본체 검사에 원본을 겹쳐 넣는 것이고,
+        #   여기는 게이트 조건이다.
+        power_hay = f"{product_name or ''} {raw_text or ''}"
         for base in (product_name, stripped):
-            for candidate in prefix_variants(base):
+            for candidate in prefix_variants(base, haystack=power_hay):
                 offer(self._by_name.get(normalize(candidate)), "exact")
 
         # (2) 역방향 포함. 긴 품목명이 먼저 - '자전거용 안전모' 가 '안전모'
@@ -1240,7 +1293,9 @@ class ItemGradeBook:
         grades = {c.grade for c in candidates}
         return grades.pop() if len(grades) == 1 else None
 
-    def lookup_legal_name(self, legal_name: str | None) -> list[ItemGrade]:
+    def lookup_legal_name(
+        self, legal_name: str | None, *, haystack: str | None = None
+    ) -> list[ItemGrade]:
         """LLM 이 옮긴 법령 품목명을 표에서 조회한다.
 
         **표가 검증자다.** LLM 은 이름만 내놓고 등급은 표에서 결정론적으로
@@ -1308,10 +1363,29 @@ class ItemGradeBook:
         if len(key) < _MIN_CONTAIN_LEN:
             return []
 
+        # ⚠ **표가 붙인 동력 접두어를 원문 없이 따라가지 않는다.**
+        #   legal='프라이팬' 이 표의 '전기프라이팬' 에 포함돼 확장되면
+        #   무쇠 프라이팬이 전기제품이 된다(실측 19번). 접두어를 떼는
+        #   방향은 그대로 둔다 - 위 prefix_variants 와 같은 원칙이다.
+        power_ok = haystack is None or has_power_marker(haystack)
+
         seen: set[tuple[str, str]] = set()
         out: list[ItemGrade] = []
         for name, rows in self._by_name.items():
             if key not in name and not is_prefix_expansion(key, name):
+                continue
+            if not power_ok and any(
+                # 표 품목명이 **동력 접두어로 시작**하는데 LLM 답은 아닌 경우만
+                # 막는다. 즉 우리가 접두어를 붙인 것이다.
+                #
+                # ⚠ 처음엔 `name.replace(key, "")` 로 차이분을 봤는데 그러면
+                #   '전기그릴' → '전기거치식그릴' 까지 막았다. 부분열(가운데
+                #   수식이 끼는 형태)에서는 replace 가 아무것도 지우지 못해
+                #   차이분이 품목명 전체가 되기 때문이다. 그 경우는 LLM 답에
+                #   이미 '전기' 가 있으므로 막을 이유가 없다.
+                name.startswith(normalize(pfx)) and not key.startswith(normalize(pfx))
+                for pfx in _PREFIXES
+            ):
                 continue
             for row in rows:
                 mark = (row["item"], row["grade"])

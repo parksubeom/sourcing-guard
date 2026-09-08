@@ -711,7 +711,7 @@ def test_the_fallback_condition_is_zero_candidates_not_weak_ones():
 
     src = inspect.getsource(verifier._item_grade_findings)
     head = src[: src.index("if not found:")]
-    assert "lookup_legal_name(legal_name) if not found else ()" in head, (
+    assert "lookup_legal_name(legal_name, haystack=_hay) if not found else ()" in head, (
         "폴백 조건이 바뀌었다"
     )
     for smell in ("confidence ==", 'confidence ==\n', "possible\" in", "certain\" in"):
@@ -965,8 +965,22 @@ def test_kickboard_is_not_a_containment_key():
                 "[ABC0532] 핸드워머 자전거 킥보드 방한장갑 핸드머프"):
         assert not [g for g in book.lookup_all(raw) if g.item == "킥보드"], raw
 
-    assert [g.item for g in book.lookup_all("킥보드")] == ["킥보드", "전동킥보드"]
+    # ⚠ **2026-09-08 에 '전동킥보드' 가 빠졌다.** 예전에는 prefix_variants 가
+    #   '킥보드' 에 '전동' 을 붙여 표의 '전동킥보드' 를 함께 냈다. 동력 표지
+    #   가드를 넣으면서 그 경로가 닫혔다.
+    #
+    #   **가드가 옳게 막았다.** 상품명에 '킥보드' 뿐이면 발로 미는 킥보드일
+    #   수 있고, 그때 '전동킥보드'(안전확인 대상)를 붙이면 없는 의무를
+    #   만든다. 표에 '킥보드'·'전동킥보드' 가 따로 있는 이유가 그것이다.
+    #
+    #   이 검사의 원래 취지("포함 키에서 뺐지만 정확 일치는 살아 있다")는
+    #   '킥보드' 한 건으로 그대로 확인된다.
+    assert [g.item for g in book.lookup_all("킥보드")] == ["킥보드"]
     assert [g.item for g in book.lookup_all("전동킥보드 접이식 성인용")] == ["전동킥보드"]
+    # 표지어가 있으면 전동 쪽도 함께 나온다.
+    assert "전동킥보드" in [
+        g.item for g in book.lookup_all("킥보드 충전식 접이식", raw_text="킥보드 충전식 접이식")
+    ]
 
 
 def test_knee_pad_alias_lands_on_the_child_sports_gear_item():
@@ -1399,3 +1413,75 @@ def test_the_adult_bag_table_closes_when_a_child_marker_is_present():
     for raw in ("귀여운 파차 열쇠고리 실리콘 2원 책가방 열쇠고리 도매 만화 열쇠고리",
                 "열쇠고리 산리오 인형 책가방 장식 자동차 열쇠고리 정교함"):
         assert not book.lookup_all(raw), raw
+
+
+def test_a_power_prefix_is_not_added_without_evidence_in_the_text():
+    """표가 붙인 '전기'·'전동' 을 원문 근거 없이 따라가지 않는다.
+
+    ⚠ 실측 사고다. `_PREFIXES` 를 **양방향**으로 쓰면 '프라이팬' 에 '전기' 를
+      붙여 표의 '전기프라이팬' 에 맞춘다. 그러면 무쇠 프라이팬(식품용 기구·
+      식약처)과 1회용 면도기가 전기제품이 된다. GPT 전수 측정에서 비대상
+      2건이 정확히 그렇게 붙었다:
+
+        19  IH 인덕션 후라이팬 무쇠팬 …  → 전기프라이팬  (법령 포함 확장)
+        227 면도기 1회용면도기 …        → 전기면도기    (prefix_variants)
+
+    ⚠ 두 경로가 다르다. 227번은 `prefix_variants` 가 만든 **가짜 정확 일치**
+      이고, `how="exact"` 라 부속어·본체 검사가 전부 꺼져 다른 가드가 받아
+      주지 못한다. 그래서 두 곳 모두에 걸었다.
+
+    ⚠ **떼는 방향은 조건 없이 유지한다.** 셀러가 '전기' 라 적은 것을 우리가
+      의심할 이유가 없다.
+
+    ⚠ 원문을 함께 보는 것은 막는 판단을 **완화하는** 쪽이다 - LLM 이 요약에서
+      '전기' 를 떨어뜨렸을 때 정답을 죽이지 않기 위해서다. [Q] 가 금지한
+      것은 매처 본체 검사에 원본을 겹쳐 넣는 것이고 여기는 게이트 조건이다.
+    """
+    from sourcing_guard.item_grades import (
+        _POWER_MARKERS,
+        ItemGradeBook,
+        has_power_marker,
+        prefix_variants,
+    )
+
+    book = ItemGradeBook()
+
+    # 막혀야 하는 것 - 동력 표지가 없다.
+    assert not book.lookup_all(
+        "면도기", raw_text="[ABC0749] 면도기 1회용면도기 면도기일회용 개별OPP포장"
+    )
+    assert not book.lookup_all(
+        "IH 인덕션 후라이팬 무쇠팬 궁중팬",
+        raw_text="IH 인덕션 후라이팬 무쇠팬 궁중팬 볶음팬 프라이팬",
+    )
+    # 법령 경로도 같다.
+    assert not book.lookup_legal_name("프라이팬", haystack="IH 인덕션 무쇠팬")
+    assert not book.lookup_legal_name("면도기", haystack="1회용면도기 개별포장")
+
+    # 표지어가 있으면 살아 있다.
+    for name, want in (
+        ("USB 선풍기 미니", "선풍기"),
+        ("충전식 랜턴", "충전식 휴대전등"),
+        ("전동 칫솔", "전동칫솔"),
+        ("220V 전기포트", "전기주전자"),
+    ):
+        got = [g.item for g in book.lookup_all(name, raw_text=name)]
+        assert want in got, (name, got)
+
+    # 떼는 방향은 조건 없이 유지된다.
+    assert [g.item for g in book.lookup_all("전기토스터")] == ["전기토스터"]
+
+    # ⚠ **요약이 '전기' 를 잃어도 원문이 살린다.** 이 두 줄이 가드의 핵심이다.
+    assert [
+        g.item for g in book.lookup_all("주전자", raw_text="스탠리 무선 전기 주전자 1.7L")
+    ] == ["전기주전자"]
+    assert not book.lookup_all("주전자", raw_text="전통 무쇠 주전자 찻주전자 선물세트")
+
+    # haystack 을 안 주면 예전대로 무조건 붙인다 - 표 어휘 정렬 자리를 안 깬다.
+    assert "전기면도기" in prefix_variants("면도기")
+    assert "전기면도기" not in prefix_variants("면도기", haystack="1회용 면도기")
+
+    # 표지어 목록은 실측에서 뽑았다. 한 글자('W'·'V')는 넣지 않았다.
+    assert "W" not in _POWER_MARKERS and "V" not in _POWER_MARKERS
+    assert has_power_marker("BLDC 써큘레이터")
+    assert not has_power_marker("무쇠 프라이팬 궁중팬")
