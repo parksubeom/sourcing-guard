@@ -388,32 +388,55 @@ def test_the_proposal_numbers_match_the_code():
     single = {r["name"]: grades_for(r, _kats, _rules) for r in raw}
     s_got = _tally(single, scope=scope)
 
+    # 검수 분리 값을 **먼저** 뽑는다 - 기획서가 두 숫자를 함께 적으므로 위쪽
+    # 대조에서 둘 다 필요하다.
+    from audit_tally import load_reviewed_pairs as _load_reviewed
+
+    _reviewed_early = _load_reviewed(raw_path)
+    _s_rev_early = _tally(single, scope=scope, reviewed=_reviewed_early)
+    s_rev_ok = _s_rev_early["ok"]
+    s_rev_unreviewed = _s_rev_early["unreviewed"]
+
     assert s_got["denominator"] == 135, s_got
-    # ⚠ 113 → 114 (2026-09-08, 4-e `e80f205` 다음 커밋). `category=out_of_scope`
-    #   가 등급표 조회를 막던 게이트를 열었고, `[CU] 핏미업 러닝벨트` 가
-    #   `의류 이외의 섬유제품` 으로 붙었다. **그 쌍은 검수 파일에 없다** -
-    #   아래 미검수 15 로 잡힌다. 즉 상한만 올랐고 검수된 정답은 99 그대로다.
-    assert s_got["ok"] == 114, s_got
+    assert s_got["ok"] == 113, s_got
     assert s_got["vague"] == 2, s_got
     assert s_got["wrong"] == 1, s_got
     # ⚠ **비대상 0 이 우리 제품의 가장 센 주장이다.** 이 값이 0 이 아니면
     #   정답률이 얼마든 발표에 쓸 수 없다.
     assert s_got["off_target"] == 0, s_got
+    # ⚠⚠ **애매 부착도 잠근다 (2026-09-09).** 분모 밖이라 정답률에 안 보이지만
+    #   화면에는 뜬다 - 애매로 판정한 줄에 등급이 붙으면 셀러는 그것을 답으로
+    #   읽는다. 4-e 를 넣었을 때 이 값이 1 → 2 로 움직였고 **통과 기준에 없어
+    #   보고에서 빠졌다.** 기준을 네 개만 세면 다섯째가 조용히 움직인다.
+    assert s_got["on_vague"] == 1, s_got
 
     s_pct = round(s_got["ok"] / s_got["denominator"] * 100, 1)
 
-    # 사이드카도 **재계산으로** 대조한다.
+    # 사이드카도 **재계산으로** 대조한다. 두 숫자를 다 담아야 한다.
     #
     # ⚠ 전에는 `"정답 113 (83.7%)" in side` 라는 하드코딩 문자열이었다. 그러면
     #   코드가 바뀌어 재생값이 움직여도 사이드카가 낡은 채로 통과한다 - 그리고
     #   낡은 사이드카를 다음 사람이 발표 숫자로 옮긴다. 실제로 `단건경로_gpt.md`
     #   가 94/19 로 낡아 있었고 재생값은 95/18 이었다.
-    assert _flat(f"정답 {s_got['ok']} ({s_pct}%)") in _flat(
-        side.read_text(encoding="utf-8")
-    ), (s_got, s_pct)
 
-    assert "단건 경로 · 대상 135 중" in doc
-    assert _flat(f"정답 {s_got['ok']}건 ({s_pct}%)") in _flat(doc), (s_got, s_pct)
+    # ── 기획서는 **두 숫자를 함께** 적는다 ──────────────────────────
+    #
+    # ⚠ 83.7% 도 미검수 14 를 품은 상한이었다. GPT 를 재면서 우리 숫자에도 같은
+    #   기준을 걸기로 했으므로(커밋 `9a49ff2`) 기획서 형식도 그래야 한다.
+    #   한 숫자만 적으면 검수 전 값을 검수된 값처럼 쓰게 된다.
+    #
+    # ⚠ 두 값 모두 **재계산으로** 대조한다. 문서에 손으로 적힌 숫자를 믿지 않는다.
+    assert "단건 경로 · 상품명만 · 대상 135 중" in doc
+    r_pct_doc = round(s_rev_ok / 135 * 100, 1)
+    assert _flat(f"검수 완료 정답 {s_rev_ok}건 ({r_pct_doc}%)") in _flat(doc), s_rev_ok
+    assert _flat(f"미검수 포함 상한 {s_got['ok']}건 ({s_pct}%)") in _flat(doc), (
+        s_got, s_pct
+    )
+    assert _flat(f"미검수 {s_rev_unreviewed}건 판정 대기") in _flat(doc), (
+        s_rev_unreviewed
+    )
+    # 애매 부착도 문서에 있어야 한다 (기준 ⑤). 분모 밖이라고 빼지 않는다.
+    assert _flat(f"애매 47건 → {s_got['on_vague']}건 부착") in _flat(doc), s_got
     assert '화면에는 "비대상입니다"를 출력하지 않습니다' in doc
 
     # ── 미검수 분리를 **발표 숫자에도** 건다 ──────────────────────────
@@ -426,8 +449,8 @@ def test_the_proposal_numbers_match_the_code():
     #   그래서 같은 기준을 Claude 쪽에도 건다:
     #
     #       정답(검수된 쌍만)  99 (73.3%)
-    #       미검수             15
-    #       상한               114 (84.4%)
+    #       미검수             14
+    #       상한               113 (83.7%)
     #
     # ⚠ **이 검사는 미검수 14 를 잠근다.** 판정이 들어와 0 이 되면 여기서
     #   깨지고, 그때 숫자를 "검수 완료" 라벨로 갱신한다. 수트 전체를 빨갛게
@@ -438,11 +461,51 @@ def test_the_proposal_numbers_match_the_code():
     reviewed = load_reviewed_pairs(raw_path)
     s_rev = _tally(single, scope=scope, reviewed=reviewed)
 
-    assert s_rev["ok_upper"] == 114, s_rev
-    assert s_rev["ok"] == 99, f"검수된 정답은 움직이지 않았다: {s_rev}"
-    assert s_rev["unreviewed"] == 15, s_rev
+    assert s_rev["ok_upper"] == 113, s_rev
+    assert s_rev["ok"] == 99, f"검수된 정답: {s_rev}"
+    assert s_rev["unreviewed"] == 14, s_rev
     # 비대상 0 은 검수와 무관하게 유지돼야 한다.
     assert s_rev["off_target"] == 0, s_rev
+
+    # ── 다섯 기준을 **기준선 표 하나로** 잠근다 ────────────────────
+    #
+    # ⚠ 2026-09-09 에 이 검사가 생긴 이유: 4-e 를 넣었을 때 `on_vague` 가
+    #   1 → 2 로 움직였고 통과 기준에 없어 보고에서 빠졌다. 항목을 하나씩
+    #   세면 빠뜨린다. `audit_tally.BASELINE` 이 한 곳이고 스크립트 출력도
+    #   같은 표를 본다.
+    from audit_tally import BASELINE, BASELINE_ON_VAGUE, compare_baseline
+
+    # 사이드카가 **두 숫자를 다 담고** 있고 그 값이 재계산과 같아야 한다.
+    side_text = _flat(side.read_text(encoding="utf-8"))
+    r_pct = round(s_rev["ok"] / s_rev["denominator"] * 100, 1)
+    assert _flat(f"{s_rev['ok']} ({r_pct}%)") in side_text, (s_rev, r_pct)
+    assert _flat(f"{s_rev['ok_upper']} ({s_pct}%)") in side_text, (s_rev, s_pct)
+    # 애매 부착 수도 사이드카에 적혀 있어야 한다 (기준 ⑤).
+    assert f"{s_got['on_vague']}건 부착" in side.read_text(encoding="utf-8")
+
+    assert compare_baseline(s_rev, "claude") == [], (
+        f"기준선과 다르다 - 보고에 다섯을 다 적을 것: {s_rev}"
+    )
+
+    # GPT 쪽도 같은 표로 잠근다. 발표 숫자는 아니지만 추출기를 바꿔 재는
+    # 측정의 기준선이고, 낡으면 다음 사람이 낡은 값을 옮긴다.
+    gpt_raw = _json.loads(
+        (root / "tests" / "fixtures" / "단건경로_gpt.json").read_text(encoding="utf-8")
+    )
+    gpt = {r["name"]: grades_for(r, _kats, _rules) for r in gpt_raw
+           if scope.get(r["name"])}
+    g_rev = _tally(gpt, scope=scope, reviewed=reviewed)
+    assert compare_baseline(g_rev, "gpt") == [], g_rev
+
+    # 애매 부착이 **어느 줄인지**까지 잠근다 (기준 ⑤). 수만 같고 줄이 바뀌면
+    # 그것도 알아야 한다.
+    for which, results in (("claude", single), ("gpt", gpt)):
+        attached = tuple(sorted(
+            n for n, v in results.items() if v and scope.get(n) == "애매"
+        ))
+        assert attached == tuple(sorted(BASELINE_ON_VAGUE[which])), (
+            which, attached
+        )
 
     # ⚠ 기획서 문구는 **판정이 들어온 뒤** 고친다 - 그때 "검수 완료" 라벨을
     #   붙인다. 지금 "83.7% 는 상한이다" 를 적으면 검수가 끝난 뒤 또 고쳐야
