@@ -171,3 +171,37 @@ def test_llm_and_regex_numbers_are_merged_without_duplicates(_live):
         facts = extract("완구 KC 인증번호 CB061R2170-3018 및 CB067R317-5002")
 
     assert facts.kc_numbers == ["CB061R2170-3018", "CB067R317-5002"]
+
+
+def test_the_gpt_path_converts_image_blocks_to_openai_shape():
+    """이미지 블록이 OpenAI 형식으로 옮겨진다.
+
+    ⚠ 두 벤더의 이미지 형식이 다르다 (CLAUDE.md R7):
+        Anthropic  {"type": "image", "source": {"type": "base64", ...}}
+        OpenAI     {"type": "image_url", "image_url": {"url": "data:..."}}
+      변환을 빠뜨리면 GPT 경로에서 kc_numbers_from_image 가 통째로 죽는다.
+
+    ⚠ 실제 GPT 호출로도 확인했다 (R7 '이미지 입력' 절에 입력과 답을 적었다).
+      여기서는 네트워크 없이 변환 모양만 잠근다.
+    """
+    import sourcing_guard.extractor as ex
+
+    user_content = [
+        {"type": "image",
+         "source": {"type": "base64", "media_type": "image/png", "data": "QUJD"}},
+        {"type": "text", "text": "본문"},
+    ]
+    got = ex._openai_content(user_content)
+
+    assert got[0] == {
+        "type": "image_url",
+        "image_url": {"url": "data:image/png;base64,QUJD"},
+    }
+    assert got[1] == {"type": "text", "text": "본문"}
+
+    # jpeg 도 media_type 을 그대로 따라간다.
+    jpeg = ex._openai_content([
+        {"type": "image",
+         "source": {"type": "base64", "media_type": "image/jpeg", "data": "WFla"}},
+    ])
+    assert jpeg[0]["image_url"]["url"].startswith("data:image/jpeg;base64,")

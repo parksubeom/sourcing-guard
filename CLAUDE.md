@@ -136,11 +136,32 @@ R3(모르면 UNKNOWN)은 **스캔**에 적용된다. **리콜 알림**에는 적
 
 #### 설정
 
-    EXTRACTOR_ORDER=gpt,claude    순서대로 시도. 지금은 Claude 잔액 0 이라 gpt 우선
+    EXTRACTOR_ORDER=claude,gpt    **코드 기본값.** 순서대로 시도 → 둘 다 죽으면 휴리스틱
     GPT_MODEL=gpt-5.4-mini        /v1/models 목록에서 고른 실제 이름 (R5)
     EXTRACTOR_MODEL=claude-sonnet-5
 
-Claude 를 충전하면 `EXTRACTOR_ORDER=claude,gpt` 로 되돌린다. 순서를 그대로 두면 매 스캔이 실패가 확정인 왕복을 한 번 더 한다.
+**기본값은 `claude,gpt` 다.** Claude 잔액이 0 인 동안만 fly secret 으로 `EXTRACTOR_ORDER=gpt,claude` 를 걸어 둔다 — 그렇지 않으면 매 스캔이 실패가 확정인 왕복을 한 번 더 한다. 충전하면 그 secret 을 **지운다**(기본값으로 돌아간다).
+
+⚠ 장애 우회를 코드 기본값으로 굳히지 않는다. 굳히면 충전 후 env 를 안 바꿨을 때 GPT 가 영구 1순위가 되고, **발표 숫자의 기준 추출기가 조용히 바뀐다.**
+
+#### 이미지 입력 — **GPT 경로 검증했다** (2026-09-08)
+
+`kc_numbers_from_image` 경로가 이미지를 LLM 에 넘긴다. Anthropic 형식(`{"type":"image","source":{...}}`)을 OpenAI 형식(`{"type":"image_url","image_url":{"url":"data:..."}}`)으로 옮기는 것이 `_openai_content` 다.
+
+**실제로 쳐 본 입력**: 760×300 PNG(base64 31,340자)에 상세페이지에 흔한 모양으로 다섯 줄을 그렸다 — "블록 완구 세트 100pcs" / "안전확인신고번호 : CB061R2170-3018" / "품명 : 합성수지제 조립블록" / "사용연령 : 3세 이상" / "제조국 : 중국". 텍스트는 `(이미지만 있는 상세페이지)` 만 넣었다.
+
+받은 답:
+
+    kc_numbers_from_image  ["CB061R2170-3018"]   ← 이미지에서 읽었다
+    kc_numbers             []                     ← 텍스트에는 없으므로 비었다
+    product_name           "블록 완구 세트 100pcs"
+    target_age             "3세 이상"
+    legal_item_name        "완구"
+    category               children_toy
+
+두 필드가 **올바르게 분리**됐다. 이미지에서 읽은 번호를 `kc_numbers` 에 섞으면 0/O 오독이 정상 인증을 "미조회" 로 만든다 — extractor 주석이 적어 둔 그 이유다.
+
+⚠ 검증한 것은 **한 장·PNG·한국어 표 모양** 하나다. 여러 장·JPEG·저해상도 스캔은 안 쳐 봤다.
 
 ---
 
