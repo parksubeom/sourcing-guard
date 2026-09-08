@@ -45,9 +45,32 @@ _OPEN_API = _CFG.get("open_api", {})
 _PUBLIC = _CFG.get("public_search", {})
 _URLS = _CFG.get("public_urls", {})
 
-# 신형 R-{C|R|I}-{식별부호}-{모델} 과 구형 KCC- 를 둘 다 받는다. 구형 번호도
-# 현재 DB 에 실재하고 조회된다 (실측: KCC-REM-MJT-MJT, 2012년 접수건).
-RF_NUMBER_RE = re.compile(r"(?i)\b(?:R-[CRI]-[A-Za-z0-9_]+-[A-Za-z0-9._-]+|KCC-[A-Za-z0-9-]+)\b")
+# 신형 R-{C|R|I}-{식별부호}-{모델} · 구형 KCC- · 그 사이 MSIP- 를 받는다.
+# 구형 번호도 현재 DB 에 실재하고 조회된다 (실측: KCC-REM-MJT-MJT, 2012년 접수건).
+#
+# ⚠ **MSIP- 를 2026-09-08 에 추가했다.** 도매꾹 실상품 표본(대상 109건)에서
+#   `certType: 방송통신기자재` 인 번호 8개 중 둘이 이 표기였고, 정규식이 못
+#   잡아 `is_rf_number` 도 `is_cert_number` 도 False 였다 - **두 축 어디에도
+#   안 걸리고 그냥 사라졌다**(잘못된 빨간불이 아니라 놓침이다).
+#
+#   원문 확인 (R5) — emsit 정부 Open API 에 직접 물었다. 셋 다 resultCode=0000:
+#
+#       MSIP-CMI-YOU-SOUND-T  특정소출력 무선기기 · (주)이모텔리 · SOUND-T
+#       MSIP-CMI-DVT-Rainbow  특정소출력 무선기기 · 데이비드테크(주) · Rainbow
+#       R-R-nDC-A205          가습기 · 주식회사 디씨네트워크 · A205   ← 대조군
+#
+#   즉 내 기억이 아니라 **등록기관이 갖고 있다고 답한 것**이다.
+#
+# ⚠ 코드 목록을 열거하지 않고 `KCC-` 와 **같은 느슨함**으로 둔다. 실측에서 본
+#   것은 `MSIP-CMI-` 하나이고, `MSIP-REM-`·`MSIP-CRM-` 같은 같은 시기 표기를
+#   내가 열거하면 그것은 지어내는 것이다 (R5). 접두어만 보고 뒤는 열어 둔다 -
+#   틀려도 emsit 이 0001(미조회)로 답하고 우리는 "부재가 정상일 수 있다" 로
+#   말하므로, 못 잡는 쪽이 더 비싸다.
+RF_NUMBER_RE = re.compile(
+    r"(?i)\b(?:R-[CRI]-[A-Za-z0-9_]+-[A-Za-z0-9._-]+"
+    r"|KCC-[A-Za-z0-9-]+"
+    r"|MSIP-[A-Za-z0-9-]+)\b"
+)
 
 # 요청 파라미터 누락. 우리 잘못이라 셀러에게 "다시 시도" 를 권하면 안 된다.
 OPERATOR_FAULT_CODES = {"0098"}
