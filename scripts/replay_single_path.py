@@ -56,7 +56,9 @@ def grades_for(row: dict, kats, rules: RuleBook) -> list[str]:
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--src", nargs="+", required=True, help="측정 원자료 json")
+    ap.add_argument("--src", nargs="+",
+                    default=["tests/fixtures/단건경로_claude_235.json"],
+                    help="측정 원자료 json (기본: 리포의 Claude 235건)")
     ap.add_argument("--out", default="")
     args = ap.parse_args()
 
