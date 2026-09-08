@@ -36,10 +36,18 @@ def load_scope(path: Path | None = None) -> dict[str, str]:
     return out
 
 
-def load_audit(path: Path | None = None) -> tuple[dict[str, set[str]], dict[str, set[str]]]:
-    """(상품명 → 오답 품목 집합), (상품명 → 애매 품목 집합)."""
-    wrong: dict[str, set[str]] = {}
-    vague: dict[str, set[str]] = {}
+def _sections(path: Path | None = None) -> dict[str, dict[str, set[str]]]:
+    """검수 파일을 절별로 읽는다. 절 이름 → {상품명: 품목 집합}.
+
+    ⚠ `[검수했고 정답]` 절이 **2026-09-08 부터 기계가 읽는 절**이다. 전에는
+      주석뿐이어서 `load_reviewed_pairs` 가 읽지 못했고, 91번(에어핏 러닝
+      조끼 백팩)은 그 절에 적혀 있는데도 "미검수" 로 나왔다 - 사람이 검수한
+      기록이 코드에 닿지 않은 것이다.
+
+    ⚠ `[고쳐짐...]` 절은 계속 주석이다. 그 절은 "지금은 안 붙는다" 를 적은
+      것이므로 붙은 쌍이 없다.
+    """
+    out: dict[str, dict[str, set[str]]] = {"wrong": {}, "vague": {}, "correct": {}}
     section = None
     for line in (path or AUDIT_FILE).read_text(encoding="utf-8").splitlines():
         if line.startswith("#"):
@@ -47,15 +55,33 @@ def load_audit(path: Path | None = None) -> tuple[dict[str, set[str]], dict[str,
                 section = "wrong"
             elif "[애매]" in line:
                 section = "vague"
-            elif "[검수했고 정답]" in line or "[고쳐짐" in line:
+            elif "[검수했고 정답]" in line:
+                section = "correct"
+            elif "[고쳐짐" in line:
                 section = None
             continue
         if not line.strip() or section is None:
             continue
         cells = line.split("\t")
-        bucket = wrong if section == "wrong" else vague
-        bucket.setdefault(cells[0], set()).add(cells[1].strip() if len(cells) > 1 else "")
-    return wrong, vague
+        out[section].setdefault(cells[0], set()).add(
+            cells[1].strip() if len(cells) > 1 else ""
+        )
+    return out
+
+
+def load_audit(path: Path | None = None) -> tuple[dict[str, set[str]], dict[str, set[str]]]:
+    """(상품명 → 오답 품목 집합), (상품명 → 애매 품목 집합).
+
+    ⚠ 반환은 둘로 유지한다. `[검수했고 정답]` 절은 `load_correct()` 로 따로
+      읽는다 - 여기에 세 번째를 더하면 모든 호출부가 깨진다.
+    """
+    sec = _sections(path)
+    return sec["wrong"], sec["vague"]
+
+
+def load_correct(path: Path | None = None) -> dict[str, set[str]]:
+    """`[검수했고 정답]` 절. 상품명 → 사람이 정답이라 판정한 품목 집합."""
+    return _sections(path)["correct"]
 
 
 def load_reviewed_pairs(*sources: str | Path) -> set[tuple[str, str]]:
@@ -83,8 +109,9 @@ def load_reviewed_pairs(*sources: str | Path) -> set[tuple[str, str]]:
             for key in ("single", "batch"):
                 for item in r.get(key) or ():
                     pairs.add((r["name"], item))
-    wrong, vague = load_audit()
-    for bucket in (wrong, vague):
+    # 오답·애매·[검수했고 정답] 세 절 모두 사람이 본 것이다.
+    sec = _sections()
+    for bucket in (sec["wrong"], sec["vague"], sec["correct"]):
         for name, items in bucket.items():
             for item in items:
                 if item:
@@ -158,3 +185,46 @@ def tally(
         "on_vague": len([n for n in results if results[n] and scope.get(n) == "애매"]),
         "matched_all": len([n for n in results if results[n]]),
     }
+
+# 미검수 목록에 붙이는 **참고** 근거. 품목명 기준이다.
+#
+# ⚠ 참고일 뿐 판정이 아니다. 사람이 검수해서 `[검수했고 정답]` 절이나
+#   오답·애매 절로 옮겨야 reviewed 에 들어간다.
+#
+# ⚠ 품목명 기준으로 둔 이유: 측정마다 상품명이 달라지므로 상품명 매핑은
+#   금방 낡는다. "이 품목을 붙이기로 한 근거" 는 커밋에 남아 있고 품목이
+#   바뀌지 않는 한 유효하다.
+REVIEW_NOTES: dict[str, str] = {
+    "의류": (
+        "3ffc0bf · 안전기준준수 부속서 1 [표 1] 중의류 \"셔츠, 타올, 장갑 … "
+        "헤어밴드, 가발, 귀마개, 토시 등\" · 외의류 \"모자, 숄, 머플러, "
+        "스카프, 앞치마\". 만 14세 이상이라 어린이 표지어가 있으면 닫힌다"
+    ),
+    "의류 이외의 섬유제품": (
+        "150496f(모기장) · 3a0fac1(가방) · 안전기준준수 부속서 1 [표 1] "
+        "기타 제품류 \"가방, 쿠션류, 방석류, 모기장, 커튼, 수의, 덮개 등\". "
+        "3.6 이 \"직접 착용하지 않는 제품\" 이라 적어 이 품목으로 보냈다"
+    ),
+    "공기주입물놀이기구": (
+        "안전인증 부속서 7 서문에 연령 범위가 없다. 성인용 표기가 있어도 대상"
+    ),
+    "완구": "미검수 - 이번 측정에서 처음 붙었다",
+    "LED마스크": "미검수 - 이번 측정에서 처음 붙었다",
+    "커피메이커": "미검수 - 이번 측정에서 처음 붙었다",
+    "전기프라이팬": (
+        "미검수 · **의심** - 상위어 승격으로 보인다. legal='프라이팬' 이 "
+        "'전기프라이팬' 에 포함돼 확장됐다. 21·23번 냄비와 같은 패턴"
+    ),
+    "전기면도기": (
+        "미검수 · **의심** - 상위어 승격으로 보인다. '면도기' 가 "
+        "'전기면도기' 에 포함돼 확장됐다"
+    ),
+}
+
+
+def review_note(items: list[str] | set[str]) -> str:
+    """미검수 쌍에 붙일 참고 근거. 없으면 빈 문자열."""
+    for item in items:
+        if item in REVIEW_NOTES:
+            return REVIEW_NOTES[item]
+    return ""
