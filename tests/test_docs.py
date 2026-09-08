@@ -338,9 +338,9 @@ def test_the_proposal_numbers_match_the_code():
     assert len(target) == 135, len(target)
     assert f"안전관리대상   {len(target)}건" in doc
 
-    import sys as _sys
+    import sys
 
-    _sys.path.insert(0, "scripts")
+    sys.path.insert(0, "scripts")
     from audit_tally import tally as _tally
 
     results = {n: sorted({g.item for g in book.lookup_all(n)}) for n in names}
@@ -357,16 +357,49 @@ def test_the_proposal_numbers_match_the_code():
         doc
     ), (b_ok, b_pct)
 
-    # 단건 경로 - 발표 숫자다. 문서에 적힌 값이 원자료와 맞는지 본다.
-    single = {
-        r["name"]: r["single"]
-        for r in _json.loads(
-            (root / "tests" / "fixtures" / "단건경로_136건.json").read_text(encoding="utf-8")
-        )
-    }
-    assert single, "단건 원자료가 비었다"
+    # 단건 경로 - **발표 숫자다.** 문서의 문자열만 보지 않고 **다시 계산한다.**
+    #
+    # ⚠ 2026-09-08 까지 이 자리는 원자료를 열기만 하고 실제로는 문서에
+    #   "정답 113건 (83.7%)" 문자열이 있는지만 봤다. 그러면 코드가 바뀌어
+    #   숫자가 움직여도 문서를 안 고치면 검사가 통과한다 - 이 저장소의
+    #   반복 결함(문서가 코드보다 앞서 나감)을 못 잡는 가드였다.
+    #
+    #   게다가 열던 파일이 `단건경로_136건.json`(68.4% 시절, 12ab9ce)이라
+    #   지금 원자료도 아니었다.
+    #
+    # ⚠ LLM 호출은 없다. 저장된 추출 결과(product_name·category·legal)를
+    #   ProductFacts 로 되돌려 verify() 만 다시 돈다.
+    from unittest.mock import MagicMock
+
+    sys.path.insert(0, "scripts")
+    from replay_single_path import grades_for
+    from sourcing_guard.verifier import RuleBook as _RuleBook
+
+    raw_path = root / "tests" / "fixtures" / "단건경로_claude_235.json"
+    raw = _json.loads(raw_path.read_text(encoding="utf-8"))
+    assert len(raw) == 235, len(raw)
+    # 재생 조건은 사이드카 md 에 적혀 있다 - JSON 은 주석을 담을 수 없다.
+    side = raw_path.with_suffix(".md")
+    assert side.exists(), "재생 조건 사이드카가 없다"
+    assert "정답 113 (83.7%)" in side.read_text(encoding="utf-8")
+
+    _kats = MagicMock()
+    _kats.lookup_certification_cached.return_value = MagicMock(record=None)
+    _rules = _RuleBook()
+    single = {r["name"]: grades_for(r, _kats, _rules) for r in raw}
+    s_got = _tally(single, scope=scope)
+
+    assert s_got["denominator"] == 135, s_got
+    assert s_got["ok"] == 113, s_got
+    assert s_got["vague"] == 2, s_got
+    assert s_got["wrong"] == 1, s_got
+    # ⚠ **비대상 0 이 우리 제품의 가장 센 주장이다.** 이 값이 0 이 아니면
+    #   정답률이 얼마든 발표에 쓸 수 없다.
+    assert s_got["off_target"] == 0, s_got
+
+    s_pct = round(s_got["ok"] / s_got["denominator"] * 100, 1)
     assert "단건 경로 · 대상 135 중" in doc
-    assert _flat("정답 113건 (83.7%)") in _flat(doc)
+    assert _flat(f"정답 {s_got['ok']}건 ({s_pct}%)") in _flat(doc), (s_got, s_pct)
     assert '화면에는 "비대상입니다"를 출력하지 않습니다' in doc
 
     # ⚠ 오부착률은 **실측한 값만** 적는다. 2026-09-07 까지 이 자리에 40.9% 가

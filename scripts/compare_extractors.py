@@ -47,7 +47,10 @@ from audit_tally import (  # noqa: E402
 from replay_single_path import grades_for  # noqa: E402
 from sourcing_guard.verifier import RuleBook  # noqa: E402
 
-_CLAUDE_SOURCES = ("/tmp/kid/single_full.json", "/tmp/kid/single_out.json")
+# ⚠ 리포 안의 파일이어야 한다. 2026-09-08 까지 /tmp 를 가리키고 있었고,
+#   그러면 발표 숫자 83.7% 와 "검수된 쌍 149개" 둘 다 커밋되지 않은 파일에
+#   걸린다. 재생 조건은 사이드카 md 에 적었다.
+_CLAUDE_SOURCES = ("tests/fixtures/단건경로_claude_235.json",)
 
 
 def main() -> None:
