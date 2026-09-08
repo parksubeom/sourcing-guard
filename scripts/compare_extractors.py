@@ -127,6 +127,23 @@ def main() -> None:
     got = tally(results, scope=scope, audit=(wrong, vague), reviewed=reviewed)
 
     # 미검수 목록을 tsv 로 남긴다. 사람이 검수한다.
+    #
+    # ⚠ **미검수의 원인이 둘이다.** 가르지 않으면 검수가 느려진다:
+    #
+    #   (1) 규칙이 바뀌어 생긴 쌍
+    #       원자료는 그 시점 코드로 얻은 것이다. 그 뒤 별칭·가드가 늘면
+    #       같은 추출 결과에서도 새 쌍이 나온다. 부속서 1(모기장·가방·장갑·
+    #       토시·타월)이 그렇게 들어왔고, 그때 눈 검수해서 커밋에 적었다.
+    #   (2) 추출이 달라져 생긴 쌍
+    #       추출기를 바꾼 효과다. 이쪽이 이 측정에서 새로 보는 것이다.
+    #
+    #   Claude 원자료를 **현재 코드로 재생**해 같은 쌍이 나오면 (1) 이다.
+    #
+    # ⚠ (1) 이라고 해서 자동으로 정답이 되는 것은 아니다. 판정은 사람이 한다 -
+    #   이 스크립트는 원인만 가른다.
+    claude_now = {
+        r["name"]: grades_for(r, kats, rules) for r in claude.values()
+    }
     unrev = [
         r for r in out
         if verdict(r["name"], r["single"], wrong, vague, reviewed) == "unreviewed"
@@ -143,7 +160,13 @@ def main() -> None:
         "#",
         "# `**품목**` 이 미검수 쌍이다. 갈림이면 일부만 새 후보일 수 있다.",
         "#",
-        "# 상품명\t붙은 품목(GPT)\tclaude 가 붙였던 것\t분류\t판정(사람이 적는다)",
+        "# `원인` 칸:",
+        "#   규칙변경  Claude 원자료를 현재 코드로 재생해도 같은 쌍이 나온다.",
+        "#             별칭·가드가 늘어 생긴 것이고 추출기와 무관하다.",
+        "#   추출차이  재생에서는 안 나온다. 추출기를 바꾼 효과다.",
+        "#   ⚠ 규칙변경이라고 자동으로 정답이 되는 것은 아니다. 판정은 사람이 한다.",
+        "#",
+        "# 상품명\t붙은 품목(GPT)\tclaude 저장값\tclaude 재생(현재 코드)\t원인\t분류\t판정(사람이 적는다)",
     ]
     for r in unrev:
         # 어느 쌍이 미검수인지 표시한다 - 갈림에서 일부만 새 후보일 수 있다.
@@ -151,9 +174,12 @@ def main() -> None:
             item if (r["name"], item) in reviewed else f"**{item}**"
             for item in r["single"]
         )
+        now = claude_now.get(r["name"], [])
+        cause = "규칙변경" if set(now) == set(r["single"]) else "추출차이"
         lines.append(
             f"{r['name']}\t{marked}\t"
-            f"{' / '.join(r['single_claude']) or '(없음)'}\t{scope.get(r['name'])}\t"
+            f"{' / '.join(r['single_claude']) or '(없음)'}\t"
+            f"{' / '.join(now) or '(없음)'}\t{cause}\t{scope.get(r['name'])}\t"
         )
     Path(args.unreviewed_out).write_text("\n".join(lines) + "\n", encoding="utf-8")
 
