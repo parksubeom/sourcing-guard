@@ -28,16 +28,23 @@ class ExtractionStats:
         self.llm = 0
         self.heuristic = 0
         self.llm_failures = 0
+        # 벤더별로 센다. 발표 숫자가 어느 추출기 기준인지 말할 수 있어야 한다.
+        self.by_vendor: dict[str, int] = {}
+        self.failures_by_vendor: dict[str, int] = {}
 
     def snapshot(self) -> dict:
         return {
             "llm": self.llm,
             "heuristic": self.heuristic,
             "llm_failures": self.llm_failures,
+            "by_vendor": dict(self.by_vendor),
+            "failures_by_vendor": dict(self.failures_by_vendor),
         }
 
     def reset(self) -> None:
         self.llm = self.heuristic = self.llm_failures = 0
+        self.by_vendor = {}
+        self.failures_by_vendor = {}
 
 
 stats = ExtractionStats()
@@ -229,6 +236,94 @@ def _few_shot_messages() -> list[dict]:
     return out
 
 
+# ── 벤더별 호출 (CLAUDE.md R7: Claude · GPT 두 벌) ─────────────────────
+#
+# 프롬프트·few-shot·후처리는 **공유한다.** 갈라지는 것은 호출 형식뿐이다.
+# 두 벌을 두는 이유는 가용성이고, 답이 서로 달라지길 바라는 것이 아니다 -
+# 프롬프트가 갈라지면 "발표 숫자가 어느 추출기 기준인가" 를 말할 수 없게 된다.
+
+
+def _openai_content(user_content: list[dict]) -> list[dict]:
+    """Anthropic 형식 user_content 를 OpenAI 형식으로 옮긴다.
+
+    이미지 블록만 모양이 다르다.
+        Anthropic  {"type": "image", "source": {"type": "base64", ...}}
+        OpenAI     {"type": "image_url", "image_url": {"url": "data:..."}}
+    """
+    out: list[dict] = []
+    for block in user_content:
+        if block.get("type") == "image":
+            src = block["source"]
+            out.append({
+                "type": "image_url",
+                "image_url": {
+                    "url": f"data:{src['media_type']};base64,{src['data']}"
+                },
+            })
+        else:
+            out.append({"type": "text", "text": block["text"]})
+    return out
+
+
+def _call_claude(user_content: list[dict]) -> str:
+    """Anthropic 으로 추출한다. JSON 문자열을 돌려준다."""
+    from anthropic import Anthropic
+
+    client = Anthropic(api_key=settings.anthropic_api_key)
+    msg = client.messages.create(
+        model=settings.extractor_model,
+        max_tokens=1200,
+        system=[{
+            "type": "text",
+            "text": SYSTEM_PROMPT,
+            # 고정부 전체가 한 캐시 블록이 되어 두 번째 호출부터 90% 싸진다.
+            "cache_control": {"type": "ephemeral"},
+        }],
+        messages=[*_few_shot_messages(), {"role": "user", "content": user_content}],
+    )
+    return "".join(b.text for b in msg.content if b.type == "text").strip()
+
+
+def _call_gpt(user_content: list[dict]) -> str:
+    """OpenAI 로 추출한다. JSON 문자열을 돌려준다.
+
+    ⚠ 호출 모양은 **실제로 쳐 보고** 확인했다 (R5):
+        max_tokens 가 아니라 **max_completion_tokens** 를 받는다
+        response_format={"type": "json_object"} 로 JSON 을 강제한다
+      캐시는 명시하지 않는다 - OpenAI 는 긴 접두를 자동으로 캐시한다.
+    """
+    from openai import OpenAI
+
+    client = OpenAI(api_key=settings.gpt_api_key)
+    messages: list[dict] = [{"role": "system", "content": SYSTEM_PROMPT}]
+    for page, answer in _EXAMPLES:
+        messages.append({"role": "user", "content": page})
+        messages.append({
+            "role": "assistant",
+            "content": json.dumps(answer, ensure_ascii=False),
+        })
+    messages.append({"role": "user", "content": _openai_content(user_content)})
+
+    res = client.chat.completions.create(
+        model=settings.gpt_model,
+        max_completion_tokens=1200,
+        response_format={"type": "json_object"},
+        messages=messages,
+    )
+    return (res.choices[0].message.content or "").strip()
+
+
+_VENDOR_CALLS = {"claude": _call_claude, "gpt": _call_gpt}
+
+
+def _vendor_ready(name: str) -> bool:
+    if name == "claude":
+        return bool(settings.anthropic_api_key)
+    if name == "gpt":
+        return bool(settings.gpt_api_key)
+    return False
+
+
 def extract(
     page_text: str,
     page_url: str | None = None,
@@ -259,12 +354,11 @@ def extract(
     (R3: 못 읽은 것을 안다고 하지 않음).
     """
     has_input = bool(page_text.strip()) or bool(images)
-    if not allow_llm or settings.mock_mode or not settings.anthropic_api_key:
+    usable = [v for v in settings.extractor_order if _vendor_ready(v)]
+    if not allow_llm or settings.mock_mode or not usable:
         stats.heuristic += 1
         # 이미지만 있고 LLM 을 못 쓰면 휴리스틱이 읽을 게 없다.
         return _with_scope_markers(_heuristic_fallback(page_text, page_url), page_text)
-
-    from anthropic import Anthropic
 
     # 페이지 내용(가변)과 이미지를 한 user 메시지로. 시스템 프롬프트와 few-shot
     # (고정부)은 캐시로 표시해 반복 호출에서 입력 비용을 90% 아낀다. 투표 기간
@@ -284,37 +378,41 @@ def extract(
     if not user_content:
         user_content.append({"type": "text", "text": "(빈 입력)"})
 
-    try:
-        client = Anthropic(api_key=settings.anthropic_api_key)
-        msg = client.messages.create(
-            model=settings.extractor_model,
-            max_tokens=1200,
-            system=[{
-                "type": "text",
-                "text": SYSTEM_PROMPT,
-                "cache_control": {"type": "ephemeral"},
-            }],
-            messages=[*_few_shot_messages(), {"role": "user", "content": user_content}],
-        )
-    except Exception as exc:  # noqa: BLE001
-        # 남의 API 장애로 우리 서비스를 죽이지 않는다. 정부 API 에 적용한 원칙과
-        # 같다 - 투표 기간 18일 동안 추출기 하나 때문에 스캔 전체가 500 이 되면
-        # 안 된다.
-        #
-        # 빈 ProductFacts 가 아니라 휴리스틱으로 내린다. 빈 값으로 두면 페이지에
-        # 인증번호가 적혀 있는데도 "표기 없음" 이라고 말하게 된다 - 못 찾은 것과
-        # 찾아보지 않은 것은 다르다 (R3). 휴리스틱은 정규식이라 인증번호·재질은
-        # 그대로 잡는다.
-        _log.warning(
-            "추출기 LLM 호출 실패, 휴리스틱으로 대체합니다: %s: %s",
-            type(exc).__name__, exc,
-        )
+    # 순서대로 시도한다. 하나가 죽어도 다음 벤더가 받고, 둘 다 죽으면
+    # 휴리스틱으로 내린다.
+    #
+    # ⚠ 남의 API 장애로 우리 서비스를 죽이지 않는다. 정부 API 에 적용한 원칙과
+    #   같다 - 투표 기간 18일 동안 추출기 하나 때문에 스캔 전체가 500 이 되면
+    #   안 된다.
+    #
+    # ⚠ 빈 ProductFacts 가 아니라 휴리스틱으로 내린다. 빈 값으로 두면 페이지에
+    #   인증번호가 적혀 있는데도 "표기 없음" 이라고 말하게 된다 - 못 찾은 것과
+    #   찾아보지 않은 것은 다르다 (R3). 휴리스틱은 정규식이라 인증번호·재질은
+    #   그대로 잡는다.
+    text = ""
+    used = ""
+    for vendor in usable:
+        try:
+            text = _VENDOR_CALLS[vendor](user_content)
+        except Exception as exc:  # noqa: BLE001
+            _log.warning(
+                "추출기 %s 호출 실패: %s: %s", vendor, type(exc).__name__, exc,
+            )
+            stats.failures_by_vendor[vendor] = (
+                stats.failures_by_vendor.get(vendor, 0) + 1
+            )
+            continue
+        used = vendor
+        break
+
+    if not used:
         stats.llm_failures += 1
         stats.heuristic += 1
+        _log.warning("추출기 전 벤더 실패, 휴리스틱으로 대체합니다: %s", usable)
         return _with_scope_markers(_heuristic_fallback(page_text, page_url), page_text)
 
     stats.llm += 1
-    text = "".join(b.text for b in msg.content if b.type == "text").strip()
+    stats.by_vendor[used] = stats.by_vendor.get(used, 0) + 1
     text = text.removeprefix("```json").removeprefix("```").removesuffix("```").strip()
 
     try:
