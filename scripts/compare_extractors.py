@@ -38,6 +38,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import sourcing_guard.extractor as ex  # noqa: E402
 from audit_tally import (  # noqa: E402
+    BASELINE_ON_VAGUE,
+    compare_baseline,
     load_audit,
     load_reviewed_pairs,
     load_scope,
@@ -202,7 +204,21 @@ def main() -> None:
     print(f"    오답                {got['wrong']:3}")
     print(f"    미매칭              {got['missed']:3}")
     print(f"\n  비대상 → 부착        {got['off_target']:3}   ← 0 이 아니면 못 간다")
-    print(f"  애매   → 부착        {got['on_vague']:3}")
+    # ⚠ **애매 부착을 조건부로 숨기지 않는다.** 4-e(2026-09-08)에서 이 숫자가
+    #   1 → 2 로 움직였는데 보고에서 빠졌다. 분모 밖이라 정답률에는 안 보이지만
+    #   화면에는 뜬다 - 애매로 판정한 줄에 등급이 붙으면 셀러는 그것을 답으로
+    #   읽는다. `off_target` 과 같은 종류다.
+    print(f"  애매   → 부착        {got['on_vague']:3}   ← 분모 밖이지만 화면에는 뜬다")
+    which = "gpt" if "gpt" in args.label.lower() else "claude"
+    for name in sorted(n for n, v in single.items()
+                       if v and scope.get(n) == "애매"):
+        known = name in BASELINE_ON_VAGUE.get(which, ())
+        print(f"       {'  ' if known else '⚠ 새'} [애매] {name[:44]} → {single[name]}")
+    drift = compare_baseline(got, which)
+    if drift:
+        print(f"\n  ⚠⚠ 기준선({which})과 다르다 - 보고에 다섯을 다 적을 것")
+        for line in drift:
+            print(f"       {line}")
     vendors: dict[str, int] = {}
     for r in out:
         vendors[r["vendor"]] = vendors.get(r["vendor"], 0) + 1

@@ -1,5 +1,5 @@
 {
- "라벨": "4-c·4-d-3·4-d-1·4-d-2 전부 적용 · 로컬 재생",
+ "라벨": "4-e′ 되돌린 뒤 · 로컬 재생",
  "원자료": "tests/fixtures/도매꾹_AB_2026-09-08.json",
  "리콜_as_of": "20260908",
  "조건별": [
@@ -1676,22 +1676,12 @@
     "out_of_scope": 5
    },
    "신호등": {
-    "UNKNOWN": 79,
-    "RED": 3,
+    "UNKNOWN": 80,
+    "RED": 2,
     "AMBER": 25,
     "GREEN": 2
    },
    "RED": [
-    {
-     "no": 48,
-     "name": "차량용 무선 휴대용 핸디 청소기 에어건 2in1",
-     "kinds": [
-      "recall_match",
-      "recall_match",
-      "recall_match",
-      "recall_match"
-     ]
-    },
     {
      "no": 67,
      "name": "그릴 후라이팬 고기 불판 와이드 전기 그릴 48cm 사은품 / 판촉물",
@@ -1993,7 +1983,7 @@
      }
     },
     "48": {
-     "signal": "RED",
+     "signal": "UNKNOWN",
      "items": [
       "진공청소기",
       "물흡입청소기",

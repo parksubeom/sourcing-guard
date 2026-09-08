@@ -186,6 +186,72 @@ def tally(
         "matched_all": len([n for n in results if results[n]]),
     }
 
+#: 재생 기준선. **여기가 한 곳이다** — 스크립트 출력과 `test_docs` 가 같은 값을
+#: 본다. 규칙을 고친 뒤 재생해서 이 표와 다르면 **다섯 중 무엇이 움직였는지**
+#: 보고에 적는다.
+#:
+#: ⚠ 2026-09-09 에 이 표가 생긴 이유: 4-e 를 넣었을 때 통과 기준에 없던
+#:   `on_vague`(애매 부착)가 1 → 2 로 움직였고 **보고에서 빠졌다.** 기준을
+#:   네 개만 세면 다섯째가 조용히 움직인다. 그래서 한 표로 묶고 검사로 잠근다.
+#:
+#: ⚠ `on_vague` 는 **분모 밖이라 정답률에 안 보인다.** 그러나 화면에는 보인다 -
+#:   애매로 판정한 줄에 등급이 붙으면 셀러는 그것을 답으로 읽는다. `off_target`
+#:   과 같은 종류다.
+#:
+#: 재생 명령 (LLM 0회):
+#:     PYTHONPATH=. python scripts/replay_single_path.py
+#:     PYTHONPATH=. python scripts/replay_single_path.py \
+#:       --src tests/fixtures/단건경로_gpt.json
+BASELINE: dict[str, dict[str, int]] = {
+    # Claude · 단건 · 상품명만 · 분모 대상 135 · 커밋 5ba5b82 되돌린 뒤
+    "claude": {
+        "denominator": 135,
+        "ok": 99,            # 검수된 쌍만 (73.3%)
+        "ok_upper": 113,     # 미검수 포함 상한 (83.7%)
+        "unreviewed": 14,
+        "vague": 2,
+        "wrong": 1,
+        "missed": 19,
+        "off_target": 0,     # ⚠ 0 이 아니면 발표에 쓸 수 없다
+        "on_vague": 1,       # 포워드테크 다림질 매트 → 스팀다리미 (오답표에 있던 줄)
+    },
+    # GPT · 같은 조건
+    "gpt": {
+        "denominator": 135,
+        "ok": 95,            # (70.4%)
+        "ok_upper": 113,     # (83.7%) — Claude 와 우연히 같다
+        "unreviewed": 18,
+        "vague": 2,
+        "wrong": 1,
+        "missed": 19,
+        "off_target": 0,
+        "on_vague": 3,       # 넉박스 ×2 → 커피메이커 · 다림질 매트 → 스팀다리미
+    },
+}
+
+#: 애매 부착으로 알려진 줄. 늘면 그 줄을 보고에 적는다 (기준 ⑤).
+BASELINE_ON_VAGUE: dict[str, tuple[str, ...]] = {
+    "claude": (
+        "포워드테크 휴대용 접이식 다림질 매트 다리미판 좌식 걸이형 스팀 다리미 시트",
+    ),
+    "gpt": (
+        "넉박스 커피 찌꺼기통 홈카페 바리스타 커피머신",
+        "포워드테크 휴대용 접이식 다림질 매트 다리미판 좌식 걸이형 스팀 다리미 시트",
+        "홈카페 넉박스 커피찌꺼기통 바리스타 커피머신",
+    ),
+}
+
+
+def compare_baseline(got: dict[str, int], which: str) -> list[str]:
+    """기준선과 다른 항목을 사람이 읽을 줄로. 같으면 빈 목록."""
+    base = BASELINE.get(which) or {}
+    return [
+        f"{k}: 기준선 {base[k]} → 지금 {got[k]}"
+        for k in base
+        if k in got and got[k] != base[k]
+    ]
+
+
 # 미검수 목록에 붙이는 **참고** 근거. 품목명 기준이다.
 #
 # ⚠ 참고일 뿐 판정이 아니다. 사람이 검수해서 `[검수했고 정답]` 절이나

@@ -31,7 +31,15 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from sourcing_guard.models import ItemCategory, ProductFacts  # noqa: E402
 from sourcing_guard.verifier import RuleBook, verify  # noqa: E402
-from audit_tally import load_audit, load_scope, verdict  # noqa: E402
+from audit_tally import (  # noqa: E402
+    BASELINE_ON_VAGUE,
+    compare_baseline,
+    load_audit,
+    load_reviewed_pairs,
+    load_scope,
+    tally,
+    verdict,
+)
 
 _SCOPE = Path("tests/fixtures/새표본235_대상분류.tsv")
 _WRONG = Path("tests/fixtures/새표본235_오답.tsv")
@@ -84,15 +92,35 @@ def main() -> None:
 
     n_off = len([n for n in res if scope[n] == "비대상"])
     n_vag = len([n for n in res if scope[n] == "애매"])
-    print(f"단건 재생 · 대상 {len(target)}")
-    print(f"  정답 {ok} ({ok / len(target) * 100:.1f}%) · 애매 {len(amb)} "
-          f"· 오답 {len(bad)} · 미매칭 {len(target) - len(hit)}")
-    if n_off or n_vag:
-        print(f"  비대상 {n_off} → {len(off)}건 부착 · 애매 {n_vag} → {len(vag)}건 부착")
-        for n, v in off:
-            print(f"     [비대상] {n[:46]} → {v}")
-        for n, v in vag:
-            print(f"     [애매]  {n[:46]} → {v}")
+
+    # 검수 분리까지 **정본 집계**로 낸다. 다섯 기준을 한 화면에 둔다.
+    which = "gpt" if any("gpt" in str(p) for p in args.src) else "claude"
+    reviewed = load_reviewed_pairs("tests/fixtures/단건경로_claude_235.json")
+    full = tally(res, scope=scope, reviewed=reviewed)
+
+    print(f"단건 재생 · 대상 {len(target)}   (기준선 표: {which})")
+    print(f"  ① 검수된 정답  {full['ok']:3} ({full['ok'] / full['denominator'] * 100:.1f}%)")
+    print(f"  ② 미검수       {full['unreviewed']:3}")
+    print(f"  ③ 상한         {full['ok_upper']:3} "
+          f"({full['ok_upper'] / full['denominator'] * 100:.1f}%)   ← 미검수 포함")
+    print(f"     애매 {full['vague']} · 오답 {full['wrong']} · 미매칭 {full['missed']}")
+    print(f"  ④ 비대상 부착  {full['off_target']:3}   ← 0 이 아니면 발표에 쓸 수 없다")
+    # ⚠ **⑤ 를 조건부로 숨기지 않는다.** 4-e 에서 이 숫자가 1 → 2 로 움직였는데
+    #   보고에서 빠졌다. 분모 밖이라 정답률에는 안 보이지만 화면에는 보인다.
+    print(f"  ⑤ 애매 부착    {full['on_vague']:3}   ← 분모 밖이지만 화면에는 뜬다")
+    for n, v in vag:
+        known = n in BASELINE_ON_VAGUE.get(which, ())
+        print(f"       {'  ' if known else '⚠ 새'} [애매] {n[:44]} → {v}")
+    for n, v in off:
+        print(f"       ⚠ 새 [비대상] {n[:44]} → {v}")
+
+    drift = compare_baseline(full, which)
+    if drift:
+        print("\n  ⚠⚠ 기준선과 다르다 - 보고에 다섯을 다 적을 것")
+        for line in drift:
+            print(f"       {line}")
+    else:
+        print(f"\n  ✅ 기준선({which})과 같다")
     if args.out:
         Path(args.out).write_text(json.dumps(res, ensure_ascii=False, indent=1),
                                   encoding="utf-8")
