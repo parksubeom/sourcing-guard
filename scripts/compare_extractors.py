@@ -41,6 +41,7 @@ from audit_tally import (  # noqa: E402
     load_audit,
     load_reviewed_pairs,
     load_scope,
+    review_note,
     tally,
     verdict,
 )
@@ -166,7 +167,9 @@ def main() -> None:
         "#   추출차이  재생에서는 안 나온다. 추출기를 바꾼 효과다.",
         "#   ⚠ 규칙변경이라고 자동으로 정답이 되는 것은 아니다. 판정은 사람이 한다.",
         "#",
-        "# 상품명\t붙은 품목(GPT)\tclaude 저장값\tclaude 재생(현재 코드)\t원인\t분류\t판정(사람이 적는다)",
+        "# `참고` 칸은 그 품목을 붙이기로 한 커밋·원문이다. **판정이 아니다.**",
+        "#",
+        "# 상품명\t붙은 품목(GPT)\tclaude 저장값\tclaude 재생(현재 코드)\t원인\t분류\t참고\t판정(사람이 적는다)",
     ]
     for r in unrev:
         # 어느 쌍이 미검수인지 표시한다 - 갈림에서 일부만 새 후보일 수 있다.
@@ -180,6 +183,7 @@ def main() -> None:
             f"{r['name']}\t{marked}\t"
             f"{' / '.join(r['single_claude']) or '(없음)'}\t"
             f"{' / '.join(now) or '(없음)'}\t{cause}\t{scope.get(r['name'])}\t"
+            f"{review_note(r['single'])}\t"
         )
     Path(args.unreviewed_out).write_text("\n".join(lines) + "\n", encoding="utf-8")
 
