@@ -830,7 +830,50 @@ def verify(
     scope_reason = out_of_scope_reason(
         facts.product_name, facts.model_name, *facts.materials, *facts.substances_mentioned
     )
-    if scope_reason:
+
+    # ⚠ **단독 판정은 상품 전체가 타 소관일 때만이다 (4-d-1, 2026-09-08).**
+    #
+    #   전에는 `scope_reason` 이 잡히면 여기서 `return findings` 로 단락했다.
+    #   그러면 근거 한 줄이 나머지 전부를 덮는다. 실측(A-5 · 대상 109건):
+    #   **5건이 통째로 침묵했다.**
+    #
+    #   원인은 상품이 아니라 **셀러 공지 배너**였다. 전기오븐·전기주전자 5개
+    #   (같은 셀러)의 `desc.notice` 에 이런 문구가 있다:
+    #
+    #       [필독] "3W CLINIC 화장품" 제품 쿠팡 판매 금지 …
+    #       3W CLINIC 화장품 제품 외의 상품은 해당사항없음
+    #
+    #   추출기가 `substances_mentioned` 에 '화장품' 을 담고, 여기서 단락되어
+    #   `item_grade_matched`(전기오븐기기 · 안전인증)가 사라졌다. 셀러가
+    #   상세페이지를 붙여 넣으면 이 배너도 같이 오므로 **측정 잡음이 아니라
+    #   실제 실패 모양**이다.
+    #
+    #   그래서 단락은 **상품 자체가 타 소관일 때만** 한다:
+    #
+    #   그 판별력은 **등급표 부착 여부**다. 화장품·식품에는 전안법 세부품목
+    #   등급이 붙지 않고, 전기오븐에는 붙는다. 그러니
+    #
+    #       등급이 붙었다  →  이 상품은 우리 소관이다. 소관 안내는 병기.
+    #       안 붙었다      →  지금처럼 단독.
+    #
+    # ⚠ 두 가지를 먼저 시도했다가 버렸다.
+    #
+    #   (1) "추출기도 category=out_of_scope 라고 봤을 때만 단독" —
+    #       `test_code_evidence_still_short_circuits` 가 깨진다. 그 검사는
+    #       "화장품책임판매업자·EWG 같은 하드 신호는 LLM 이 놓쳐도 코드가
+    #       잡는다" 를 잠그고 있고, 그 동작이 맞다.
+    #
+    #   (2) "근거가 상품명·모델·재질에서 나왔을 때만 단독" — 목 추출기가
+    #       상품명을 본문 첫 줄로 잡아서(`전자상거래 등에서의 상품정보제공고시`)
+    #       골든셋 화장품 3건의 식별 필드가 비어 있다. 실측으로 확인했다.
+    #
+    # ⚠ 등급표 조회는 **로컬**이다(YAML). 그래서 여기서 미리 봐도 네트워크가
+    #   나가지 않는다. 아래에서 같은 값을 다시 쓴다 - 두 번 조회하지 않는다.
+    _grade_probe = _item_grade_findings(
+        facts.product_name, today,
+        hints=hints, legal_name=facts.legal_item_name, raw_text=raw_text,
+    )
+    if scope_reason and not _grade_probe:
         findings.append(
             Finding(
                 kind=FindingKind.OUT_OF_SCOPE,
@@ -843,7 +886,7 @@ def verify(
                 source_label="어린이제품 공통안전기준 1. 적용범위",
                 source_url="https://law.go.kr/행정규칙/어린이제품공통안전기준",
                 legal_basis="어린이제품 공통안전기준 1. 적용범위",
-                detail={"reason": scope_reason},
+                detail={"reason": scope_reason, "standalone": True},
                 checked_at=today,
             )
         )
@@ -908,15 +951,8 @@ def verify(
     _GRADE_LOOKUP_OPEN = (
         _CERT_REQUIRED | _CERT_REQUIRED_IF_GRADED | {ItemCategory.UNCLASSIFIED}
     )
-    _graded = (
-        _item_grade_findings(
-            facts.product_name, today,
-            hints=hints, legal_name=facts.legal_item_name,
-            raw_text=raw_text,
-        )
-        if facts.category in _GRADE_LOOKUP_OPEN
-        else []
-    )
+    # 위에서 미리 본 값을 쓴다 - 같은 인자이므로 다시 조회하지 않는다.
+    _graded = _grade_probe if facts.category in _GRADE_LOOKUP_OPEN else []
     if facts.category in _CERT_REQUIRED_IF_GRADED and _graded:
         _cert_required_here = True
 
@@ -1443,6 +1479,33 @@ def verify(
                         checked_at=today,
                     )
                 )
+
+    # --- 소관 안내 병기 (4-d-1) --------------------------------------------
+    # 단독 판정 조건(위 (0))에 걸리지 않았지만 타 소관 표기가 있으면, 검증
+    # 결과를 **덮지 않고** 한 줄 덧붙인다.
+    #
+    # ⚠ 문구가 단독일 때와 다르다. 단독은 "이 품목은 … 제외됩니다" 이고,
+    #   병기는 **"이 페이지에 다른 소관 품목 언급이 있습니다"** 다. 상품이 타
+    #   소관이라고 단정하지 않는다 - 실제로는 셀러 공지 배너인 경우가 있었고
+    #   (화장품 판매금지 안내), 그때 이 상품은 전기오븐이었다. §9.
+    if scope_reason:
+        findings.append(
+            Finding(
+                kind=FindingKind.OUT_OF_SCOPE,
+                signal=Signal.UNKNOWN,
+                statement_ko=(
+                    f"이 페이지에 다른 소관({scope_reason}) 품목 언급이 있습니다 — "
+                    "그 부분은 이 도구의 범위 밖입니다. 위 결과는 상품 자체에 대한 "
+                    "것이며, 해당 언급이 이 상품을 가리킨다면 그 소관 기준으로 "
+                    "확인해 주세요."
+                ),
+                source_label="어린이제품 공통안전기준 1. 적용범위",
+                source_url="https://law.go.kr/행정규칙/어린이제품공통안전기준",
+                legal_basis="어린이제품 공통안전기준 1. 적용범위",
+                detail={"reason": scope_reason, "standalone": False},
+                checked_at=today,
+            )
+        )
 
     return findings
 
