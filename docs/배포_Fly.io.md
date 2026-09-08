@@ -109,6 +109,35 @@ fly secrets unset EXTRACTOR_ORDER            # 충전하면 지운다 → 기본
 바뀐다.** 지금 어느 경로로 도는지는 `/healthz` 의 `extraction` 에서 본다 —
 응답 모양으로 추론하지 말 것 (2026-09-08 에 그 실수를 했다).
 
+#### `DOMEGGOOK_API_KEY` — **아직 올리지 않는다**
+
+도매꾹은 키 발급 시 **호출 IP 를 등록받는다.** 지금 등록된 것은 개발 PC 의
+공인 IP 이고, Fly 의 나가는 IP 는 머신마다·재시작마다 달라진다. 그래서
+배포본은 도매꾹을 부르지 않고, 호출은 `scripts/` 안에서만 한다
+(`main.py` 는 `domeggook_client` 를 import 하지 않는다).
+
+**고정 egress IP 를 확정한 뒤** secret 을 올린다:
+
+```bash
+fly ips allocate-egress -a sourcing-guard -r nrt   # IPv4+IPv6 한 쌍
+fly ips list                                       # 할당 확인
+```
+
+Fly 공식 가격표 원문:
+
+> Static Egress IPs: $0.005 per hour (~$3.60/month)
+> When you allocate a static egress IP, you'll get both an IPv4 and IPv6
+> address for this single price.
+
+(참고: dedicated IPv4 는 "$2/mo". 출처 <https://fly.io/docs/about/pricing/>)
+
+⚠ 할당한 IP 를 도매꾹에 **등록 신청**해야 한다. 복수 IP 등록이 되는지는
+  미확인이다(참조.md §7) - 개발 PC IP 를 유지하면서 Fly IP 를 더할 수
+  있는지 확인하고 나서 올린다.
+
+⚠ `fly machine egress-ip` 는 deprecated 다. `fly ips allocate-egress`
+  (앱 스코프)를 쓴다.
+
 **IP 등록**: SafetyKorea 는 등록된 IP 에서만 응답한다(결과코드 4001).
 Fly 의 나가는 IP 를 확인해 제품안전정보센터에 등록 신청한다.
 

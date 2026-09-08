@@ -60,7 +60,7 @@ LLM의 역할은 **추출(extraction)**, **분류(classification)**, **설명(ex
 | `emsit.go.kr` | 전파인증 번호 조회 (Open API, 인증키 불필요) | 예정 `rra_client.py` |
 | `rra.go.kr` | 전파인증 모델명 검색·부적합 현황 (HTML) | 예정 `rra_client.py` |
 | `law.go.kr` | 고시·별표·부속서 원문 (DRF OpenAPI, `OC=test`) | `verifier.py` 근거 URL · `scripts/` 자료 수집 |
-| `domeggook.com` | 도매꾹·도매매 상품 상세 (**공개 Open API 전용**) | 예정 `domeggook_client.py` |
+| `domeggook.com` | 도매꾹·도매매 상품 상세 (**공개 Open API 전용**) | `domeggook_client.py` |
 
 전부 정부 도메인이며 상거래 사이트가 아니다. 도메인을 추가하려면 이 표에 먼저 적는다.
 
@@ -112,9 +112,19 @@ R4 가 막으려던 것은 상거래 사이트 무단 크롤링이지 제공되�
     401/403 이 나면 IP 변경부터 의심한다. 그래서 배포본에서 부르려면 나가는
     IP 가 고정이어야 하고, 확정 전까지 도매꾹 호출은 `scripts/` 안에서만 한다.
 
-⚠ 이 목록은 문서에만 있고 코드가 강제하지 않는다. 현재 서버가 외부로 나가는
-경로는 `kats_client.py` 하나뿐이라 어댑터 계층이 사실상 게이트 역할을 한다.
-어댑터가 둘 이상이 되면 호스트 검사를 코드로 옮기는 것을 검토한다.
+✅ **코드가 강제한다 (2026-09-08).** 목록은 `sourcing_guard/allowed_hosts.py`
+의 `ALLOWED_HOSTS` 이고, 어댑터는 나가기 **전에** `ensure_allowed(url)` 을
+부른다. 승인되지 않은 호스트면 `HostNotAllowedError` 로 막힌다.
+
+  전에는 "문서에만 있고 코드가 강제하지 않는다 … 어댑터가 둘 이상이 되면
+  호스트 검사를 코드로 옮기는 것을 검토한다" 였다. `domeggook_client.py` 가
+  생겨 어댑터가 둘이 됐으므로 그 조건이 충족됐다.
+
+  ⚠ 이 표와 `ALLOWED_HOSTS` 는 **같아야 한다.** 어긋나면 검사가 깨진다
+    (`tests/test_allowed_hosts.py`). 호스트를 추가할 때는 표에 먼저 적는다.
+
+  ⚠ 하위 도메인은 접미사로 인정한다 - `www.domeggook.com` 은 통과하고
+    `evildomeggook.com` 은 막힌다.
 
 ### R5. 값을 지어내지 않는다
 
