@@ -27,12 +27,44 @@ from sourcing_guard.rra_client import (
         ("R-R-LGE-WU922M2604", True),
         ("R-I-ABC-XYZ123", True),
         ("KCC-REM-MJT-MJT", True),
+        # 구형 MSIP- (미래창조과학부 시절). **실물이다** - 도매꾹 실상품
+        # 표본에서 나왔고 emsit 이 갖고 있다(아래 검사 참조).
+        ("MSIP-CMI-YOU-SOUND-T", True),
+        ("MSIP-CMI-DVT-Rainbow", True),
         ("R-I-", False),
         ("그냥글자", False),
+        # 접두어가 아니면 안 된다 - 느슨하게 열어 둔 것이 아무 문자열을
+        # 받는다는 뜻은 아니다.
+        ("MSIP", False),
+        ("MSIPX-1", False),
     ],
 )
 def test_rf_number_format(number, valid):
     assert is_rf_number(number) is valid
+
+
+def test_msip_numbers_are_recognised_the_case_that_was_being_dropped():
+    """2026-09-08 실측: 이 둘이 **두 축 어디에도 안 걸리고 사라지고 있었다.**
+
+    도매꾹 실상품 표본(대상 109건)의 `certType: 방송통신기자재` 번호 8개 중
+    둘이 `MSIP-CMI-*` 였다. 정규식이 못 잡아 `is_rf_number` 도
+    `is_cert_number` 도 False 였다 - 잘못된 빨간불이 아니라 **놓침**이었다.
+
+    원문 확인(R5): emsit 정부 Open API 가 셋 다 `resultCode=0000` 으로 답했다.
+
+        MSIP-CMI-YOU-SOUND-T  특정소출력 무선기기 · (주)이모텔리 · SOUND-T
+        MSIP-CMI-DVT-Rainbow  특정소출력 무선기기 · 데이비드테크(주) · Rainbow
+        R-R-nDC-A205          가습기 · 디씨네트워크 · A205            ← 대조군
+    """
+    from sourcing_guard.kats_client import is_cert_number
+
+    for real in ("MSIP-CMI-YOU-SOUND-T", "MSIP-CMI-DVT-Rainbow"):
+        assert is_rf_number(real), f"{real} 이 전파 축에서 사라진다"
+        assert not is_cert_number(real), f"{real} 이 KATS 축으로 새면 안 된다"
+
+    # 본문에서도 뽑힌다. 붙여넣기 입력 경로가 이것에 의존한다.
+    text = "인증번호 : MSIP-CMI-DVT-Rainbow\n안전확인신고번호 : CB061R2170-3018"
+    assert extract_rf_numbers(text) == ["MSIP-CMI-DVT-Rainbow"]
 
 
 def test_kc_number_is_not_mistaken_for_rf_number():
@@ -420,3 +452,4 @@ def test_number_takes_priority_over_model_search():
     verified = [f for f in findings if f.kind is FindingKind.RF_CERT_VERIFIED]
     assert len(verified) == 1
     assert verified[0].detail["matched_on"] == "number"
+

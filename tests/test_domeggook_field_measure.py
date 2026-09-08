@@ -41,21 +41,30 @@ def test_broadcast_equipment_numbers_never_go_to_safetykorea():
 
 
 def test_split_uses_cert_type_not_the_number_shape():
-    """번호 모양으로 가르면 우리 정규식이 못 잡는 표기를 놓친다.
+    """도매꾹은 `certType` 으로 제도를 직접 적어 준다 - 그것을 쓴다.
 
-    실측: `MSIP-CMI-*` 2개가 `rra_client.RF_NUMBER_RE` 를 통과하지 못한다.
-    도매꾹은 `certType` 으로 제도를 직접 적어 준다 - 그것을 쓴다.
+    ⚠ **전제가 2026-09-08 에 바뀌었다.** 전에는 "정규식이 MSIP 를 못 잡으니
+      certType 을 써야 한다" 였다. 4-c 로 정규식이 MSIP 를 잡게 됐으므로 그
+      근거는 사라졌다. 그래도 `certType` 을 쓰는 이유가 남는다 - **도매꾹이
+      제도를 명시해 주는데 우리가 번호 모양으로 다시 추측할 이유가 없다.**
+      정규식은 붙여넣기 입력(모양밖에 없는 경우)의 몫이다.
     """
     from sourcing_guard.rra_client import is_rf_number
 
-    assert not is_rf_number("MSIP-CMI-YOU-SOUND-T"), (
-        "정규식이 MSIP 를 잡게 됐다면 이 검사의 전제가 바뀌었다 - 확인할 것"
-    )
+    assert is_rf_number("MSIP-CMI-YOU-SOUND-T"), "4-c 가 되돌려졌다"
     m = _mod()
+    # 모양으로는 KATS 번호처럼 생긴 값이라도, certType 이 방송통신기자재면
+    # 전파 축으로 보낸다.
     axis = m.cert_axis([
-        _row({"cert": "Y", "certType": m.RF_CERT_TYPE, "no": "MSIP-CMI-DVT-Rainbow"})
+        _row({"cert": "Y", "certType": m.RF_CERT_TYPE, "no": "MSIP-CMI-DVT-Rainbow"},
+             no="10"),
+        _row({"cert": "Y", "certType": m.RF_CERT_TYPE, "no": "HU071406-18008A"},
+             no="11"),
     ])
     assert axis["kats"] == {}, "제도가 적혀 있는데도 KATS 로 보냈다"
+    assert sorted(n for n, _ in axis["rf"]) == [
+        "HU071406-18008A", "MSIP-CMI-DVT-Rainbow",
+    ]
 
 
 def test_dash_and_useno_n_are_not_numbers():
