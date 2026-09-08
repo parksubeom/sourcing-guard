@@ -381,7 +381,6 @@ def test_the_proposal_numbers_match_the_code():
     # 재생 조건은 사이드카 md 에 적혀 있다 - JSON 은 주석을 담을 수 없다.
     side = raw_path.with_suffix(".md")
     assert side.exists(), "재생 조건 사이드카가 없다"
-    assert "정답 113 (83.7%)" in side.read_text(encoding="utf-8")
 
     _kats = MagicMock()
     _kats.lookup_certification_cached.return_value = MagicMock(record=None)
@@ -402,6 +401,17 @@ def test_the_proposal_numbers_match_the_code():
     assert s_got["off_target"] == 0, s_got
 
     s_pct = round(s_got["ok"] / s_got["denominator"] * 100, 1)
+
+    # 사이드카도 **재계산으로** 대조한다.
+    #
+    # ⚠ 전에는 `"정답 113 (83.7%)" in side` 라는 하드코딩 문자열이었다. 그러면
+    #   코드가 바뀌어 재생값이 움직여도 사이드카가 낡은 채로 통과한다 - 그리고
+    #   낡은 사이드카를 다음 사람이 발표 숫자로 옮긴다. 실제로 `단건경로_gpt.md`
+    #   가 94/19 로 낡아 있었고 재생값은 95/18 이었다.
+    assert _flat(f"정답 {s_got['ok']} ({s_pct}%)") in _flat(
+        side.read_text(encoding="utf-8")
+    ), (s_got, s_pct)
+
     assert "단건 경로 · 대상 135 중" in doc
     assert _flat(f"정답 {s_got['ok']}건 ({s_pct}%)") in _flat(doc), (s_got, s_pct)
     assert '화면에는 "비대상입니다"를 출력하지 않습니다' in doc
