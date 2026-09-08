@@ -124,6 +124,9 @@ def main() -> None:
     Path(args.out).write_text(json.dumps(out, ensure_ascii=False, indent=1),
                               encoding="utf-8")
 
+    # ⚠ 방금 측정한 값이라 재생과 같다. 나중에 이 원자료로 다시 셀 때는
+    #   **현재 규칙으로 재생**해야 한다 - 저장값은 측정 시점의 것이다.
+    #   /tmp/kid/redo_tsv.py 가 그 경로다.
     results = {r["name"]: r["single"] for r in out}
     got = tally(results, scope=scope, audit=(wrong, vague), reviewed=reviewed)
 
