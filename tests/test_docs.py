@@ -390,7 +390,11 @@ def test_the_proposal_numbers_match_the_code():
     s_got = _tally(single, scope=scope)
 
     assert s_got["denominator"] == 135, s_got
-    assert s_got["ok"] == 113, s_got
+    # ⚠ 113 → 114 (2026-09-08, 4-e `e80f205` 다음 커밋). `category=out_of_scope`
+    #   가 등급표 조회를 막던 게이트를 열었고, `[CU] 핏미업 러닝벨트` 가
+    #   `의류 이외의 섬유제품` 으로 붙었다. **그 쌍은 검수 파일에 없다** -
+    #   아래 미검수 15 로 잡힌다. 즉 상한만 올랐고 검수된 정답은 99 그대로다.
+    assert s_got["ok"] == 114, s_got
     assert s_got["vague"] == 2, s_got
     assert s_got["wrong"] == 1, s_got
     # ⚠ **비대상 0 이 우리 제품의 가장 센 주장이다.** 이 값이 0 이 아니면
@@ -412,8 +416,8 @@ def test_the_proposal_numbers_match_the_code():
     #   그래서 같은 기준을 Claude 쪽에도 건다:
     #
     #       정답(검수된 쌍만)  99 (73.3%)
-    #       미검수             14
-    #       상한               113 (83.7%)
+    #       미검수             15
+    #       상한               114 (84.4%)
     #
     # ⚠ **이 검사는 미검수 14 를 잠근다.** 판정이 들어와 0 이 되면 여기서
     #   깨지고, 그때 숫자를 "검수 완료" 라벨로 갱신한다. 수트 전체를 빨갛게
@@ -424,9 +428,9 @@ def test_the_proposal_numbers_match_the_code():
     reviewed = load_reviewed_pairs(raw_path)
     s_rev = _tally(single, scope=scope, reviewed=reviewed)
 
-    assert s_rev["ok_upper"] == 113, s_rev
-    assert s_rev["ok"] == 99, s_rev
-    assert s_rev["unreviewed"] == 14, s_rev
+    assert s_rev["ok_upper"] == 114, s_rev
+    assert s_rev["ok"] == 99, f"검수된 정답은 움직이지 않았다: {s_rev}"
+    assert s_rev["unreviewed"] == 15, s_rev
     # 비대상 0 은 검수와 무관하게 유지돼야 한다.
     assert s_rev["off_target"] == 0, s_rev
 

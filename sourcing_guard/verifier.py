@@ -869,9 +869,26 @@ def verify(
     #
     # ⚠ 등급표 조회는 **로컬**이다(YAML). 그래서 여기서 미리 봐도 네트워크가
     #   나가지 않는다. 아래에서 같은 값을 다시 쓴다 - 두 번 조회하지 않는다.
+    # ⚠ **`category=out_of_scope` 일 때는 `legal_item_name` 확장 폴백을 끈다**
+    #   (4-e). 표 조회 자체는 연다 - 아래 `_GRADE_LOOKUP_OPEN` 참조.
+    #
+    #   `lookup_legal_name` 은 정확 일치가 없으면 **표의 품목명이 LLM 답을
+    #   포함하는지**까지 본다(표 596행 중 75건에 법령 수식이 붙어 있어 필요한
+    #   완화다). 그런데 추출기가 "다른 소관" 이라고 본 상품에서 그 LLM 답을
+    #   표에 맞춰 넓히는 것은 **두 신호가 서로 반대인데 넓히는 쪽을 택하는
+    #   것**이고 R3 방향이 아니다.
+    #
+    #   실측이 그 위험을 하나 보여 줬다 - GPT 가 `커피머신클리너 세정제` 의
+    #   `legal_item_name` 을 `커피메이커` 로 뽑았고, 폴백이 열려 있으면
+    #   **비대상에 등급이 붙는다**(비대상 부착 0 → 1). 폴백을 끄면 0 을 지킨다.
+    _legal_for_lookup = (
+        None
+        if facts.category is ItemCategory.OUT_OF_SCOPE
+        else facts.legal_item_name
+    )
     _grade_probe = _item_grade_findings(
         facts.product_name, today,
-        hints=hints, legal_name=facts.legal_item_name, raw_text=raw_text,
+        hints=hints, legal_name=_legal_for_lookup, raw_text=raw_text,
     )
     if scope_reason and not _grade_probe:
         findings.append(
@@ -939,17 +956,37 @@ def verify(
     #                 R3 정신과 반대다** - R3 은 "모르면 UNKNOWN" 이지
     #                 "LLM 이 모르면 아는 것도 버려라" 가 아니다.
     #
-    #   OUT_OF_SCOPE  "우리 소관 아님" 이다. 계속 막는다. 정수기컵(식약처)·
-    #                 목발형 보행기(의료기기)에 전안법 등급을 붙이면 오답이고
-    #                 셀러에게 없는 의무를 만든다.
+    #   OUT_OF_SCOPE  "우리 소관 아님" 이다. **전에는 계속 막았다** - 정수기컵
+    #                 (식약처)·목발형 보행기(의료기기)에 전안법 등급을 붙이면
+    #                 오답이고 셀러에게 없는 의무를 만든다는 근거였다.
+    #                 그 근거는 지금 표본에서 재현되지 않는다(바로 아래).
     #
     # ⚠ 실측(단건 경로 30건): category 게이트에 10건(33%)이 막혀 있었다 -
     #   unclassified 7 · out_of_scope 3. 그중 unclassified 는 전부 대상이었다.
     #
     # ⚠ 아래 _CERT_REQUIRED 계열 판정은 facts.category 를 키로 쓰므로 이
     #   변경에 움직이지 않는다. 등급표 조회만 연다.
+    #   OUT_OF_SCOPE  **2026-09-08 부터 연다** (4-e). 도매꾹 고시 `type`
+    #                 (주방용품 등)이 추출기의 category 를 여기로 밀어내는
+    #                 일이 있고, **고시 품목분류와 전안법 품목군은 다른
+    #                 분류다.** 실측 [165] 앞치마(고시 type=주방용품)와
+    #                 [146] 방수매트가 상품명만 조건에서는 등급을 받았는데
+    #                 상세 조건에서 이 게이트에 막혔다.
+    #
+    #                 ⚠ 대신 `legal_item_name` 확장 폴백을 끈다(위 참조).
+    #                   여는 것만으로는 비대상 부착이 0 → 1 이 된다.
+    #
+    #                 ⚠ **아래 옛 주석의 사례는 재현되지 않는다.** "정수기컵
+    #                   (식약처)·목발형 보행기(의료기기)에 전안법 등급을
+    #                   붙이면 오답" 이라 적혀 있었는데, 실측하니 둘 다 등급이
+    #                   안 붙는다 - 정수기컵 계열 6행 전부 후보 0건, 목발형
+    #                   접이식 보행기도 0건(`legal='보행기'` 를 넣을 때만
+    #                   붙고, 그 경로가 지금 끈 폴백이다). 낡은 근거를 그대로
+    #                   두면 다음 사람이 그것을 믿으므로 여기 적는다.
     _GRADE_LOOKUP_OPEN = (
-        _CERT_REQUIRED | _CERT_REQUIRED_IF_GRADED | {ItemCategory.UNCLASSIFIED}
+        _CERT_REQUIRED
+        | _CERT_REQUIRED_IF_GRADED
+        | {ItemCategory.UNCLASSIFIED, ItemCategory.OUT_OF_SCOPE}
     )
     # 위에서 미리 본 값을 쓴다 - 같은 인자이므로 다시 조회하지 않는다.
     _graded = _grade_probe if facts.category in _GRADE_LOOKUP_OPEN else []
