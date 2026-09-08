@@ -362,7 +362,7 @@ def test_the_proposal_numbers_match_the_code():
     }
     assert single, "단건 원자료가 비었다"
     assert "단건 경로 · 대상 135 중" in doc
-    assert _flat("정답 105건 (77.8%)") in _flat(doc)
+    assert _flat("정답 104건 (77.0%)") in _flat(doc)
     assert '화면에는 "비대상입니다"를 출력하지 않습니다' in doc
 
     # ⚠ 오부착률은 **실측한 값만** 적는다. 2026-09-07 까지 이 자리에 40.9% 가
@@ -459,3 +459,57 @@ def test_the_handoff_schedule_matches_the_real_contest_dates():
     assert "event.wanted.co.kr" in schedule
     # 폼을 직접 못 봤다는 사실이 남아 있어야 한다.
     assert "폼 자체를 본 것이 아니다" in schedule
+
+
+def test_the_replay_script_tallies_the_same_way_as_the_live_measurement():
+    """재생 스크립트와 실측 스크립트가 **같은 방식으로 센다**.
+
+    ⚠ 2026-09-08 사고다. 급히 만든 재생이 두 군데 어긋나 기획서에 77.8% 를
+      적었다 (실제 77.0%):
+
+        (1) lookup_all 을 직접 불러 verifier 의 카테고리 게이트를 건너뛰었다
+        (2) ITEM_GRADE_MATCHED 만 셌다 - '전기방석' 처럼 두 등급으로 갈리는
+            줄은 ITEM_GRADE_SPLIT 으로 나오는데 미매칭으로 셌다
+
+    이 저장소의 반복 결함이 문서가 코드보다 앞서 나가는 것이고, 그 원인이
+    이번에는 **측정 도구가 둘로 갈라진 것**이었다. 그래서 둘이 같은 문장을
+    쓰는지 소스로 확인한다.
+    """
+    root = Path(__file__).resolve().parents[1]
+    live = (root / "scripts" / "measure_single_path_full.py").read_text(encoding="utf-8")
+    replay = (root / "scripts" / "replay_single_path.py").read_text(encoding="utf-8")
+
+    # ⚠ 주석·docstring 을 벗기고 본다. 두 스크립트 모두 이 사고를 설명하는
+    #   주석에서 ITEM_GRADE_MATCHED·lookup_all 을 **이름으로 언급**한다 -
+    #   감사 흔적을 남긴 것이 검사에 걸리면 안 된다.
+    import ast
+
+    def code_only(src: str) -> str:
+        tree = ast.parse(src)
+        for node in ast.walk(tree):
+            if isinstance(node, (ast.Module, ast.FunctionDef, ast.ClassDef)):
+                body = getattr(node, "body", [])
+                if (
+                    body
+                    and isinstance(body[0], ast.Expr)
+                    and isinstance(body[0].value, ast.Constant)
+                    and isinstance(body[0].value.value, str)
+                ):
+                    body.pop(0)
+        return ast.unparse(tree)
+
+    live_code, replay_code = code_only(live), code_only(replay)
+
+    # 둘 다 kind 를 가리지 않고 detail.candidates 를 모은다.
+    assert "'candidates'" in live_code
+    assert "'candidates'" in replay_code
+    for src, name in ((live_code, "실측"), (replay_code, "재생")):
+        assert "ITEM_GRADE_MATCHED" not in src, f"{name} 이 kind 로 걸러낸다"
+
+    # 재생은 verify() 를 통과해야 한다 - lookup_all 직접 호출은 게이트를 건너뛴다.
+    assert "verify(" in replay_code
+    assert "lookup_all" not in replay_code
+
+    # 검수 파일 파서도 같아야 한다.
+    for token in ("--- 오답", "[애매]", "[검수했고 정답]", "[고쳐짐"):
+        assert token in live and token in replay, token

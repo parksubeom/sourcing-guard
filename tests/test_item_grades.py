@@ -1013,7 +1013,7 @@ def test_the_audited_wrong_answers_are_the_only_ones_left():
     ⚠ 분모는 235 가 아니라 **안전관리대상 136** 이다 (새표본235_대상분류.tsv).
     ⚠ 발표 숫자는 **단건 경로**다 (데모가 단건이다). 이 검사는 배치를 잠근다.
         배치 · 상품명만 · 대상 135    정답 104 (77.0%) · 애매 3 · 오답 2
-        단건 · 상품명만 · 대상 135    정답 105 (77.8%) · 애매 3 · 오답 1  ← 발표
+        단건 · 상품명만 · 대상 135    정답 104 (77.0%) · 애매 3 · 오답 1  ← 발표
         전체 매칭 111/235
 
     ⚠ 2026-09-07 101 → 111: 안전기준준수 부속서 1(가정용 섬유제품)
@@ -1128,7 +1128,7 @@ def test_the_proposal_never_quotes_an_unaudited_rate_bare():
     import pathlib
 
     doc = pathlib.Path("01_기획서_안심소싱돋보기.md").read_text(encoding="utf-8")
-    assert "77.8%" in doc
+    assert "77.0%" in doc
     assert "0건 부착" in doc
     # 조건 없는 숫자를 쓰지 않는다 - 경로와 분모를 함께 적는다.
     assert "조건 없는 숫자를 쓰지 않습니다" in doc
