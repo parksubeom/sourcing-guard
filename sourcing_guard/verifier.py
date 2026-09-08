@@ -1231,6 +1231,13 @@ def verify(
                     "matched_on_ko": matched_on_label(m.matched_on),
                     "matched_value": _matched_value(facts, m),
                     "recalled_product_name": r.product_name,
+                    # 모델명 칸에 **품목명**이 들어온 경우인가 (4-가).
+                    # 사실만 적는다 - 이 사실로 신호를 정하는 것은 scorer 다.
+                    # 목록은 등급표(정부 표)이고 우리가 정하지 않는다 (R1).
+                    "matched_value_names_an_item": bool(
+                        _grade_book()
+                        and _grade_book().names_an_item(_matched_value(facts, m))
+                    ),
                     "evidence_is_original": label == "리콜 공표 원문",
                 },
                 checked_at=today,

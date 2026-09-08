@@ -1093,6 +1093,30 @@ class ItemGradeBook:
     def __len__(self) -> int:
         return len(self._rows)
 
+    def names_an_item(self, value: str | None) -> bool:
+        """이 문자열이 **표의 품목명 자체**인가 (4-가, 2026-09-08).
+
+        모델명 칸에 품목명이 들어오는 일이 있다. 실측 [48]:
+
+            상품   차량용 무선 휴대용 핸디 청소기 에어건 2in1
+            추출   model_name = '진공 청소기'      ← 모델명이 아니라 품목명이다
+
+        그 값으로 리콜 모델명을 대조하면 같은 품목의 아무 리콜에나 걸린다.
+        `'진공 청소기'` 는 리콜 4건에 걸렸고 그중 셋은 리콜 품목이
+        `전지(충전지만 해당)` 였다.
+
+        ⚠ **목록을 우리가 정하지 않는다.** 기준은 등급표
+          (`item_grades.yaml` + `child_item_grades.yaml`)의 품목명과 **표 자체가
+          쪼갠 별칭**(`split_aliases` - 가운뎃점 묶음·괄호 한정)이다. 정부 표가
+          목록이므로 "무엇이 일반명사인가" 를 우리가 판정하지 않는다 (R1).
+
+        ⚠ **우리가 손으로 만든 `ALIASES` 는 넣지 않는다.** 그건 우리 사전이고
+          정부 표가 아니다. 넣으면 위 R1 논거가 무너진다.
+        """
+        if not value:
+            return False
+        return normalize(value) in self._by_name
+
     def lookup_all(
         self,
         product_name: str | None,
