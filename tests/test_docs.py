@@ -646,3 +646,34 @@ def test_the_comparison_script_reports_both_numbers_and_dumps_unreviewed():
     assert '"--label", required=True' in src
     # 비대상 부착이 결과에 보여야 한다 - 0 이 아니면 못 간다.
     assert "비대상 → 부착" in src
+
+
+def test_the_domeggook_quota_is_recorded_as_verified_with_a_source():
+    """도매꾹 호출 쿼터를 "미확인" 으로 남겨 두지 않는다.
+
+    ⚠ 2026-09-04 에 "분당 180회·하루 15,000회 ← 이 문서에 없다 ❌조작" 이라고
+      적었다. 그때 본 것은 **상품상세정보 문서**였고, 숫자는 「OPEN API 이용
+      방법」 원문에 실재했다. 즉 "없다" 가 아니라 "그 문서에 없다" 였다.
+
+    ⚠ 작업로그는 **고치지 않는다.** 날짜 기록이고, 그때 무엇을 못 봤는지가
+      기록이다. 정본은 CLAUDE.md R4 다.
+
+    ⚠ 아직 미확인인 것(키의 계정 종속 여부)은 미확인으로 남아 있어야 한다 -
+      확인된 것과 섞으면 R5 가 무너진다.
+    """
+    root = Path(__file__).resolve().parents[1]
+    rules = (root / "CLAUDE.md").read_text(encoding="utf-8")
+
+    assert "분당 180회, 하루 15,000회" in rules
+    assert "openapi.domeggook.com/main/guide/start" in rules
+    assert "Private API" in rules, "키 종류 구분이 없다"
+    # 확인된 것을 "미확인" 으로 두지 않는다.
+    assert "⚠ **미확인 (2026-09-04)**: 호출 쿼터" not in rules
+    # 미확인인 것은 미확인으로 남는다.
+    assert "키가 셀러 계정에 종속인지" in rules
+    # IP 등록 제약이 적혀 있어야 한다 - 배포 결정에 걸린다.
+    assert "IP 를 등록받는다" in rules
+
+    # 작업로그는 그대로 - 날짜 기록이다.
+    log = (root / "docs" / "작업로그_2026-09-04.md").read_text(encoding="utf-8")
+    assert "이 문서에 없다" in log
