@@ -31,36 +31,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from sourcing_guard.models import ItemCategory, ProductFacts  # noqa: E402
 from sourcing_guard.verifier import RuleBook, verify  # noqa: E402
+from audit_tally import load_audit, load_scope, verdict  # noqa: E402
 
 _SCOPE = Path("tests/fixtures/새표본235_대상분류.tsv")
 _WRONG = Path("tests/fixtures/새표본235_오답.tsv")
-
-
-def load_scope() -> dict[str, str]:
-    out: dict[str, str] = {}
-    for line in _SCOPE.read_text(encoding="utf-8").splitlines():
-        if line.startswith("#") or not line.strip():
-            continue
-        _no, verdict, name, _why = line.split("\t")
-        out[name] = verdict
-    return out
-
-
-def load_audit() -> tuple[set[str], set[str]]:
-    wrong, vague, section = set(), set(), None
-    for line in _WRONG.read_text(encoding="utf-8").splitlines():
-        if line.startswith("#"):
-            if "--- 오답" in line:
-                section = "wrong"
-            elif "[애매]" in line:
-                section = "vague"
-            elif "[검수했고 정답]" in line or "[고쳐짐" in line:
-                section = None
-            continue
-        if not line.strip() or section is None:
-            continue
-        (wrong if section == "wrong" else vague).add(line.split("\t")[0])
-    return wrong, vague
 
 
 def grades_for(row: dict, kats, rules: RuleBook) -> list[str]:
@@ -100,8 +74,8 @@ def main() -> None:
 
     target = [r["name"] for r in rows if scope[r["name"]] == "대상"]
     hit = [n for n in target if res[n]]
-    bad = [n for n in hit if n in wrong]
-    amb = [n for n in hit if n in vague]
+    bad = [n for n in hit if verdict(n, res[n], wrong, vague) == "wrong"]
+    amb = [n for n in hit if verdict(n, res[n], wrong, vague) == "vague"]
     ok = len(hit) - len(bad) - len(amb)
     off = [(n, res[n]) for n in res if res[n] and scope[n] == "비대상"]
     vag = [(n, res[n]) for n in res if res[n] and scope[n] == "애매"]

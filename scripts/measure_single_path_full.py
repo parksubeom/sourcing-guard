@@ -26,6 +26,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from sourcing_guard.item_grades import ItemGradeBook  # noqa: E402
+from audit_tally import load_audit, load_scope, verdict  # noqa: E402
 
 _SCOPE = Path("tests/fixtures/새표본235_대상분류.tsv")
 _WRONG = Path("tests/fixtures/새표본235_오답.tsv")
@@ -58,23 +59,6 @@ def scan(url: str, text: str, *, tries: int = 4) -> dict:
     raise RuntimeError("재시도를 다 썼다")
 
 
-def load_audit() -> tuple[set[str], set[str]]:
-    wrong, vague, section = set(), set(), None
-    for line in _WRONG.read_text(encoding="utf-8").splitlines():
-        if line.startswith("#"):
-            if "--- 오답" in line:
-                section = "wrong"
-            elif "[애매]" in line:
-                section = "vague"
-            elif "[검수했고 정답]" in line or "[고쳐짐" in line:
-                section = None
-            continue
-        if not line.strip() or section is None:
-            continue
-        (wrong if section == "wrong" else vague).add(line.split("\t")[0])
-    return wrong, vague
-
-
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--url", default="https://sourcing-guard.fly.dev")
@@ -91,8 +75,9 @@ def main() -> None:
     for line in _SCOPE.read_text(encoding="utf-8").splitlines():
         if line.startswith("#") or not line.strip():
             continue
-        no, verdict, name, why = line.split("\t")
-        scope[int(no)] = (verdict, name, why)
+        # ⚠ 지역 이름을 verdict 로 쓰면 위에서 import 한 함수를 가린다.
+        no, sc, name, why = line.split("\t")
+        scope[int(no)] = (sc, name, why)
     want = {"밖": {"비대상", "애매"}, "전부": {"대상", "비대상", "애매"}}.get(
         args.scope, {args.scope}
     )
@@ -130,10 +115,11 @@ def main() -> None:
     n = len(rows)
     s_hit = [r for r in rows if r["single"]]
     b_hit = [r for r in rows if r["batch"]]
-    s_bad = [r for r in s_hit if r["name"] in wrong]
-    s_vag = [r for r in s_hit if r["name"] in vague]
-    b_bad = [r for r in b_hit if r["name"] in wrong]
-    b_vag = [r for r in b_hit if r["name"] in vague]
+    # ⚠ 붙은 품목까지 본다 - 상품명만 보면 고쳐진 오답도 계속 오답으로 센다.
+    s_bad = [r for r in s_hit if verdict(r["name"], r["single"], wrong, vague) == "wrong"]
+    s_vag = [r for r in s_hit if verdict(r["name"], r["single"], wrong, vague) == "vague"]
+    b_bad = [r for r in b_hit if verdict(r["name"], r["batch"], wrong, vague) == "wrong"]
+    b_vag = [r for r in b_hit if verdict(r["name"], r["batch"], wrong, vague) == "vague"]
     print(f"\n{'='*70}")
     print(f"분모: 안전관리대상 {n}건")
     print(f"\n  배치 경로 · 상품명만   정답 {len(b_hit)-len(b_bad)-len(b_vag):3}"
