@@ -1012,14 +1012,16 @@ def test_the_audited_wrong_answers_are_the_only_ones_left():
     ⚠ 발표에 쓰는 숫자는 매칭률이 아니라 **정답률**이다.
     ⚠ 분모는 235 가 아니라 **안전관리대상 136** 이다 (새표본235_대상분류.tsv).
     ⚠ 발표 숫자는 **단건 경로**다 (데모가 단건이다). 이 검사는 배치를 잠근다.
-        배치 · 상품명만 · 대상 135    정답 104 (77.0%) · 애매 3 · 오답 2
-        단건 · 상품명만 · 대상 135    정답 104 (77.0%) · 애매 3 · 오답 1  ← 발표
-        전체 매칭 111/235
+        배치 · 상품명만 · 대상 135    정답 111 (82.2%) · 애매 2 · 오답 1
+        단건 · 상품명만 · 대상 135    정답 113 (83.7%) · 애매 2 · 오답 1  ← 발표
+        전체 매칭 116/235
 
-    ⚠ 2026-09-07 101 → 111: 안전기준준수 부속서 1(가정용 섬유제품)
-      '기타 제품류' 가 "가방, 쿠션류, 방석류, **모기장**, 커튼, 수의,
-      덮개 등" 을 열거한다. 모기장 +5, 가방 계열 +5. 오답 증가 0건.
-      가방은 부속서 1 이 만 14세 이상이라 어린이 표지어가 없을 때만 연다
+    ⚠ 2026-09-07~08 101 → 116: 안전기준준수 부속서 1(가정용 섬유제품)
+      [표 1] 세부분류를 옮겼다 (docs/부속서1_가정용섬유제품_종류표.md).
+        기타 제품류  "가방, 쿠션류, 방석류, **모기장**, 커튼, 수의, 덮개 등"
+        중의류       "… 셔츠, **타올**, **장갑** … **헤어밴드**, 가발, 귀마개, **토시** 등"
+      모기장 +5 · 가방 +5 · 장갑·토시·헤어밴드·타월 +6. 오답 증가 0건.
+      부속서 1 이 만 14세 이상이라 어린이 표지어가 없을 때만 연다
       (ALIASES_IF_NO_CHILD_MARKER).
 
     이 검사가 실패하면 매칭이 바뀐 것이다 - 검수 파일을 다시 만들 것.
@@ -1032,32 +1034,34 @@ def test_the_audited_wrong_answers_are_the_only_ones_left():
     rows = [l.strip() for l in
             pathlib.Path("tests/fixtures/새표본235.txt").read_text(encoding="utf-8").splitlines()
             if l.strip()]
-    wrong, vague, section = set(), set(), "wrong"
-    for line in pathlib.Path("tests/fixtures/새표본235_오답.tsv").read_text(
-            encoding="utf-8").splitlines():
-        if line.startswith("#"):
-            if "[애매]" in line:
-                section = "vague"
-            # ⚠ [검수했고 정답] 절을 모르면 그 절의 행이 조용히 애매로 센다.
-            #   지금은 그 절이 주석뿐이라 드러나지 않지만, 데이터 행을 한 줄
-            #   넣는 순간 카운트가 틀어진다 - 파일을 고치는 사람이 검사를
-            #   같이 고쳐야 한다는 뜻이라 여기서 미리 받는다.
-            elif "[고쳐짐" in line or "[검수했고 정답]" in line:
-                section = "fixed"
-            continue
-        if not line.strip():
-            continue
-        (wrong if section == "wrong" else vague if section == "vague" else set()).add(
-            line.split("\t")[0]
-        )
+    # ⚠ 집계는 **공용 헬퍼 하나**를 쓴다 (scripts/audit_tally.py). 2026-09-08
+    #   까지 같은 일을 하는 구현이 셋이었고 서로 달라서 기획서에 77.8% 를
+    #   적었는데 실제는 77.0% 였다.
+    import sys
 
-    matched = [r for r in rows if book.lookup_all(r)]
-    assert len(matched) == 111
-    assert len([r for r in matched if r in wrong]) == 3
-    assert len([r for r in matched if r in vague]) == 3
-    # 검수 파일에 적힌 오답이 실제로 아직 매칭되고 있어야 한다 - 고쳐졌으면
-    # [고쳐짐] 절로 옮길 것.
-    assert wrong <= set(matched) and vague <= set(matched)
+    sys.path.insert(0, "scripts")
+    from audit_tally import load_audit, tally
+
+    wrong, vague = load_audit()
+    results = {r: sorted({g.item for g in book.lookup_all(r)}) for r in rows}
+    got = tally(results)
+
+    assert got["matched_all"] == 116, got
+    assert got["ok"] == 111, got
+    assert got["vague"] == 2, got
+    assert got["wrong"] == 1, got
+
+    # 검수 파일에 적힌 줄은 **아직 그 품목이 붙고 있어야** 한다 - 다른 품목이
+    # 붙어 고쳐졌으면 [고쳐짐]·[검수했고 정답] 절로 옮기거나 사유를 적을 것.
+    #
+    # ⚠ 145번 곰돌이비치타월은 예외로 남겨 뒀다. 지금은 '의류' 가 붙어
+    #   고쳐졌지만, '물놀이' 가 다시 튜브를 붙이면 오답이므로 가드로 필요하다.
+    #   그 사유를 파일 안에 적어 뒀고, 여기서는 사유 문구의 존재로 확인한다.
+    audit_text = pathlib.Path("tests/fixtures/새표본235_오답.tsv").read_text(encoding="utf-8")
+    for name in set(wrong) | set(vague):
+        if name not in results or results[name]:
+            continue
+        assert "가드로 남긴다" in audit_text, name
 
 
 def test_knee_pad_alias_needs_a_child_marker_in_the_product_name():
@@ -1128,7 +1132,7 @@ def test_the_proposal_never_quotes_an_unaudited_rate_bare():
     import pathlib
 
     doc = pathlib.Path("01_기획서_안심소싱돋보기.md").read_text(encoding="utf-8")
-    assert "77.0%" in doc
+    assert "83.7%" in doc
     assert "0건 부착" in doc
     # 조건 없는 숫자를 쓰지 않는다 - 경로와 분모를 함께 적는다.
     assert "조건 없는 숫자를 쓰지 않습니다" in doc

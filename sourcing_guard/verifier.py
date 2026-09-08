@@ -1626,7 +1626,22 @@ def _item_grade_findings(
     # '안마기'·'마사지기' 는 그 자체로 전동인지 수동인지 알 수 없어서,
     # 답이 있어야 붙일 수 있다.
     extra = ALIASES_IF_MAINS if (hints and hints.says_mains()) else None
-    found = book.lookup_all(product_name, extra_aliases=extra, raw_text=raw_text)
+    # ⚠ **추출이 상품명을 못 냈으면 원본을 쓴다.** LLM 이 product_name 을
+    #   null 로 내는 줄이 있고(실측 135건 중 2건), 그때 조회를 아예 못 하면
+    #   원본에 품목명이 그대로 적혀 있는데도 회색으로 남는다:
+    #
+    #     5    "[겨울필수템] USB 포켓 발열무릎담요 …"   → 전기방석
+    #     126  "원터치 대형 사각 … 아기침대 텐트 모기장" → 의류 이외의 섬유제품
+    #
+    #   R3 은 "모르면 UNKNOWN" 이지 **"LLM 이 모르면 아는 것도 버려라" 가
+    #   아니다** - category 게이트를 열 때 적은 것과 같은 이유다.
+    #
+    # ⚠ 이것은 [Q] 가 금지한 자리가 **아니다.** 금지된 것은 정리 상품명이
+    #   있는데도 매처 본체 검사에 원본을 겹쳐 넣는 것이고(09-04 경쟁 양보
+    #   버그), 여기는 상품명이 **없을 때** 원본을 그 자리에 놓는 것이다.
+    #   실측에서 갈림 증가 0 · 비대상 부착 0 · 오답 증가 0 이다.
+    lookup_name = product_name or raw_text
+    found = book.lookup_all(lookup_name, extra_aliases=extra, raw_text=raw_text)
 
     # LLM 이 옮긴 법령 품목명을 표에서 조회한다.
     #
