@@ -538,6 +538,26 @@ def recall_match_earns_red(
     detail = finding.detail or {}
     if detail.get("matched_on") != "model_name":
         return True
+
+    # ⚠ **모델명 칸에 품목명이 들어온 경우는 모델명 축을 쓰지 않는다** (4-가).
+    #
+    #   실측 [48] 차량용 무선 휴대용 핸디 청소기 · `model_name='진공 청소기'`.
+    #   그것으로 리콜 모델명을 대조하면 같은 품목의 아무 리콜에나 걸린다 -
+    #   4건에 걸렸고 그중 셋은 리콜 품목이 `전지(충전지만 해당)` 였다. 4번째는
+    #   리콜 품목이 `진공청소기` 여서 아래 품목 일치를 통과해 RED 가 됐다.
+    #   즉 "품목이 같으니 RED" 인데 **모델명이 품목명이므로 그 일치는 정보가
+    #   아니다.**
+    #
+    #   목록은 등급표(정부 표)의 품목명과 표 자체의 별칭이다. "무엇이
+    #   일반명사인가" 를 우리가 정하지 않는다 (R1). 판정은 verifier 가
+    #   `matched_value_names_an_item` 으로 적어 준다 - scorer 는 순수 함수라
+    #   YAML 을 읽지 않는다.
+    #
+    # ⚠ 버리지는 않는다. finding 은 그대로 나오고 문구도 그대로다. 색만 내린다.
+    # ⚠ 워치리스트 sweep 은 건드리지 않는다 (R6) - 위 머리 주석 참조.
+    if detail.get("matched_value_names_an_item"):
+        return False
+
     if _overlaps(facts.maker, detail.get("maker")):
         return True
     recalled = detail.get("recalled_product_name")

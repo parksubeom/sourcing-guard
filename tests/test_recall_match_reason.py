@@ -360,3 +360,77 @@ def test_recall_board_url_is_configured():
     """
     assert RECALL_BOARD_URL.startswith("https://")
     assert "recall" in RECALL_BOARD_URL
+
+
+# ---------------------------------------------------------------------------
+# 4-가. 모델명 칸에 품목명이 들어온 경우는 모델명 축을 쓰지 않는다
+# ---------------------------------------------------------------------------
+def test_a_model_name_that_is_an_item_name_does_not_earn_red():
+    """실측 [48] 차량용 핸디 청소기 · `model_name='진공 청소기'`.
+
+    그것으로 리콜 모델명을 대조하면 같은 품목의 아무 리콜에나 걸린다. 실제로
+    4건에 걸렸고 그중 셋은 리콜 품목이 `전지(충전지만 해당)` 였다. 4번째는
+    리콜 품목이 `진공청소기` 여서 품목 일치를 통과해 RED 가 됐다 - **모델명이
+    품목명이므로 그 일치는 정보가 아니다.**
+
+    ⚠ 목록은 등급표(정부 표)의 품목명과 표 자체의 별칭이다. "무엇이 일반명사
+      인가" 를 우리가 정하지 않는다 (R1).
+    """
+    facts = ProductFacts(
+        product_name="차량용 무선 휴대용 핸디 청소기 에어건 2in1",
+        model_name="진공 청소기",
+        legal_item_name="진공청소기",
+        category=ItemCategory.ELECTRICAL,
+    )
+    _findings, result = run(
+        facts, [(rec(product_name="진공청소기", model_name="진공 청소기"),
+                 Match(MatchStrength.EXACT, "model_name"))]
+    )
+    f = next(x for x in result.findings if x.kind is FindingKind.RECALL_MATCH)
+
+    assert f.detail["matched_value_names_an_item"] is True
+    assert f.signal is Signal.AMBER
+    assert result.signal is not Signal.RED
+    # 버리지 않는다 - 줄과 문구는 그대로다 (R6).
+    assert "원문 확인이 필요합니다" in f.statement_ko
+
+
+def test_a_real_model_name_with_the_same_item_still_earns_red():
+    """게이트가 좁다는 것을 잠근다. 진짜 모델명이면 품목 일치로 RED 다."""
+    facts = ProductFacts(
+        product_name="테팔 블랙필 무선주전자 KO2998",
+        model_name="KO2998",
+        legal_item_name="전기주전자",
+        category=ItemCategory.ELECTRICAL,
+    )
+    _findings, result = run(
+        facts, [(rec(product_name="전기주전자", model_name="KO2998"),
+                 Match(MatchStrength.EXACT, "model_name"))]
+    )
+    f = next(x for x in result.findings if x.kind is FindingKind.RECALL_MATCH)
+
+    assert f.detail["matched_value_names_an_item"] is False
+    assert f.signal is Signal.RED
+    assert result.signal is Signal.RED
+
+
+def test_the_item_name_list_comes_from_the_government_table_not_from_us():
+    """우리가 손으로 만든 ALIASES 는 이 목록에 넣지 않는다.
+
+    넣으면 "무엇이 일반명사인가" 를 우리가 정하는 것이 되어 R1 논거가 무너진다.
+    """
+    from sourcing_guard.item_grades import ALIASES, ItemGradeBook
+
+    book = ItemGradeBook()
+    # 표에 있는 이름
+    assert book.names_an_item("진공 청소기")
+    assert book.names_an_item("스팀청소기")
+    # 모델명처럼 생긴 것
+    assert not book.names_an_item("KO2998")
+    assert not book.names_an_item("레인보우")
+    assert not book.names_an_item("153")
+    assert not book.names_an_item("")
+
+    # 우리 사전에만 있고 표에는 없는 키는 걸리지 않아야 한다.
+    ours_only = [k for k in ALIASES if not book.names_an_item(k)]
+    assert ours_only, "ALIASES 가 전부 표에 있으면 이 검사가 무의미하다"
