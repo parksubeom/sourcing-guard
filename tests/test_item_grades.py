@@ -1481,7 +1481,18 @@ def test_a_power_prefix_is_not_added_without_evidence_in_the_text():
     assert "전기면도기" in prefix_variants("면도기")
     assert "전기면도기" not in prefix_variants("면도기", haystack="1회용 면도기")
 
-    # 표지어 목록은 실측에서 뽑았다. 한 글자('W'·'V')는 넣지 않았다.
+    # ⚠ 목록이 두 갈래다 - 실측 9개와 추정 추가 5개. 주석이 그것을 갈라
+    #   적어야 한다. "실측" 이라 적힌 것은 실측이어야 한다.
+    import pathlib as _p
+
+    src = _p.Path("sourcing_guard/item_grades.py").read_text(encoding="utf-8")
+    assert "(1) 실측 9개" in src and "(2) 추정 추가 5개" in src
+    for measured in ("전기", "전동", "무선", "충전", "USB", "BLDC", "DC",
+                     "배터리", "건전지"):
+        assert measured in _POWER_MARKERS, measured
+    # 한 글자는 넣지 않았다.
     assert "W" not in _POWER_MARKERS and "V" not in _POWER_MARKERS
+    # 'DC' 는 두 글자라 실측했다 - 474건에서 BLDC 안 2건뿐, 단독 0건.
+    assert "단독 'DC' 출현은 0건" in src
     assert has_power_marker("BLDC 써큘레이터")
     assert not has_power_marker("무쇠 프라이팬 궁중팬")
