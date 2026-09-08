@@ -1146,7 +1146,15 @@ def test_the_proposal_never_quotes_an_unaudited_rate_bare():
     import pathlib
 
     doc = pathlib.Path("01_기획서_안심소싱돋보기.md").read_text(encoding="utf-8")
-    assert "83.7%" in doc
+    # ⚠ 83.7% → 84.4% (2026-09-08 · 4-e). `category=out_of_scope` 가 등급표
+    #   조회를 막던 게이트를 열어 `[CU] 핏미업 러닝벨트` 가 붙었다. 재계산
+    #   값이고 우리가 문서에 손으로 올린 숫자가 아니다 - `test_docs` 가 같은
+    #   값을 원자료에서 다시 계산해 대조한다.
+    #
+    #   ⚠ **검수된 정답은 99 (73.3%) 그대로다.** 새로 붙은 쌍은 검수 파일에
+    #     없어 미검수 15 로 들어간다. 즉 상한만 올랐다. 상한을 발표에 쓰는
+    #     문제는 미완 3-b(시피님 판정 대기) 그대로 열려 있다.
+    assert "84.4%" in doc
     assert "0건 부착" in doc
     # 조건 없는 숫자를 쓰지 않는다 - 경로와 분모를 함께 적는다.
     assert "조건 없는 숫자를 쓰지 않습니다" in doc
