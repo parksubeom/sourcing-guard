@@ -32,7 +32,13 @@ from .ratelimit import RateLimiter, text_fingerprint
 from .recall_index import RecallIndex
 from .storage import SqliteWatchStore
 from .sync import run_sync, sync_loop
-from .verifier import _grade_book, RuleBook, verify, verify_rf_by_model
+from .verifier import (
+    _grade_book,
+    RuleBook,
+    split_cert_regimes,
+    verify,
+    verify_rf_by_model,
+)
 from .watchlist import sweep
 
 @asynccontextmanager
@@ -327,6 +333,11 @@ def scan(req: ScanRequest, request: Request) -> ScanResult:
     allow_llm = _limiter.take_llm_budget(fingerprint=fp)
     imgs = [{"media_type": i.media_type, "data": i.data} for i in req.images]
     facts = extract(req.page_text, req.page_url, images=imgs, allow_llm=allow_llm)
+    # 어느 번호가 어느 제도인지 verifier 가 정한다 (4-d-3). verify() 머리에서도
+    # 부르지만 **여기서도** 불러야 한다 - score() 에 넘기는 facts 가 화면의
+    # "읽은 값" 패널이고, 거기에 전파번호가 KC 번호로 남으면 findings 와
+    # 화면이 어긋난다. 멱등이므로 두 번 불러도 같다.
+    facts = split_cert_regimes(facts)
     findings = verify(
         facts, _kats, _rules, _recalls, _rra, _noncompliant,
         hints=req.seller_hints,
