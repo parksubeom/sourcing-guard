@@ -355,6 +355,34 @@ def score(
     """
     kinds = {f.kind for f in findings}
 
+    # --- 소관 안내가 병기인가 단독인가 (4-d-1) -----------------------------
+    #
+    # 병기(`standalone=False`)면 **신호·헤드라인·감시권유·수록범위 안내에서
+    # 없는 것처럼 본다.** 화면에는 그 줄이 그대로 남는다 - 색만 바뀌는 것이
+    # 아니라 "덮지 않는다" 는 뜻이다.
+    #
+    # ⚠ 왜 kinds 에서 빼는가. 이 아래 다섯 곳이 `OUT_OF_SCOPE in kinds` 를
+    #   보고 각자 덮는다(_signal_for · 헤드라인 · _unknown_headline ·
+    #   _watch_suggestion · _coverage_note). 다섯 군데 조건을 따로 고치면
+    #   한 곳을 빼먹고, 그 한 곳이 5건을 침묵시킨 그 결함이다. 입구에서 한 번
+    #   가른다.
+    #
+    # ⚠ 감점은 원래 0 이므로 점수는 움직이지 않는다(_PENALTY).
+    #   `_grouped_findings`·`_axes` 는 findings 를 직접 보므로 그 줄이 화면에서
+    #   사라지지 않는다.
+    #
+    # ⚠ 판정은 verifier 가 아니라 여기서 한다고 착각하지 말 것 - verifier 가
+    #   "단독이냐" 라는 **사실**(등급이 붙었는가)을 detail 에 적고, scorer 는
+    #   그 사실로 신호를 정한다. R1 의 경계 그대로다.
+    if FindingKind.OUT_OF_SCOPE in kinds:
+        co_listed = all(
+            f.detail.get("standalone") is False
+            for f in findings
+            if f.kind is FindingKind.OUT_OF_SCOPE
+        )
+        if co_listed:
+            kinds = kinds - {FindingKind.OUT_OF_SCOPE}
+
     penalty = sum(_PENALTY[f.kind] for f in findings)
     value = max(0, 100 - penalty)
 
