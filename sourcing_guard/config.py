@@ -50,9 +50,10 @@ class Settings:
     # 세 필드가 비고, 그러면 등급표 조회가 원본 상품명으로 돌아간다 -
     # 발표 숫자(단건 83.7%)가 화면과 어긋난다.
     #
-    # ⚠ 순서를 환경변수로 둔다. 지금은 Claude 잔액이 0 이라 gpt 를 앞에
-    #   세운다 - 그렇지 않으면 매 스캔이 실패가 확정인 왕복을 한 번 더 한다.
-    #   Claude 를 충전하면 EXTRACTOR_ORDER=claude,gpt 로 되돌린다.
+    # ⚠ **기본값은 claude,gpt 다.** gpt 를 앞에 세우는 것은 장애 우회이고,
+    #   fly secret 으로만 건다. 장애 상태를 코드 기본값으로 굳히면 충전 후
+    #   env 를 안 바꿨을 때 GPT 가 영구 1순위가 된다 - 그러면 발표 숫자의
+    #   기준 추출기가 조용히 바뀐다.
     gpt_api_key: str | None
     gpt_model: str
     extractor_order: tuple[str, ...]
@@ -76,7 +77,7 @@ class Settings:
             gpt_model=os.getenv("GPT_MODEL", "gpt-5.4-mini"),
             extractor_order=tuple(
                 v.strip().lower()
-                for v in os.getenv("EXTRACTOR_ORDER", "gpt,claude").split(",")
+                for v in os.getenv("EXTRACTOR_ORDER", "claude,gpt").split(",")
                 if v.strip()
             ),
             kats_base_url=os.getenv("KATS_BASE_URL") or None,

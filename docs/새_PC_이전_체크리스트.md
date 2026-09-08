@@ -54,19 +54,29 @@ pytest -q                        # 577 passed 나오면 정상
 
 | 키 | 값 | 없으면 |
 |---|---|---|
-| `ANTHROPIC_API_KEY` | 108자 | LLM 추출이 휴리스틱으로 대체된다 (동작은 하되 정확도가 떨어진다) |
+| `ANTHROPIC_API_KEY` | 108자 | 추출기 1순위가 빠진다. GPT 가 받는다 |
+| `GPT_API_KEY` | 51자 | 추출기 2순위가 빠진다. **둘 다 없으면 휴리스틱**(동작은 하되 정확도가 떨어진다) |
 | `KATS_SERVICE_KEY` | 36자 | KC 인증 조회·리콜 동기화가 안 된다 |
 | `SYNC_TOKEN` | 32자 | `POST /api/v1/sync` 수동 트리거가 403 |
+
+⚠ 추출기가 두 벌이다 (CLAUDE.md R7, 2026-09-08 개정). 한쪽 키만 있어도
+동작하지만, 그때 발표 숫자의 기준 추출기가 그쪽으로 바뀐다. 지금 어느
+경로로 도는지는 `/healthz` 의 `extraction` 에서 확인한다.
 
 비밀이 아닌 나머지는 값을 그대로 적어둔다 — 개발 PC 기준:
 
 ```
 MOCK_MODE=false
 EXTRACTOR_MODEL=claude-sonnet-5
+GPT_MODEL=gpt-5.4-mini
+EXTRACTOR_ORDER=          (빈 값으로 두는 게 정상. 기본 claude,gpt)
 KATS_BASE_URL=            (빈 값으로 두는 게 정상. 시험용 오버라이드 전용)
 WATCHLIST_DB_PATH=data/watchlist.db
 SYNC_ENABLED=true
 ```
+
+⚠ `EXTRACTOR_ORDER` 는 **장애 우회용**이다. Claude 잔액이 0 인 동안만
+`gpt,claude` 로 두고, 충전하면 비운다. 장애 상태를 굳히면 안 된다.
 
 **IP 등록은 신경 쓰지 않아도 된다.** SafetyKorea 는 원래 서비스 ID 가 등록
 IP 에 묶여 미등록 IP 에서 `4001 Invalid IP` 가 나는데, 인증키 회신에

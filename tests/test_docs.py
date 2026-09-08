@@ -505,3 +505,76 @@ def test_every_measurement_tool_shares_one_tally():
     # 재생은 verify() 를 통과해야 한다 - lookup_all 직접 호출은 게이트를 건너뛴다.
     replay = (root / "scripts" / "replay_single_path.py").read_text(encoding="utf-8")
     assert "verify(" in replay
+
+
+def test_the_tally_does_not_score_unreviewed_pairs_as_correct():
+    """검수된 적 없는 (상품명, 품목) 쌍을 정답으로 세지 않는다.
+
+    ⚠ **세 번 지적된 결함이다.** 검수 목록은 Claude 추출 기준으로 만들어졌다.
+      다른 추출기가 다르게 붙인 쌍은 검수된 적이 없는데도 오답·애매 목록에
+      없다는 이유로 "ok" 로 잡힌다. 그러면 추출기를 바꿀 때마다 정답률이
+      공짜로 오른다 - 아무도 그 답을 본 적이 없는데.
+
+    ⚠ 쌍 하나라도 미검수면 그 줄이 미검수다. "하나라도 검수됐으면 ok" 는
+      갈림에서 새어 나간다 (GPT 가 전기매트에 ['전기매트','전기요'] 를 붙인
+      경우 - '전기요' 는 검수된 적이 없다).
+
+    ⚠ 코드가 정답 판정을 하지 않는다. 미검수는 tsv 로 뽑아 사람이 검수한다.
+    """
+    import sys
+
+    sys.path.insert(0, "scripts")
+    from audit_tally import load_reviewed_pairs, tally, verdict
+
+    reviewed = {("A", "완구"), ("B", "전기매트")}
+
+    # 검수된 쌍만 정답이다.
+    assert verdict("A", ["완구"], {}, {}, reviewed) == "ok"
+    # 갈림에서 일부만 검수됐으면 미검수다.
+    assert verdict("B", ["전기매트", "전기요"], {}, {}, reviewed) == "unreviewed"
+    # 아예 다른 품목이면 미검수다.
+    assert verdict("A", ["전기방석"], {}, {}, reviewed) == "unreviewed"
+    # 오답·애매 목록이 미검수보다 우선한다 - 이미 사람이 본 것이다.
+    assert verdict("A", ["전기방석"], {"A": {"전기방석"}}, {}, reviewed) == "wrong"
+    # reviewed 를 안 주면 예전 동작 - Claude 기준 재생·락이 그 경로다.
+    assert verdict("A", ["전기방석"], {}, {}) == "ok"
+
+    # tally 는 두 숫자를 낸다: 검수된 값과 미검수 포함 상한.
+    scope = {"A": "대상", "B": "대상", "C": "대상"}
+    results = {"A": ["완구"], "B": ["전기매트", "전기요"], "C": ["전기방석"]}
+    got = tally(results, scope=scope, audit=({}, {}), reviewed=reviewed)
+    assert got["ok"] == 1, got
+    assert got["unreviewed"] == 2, got
+    assert got["ok_upper"] == 3, got
+
+    # 실제 원자료로 쌍 집합이 만들어지는지 - 형식이 바뀌면 여기서 깨진다.
+    root = Path(__file__).resolve().parents[1]
+    src = root / "tests" / "fixtures" / "단건경로_136건.json"
+    if src.exists():
+        pairs = load_reviewed_pairs(src)
+        assert pairs, "원자료에서 검수된 쌍을 못 읽었다"
+        assert all(isinstance(p, tuple) and len(p) == 2 for p in pairs)
+
+
+def test_the_comparison_script_reports_both_numbers_and_dumps_unreviewed():
+    """추출기 대조 스크립트가 두 숫자를 내고 미검수를 파일로 남기는지.
+
+    ⚠ "미검수 포함 상한" 만 보고하면 부풀린 숫자가 발표로 새어 나간다.
+      두 숫자를 함께 내고, 상한 쪽에는 "검수 전에는 이 값을 쓰지 않는다" 를
+      화면에 적는다.
+    """
+    root = Path(__file__).resolve().parents[1]
+    src = (root / "scripts" / "compare_extractors.py").read_text(encoding="utf-8")
+
+    assert "load_reviewed_pairs" in src
+    assert "reviewed=reviewed" in src
+    assert "정답(검수된 쌍만)" in src
+    assert "정답 상한(미검수 포함)" in src
+    assert "검수 전에는 이 값을 쓰지 않는다" in src
+    # 미검수 목록을 파일로 남긴다 - 사람이 검수한다.
+    assert "unreviewed_out" in src
+    assert "사람이 검수해야 한다" in src
+    # 라벨을 강제한다 - 경로·입력·분모 없는 숫자는 쓰지 않는다.
+    assert '"--label", required=True' in src
+    # 비대상 부착이 결과에 보여야 한다 - 0 이 아니면 못 간다.
+    assert "비대상 → 부착" in src

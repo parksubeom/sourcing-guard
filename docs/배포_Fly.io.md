@@ -80,11 +80,34 @@ curl -s https://<앱이름>.fly.dev/healthz
 
 ```bash
 fly secrets set KATS_SERVICE_KEY=xxxxx     # 이것만으로 실연동 시작
-fly secrets set ANTHROPIC_API_KEY=sk-...   # Extractor 실제 구동
+fly secrets set ANTHROPIC_API_KEY=sk-...   # 추출기 1순위 (CLAUDE.md R7)
+fly secrets set GPT_API_KEY=sk-...         # 추출기 2순위. 둘 다 죽으면 휴리스틱
+fly secrets set GPT_MODEL=gpt-5.4-mini
 fly secrets set MOCK_MODE=false
 ```
 
 `fly secrets set` 은 자동으로 재배포한다.
+
+⚠ **키를 커맨드라인에 두면 프로세스 목록과 셸 히스토리에 남는다.** 여러 개를
+한 번에 넣을 때는 stdin 을 쓴다:
+
+```bash
+fly secrets import < secrets.env   # KEY=value 한 줄씩. 넣은 뒤 파일을 지운다
+```
+
+#### `EXTRACTOR_ORDER` — 장애 우회용 secret
+
+코드 기본값은 `claude,gpt` 다 (`config.py`). **Claude 잔액이 0 인 동안만**
+secret 으로 순서를 뒤집는다:
+
+```bash
+fly secrets set EXTRACTOR_ORDER=gpt,claude   # 잔액 0 인 동안만
+fly secrets unset EXTRACTOR_ORDER            # 충전하면 지운다 → 기본값으로
+```
+
+지우지 않으면 GPT 가 영구 1순위가 되고 **발표 숫자의 기준 추출기가 조용히
+바뀐다.** 지금 어느 경로로 도는지는 `/healthz` 의 `extraction` 에서 본다 —
+응답 모양으로 추론하지 말 것 (2026-09-08 에 그 실수를 했다).
 
 **IP 등록**: SafetyKorea 는 등록된 IP 에서만 응답한다(결과코드 4001).
 Fly 의 나가는 IP 를 확인해 제품안전정보센터에 등록 신청한다.
