@@ -35,7 +35,13 @@ from .scoping import (
 from .item_grades import ALIASES_IF_MAINS, ItemGradeBook
 from .item_grades import normalize as normalize_item
 from .noncompliant_index import NoncompliantIndex
-from .rra_client import RraApiError, RraClient, is_searchable_model, rf_evidence_url
+from .rra_client import (
+    RraApiError,
+    RraClient,
+    is_rf_number,
+    is_searchable_model,
+    rf_evidence_url,
+)
 
 _NONCOMPLIANT_URL = "https://www.rra.go.kr/ko/license/A_d_list.do"
 from .models import (
@@ -740,6 +746,51 @@ def _tier_unknown_statement(category: ItemCategory) -> str:
     )
 
 
+def split_cert_regimes(facts: ProductFacts) -> ProductFacts:
+    """어느 번호가 어느 제도인지 **여기서** 정한다. 추출기가 아니다.
+
+    왜 verifier 인가
+    ----------------
+    전안법 KC 와 전파법 적합성평가는 **별개 제도**이고 조회 기관도 다르다
+    (SafetyKorea vs emsit/RRA). 그런데 추출기는 프롬프트가 "KC 번호를
+    rf_numbers 에 넣지 마십시오" 라고 적어 둬도 반대 방향으로는 새는 것을
+    막지 못한다 - 실측에서 `MSIP-CMI-DVT-Rainbow`(전파번호)가 `kc_numbers`
+    에 담겨 왔다.
+
+    그 결과 **같은 번호 하나로 두 축에서 각각 "조회되지 않습니다" 가 떴다**:
+
+        kc_not_found      AMBER   SafetyKorea 에 없다 (당연하다, 소관이 아니다)
+        rf_cert_not_found AMBER   전파 쪽에도 없다고 나왔다
+
+    같은 사실을 두 번 말하는 것이고, 앞의 것은 **소관이 아닌 DB 에 물어서
+    안 나온 것**이다. 부재를 증거로 읽는 R3-b 위반의 입구다.
+
+    ⚠ **프롬프트를 고치지 않는다.** 프롬프트를 바꾸면 R7 에 따라 235건을 LLM
+      으로 다시 재야 한다. 번호 형식은 하드 데이터이므로 결정론적 코드가
+      가리는 것이 맞다 - 추출기의 `CERT_NUMBER_RE` 병합과 같은 계열이다.
+
+    ⚠ **멱등이다.** `verify()` 머리에서도 부르고 `main.py` 가 화면에 넘기는
+      facts 에도 부른다. 두 번 불러도 결과가 같아야 한다 - 한 번 옮긴 번호는
+      이미 `rf_numbers` 에 있으므로 다시 옮길 것이 없다.
+
+    ⚠ 도매꾹 구조 입력([H])에서는 `certType` 이 제도를 **명시**한다. 그때는
+      번호 모양으로 추측하지 않고 그 필드를 쓴다 - 모양으로 가르면 우리
+      정규식이 못 잡는 표기를 놓친다(4-c 가 그 사례였다).
+    """
+    moved = [n for n in facts.kc_numbers if is_rf_number(n)]
+    if not moved:
+        return facts
+    kept = [n for n in facts.kc_numbers if not is_rf_number(n)]
+    rf = list(facts.rf_numbers)
+    for n in moved:
+        if n not in rf:
+            rf.append(n)
+    _log.info(
+        "전파인증 번호를 kc_numbers 에서 rf_numbers 로 옮겼습니다: %s", moved
+    )
+    return facts.model_copy(update={"kc_numbers": kept, "rf_numbers": rf})
+
+
 def verify(
     facts: ProductFacts,
     kats: KatsClient,
@@ -758,6 +809,9 @@ def verify(
     hints = hints or SellerHints()
     today = date.today()
     findings: list[Finding] = []
+
+    # 제도를 먼저 가른다. 이 뒤의 모든 축이 갈라진 값을 본다 (4-d-3).
+    facts = split_cert_regimes(facts)
 
     # --- (0) 우리 소관인가 -------------------------------------------------
     # 공통안전기준 1항이 제외하는 물품이면 여기서 끝낸다. 셀러에게 "판별 못 함"
