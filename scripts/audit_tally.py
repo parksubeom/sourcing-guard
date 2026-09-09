@@ -241,9 +241,13 @@ BASELINE: dict[str, dict[str, int]] = {
 #:     PYTHONPATH=. python scripts/measure_matcher.py --sample tests/fixtures/도매꾹239.txt
 #:     PYTHONPATH=. python scripts/measure_matcher.py
 BASELINE_MATCH: dict[str, dict[str, int]] = {
-    # 09-04 로그는 170/239(71.1%)이었다. 지금 167 이고 **차이 3건 중 2건은 오답을
-    # 지운 것, 1건은 정답을 잃은 것**이다 (미완 4-f). 개선/악화로 읽지 말 것.
-    "도매꾹239": {"matched": 167, "total": 239},
+    # 09-04 로그는 170/239(71.1%)이었다. 지금 168 이고 **차이 2건은 둘 다 오답을
+    # 지운 것**이다 - 정답 손실 0 (미완 4-f · 4-g). 개선/악화로 읽지 말 것:
+    # 붙는 수가 줄어든 것이 오답을 지운 결과다.
+    #
+    #   167 → 168  4-g 에서 `'걸이'` 를 부속품명 목록에서 뺐다. `벽걸이히터` 가
+    #              `걸이` 로 읽혀 `전기온풍기` 를 잃고 있었다.
+    "도매꾹239": {"matched": 168, "total": 239},
     "새표본235": {"matched": 116, "total": 235},
 }
 
