@@ -174,7 +174,10 @@
         if (!r.ok) throw new Error("서버가 " + r.status + " 로 응답했습니다");
         return r.json();
       })
-      .then(render)
+      // 주의: 응답이 배열에서 객체로 바뀌었다 (C-백). 양쪽을 받는다.
+      //   sweep 시각·알림 표시는 주말 묶음이다 (미완 6장 C-화면).
+      //   정적 자산에는 이모지·경고 기호를 쓰지 않는다 - test_no_emoji_anywhere.
+      .then(function (data) { render((data && data.items) || data); })
       .catch(fail)
       .finally(function () { skel.hidden = true; });
   }
