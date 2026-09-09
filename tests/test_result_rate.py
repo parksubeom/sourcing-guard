@@ -14,6 +14,8 @@ from datetime import date
 import pytest
 from fastapi.testclient import TestClient
 
+from pathlib import Path
+
 from sourcing_guard.main import app
 from sourcing_guard.recall_index import RecallIndex
 from sourcing_guard.models import (
@@ -124,6 +126,7 @@ def test_every_finding_kind_is_classified():
     FindingKind.LOOKUP_FAILED,      # 조회를 **못 했다**
     FindingKind.KC_TIER_UNKNOWN,    # 등급을 몰라 부재를 해석 못 한다
     FindingKind.RECALL_CLEAR,       # 모든 검사에 붙는다 - 아래 검사 참조
+    FindingKind.RECALL_WEAK_MATCH,  # 모델명 문자열만 겹친 것 - 아래 검사 참조
 ])
 def test_these_are_not_something_we_gave_the_seller(kind):
     assert kind in NON_SPECIFIC_FINDING_KINDS
@@ -224,3 +227,55 @@ def test_the_metric_is_not_used_for_the_signal():
     # 비구체적 finding 을 하나 더해도 신호는 그것 때문에 바뀌지 않는다.
     signal_more = scorer.score(facts, findings + [_f(FindingKind.INFO_REQUEST)]).signal
     assert signal_with is signal_more
+
+
+# ── recall_weak_match 를 뺀 이유 ────────────────────────────────────
+def test_weak_recall_match_alone_does_not_count():
+    """약한 일치는 **이 상품에 대해 말한 것이 아닐 수 있다.**
+
+    근거는 4-d-2 실측이다 - 상세 109 에서 나온 RED 5건 중 **3건이 품목이 다른
+    우연 충돌**이었다('레인보우' · 'hope' · '진공 청소기'). 그래서
+    `downgrade_unqualified_recall_reds()` 가 이런 것의 **신호를 이미 내린다.**
+    신호를 내리면서 "구체적인 것을 줬다" 로 세면 앞뒤가 안 맞는다.
+    """
+    assert FindingKind.RECALL_WEAK_MATCH in NON_SPECIFIC_FINDING_KINDS
+    assert not has_specific_finding([_f(FindingKind.RECALL_WEAK_MATCH)])
+
+    # ⚠ **강한 일치는 여전히 센다.** 둘을 같이 빼면 리콜 축이 관측에서 사라진다.
+    assert FindingKind.RECALL_MATCH in SPECIFIC_FINDING_KINDS
+    assert has_specific_finding([_f(FindingKind.RECALL_MATCH)])
+
+
+def test_the_reason_and_the_re_entry_condition_are_written_down():
+    """왜 뺐는지와 **언제 다시 넣는지**가 코드에 적혀 있다.
+
+    ⚠ 재진입 조건이 없으면 이 결정이 영구가 된다. 강한 weak_match(모델명 +
+      제조사·품목 일치)가 생기면 그때는 "이 상품에 대해 말한 것" 이 되므로
+      다시 넣어야 한다.
+    """
+    src = (
+        Path(__file__).resolve().parents[1] / "sourcing_guard/models.py"
+    ).read_text(encoding="utf-8")
+    assert "4-d-2" in src, "실측 근거가 적혀 있지 않다"
+    assert "우연 충돌" in src
+    assert "제조사" in src and "품목 일치" in src, "재진입 조건이 적혀 있지 않다"
+    # R6 과 헷갈리지 않게 - 알림은 관대하게 보낸다는 것도 적혀 있어야 한다.
+    assert "R6" in src
+
+
+def test_weak_match_is_still_delivered_as_a_watch_alert():
+    """관측에서 뺀 것이 **알림을 끈 것이 아님**을 실물로 확인한다 (R6).
+
+    ⚠ 스캔에서는 잘못 안심시키는 것이 비싸지만 알림에서는 **놓친 알림**이 더
+      비싸다. 오류 비대칭이 뒤집히는 자리다.
+    """
+    import inspect
+
+    from sourcing_guard import watchlist
+
+    src = inspect.getsource(watchlist)
+    # 스윕이 관측 지표 집합을 보면 안 된다 - 보면 약한 일치가 알림에서 빠진다.
+    assert "SPECIFIC_FINDING_KINDS" not in src
+    assert "NON_SPECIFIC_FINDING_KINDS" not in src
+    # 약한 강도가 매칭 하한으로 남아 있다.
+    assert "WEAK" in src

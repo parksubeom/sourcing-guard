@@ -406,8 +406,8 @@ SPECIFIC_FINDING_KINDS: frozenset["FindingKind"] = frozenset({
     FindingKind.AGE_OUT_OF_CHILD_RANGE,
     FindingKind.OUT_OF_SCOPE,
     # 리콜 축
+    #   ⚠ `RECALL_WEAK_MATCH` 는 여기 없다 - 아래 비구체적 쪽에 있다.
     FindingKind.RECALL_MATCH,
-    FindingKind.RECALL_WEAK_MATCH,
     FindingKind.MAKER_OTHER_RECALLS,
     # 전파 축
     FindingKind.RF_CERT_VERIFIED,
@@ -436,6 +436,28 @@ NON_SPECIFIC_FINDING_KINDS: frozenset["FindingKind"] = frozenset({
     #   **움직이지 않는 지표는 지표가 아니다.** 부재의 증명은 원래 약하고
     #   (R3-b), GREEN 조건도 이것만으로는 안 준다.
     FindingKind.RECALL_CLEAR,
+    # ⚠⚠ `recall_weak_match` 도 뺐다 (2026-09-09). 약한 일치는 **모델명 문자열이
+    #   겹쳤다는 사실**이고, 이 상품에 대해 말한 것이 아닐 수 있다.
+    #
+    #   근거는 4-d-2 실측이다 - 상세 109 에서 나온 RED 5건 중 **3건이 품목이
+    #   다른 우연 충돌**이었다:
+    #
+    #       '레인보우'      물놀이 튜브        ↔  전혀 다른 품목의 리콜
+    #       'hope'          생활용품          ↔  같은 문자열을 쓴 다른 상품
+    #       '진공 청소기'    일반 명사가 모델명 자리에 들어온 경우
+    #
+    #   그래서 `downgrade_unqualified_recall_reds()` 가 이런 것의 **신호를 이미
+    #   내린다.** 신호를 내리면서 "구체적인 것을 줬다" 로 세면 앞뒤가 안 맞고,
+    #   `recall_clear` 를 뺀 것과 같은 이유로 **지표가 우리에게 유리하게 부푼다.**
+    #
+    #   ⚠ 다시 넣을 조건: 모델명 일치에 **제조사·품목 일치까지 요구하는 강한
+    #     weak_match** 가 생기면 그때 넣는다. 그때는 "이 상품에 대해 말한 것" 이
+    #     되고 우연 충돌 3건이 걸러진다.
+    #
+    #   ⚠ R6 은 그대로다. 워치리스트 알림은 약한 일치도 **관대하게 보낸다** -
+    #     놓친 알림이 더 비싸기 때문이다. 여기서 빼는 것은 **관측 지표**에서
+    #     빼는 것이고, 알림을 끄는 것이 아니다.
+    FindingKind.RECALL_WEAK_MATCH,
     FindingKind.INFO_REQUEST,
     FindingKind.COVERAGE_GAP,
     FindingKind.LOOKUP_FAILED,
