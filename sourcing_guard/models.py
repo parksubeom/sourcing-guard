@@ -365,6 +365,86 @@ class ResultAxis(BaseModel):
     note: str = ""      # 기준일 같은 한정
 
 
+#: **셀러에게 구체적인 것을 하나라도 줬는가** 를 가리는 finding 종류 (E).
+#:
+#: 모든 `Finding` 은 `source_url` 을 갖는다(R2). 그래서 "원문 링크가 붙었나" 로는
+#: 아무것도 갈리지 않는다 - 갈라야 하는 것은 **이 상품에 대해 무엇을 말했나** 다.
+#:
+#: 여기 **넣지 않은** 것과 그 이유:
+#:
+#:     info_request      우리가 **묻는** 것이다. 답을 준 게 아니다
+#:     coverage_gap      우리 수록 범위 밖이라고 말한 것이다
+#:     lookup_failed     조회를 **못 했다**. 정부 API 장애다
+#:     kc_tier_unknown   등급을 몰라서 부재를 해석할 수 없다는 말이다
+#:     item_grade_not_applied · item_grade_needs_power
+#:                       조건이 안 맞아 적용하지 않았다는 말이다
+#:
+#: ⚠ `kc_absence_expected` 는 **넣는다.** "이 등급에서는 번호 부재가 정상이다" 는
+#:   원문 근거가 붙은 **이 상품에 대한 판단**이고, R3-b 가 세운 답이다.
+#:
+#: ⚠ `out_of_scope` 도 넣는다. "다른 부처 소관" 은 판별 못 함이 아니라 답이다.
+#:
+#: ⚠ 이 집합은 **판정에 쓰지 않는다.** 관측 지표(`/healthz`)만 쓴다 - 신호를
+#:   여기에 걸면 "구체적 finding 이 많으면 위험" 같은 판정이 된다.
+#: 여기 **넣은** 것 - 열거로 둔다. 새 종류가 생기면 자동으로 "구체적" 이 되지
+#: 않게 하기 위해서다. `tests/test_result_rate.py` 가 모든 종류가 분류됐는지 본다.
+SPECIFIC_FINDING_KINDS: frozenset["FindingKind"] = frozenset({
+    # 인증 축 - 조회해서 무엇이 나왔나
+    FindingKind.KC_VERIFIED,
+    FindingKind.KC_REVOKED,
+    FindingKind.KC_EXPIRED,
+    FindingKind.KC_SUSPENDED,
+    FindingKind.KC_UNDER_ACTION,
+    FindingKind.KC_NOT_FOUND,
+    FindingKind.KC_MISSING_BUT_REQUIRED,
+    FindingKind.KC_ABSENCE_EXPECTED,
+    FindingKind.KC_IMAGE_CANDIDATE,
+    # 품목 축 - 무엇으로 봤고 어느 등급인가
+    FindingKind.ITEM_GRADE_MATCHED,
+    FindingKind.ITEM_GRADE_SPLIT,
+    FindingKind.CHILD_CATCH_ALL,
+    FindingKind.AGE_OUT_OF_CHILD_RANGE,
+    FindingKind.OUT_OF_SCOPE,
+    # 리콜 축
+    FindingKind.RECALL_MATCH,
+    FindingKind.RECALL_WEAK_MATCH,
+    FindingKind.MAKER_OTHER_RECALLS,
+    # 전파 축
+    FindingKind.RF_CERT_VERIFIED,
+    FindingKind.RF_CERT_NOT_FOUND,
+    FindingKind.RF_WIRELESS_UNVERIFIED,
+    FindingKind.RF_NONCOMPLIANT,
+    # 유해물질 축
+    FindingKind.HAZARD_RULE_APPLIES,
+    FindingKind.SUBSTANCE_MENTIONED,
+})
+
+#: 일부러 뺀 것. 합집합이 전체와 같아야 한다 - 검사가 강제한다.
+NON_SPECIFIC_FINDING_KINDS: frozenset["FindingKind"] = frozenset({
+    # ⚠⚠ `recall_clear` 를 뺐다. 처음엔 넣었는데 **지표가 항상 1.0 이 됐다.**
+    #
+    #   이 finding 은 리콜 대조를 했다는 사실이라 **모든 검사에 붙는다** -
+    #   URL 만 붙여넣어 우리가 아무것도 못 읽은 검사에도 붙는다. 그때 "리콜
+    #   목록에서 일치 항목을 찾지 못했습니다" 는 대조할 것이 없어서 못 찾은
+    #   것이고, 셀러에게 준 것이 아니다.
+    #
+    #   실측 (목 모드):
+    #       "그냥 아무 글자"        recall_clear 포함 → True   제외 → False
+    #       "https://example.com/…" recall_clear 포함 → True   제외 → False
+    #       "유아용 블록 완구 …"     둘 다 True
+    #
+    #   **움직이지 않는 지표는 지표가 아니다.** 부재의 증명은 원래 약하고
+    #   (R3-b), GREEN 조건도 이것만으로는 안 준다.
+    FindingKind.RECALL_CLEAR,
+    FindingKind.INFO_REQUEST,
+    FindingKind.COVERAGE_GAP,
+    FindingKind.LOOKUP_FAILED,
+    FindingKind.KC_TIER_UNKNOWN,
+    FindingKind.ITEM_GRADE_NOT_APPLIED,
+    FindingKind.ITEM_GRADE_NEEDS_POWER,
+})
+
+
 class ScanMeta(BaseModel):
     """**이 스캔 한 건**이 어떻게 나왔나. 판정이 아니라 리포트 메타다.
 

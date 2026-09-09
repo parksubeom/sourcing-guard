@@ -33,7 +33,7 @@ from .models import (
     SellerHints,
     WatchItem,
 )
-from .scorer import score
+from .scorer import has_specific_finding, score
 from .demos import DEMOS, DEMO_TEXTS
 from .ratelimit import RateLimiter, text_fingerprint
 from .recall_index import RecallIndex
@@ -91,6 +91,42 @@ _kats = KatsClient(settings.kats_base_url, settings.kats_service_key, mock=setti
 # 전파인증 조회. 인증키가 필요 없어 MOCK_MODE 만 따른다.
 _rra = RraClient(mock=settings.mock_mode)
 _rules = RuleBook()
+
+
+class ResultStats:
+    """**유효 결과율** - 구체적인 것을 하나라도 준 검사의 비율 (E).
+
+    매칭률과 별개로 우리가 움직여야 할 지표다. 매칭률이 올라도 화면이 "확인
+    필요" 세 줄뿐이면 셀러에게 준 것이 없다.
+
+    ⚠ **프로세스 메모리다.** 재배포하면 0 이 된다 - 누적 통계가 아니라 "지금 뜬
+      이 프로세스가 어떤 결과를 내고 있나" 를 보는 값이다. `ExtractionStats` 와
+      같은 성격이고 `/healthz` 가 그 사실을 함께 적는다.
+
+    ⚠ **단건 경로(`/api/v1/scan`)만 센다.** 배치는 `screen()` 이 `BatchRow` 를
+      내고 `Finding` 이 없어서 같은 자로 잴 수 없다.
+    """
+
+    def __init__(self) -> None:
+        self.scans = 0
+        self.with_specific = 0
+
+    def record(self, *, specific: bool) -> None:
+        self.scans += 1
+        self.with_specific += specific
+
+    def snapshot(self) -> dict:
+        return {
+            "scans": self.scans,
+            "with_specific_finding": self.with_specific,
+            "rate": (
+                round(self.with_specific / self.scans, 3) if self.scans else None
+            ),
+            "note": "프로세스 메모리 · 단건 경로만 · 재배포하면 0",
+        }
+
+
+_result_stats = ResultStats()
 
 
 class ScanImage(BaseModel):
@@ -193,6 +229,9 @@ def healthz() -> dict:
         #
         #   ⚠ 프로세스 메모리라 재배포하면 0 이 된다. 누적 통계가 아니라
         #     "지금 뜬 이 프로세스가 어느 경로를 쓰고 있나" 를 보는 값이다.
+        # 유효 결과율 - 매칭률과 별개로 우리가 움직여야 할 지표다 (E).
+        # ⚠ 프로세스 메모리이고 단건 경로만 센다. note 에 그 사실을 적는다.
+        "results": _result_stats.snapshot(),
         "extraction": {
             "order": list(settings.extractor_order),
             "claude_key": bool(settings.anthropic_api_key),
@@ -380,6 +419,9 @@ def scan(req: ScanRequest, request: Request) -> ScanResult:
             extraction_reason=trace.reason,
         ),
     )
+    # 유효 결과율 (E). 판정에 쓰지 않는다 - 세기만 한다.
+    _result_stats.record(specific=has_specific_finding(result.findings))
+
     if not allow_llm:
         result.extraction_note = (
             "오늘 분석 한도에 도달해 간이 추출로 처리했습니다. "
