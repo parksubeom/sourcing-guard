@@ -229,6 +229,25 @@ BASELINE: dict[str, dict[str, int]] = {
     },
 }
 
+#: 다섯 기준의 **③** — 표본별 매칭 건수. `lookup_all` 기준이고 LLM 이 없다.
+#:
+#: ⚠ 2026-09-09 에 살렸다. `scripts/measure_matcher.py` 가 자기검사에서 멈춰
+#:   ③ 이 죽어 있었고, 그러면 회귀 방어가 둘뿐이다 (미완 4-f).
+#:
+#: ⚠ **도매꾹239 는 별칭을 만들 때 쓴 표본이다.** 거기서 재면 우리가 맞춘 것을
+#:   다시 맞춘 숫자가 나온다 - 발표에 쓰지 않는다. 회귀 감지용 기준선이다.
+#:
+#: 재생:
+#:     PYTHONPATH=. python scripts/measure_matcher.py --sample tests/fixtures/도매꾹239.txt
+#:     PYTHONPATH=. python scripts/measure_matcher.py
+BASELINE_MATCH: dict[str, dict[str, int]] = {
+    # 09-04 로그는 170/239(71.1%)이었다. 지금 167 이고 **차이 3건 중 2건은 오답을
+    # 지운 것, 1건은 정답을 잃은 것**이다 (미완 4-f). 개선/악화로 읽지 말 것.
+    "도매꾹239": {"matched": 167, "total": 239},
+    "새표본235": {"matched": 116, "total": 235},
+}
+
+
 #: 애매 부착으로 알려진 줄. 늘면 그 줄을 보고에 적는다 (기준 ⑤).
 BASELINE_ON_VAGUE: dict[str, tuple[str, ...]] = {
     "claude": (
