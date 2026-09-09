@@ -20,7 +20,7 @@ from datetime import date
 from pathlib import Path
 from typing import Iterable
 
-from .models import WatchItem, WatchStatus
+from .models import RecallAlert, WatchItem, WatchStatus
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS watch_items (
@@ -64,6 +64,24 @@ CREATE INDEX IF NOT EXISTS idx_rf_nc_model ON rf_noncompliant(model);
 
 -- 동기화 진행 상태. 재배포 후 "초기 적재를 다시 해야 하나" 를 판단하고,
 -- 캐시 기준일 표시에도 같은 값을 쓴다.
+-- 스윕이 찾아낸 알림. **저장하는 이유는 약속 때문이다.**
+--
+-- 기획서 §6.1: 이 서비스가 유일하게 보증하는 것은 "나중에 리콜 공표되면 가장
+-- 먼저 알린다" 다. 알림을 메모리에만 두면 셀러가 화면을 안 보고 있던 사이에
+-- 발생한 알림이 사라진다 - 워치리스트를 디스크에 남긴 것과 같은 이유다.
+--
+-- ⚠ `watch_items.payload` 의 `seen_recall_fingerprints` 는 "다시 알리지
+--   않는다" 를 위한 것이고, 이 표는 "무엇을 알렸나" 를 남기는 것이다. 둘은
+--   다른 일을 한다 - 지문만 있으면 알림 내용을 복원할 수 없다.
+CREATE TABLE IF NOT EXISTS recall_alerts (
+    watch_item_id       TEXT NOT NULL,
+    recall_fingerprint  TEXT NOT NULL,
+    detected_at         TEXT NOT NULL,   -- YYYY-MM-DD
+    payload             TEXT NOT NULL,   -- RecallAlert 전체 (Pydantic JSON)
+    PRIMARY KEY (watch_item_id, recall_fingerprint)
+);
+CREATE INDEX IF NOT EXISTS idx_alert_detected ON recall_alerts(detected_at);
+
 CREATE TABLE IF NOT EXISTS sync_state (
     key   TEXT PRIMARY KEY,
     value TEXT NOT NULL
@@ -335,6 +353,59 @@ class SqliteWatchStore:
         return row["d"] if row and row["d"] else None
 
     # -- sync state --------------------------------------------------------
+
+    # -- 스윕 알림 --------------------------------------------------------
+    def save_alerts(self, alerts: "Iterable[RecallAlert]") -> int:
+        """새 알림을 남긴다. 이미 있는 (항목, 지문) 쌍은 무시한다.
+
+        ⚠ 돌려주는 것은 **실제로 새로 들어간 수**다. `sweep()` 이 낸 수가
+          아니다 - 같은 리콜을 두 번 세면 "새 알림 N" 이 거짓이 된다.
+        """
+        rows = [
+            (a.watch_item_id, a.recall_fingerprint, a.detected_at.isoformat(),
+             a.model_dump_json())
+            for a in alerts
+        ]
+        if not rows:
+            return 0
+        with self._conn:
+            before = self._conn.execute(
+                "SELECT COUNT(*) FROM recall_alerts"
+            ).fetchone()[0]
+            self._conn.executemany(
+                "INSERT OR IGNORE INTO recall_alerts "
+                "(watch_item_id, recall_fingerprint, detected_at, payload) "
+                "VALUES (?, ?, ?, ?)",
+                rows,
+            )
+            after = self._conn.execute(
+                "SELECT COUNT(*) FROM recall_alerts"
+            ).fetchone()[0]
+        return after - before
+
+    def alerts_for_owner(self, owner_id: str) -> list["RecallAlert"]:
+        """이 소유자의 저장된 알림. 최근 것 먼저."""
+        rows = self._conn.execute(
+            "SELECT a.payload FROM recall_alerts a "
+            "JOIN watch_items w ON w.id = a.watch_item_id "
+            "WHERE w.owner_id = ? "
+            "ORDER BY a.detected_at DESC, a.recall_fingerprint",
+            (owner_id,),
+        ).fetchall()
+        from .models import RecallAlert
+
+        return [RecallAlert.model_validate_json(r[0]) for r in rows]
+
+    def alert_count(self, *, owner_id: str | None = None) -> int:
+        if owner_id is None:
+            return self._conn.execute(
+                "SELECT COUNT(*) FROM recall_alerts"
+            ).fetchone()[0]
+        return self._conn.execute(
+            "SELECT COUNT(*) FROM recall_alerts a "
+            "JOIN watch_items w ON w.id = a.watch_item_id WHERE w.owner_id = ?",
+            (owner_id,),
+        ).fetchone()[0]
 
     def get_sync_state(self, key: str) -> str | None:
         row = self._conn.execute(

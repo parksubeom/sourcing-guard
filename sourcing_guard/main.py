@@ -6,6 +6,7 @@ CLAUDE.md R4: the server never fetches commerce pages itself.
 from __future__ import annotations
 
 import asyncio
+import logging
 from contextlib import asynccontextmanager, suppress
 
 from pathlib import Path
@@ -16,7 +17,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field, model_validator
 
-from datetime import date
+from datetime import date, datetime, timezone
 from uuid import uuid4
 
 from .config import settings
@@ -35,6 +36,8 @@ from .models import (
 )
 from .scorer import has_specific_finding, score
 from .demos import DEMOS, DEMO_TEXTS
+
+_log = logging.getLogger(__name__)
 from .ratelimit import RateLimiter, text_fingerprint
 from .recall_index import RecallIndex
 from .storage import SqliteWatchStore
@@ -63,7 +66,9 @@ async def _lifespan(app: FastAPI):
             sync_loop(
                 _kats,
                 _store,
-                on_updated=_recalls.invalidate,
+                # ⚠ 색인 무효화 **다음에 전체 스윕**까지 돈다 (C-백).
+                #   순서가 중요하다 - `_on_recalls_updated` 주석 참조.
+                on_updated=_on_recalls_updated,
                 # 부적합 방송통신기자재 현황. 전파인증 축의 유일한 RED 소스라
                 # 여기 안 붙이면 rf_noncompliant 테이블이 영구히 비고
                 # RF_NONCOMPLIANT 이 한 번도 뜨지 않는다.
@@ -229,6 +234,10 @@ def healthz() -> dict:
         #
         #   ⚠ 프로세스 메모리라 재배포하면 0 이 된다. 누적 통계가 아니라
         #     "지금 뜬 이 프로세스가 어느 경로를 쓰고 있나" 를 보는 값이다.
+        # 감시 자동화 상태 (C-백). "마지막 sweep 시각 · 새 알림 N".
+        # ⚠ 이 값이 오래 안 움직이면 **약속이 조용히 깨진 것**이다 - 셀러는
+        #   감시받고 있다고 믿는 채로 감시되지 않는다 (기획서 §6.1).
+        "watch_sweep": _sweep_snapshot(),
         # 유효 결과율 - 매칭률과 별개로 우리가 움직여야 할 지표다 (E).
         # ⚠ 프로세스 메모리이고 단건 경로만 센다. note 에 그 사실을 적는다.
         "results": _result_stats.snapshot(),
@@ -433,8 +442,19 @@ def scan(req: ScanRequest, request: Request) -> ScanResult:
 # ---------------------------------------------------------------------------
 # Watchlist (기획서 §3-4단계)
 #
-# v1 scope: register + on-demand sweep + display. Notification delivery
+# v1 scope: register + **automatic** sweep + display. Notification delivery
 # (email/Kakao) is explicitly out of scope for the 9/20 submission.
+#
+# ⚠ 2026-09-09 갱신 (C-백): "on-demand sweep" 이었다. 셀러가 `/watch` 화면에서
+#   버튼을 눌러야만 스윕이 돌았고, 그러면 **화면을 안 열어 본 셀러는 리콜이
+#   공표돼도 모른다.** §6.1 이 유일하게 보증한다고 적은 것이 "나중에 리콜
+#   공표되면 가장 먼저 알린다" 인데 사람이 눌러야 도는 것은 그 보증이 아니다.
+#   이제 리콜 동기화가 새 레코드를 쓰면 `_on_recalls_updated` 가 전체 스윕을
+#   돌리고 알림을 `recall_alerts` 에 남긴다. 버튼(`/api/v1/watch/sweep`)은
+#   그대로 남긴다 - 데모에서 즉시 돌려 보여야 한다.
+#
+# ⚠ **전달(delivery)은 여전히 범위 밖이다.** 알림을 저장하고 화면에 보이게 한
+#   것이지 메일·카카오로 보내는 것이 아니다. [K] 다.
 #
 # 저장은 SQLite. 재시작으로 워치리스트를 잃으면 셀러는 감시받고 있다고 믿는 채로
 # 감시되지 않는다 (기획서 §6.1). 배포 시 WATCHLIST_DB_PATH 를 영구 볼륨으로.
@@ -451,6 +471,72 @@ _recalls = RecallIndex(_store)
 # 눌렀는데 429 를 보면 그대로 이탈한다 (핸드오프 §9).
 _limiter = RateLimiter()
 _limiter.register_exempt(*DEMO_TEXTS)
+
+
+def _full_sweep(*, on: date | None = None) -> dict:
+    """**활성 워치 전체**를 리콜 로컬 사본과 대조하고 결과를 남긴다 (C-백).
+
+    리콜 동기화가 새 레코드를 썼을 때 자동으로 돈다. 전에는 셀러가 `/watch`
+    화면에서 버튼을 눌러야만 스윕이 돌았다 - 그러면 **화면을 안 열어 본 셀러는
+    리콜이 공표돼도 모른다.** 기획서 §6.1 이 유일하게 보증한다고 적은 것이
+    "나중에 리콜 공표되면 가장 먼저 알린다" 인데, 사람이 눌러야 도는 것은 그
+    보증이 아니다.
+
+    ⚠ **순서가 중요하다.** `_recalls.invalidate()` 를 먼저 부르고 스윕한다.
+      순서를 바꾸면 방금 들어온 레코드를 못 보고 지나간다 - 조용히 놓치는
+      알림이고, 그게 이 서비스가 가장 하지 말아야 할 실패다 (R6).
+
+    ⚠ **정부 API 를 부르지 않는다.** 스윕은 로컬 사본(`RecallIndex`) 위에서
+      돈다. `run_sweep` 의 docstring 이 적어 둔 그 전환 덕분이다 - 워치 항목이
+      N개여도 정부 호출은 **0회**다. 그래서 전체 스윕을 자동화해도 부담이 없다.
+
+    ⚠ `sweep()` 은 순수 함수다. 저장과 시각 기록만 여기서 한다.
+    """
+    today = on or date.today()
+    items = list(_store.active_items())
+    alerts = sweep(items, _recalls.all_records(), today=today)
+
+    # 지문을 남겨 다음 스윕에서 같은 리콜을 다시 알리지 않는다. 알림이 없었어도
+    # 스윕 일자는 기록한다 - "언제까지 확인했다" 가 셀러에게 보이는 정보다.
+    by_item: dict[str, list[str]] = {i.id: [] for i in items}
+    for a in alerts:
+        by_item[a.watch_item_id].append(a.recall_fingerprint)
+    for item_id, fps in by_item.items():
+        _store.mark_swept(item_id, today, fps)
+
+    # ⚠ **저장된 수를 센다.** `sweep()` 이 낸 수가 아니다 - 같은 리콜을 두 번
+    #   세면 "새 알림 N" 이 거짓이 된다.
+    new_count = _store.save_alerts(alerts)
+    _store.set_sync_state("last_full_sweep_at", datetime.now(timezone.utc)
+                          .isoformat(timespec="seconds"))
+    _store.set_sync_state("last_full_sweep_items", str(len(items)))
+    _store.set_sync_state("last_full_sweep_new", str(new_count))
+    if new_count:
+        _log.info("전체 스윕: 워치 %d개 · 새 알림 %d건", len(items), new_count)
+    return {"items": len(items), "new_alerts": new_count}
+
+
+def _sweep_snapshot(owner_id: str | None = None) -> dict:
+    """"마지막 sweep 시각 · 새 알림 N". 화면 상단이 읽는 값 (주말 배선)."""
+    return {
+        "last_full_sweep_at": _store.get_sync_state("last_full_sweep_at"),
+        "last_full_sweep_items": _store.get_sync_state("last_full_sweep_items"),
+        "last_full_sweep_new": _store.get_sync_state("last_full_sweep_new"),
+        "alerts_stored": _store.alert_count(owner_id=owner_id),
+    }
+
+
+def _on_recalls_updated() -> None:
+    """리콜 사본이 갱신되면 색인을 버리고 **전체 스윕까지** 돈다.
+
+    ⚠ 스윕이 죽어도 동기화는 계속돼야 한다. 남의 API 장애로 우리 루프를 멈추지
+      않는 것과 같은 원칙이다.
+    """
+    _recalls.invalidate()
+    try:
+        _full_sweep()
+    except Exception:  # noqa: BLE001
+        _log.exception("전체 스윕 실패 - 동기화는 계속한다")
 
 
 class WatchRequest(BaseModel):
@@ -475,10 +561,32 @@ def register_watch(req: WatchRequest) -> WatchItem:
     return _store.add(item)
 
 
-@app.get("/api/v1/watch", response_model=list[WatchItem])
-def list_watch(owner_id: str) -> list[WatchItem]:
-    """이 소유자가 감시 중인 상품 목록."""
-    return _store.for_owner(owner_id)
+class WatchListResponse(BaseModel):
+    """감시 목록 + **언제까지 확인했나** (C-백).
+
+    ⚠ 응답 모양이 배열에서 객체로 바뀌었다. 화면이 "마지막 sweep 시각" 을
+      읽어야 하고, 그것을 헤더나 별도 엔드포인트로 빼면 두 곳을 맞춰야 한다.
+      `watch.html` 은 `data.items || data` 로 양쪽을 받게 한 줄만 고쳤다 -
+      **표시는 주말 묶음이다**(미완 §6 [C-화면]).
+    """
+
+    items: list[WatchItem]
+    sweep: dict
+    alerts: list[RecallAlert]
+
+
+@app.get("/api/v1/watch", response_model=WatchListResponse)
+def list_watch(owner_id: str) -> WatchListResponse:
+    """이 소유자가 감시 중인 상품 목록 + 마지막 스윕 · 저장된 알림.
+
+    ⚠ 알림을 **저장된 것에서** 낸다. 전에는 버튼을 눌러 방금 스윕한 결과만
+      화면에 있었고, 화면을 안 열어 본 사이의 알림은 사라졌다.
+    """
+    return WatchListResponse(
+        items=_store.for_owner(owner_id),
+        sweep=_sweep_snapshot(owner_id),
+        alerts=_store.alerts_for_owner(owner_id),
+    )
 
 
 @app.post("/api/v1/watch/sweep", response_model=list[RecallAlert])
@@ -507,4 +615,6 @@ def run_sweep(owner_id: str) -> list[RecallAlert]:
         by_item[a.watch_item_id].append(a.recall_fingerprint)
     for item_id, fps in by_item.items():
         _store.mark_swept(item_id, today, fps)
+    # 버튼으로 돈 스윕도 남긴다 - 저장하지 않으면 화면을 닫는 순간 사라진다.
+    _store.save_alerts(alerts)
     return alerts
