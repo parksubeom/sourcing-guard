@@ -365,6 +365,35 @@ class ResultAxis(BaseModel):
     note: str = ""      # 기준일 같은 한정
 
 
+class ScanMeta(BaseModel):
+    """**이 스캔 한 건**이 어떻게 나왔나. 판정이 아니라 리포트 메타다.
+
+    ⚠ 2026-09-08 사고의 뿌리가 "이 스캔" 을 말할 수 없다는 것이었다. Claude
+      잔액이 0 이 되어 배포본이 매 스캔마다 휴리스틱으로 떨어졌는데, 응답도
+      화면도 그 사실을 말하지 않아 휴리스틱 결과를 "실물 확인" 으로 보고했다.
+      `/healthz` 의 `extraction` 은 **프로세스 누적값**이라 "지금 이 결과가
+      무엇으로 나왔나" 를 답하지 못한다.
+
+    ⚠ `ProductFacts` 에 넣지 않는다. 그쪽은 `extra="forbid"` 인 판정 입력이고
+      여기에 메타를 섞으면 R1 경계가 흐려진다.
+
+    ⚠ **화면은 이 필드를 읽어 그린다. 하드코딩 금지.** 모델 이름도 설정에서
+      와야 한다 - 문서에 적힌 이름과 배포본 secret 이 다를 수 있고, 실제로
+      그것을 확인할 방법이 없어서 이 필드를 만들었다.
+    """
+
+    # "LLM(GPT · gpt-5.4-mini)" · "규칙 기반 (일일 한도 초과)" 처럼 그대로 쓸 한 줄.
+    extracted_by: str
+    # 기계가 가릴 수 있게 조각도 함께 낸다.
+    extraction_path: str                  # "llm" | "heuristic"
+    extractor_vendor: str | None = None   # "claude" | "gpt" | None
+    extractor_model: str | None = None    # 설정에서 온 실제 모델 이름
+    extraction_reason: str | None = None  # 휴리스틱으로 내려간 이유
+    # 리콜 로컬 사본 기준일. ScanResult.recall_data_as_of 와 같은 값을 메타
+    # 자리에도 둔다 - 화면 상단 두 줄이 한 곳에서 읽히게 하기 위해서다.
+    recall_data_as_of: str | None = None
+
+
 class ScanResult(BaseModel):
     signal: Signal
     # 셀러의 질문은 "이거 소싱해도 돼?" 다. 신호(RED/AMBER/GREEN)와 개별 근거만으로는
@@ -400,6 +429,9 @@ class ScanResult(BaseModel):
     # findings 를 셀러 관점 구획(확인할 것 / 확인된 문제 / 참고)으로 묶은 것.
     # findings 원본도 그대로 두어 하위호환을 유지한다. 프론트는 grouped 를 그린다.
     grouped_findings: list[dict] = Field(default_factory=list)
+    # 이 스캔이 어떻게 나왔나 (추출 경로 · 리콜 기준일). 화면 상단 두 줄이
+    # 이것을 읽는다.
+    meta: "ScanMeta | None" = None
     # 상품 정보를 하나도 읽지 못했을 때의 안내. 판정이 아니라 입력 문제다.
     #
     # 붙여넣은 것이 상세페이지가 아니면(URL 만, 리뷰만, 배송 안내만) 결과가

@@ -10,7 +10,7 @@ import re
 import unicodedata
 from datetime import date, datetime
 
-from .models import Finding, FindingKind, ProductFacts, ScanResult, Signal, ItemCategory, WatchSuggestion, ExtractedField, FindingGroup
+from .models import Finding, FindingKind, ProductFacts, ScanMeta, ScanResult, Signal, ItemCategory, WatchSuggestion, ExtractedField, FindingGroup
 
 # Weights are intentionally boring and auditable. Any change must be
 # accompanied by a test case explaining the new behaviour.
@@ -349,6 +349,8 @@ def score(
     # ⚠ scorer 는 순수 함수다 - 현재시각을 스스로 읽지 않는다 (CLAUDE.md §6).
     #   "오늘 갱신" 을 말하려면 오늘이 언제인지 부르는 쪽이 알려줘야 한다.
     today: "date | None" = None,
+    # 이 스캔이 어떻게 나왔나. 판정에 쓰지 않는다 - 그대로 실어 보낸다.
+    meta: "ScanMeta | None" = None,
 ) -> ScanResult:
     """Combine findings into a display score and a signal.
 
@@ -435,6 +437,14 @@ def score(
         grouped_findings=_grouped_findings(findings),
         axes=_axes(findings, recall_data_as_of, recall_synced_at, today),
         recall_data_as_of=recall_data_as_of,
+        # ⚠ 판정에 쓰지 않는다. `_signal_for` 도 `_HEADLINE` 도 meta 를 보지
+        #   않는다 - 추출 경로가 신호를 바꾸면 "휴리스틱이면 더 위험" 같은
+        #   판정을 하게 되고, 그것은 R1 위반이다.
+        meta=(
+            meta.model_copy(update={"recall_data_as_of": recall_data_as_of})
+            if meta is not None
+            else None
+        ),
     )
 
 
