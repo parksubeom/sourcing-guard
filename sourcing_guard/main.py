@@ -21,11 +21,18 @@ from uuid import uuid4
 
 from .config import settings
 from .batch import MAX_ROWS, BatchReport, screen
-from .extractor import extract, stats as extraction_stats
+from .extractor import extract_traced, stats as extraction_stats
 from .kats_client import KatsClient, health
 from .noncompliant_index import NoncompliantIndex
 from .rra_client import RraClient
-from .models import Finding, RecallAlert, ScanResult, SellerHints, WatchItem
+from .models import (
+    Finding,
+    RecallAlert,
+    ScanMeta,
+    ScanResult,
+    SellerHints,
+    WatchItem,
+)
 from .scorer import score
 from .demos import DEMOS, DEMO_TEXTS
 from .ratelimit import RateLimiter, text_fingerprint
@@ -190,6 +197,12 @@ def healthz() -> dict:
             "order": list(settings.extractor_order),
             "claude_key": bool(settings.anthropic_api_key),
             "gpt_key": bool(settings.gpt_api_key),
+            # ⚠ **모델 이름을 노출한다. 키가 아니다.** 배포본 secret 의
+            #   GPT_MODEL 실제 문자열을 밖에서 확인할 방법이 없어서, 발표
+            #   숫자의 라벨("gpt-5.4-mini")이 배포본과 같은지 말할 수 없었다.
+            #   그 상태를 이 두 필드로 끝낸다. 화면도 이 값을 읽어 그린다.
+            "claude_model": settings.extractor_model,
+            "gpt_model": settings.gpt_model,
             **extraction_stats.snapshot(),
         },
     }
@@ -332,7 +345,11 @@ def scan(req: ScanRequest, request: Request) -> ScanResult:
     # 상한을 넘겨도 멈추지 않는다. LLM 대신 휴리스틱으로 내리고 그 사실을 적는다.
     allow_llm = _limiter.take_llm_budget(fingerprint=fp)
     imgs = [{"media_type": i.media_type, "data": i.data} for i in req.images]
-    facts = extract(req.page_text, req.page_url, images=imgs, allow_llm=allow_llm)
+    # ⚠ **건별 경로를 함께 받는다.** `/healthz` 의 extraction 은 프로세스
+    #   누적값이라 "이 스캔" 을 말할 수 없다 - 2026-09-08 사고의 뿌리가 그것이다.
+    facts, trace = extract_traced(
+        req.page_text, req.page_url, images=imgs, allow_llm=allow_llm
+    )
     # 어느 번호가 어느 제도인지 verifier 가 정한다 (4-d-3). verify() 머리에서도
     # 부르지만 **여기서도** 불러야 한다 - score() 에 넘기는 facts 가 화면의
     # "읽은 값" 패널이고, 거기에 전파번호가 KC 번호로 남으면 findings 와
@@ -354,6 +371,14 @@ def scan(req: ScanRequest, request: Request) -> ScanResult:
         recall_data_as_of=_recalls.as_of,
         recall_synced_at=_store.get_sync_state("last_sync_at"),
         today=date.today(),
+        # 화면 상단 두 줄이 읽는 값. 하드코딩 금지.
+        meta=ScanMeta(
+            extracted_by=trace.label_ko,
+            extraction_path=trace.path,
+            extractor_vendor=trace.vendor,
+            extractor_model=trace.model,
+            extraction_reason=trace.reason,
+        ),
     )
     if not allow_llm:
         result.extraction_note = (

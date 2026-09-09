@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import logging
+from dataclasses import dataclass
 
 from .config import settings
 from .kats_client import CERT_NUMBER_RE, normalize_kc
@@ -45,6 +46,53 @@ class ExtractionStats:
         self.llm = self.heuristic = self.llm_failures = 0
         self.by_vendor = {}
         self.failures_by_vendor = {}
+
+
+@dataclass(frozen=True)
+class ExtractionTrace:
+    """**이 스캔 한 건**이 어느 경로로 나왔나.
+
+    ⚠ `ExtractionStats` 는 프로세스 누적값이라 "이 스캔" 을 말할 수 없다.
+      2026-09-08 사고의 뿌리가 그것이다 - Claude 잔액이 0 이 되어 매 스캔이
+      휴리스틱으로 떨어졌는데, 화면도 응답도 그 사실을 말하지 않아 휴리스틱
+      결과를 "실물 확인" 으로 보고했다. 누적 통계는 `/healthz` 가 내고, **건별
+      경로는 응답이 낸다.**
+
+    ⚠ `ProductFacts` 에 넣지 않는다. 그쪽은 `extra="forbid"` 인 판정 입력이고
+      이것은 리포트 메타다 (CLAUDE.md R1).
+
+        path    "llm" | "heuristic"
+        vendor  "claude" | "gpt" | None
+        model   그 벤더가 실제로 쓴 모델 이름. 하드코딩 금지 - 설정에서 온다
+        reason  휴리스틱으로 내려간 이유. path=="llm" 이면 보통 None
+    """
+
+    path: str
+    vendor: str | None = None
+    model: str | None = None
+    reason: str | None = None
+
+    @property
+    def label_ko(self) -> str:
+        """화면 상단에 그대로 쓸 한 줄. **화면이 이 값을 읽는다(하드코딩 금지).**"""
+        if self.path == "llm" and self.vendor:
+            name = {"claude": "Claude", "gpt": "GPT"}.get(self.vendor, self.vendor)
+            return f"LLM({name}{f' · {self.model}' if self.model else ''})"
+        why = {
+            "daily_limit": "일일 한도 초과",
+            "mock_mode": "목 모드",
+            "no_key": "추출기 키 없음",
+            "all_vendors_failed": "추출기 전부 실패",
+        }.get(self.reason or "", self.reason or "")
+        return f"규칙 기반{f' ({why})' if why else ''}"
+
+
+def _model_of(vendor: str) -> str | None:
+    """벤더가 쓰는 모델 이름. 설정이 정본이다 (R5)."""
+    return {
+        "claude": settings.extractor_model,
+        "gpt": settings.gpt_model,
+    }.get(vendor)
 
 
 stats = ExtractionStats()
@@ -331,7 +379,22 @@ def extract(
     images: list[dict] | None = None,
     allow_llm: bool = True,
 ) -> ProductFacts:
-    """allow_llm=False 면 호출 없이 휴리스틱으로 간다.
+    """기존 호출부를 위한 얇은 래퍼. 경로가 필요하면 `extract_traced` 를 쓴다."""
+    return extract_traced(
+        page_text, page_url, images=images, allow_llm=allow_llm
+    )[0]
+
+
+def extract_traced(
+    page_text: str,
+    page_url: str | None = None,
+    *,
+    images: list[dict] | None = None,
+    allow_llm: bool = True,
+) -> tuple[ProductFacts, ExtractionTrace]:
+    """추출 결과와 **이 건이 어느 경로로 나왔는지**를 함께 돌려준다.
+
+    allow_llm=False 면 호출 없이 휴리스틱으로 간다.
 
     일일 LLM 상한을 넘겼을 때 쓴다. 상한을 넘어도 서비스는 계속 돈다 -
     멈추는 대신 정확도가 낮아지고, 그 사실을 화면이 말한다 (핸드오프 §8).
@@ -357,8 +420,17 @@ def extract(
     usable = [v for v in settings.extractor_order if _vendor_ready(v)]
     if not allow_llm or settings.mock_mode or not usable:
         stats.heuristic += 1
+        # 왜 내려갔는지 남긴다 - 셋은 원인이 다르고 대응도 다르다.
+        why = (
+            "daily_limit" if not allow_llm
+            else "mock_mode" if settings.mock_mode
+            else "no_key"
+        )
         # 이미지만 있고 LLM 을 못 쓰면 휴리스틱이 읽을 게 없다.
-        return _with_scope_markers(_heuristic_fallback(page_text, page_url), page_text)
+        return (
+            _with_scope_markers(_heuristic_fallback(page_text, page_url), page_text),
+            ExtractionTrace(path="heuristic", reason=why),
+        )
 
     # 페이지 내용(가변)과 이미지를 한 user 메시지로. 시스템 프롬프트와 few-shot
     # (고정부)은 캐시로 표시해 반복 호출에서 입력 비용을 90% 아낀다. 투표 기간
@@ -409,17 +481,26 @@ def extract(
         stats.llm_failures += 1
         stats.heuristic += 1
         _log.warning("추출기 전 벤더 실패, 휴리스틱으로 대체합니다: %s", usable)
-        return _with_scope_markers(_heuristic_fallback(page_text, page_url), page_text)
+        return (
+            _with_scope_markers(_heuristic_fallback(page_text, page_url), page_text),
+            ExtractionTrace(path="heuristic", reason="all_vendors_failed"),
+        )
 
     stats.llm += 1
     stats.by_vendor[used] = stats.by_vendor.get(used, 0) + 1
     text = text.removeprefix("```json").removeprefix("```").removesuffix("```").strip()
 
+    trace = ExtractionTrace(path="llm", vendor=used, model=_model_of(used))
+
     try:
         data = json.loads(text)
     except json.JSONDecodeError:
         # R3: a parse failure is not a safe product. Degrade to unknown.
-        return ProductFacts(source_page_url=page_url)
+        return (
+            ProductFacts(source_page_url=page_url),
+            ExtractionTrace(path="llm", vendor=used, model=_model_of(used),
+                            reason="parse_failed"),
+        )
 
     # Strip anything not in the schema. extra="forbid" would otherwise reject a
     # hallucinated verdict field ("risk_level" etc.) and lose the whole
@@ -488,7 +569,7 @@ def extract(
         parsed = ProductFacts(**data, source_page_url=page_url)
     except Exception:
         parsed = ProductFacts(source_page_url=page_url)
-    return _with_scope_markers(parsed, page_text)
+    return _with_scope_markers(parsed, page_text), trace
 
 
 def _with_scope_markers(facts: ProductFacts, page_text: str) -> ProductFacts:
