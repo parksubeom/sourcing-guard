@@ -30,6 +30,16 @@
     accepted  매처가 통과시켰다
     rejected  매처(`judge`)가 거부했다 - `rejected_by` 에 어느 신호인지
     guard     `judge` 앞의 가드가 걸렀다 (부속품 · 원문 제외 표기)
+
+⚠⚠ **`rejected_by` 의 두 값을 섞어 읽지 말 것 (4-h).**
+
+    key_absent            키가 이름에 **아예 없다.** 대부분 (3) 접두 확장 단계가
+                          낸 후보이고 **부속품 판단이 아니다.** 정상 동작이다
+    accessory_or_negated  키는 이름에 있는데 부속품·부정 표현으로만 나온다.
+                          **이것만이 진짜 부속품 판단이다**
+
+  전에는 둘이 하나로 찍혀 도매꾹239 거부 134,900건이 전부 부속품 판단처럼
+  보였다. 그대로 두면 다음 사람이 "우리 매처가 너무 엄격하다" 로 읽고 가드를 푼다.
 """
 
 from __future__ import annotations
@@ -106,7 +116,13 @@ def main() -> None:
     if rejected:
         print("\n매처 거부 사유")
         for name, n in rejected.most_common():
-            print(f"  {n:7}개  {name}")
+            note = {
+                "key_absent": "  ← 키가 이름에 아예 없다. 대부분 (3) 접두 확장 "
+                              "단계가 낸 후보이고 **부속품 판단이 아니다**",
+                "accessory_or_negated": "  ← 키는 이름에 있는데 부속품·부정 "
+                                        "표현으로만 나온다. 이것이 진짜 부속품 판단이다",
+            }.get(name, "")
+            print(f"  {n:7}개  {name}{note}")
     if guarded:
         print("\n가드 사유")
         for name, n in guarded.most_common():
