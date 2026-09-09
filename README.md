@@ -44,7 +44,7 @@ curl -s localhost:8000/healthz
 | `scorer.py` | 위험도 연산. 순수 함수, I/O·시각·난수 없음 |
 | `watchlist.py` | 리콜 워치리스트 매칭. 순수 함수, 저장소 비의존 |
 | `storage.py` | 워치리스트 SQLite 저장소. `WATCHLIST_DB_PATH` 로 경로 지정 |
-| `main.py` | FastAPI. `/healthz`, `/api/v1/scan`, `/api/v1/watch`(등록·조회), `/api/v1/watch/sweep` |
+| `main.py` | FastAPI. `/healthz`, `/api/v1/scan`, `/api/v1/watch`(POST 등록 · GET 조회 — `{items, sweep, alerts}`), `/api/v1/watch/sweep`(수동 트리거). **리콜 동기화가 새 레코드를 쓰면 전체 워치를 자동 스윕**하므로 버튼을 누르지 않아도 알림이 쌓입니다 |
 | `data/hazard_rules.yaml` | 자체 규칙 DB. `status: draft`는 스코어링에서 제외 |
 | `scripts/probe_kats_schema.py` | API 응답 스키마 탐침 |
 

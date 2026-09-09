@@ -8,7 +8,9 @@
 """
 from __future__ import annotations
 
+import re
 from datetime import date
+from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
@@ -211,3 +213,74 @@ def test_the_v1_scope_comment_no_longer_says_on_demand():
     src = Path("sourcing_guard/main.py").read_text(encoding="utf-8")
     assert "v1 scope: register + **automatic** sweep + display" in src
     assert "전달(delivery)은 여전히 범위 밖이다" in src
+
+
+# ── [C-백 마감] 응답 스키마와 문서 ──────────────────────────────────
+def test_the_watch_response_schema_is_pinned():
+    """`GET /api/v1/watch` 의 모양을 잠근다.
+
+    ⚠ 이 응답은 **배열 → 객체**로 바뀌었다(C-백). 소비자는 `watch.html`
+      하나뿐이고 양쪽을 받게 고쳤지만, 모양이 또 바뀌면 화면이 조용히 빈다.
+      필드를 지우거나 이름을 바꾸는 변경은 여기서 깨져야 한다.
+    """
+    from sourcing_guard.main import WatchListResponse, app
+
+    fields = WatchListResponse.model_fields
+    assert set(fields) == {"items", "sweep", "alerts"}, sorted(fields)
+
+    # 실제 응답도 같은 모양이어야 한다 - 스키마만 맞고 핸들러가 다르면 무의미.
+    with TestClient(app) as client:
+        body = client.get("/api/v1/watch", params={"owner_id": "schema-probe"}).json()
+    assert set(body) == {"items", "sweep", "alerts"}
+    assert isinstance(body["items"], list)
+    assert isinstance(body["alerts"], list)
+    assert isinstance(body["sweep"], dict)
+    # sweep 은 "마지막 스윕 시각 · 워치 수 · 새 알림 N · 쌓인 알림" 을 말해야 한다.
+    # ⚠ 키 이름을 여기 적어 두는 이유는 화면이 이 이름으로 읽기 때문이다.
+    #   처음에 `items`/`new_alerts` 로 적었다가 틀렸다 - 실제는 아래다.
+    for key in ("last_full_sweep_at", "last_full_sweep_items",
+                "last_full_sweep_new", "alerts_stored"):
+        assert key in body["sweep"], f"{key} 가 없다: {sorted(body['sweep'])}"
+
+
+def test_the_readme_describes_the_automatic_sweep():
+    """README 가 "버튼을 눌러야 돈다" 로 남아 있으면 안 된다.
+
+    ⚠ 문서가 코드보다 앞서 나가는 것이 이 저장소의 반복 결함이다. 자동 스윕은
+      기획서 §6.1 이 보증한다고 적은 것의 실행부이므로 README 가 말해야 한다.
+    """
+    readme = (Path(__file__).resolve().parents[1] / "README.md").read_text(encoding="utf-8")
+    row = next((ln for ln in readme.splitlines() if "`main.py`" in ln), "")
+    assert row, "README 에서 main.py 행을 못 찾았다"
+    assert "자동" in row and "스윕" in row, row
+    assert "{items, sweep, alerts}" in row, "GET 응답 모양이 적혀 있지 않다"
+
+
+def test_the_hackathon2_snapshot_cannot_run():
+    """`해커톤2/` 가 **실행 불가능한 초기 뼈대**임을 기록해 둔다.
+
+    ⚠ 심사위원이 파일 목록을 보면 `/api/v1/watch` 가 두 곳에 있는 것으로
+      읽힌다. 지우는 것은 시피님 확인 뒤이므로(미완 §5) 지금은 "돌지 않는다" 는
+      사실만 잠근다 - 누가 실수로 살려 놓으면 여기서 깨진다.
+
+    ⚠ 이 검사가 깨지면 **디렉터리를 지웠는지 먼저 확인할 것.** 지웠으면 이
+      검사도 함께 지운다.
+    """
+    root = Path(__file__).resolve().parents[1]
+    old = root / "해커톤2"
+    if not old.is_dir():
+        pytest.skip("해커톤2/ 가 이미 정리됐다 - 이 검사도 지울 것")
+
+    # 상대 import 인데 패키지가 아니다.
+    assert not (old / "__init__.py").exists()
+    main_src = (old / "main.py").read_text(encoding="utf-8")
+    assert "from .config import settings" in main_src
+
+    # main.py 가 필요로 하는 모듈 대부분이 이 디렉터리에 없다.
+    needed = set(re.findall(r"from \.([a-z_]+) import", main_src))
+    present = {p.stem for p in old.glob("*.py")}
+    assert needed - present, "필요 모듈이 다 있다 - 돌 수 있게 됐나"
+
+    # pytest 가 수집하지 않는다.
+    ini = (root / "pytest.ini").read_text(encoding="utf-8")
+    assert "testpaths = tests" in ini
