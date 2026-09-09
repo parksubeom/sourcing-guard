@@ -8,12 +8,14 @@
 """
 from __future__ import annotations
 
+import json
 from datetime import date
 
 import pytest
 from fastapi.testclient import TestClient
 
 from sourcing_guard.main import app
+from sourcing_guard.recall_index import RecallIndex
 from sourcing_guard.models import (
     NON_SPECIFIC_FINDING_KINDS,
     SPECIFIC_FINDING_KINDS,
@@ -26,9 +28,62 @@ from sourcing_guard.scorer import has_specific_finding
 client = TestClient(app)
 
 
+class _FakeRecallStore:
+    """`RecallIndex` 가 쓰는 것만 흉내낸다 - `recall_payloads` · `latest_published_on`.
+
+    ⚠ **MagicMock 을 쓰지 않는다.** 목이면 `RecallIndex` 의 인터페이스가 바뀌어도
+      조용히 통과한다. 실제 `RecallIndex` 를 이 가짜 store 위에 올리면 매칭·
+      is_empty·as_of 가 모두 **진짜 코드**를 타므로, 인터페이스가 갈라지면 여기서
+      깨진다.
+    """
+
+    def __init__(self, records: "list[dict]") -> None:
+        self._payloads = [json.dumps(r) for r in records]
+
+    def recall_payloads(self, *, scope: str | None = None) -> list[str]:
+        return list(self._payloads)
+
+    def latest_published_on(self) -> str | None:
+        return "20260908"
+
+
+def _recall_index_with_one_unrelated_record() -> RecallIndex:
+    """색인은 **비어 있지 않고**, 우리 입력과는 일치하지 않는 상태.
+
+    ⚠ 이 상태가 `recall_clear` 를 낳는다. 색인이 비면 `verifier` 가
+      `recall_available=False` 로 보고 `lookup_failed` 를 내며, 그것은
+      "대조했지만 없었다" 가 아니라 "대조를 못 했다" 다 - 둘을 섞으면 R3 위반이다.
+    """
+    return RecallIndex(
+        _FakeRecallStore([
+            {
+                "product_name": "무관한 리콜 상품 · 산업용 절단기",
+                "model_name": "ZZ-9999-NOMATCH",
+                "maker": "무관제조",
+                "reason": "감전 위험",
+                "announced_on": "20260901",
+                "detail_url": "https://www.safetykorea.kr/recall/1",
+                "scope": "domestic",
+                "models": ["ZZ-9999-NOMATCH"],
+                "cert_numbers": [],
+                "uid": "fake-1",
+            }
+        ])
+    )
+
+
 @pytest.fixture(autouse=True)
 def _no_live_government_api(monkeypatch):
-    """네트워크를 쓰지 않는다 (CLAUDE.md §7)."""
+    """네트워크를 쓰지 않는다 (CLAUDE.md §7).
+
+    ⚠⚠ **리콜 색인도 여기서 만든다.** 전에는 `_kats`·`_rra` 만 목킹하고 리콜
+      축은 프로세스가 들고 있는 `data/watchlist.db`(33MB · 커밋 안 됨)를 그대로
+      썼다. 그래서 이 파일은 **그 DB 가 있는 PC 에서만 통과**했고, 새 PC · CI ·
+      총괄 검증 환경에서는 `recall_clear` 대신 `lookup_failed` 가 나와 깨졌다.
+
+      DB 유무로 skip 하지 않는다 - skip 은 아무것도 지키지 않는다. 검사가
+      필요한 상태를 **스스로 만든다.**
+    """
     from unittest.mock import MagicMock
 
     import sourcing_guard.main as m
@@ -37,6 +92,7 @@ def _no_live_government_api(monkeypatch):
     kats.lookup_certification_cached.return_value = MagicMock(record=None)
     monkeypatch.setattr(m, "_kats", kats)
     monkeypatch.setattr(m, "_rra", None)
+    monkeypatch.setattr(m, "_recalls", _recall_index_with_one_unrelated_record())
 
 
 def _f(kind: FindingKind) -> Finding:
@@ -100,7 +156,10 @@ def test_recall_clear_alone_does_not_count_or_the_metric_never_moves():
         "/api/v1/scan", json={"page_text": "https://example.com/goods/12345"}
     ).json()
     kinds = {f["kind"] for f in body["findings"]}
-    assert "recall_clear" in kinds, "이 검사의 전제가 바뀌었다"
+    # ⚠ 색인은 fixture 가 만든다. 로컬 DB 에 의존하면 이 줄이 환경마다 갈린다.
+    assert "recall_clear" in kinds, (
+        f"이 검사의 전제가 바뀌었다 - 나온 것: {sorted(kinds)}"
+    )
     assert not has_specific_finding(
         [Finding(**{**f, "checked_at": None}) for f in body["findings"]]
     ), kinds

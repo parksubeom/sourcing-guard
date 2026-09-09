@@ -255,7 +255,23 @@ def test_collected_fixture_has_no_pii_left():
 
 
 def test_no_raw_response_directory_is_committed():
-    """`도매꾹_원문_*` 은 다시 만들지 않는다. 이름이 내용과 어긋나면 위험하다."""
+    """`도매꾹_원문_*` 은 다시 만들지 않는다. 이름이 내용과 어긋나면 위험하다.
+
+    ⚠⚠ **glob 으로 쓰면 안 된다.** macOS 는 파일명을 NFD(분해형)로 들고 소스의
+      문자열 리터럴은 NFC(결합형)라, `glob("도매꾹_원문_*")` 이 파일시스템에
+      따라 **원문 디렉터리가 실제로 있어도 0건을 돌려준다.** 그러면 이 검사가
+      조용히 무력화되고, 개인정보가 든 디렉터리를 못 잡는다.
+
+      2026-09-09 에 `tests/test_commit_refs.py` 가 같은 함정으로 NFD 트리에서
+      깨진 뒤 리포 전체를 훑어 이 한 건을 찾았다. 저쪽은 시끄럽게 깨졌지만
+      이쪽은 **조용히 통과**하는 쪽이라 더 위험했다.
+    """
+    import unicodedata
     from pathlib import Path
 
-    assert not list(Path("tests/fixtures").glob("도매꾹_원문_*"))
+    fixtures = Path("tests/fixtures")
+    found = [
+        p.name for p in fixtures.iterdir()
+        if unicodedata.normalize("NFC", p.name).startswith("도매꾹_원문_")
+    ] if fixtures.is_dir() else []
+    assert not found, f"원문 디렉터리가 있습니다 (개인정보): {found}"

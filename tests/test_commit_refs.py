@@ -27,6 +27,7 @@ from __future__ import annotations
 
 import re
 import subprocess
+import unicodedata
 from pathlib import Path
 
 import pytest
@@ -39,6 +40,23 @@ _SUFFIXES = {".md", ".py", ".yaml", ".yml"}
 
 #: 이 두 갈래는 옛 해시를 **일부러** 담는다. 빼는 것이 실수가 아니다.
 _EXEMPT = ("작업로그_", "해시_대응표_")
+
+
+def _nfc(text: str) -> str:
+    """한글 파일명을 비교하기 전에 반드시 거친다.
+
+    ⚠⚠ **macOS 는 파일명을 NFD(분해형)로 들고, 소스의 문자열 리터럴은
+      NFC(결합형)다.** 같은 "작업로그_" 가 바이트로 다르다. 그래서
+      `Path.glob("작업로그_*.md")` 와 `str(path).startswith("작업로그_")` 가
+      **파일시스템에 따라 조용히 0건을 돌려준다** - `exists()` 는 OS 가
+      정규화를 맞춰 주므로 통과하는데 glob·문자열 비교만 어긋나서 더 헷갈린다.
+
+    이 함수가 없어서 실제로 사고가 났다. 이 가드를 처음 짰을 때 개발 PC(NFC)
+    에서는 4건 전부 통과했지만, 새 PC 를 재현한 트리(NFD)에서는 작업로그 예외가
+    먹지 않아 97건이 전부 "죽은 참조" 로 잡히고 `glob` 은 빈 목록을 줬다.
+    [E-1] 이 지적한 "내 PC 에서만 통과하는 검사" 를 가드 자체가 저지른 것이다.
+    """
+    return unicodedata.normalize("NFC", text)
 
 #: rewrite 전 **옛 HEAD**. 백업이 어디 있는지 가리키는 좌표이므로 새 해시로
 #: 바꾸면 틀린다 - `backup/pre-rewrite-2026-09-09` 가 가리키는 것은 이것이다.
@@ -64,10 +82,22 @@ def _live_files() -> list[Path]:
         rel = p.relative_to(_ROOT)
         if any(d in rel.parts for d in _SKIP_DIRS):
             continue
-        if any(tag in str(rel) for tag in _EXEMPT):
+        # ⚠ 반드시 NFC 정규화 후 비교한다 - `_nfc` 주석 참조.
+        if any(tag in _nfc(str(rel)) for tag in _EXEMPT):
             continue
         out.append(p)
     return out
+
+
+def _worklogs() -> list[Path]:
+    """`docs/작업로그_*.md`. ⚠ `glob` 을 쓰지 않는다 - `_nfc` 주석 참조."""
+    docs = _ROOT / "docs"
+    if not docs.is_dir():
+        return []
+    return sorted(
+        p for p in docs.iterdir()
+        if p.is_file() and p.suffix == ".md" and _nfc(p.name).startswith("작업로그_")
+    )
 
 
 def test_the_mapping_document_survives():
@@ -107,12 +137,22 @@ def test_no_pre_rewrite_hash_remains_in_live_references():
     )
 
 
-@pytest.mark.skipif(
-    subprocess.run(
+#: git 저장소가 아니거나 shallow 면 옛/새 커밋을 확인할 수 없다.
+#: ⚠ 이 skip 은 **하나뿐이어야 한다.** 나머지 3건은 git 없이도 돈다 - 대응표
+#:   자체의 정합성(행 수·형식·백업 좌표)과 살아 있는 참조는 파일만 있으면
+#:   검사된다. "git 없으면 전부 skip" 으로 만들면 아무것도 지키지 않는다.
+_HAS_GIT_HISTORY = (
+    (_ROOT / ".git").exists()
+    and subprocess.run(
         ["git", "-C", str(_ROOT), "rev-parse", "--is-shallow-repository"],
         capture_output=True, text=True,
-    ).stdout.strip() != "false",
-    reason="shallow clone 에서는 새 해시를 확인할 수 없다",
+    ).stdout.strip() == "false"
+)
+
+
+@pytest.mark.skipif(
+    not _HAS_GIT_HISTORY,
+    reason="git 저장소가 아니거나 shallow clone 이라 커밋 실재를 확인할 수 없다",
 )
 def test_the_new_hashes_in_the_table_are_real_commits():
     """대응표의 **새** 해시 쪽은 이 저장소에 실재한다.
@@ -135,7 +175,7 @@ def test_worklogs_are_exempt_on_purpose():
     """작업로그가 대상에서 빠진 것이 실수가 아님을 코드로 적어 둔다."""
     src = Path(__file__).read_text(encoding="utf-8")
     assert "_EXEMPT" in src and "작업로그_" in src
-    logs = sorted((_ROOT / "docs").glob("작업로그_*.md"))
+    logs = _worklogs()
     assert logs, "작업로그가 없다 - 이 검사의 전제가 바뀌었나"
     # 실제로 옛 해시가 남아 있어야 정상이다 - 남아 있음을 확인해 둔다.
     olds = {old for _d, old, _n in _rows()}
@@ -158,3 +198,45 @@ def test_the_only_intentional_old_hash_is_the_pre_rewrite_head():
     # 옛 HEAD 는 대응표의 옛 해시 열에 실제로 있어야 한다 - 없으면 좌표가 틀렸다.
     olds = {old for _d, old, _n in _rows()}
     assert _OLD_HEAD[:9] in olds, "옛 HEAD 가 대응표에 없습니다 - 좌표를 확인하세요"
+
+
+def test_korean_filenames_are_compared_after_nfc_normalization():
+    """한글 파일명 비교가 정규화를 거치는지 잠근다.
+
+    ⚠ 이 가드가 실제로 NFD 트리에서 깨진 뒤에 추가했다. `glob` 으로 되돌리면
+      개발 PC 에서는 통과하고 새 PC · CI 에서만 깨진다 - 가장 나쁜 종류의 검사다.
+    """
+    src = Path(__file__).read_text(encoding="utf-8")
+    assert "_nfc(" in src and "unicodedata.normalize" in src
+
+    # ⚠ 소스 문자열 검사로 짜면 **이 검사의 설명 주석 자체에 걸린다.** 실제로
+    #   걸렸다 - 정적 자산 이모지 검사에 내 주석의 기호가 걸린 것과 같은 종류다.
+    #   그래서 문자열이 아니라 **실제 호출**을 본다.
+    import ast
+
+    bad = []
+    for node in ast.walk(ast.parse(src)):
+        if not isinstance(node, ast.Call):
+            continue
+        fn = node.func
+        if not (isinstance(fn, ast.Attribute) and fn.attr in {"glob", "rglob"}):
+            continue
+        for arg in node.args:
+            if isinstance(arg, ast.Constant) and isinstance(arg.value, str):
+                if any(ord(ch) > 0x7F for ch in arg.value):
+                    bad.append(f"{fn.attr}({arg.value!r}) at line {node.lineno}")
+    assert not bad, (
+        "glob 패턴에 비ASCII 문자가 있습니다 - NFD 파일시스템에서 0건이 됩니다: "
+        + ", ".join(bad)
+    )
+
+    # 실물로 확인한다 - NFD 로 적어도 같은 파일을 찾아야 한다.
+    nfd = unicodedata.normalize("NFD", "작업로그_")
+    assert nfd != "작업로그_", "이 검사의 전제(NFC != NFD)가 깨졌다"
+    assert _nfc(nfd) == "작업로그_"
+
+    # 작업로그가 예외 대상에서 실제로 빠졌는가.
+    live = {_nfc(str(p.relative_to(_ROOT))) for p in _live_files()}
+    assert not any("작업로그_" in name for name in live), (
+        "작업로그가 검사 대상에 들어왔다 - 정규화가 안 먹었다"
+    )
