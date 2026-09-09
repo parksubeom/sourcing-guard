@@ -10,7 +10,7 @@ import re
 import unicodedata
 from datetime import date, datetime
 
-from .models import Finding, FindingKind, ProductFacts, ScanMeta, ScanResult, Signal, ItemCategory, WatchSuggestion, ExtractedField, FindingGroup
+from .models import SPECIFIC_FINDING_KINDS, Finding, FindingKind, ProductFacts, ScanMeta, ScanResult, Signal, ItemCategory, WatchSuggestion, ExtractedField, FindingGroup
 
 # Weights are intentionally boring and auditable. Any change must be
 # accompanied by a test case explaining the new behaviour.
@@ -589,6 +589,22 @@ def downgrade_unqualified_recall_reds(
         else:
             out.append(f)
     return out
+
+
+def has_specific_finding(findings: list[Finding]) -> bool:
+    """이 검사가 셀러에게 **구체적인 것을 하나라도 줬는가** (E).
+
+    ⚠ 순수 함수다 - 세는 것은 부르는 쪽(`main.py`)이 한다. scorer 에 카운터를
+      두면 §6 의 "동일 입력 → 동일 출력" 이 깨진다.
+
+    ⚠ **판정에 쓰지 않는다.** 관측 지표일 뿐이다. 신호를 여기에 걸면
+      "구체적 finding 이 많으면 위험" 같은 판정이 된다 (R1).
+
+    ⚠ "원문 링크가 붙었나" 로는 아무것도 갈리지 않는다 - 모든 `Finding` 이
+      `source_url` 을 갖는다(R2). 갈라야 하는 것은 **이 상품에 대해 무엇을
+      말했나** 이고, 그 목록이 `SPECIFIC_FINDING_KINDS` 다.
+    """
+    return any(f.kind in SPECIFIC_FINDING_KINDS for f in findings)
 
 
 def _signal_for(
