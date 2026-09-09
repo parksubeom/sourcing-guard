@@ -312,4 +312,4 @@ def test_gap_note_is_present_in_the_yaml():
     """노트 자체가 지워지면 통과 수를 커버리지로 오독하게 된다."""
     text = (Path(__file__).parent / "golden" / "golden_set.yaml").read_text(encoding="utf-8")
     assert "이 회귀 셋이 덮지 않는 경로" in text
-    assert "1523955" in text          # 통과 수가 커버리지가 아니라는 실례
+    assert "ad707fa" in text          # 통과 수가 커버리지가 아니라는 실례

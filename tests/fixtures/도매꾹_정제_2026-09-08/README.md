@@ -57,7 +57,7 @@ R3-b 를 정면으로 어긴다. `tests/test_domeggook_pii.py` 가 이 네 모�
 
 ### ⚠ 앞선 기록 두 곳을 정정한다
 
-같은 날 커밋 636f570 과 `tests/fixtures/도매꾹_수집_2026-09-08/README.md`(이
+같은 날 커밋 e1ffbcd 과 `tests/fixtures/도매꾹_수집_2026-09-08/README.md`(이
 디렉터리로 대체됨)가 이렇게 적었다.
 
     desc HTML 안   사업자번호   84/100

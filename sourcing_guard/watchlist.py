@@ -336,7 +336,7 @@ def match(item: WatchItem, r: RecallRecord) -> Match | None:
     #   여기 해당한다. 실측: 제조사 '深圳市特格尔科技有限公司' 로 감시하면
     #   maker='-' 인 리콜과 맞아떨어져 4~15건이 걸렸다.
     #
-    #   137건 오탐(ee7011c)과 같은 모양이다 - 비교의 한쪽이 비었는데 통과했다.
+    #   137건 오탐(d8f5dbb)과 같은 모양이다 - 비교의 한쪽이 비었는데 통과했다.
     watched_maker = normalize_model(item.maker)
     recall_maker = normalize_model(r.maker)
     if is_maker_placeholder(watched_maker) or is_maker_placeholder(recall_maker):

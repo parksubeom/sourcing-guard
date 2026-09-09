@@ -127,7 +127,7 @@ def test_rf_finding_kinds_are_four_not_five():
 # ---------------------------------------------------------------------------
 # 인라인 스크립트가 문법적으로 살아 있는가
 #
-# 실제로 죽인 적이 있다. 커밋 1523955 에서 JS 문자열 리터럴이 줄바꿈으로 끊겨
+# 실제로 죽인 적이 있다. 커밋 ad707fa 에서 JS 문자열 리터럴이 줄바꿈으로 끊겨
 # `<script>` 전체가 SyntaxError 였고, 그러면 데모·검사·감시 버튼이 전부 죽는다.
 # 화면 테스트가 전부 문자열 grep 이라 아무도 못 잡았다.
 # ---------------------------------------------------------------------------
@@ -231,7 +231,7 @@ def test_inline_script_has_no_unterminated_string(page):
 
 
 def test_the_guard_catches_the_bug_it_was_written_for():
-    """1523955 에서 실제로 난 모양 그대로."""
+    """ad707fa 에서 실제로 난 모양 그대로."""
     broken = 'var x = (a ? b.replace(/\\s*$/, "") + "\n" : "") + "y";'
     assert _unterminated_string_line(broken) == 1
     assert _unterminated_string_line('var x = "a\\nb"; // ok') is None

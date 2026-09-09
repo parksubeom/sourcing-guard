@@ -203,7 +203,7 @@ def tally(
 #:     PYTHONPATH=. python scripts/replay_single_path.py \
 #:       --src tests/fixtures/단건경로_gpt.json
 BASELINE: dict[str, dict[str, int]] = {
-    # Claude · 단건 · 상품명만 · 분모 대상 135 · 커밋 5ba5b82 되돌린 뒤
+    # Claude · 단건 · 상품명만 · 분모 대상 135 · 커밋 e61ce1e 되돌린 뒤
     "claude": {
         "denominator": 135,
         "ok": 99,            # 검수된 쌍만 (73.3%)
@@ -285,12 +285,12 @@ def compare_baseline(got: dict[str, int], which: str) -> list[str]:
 #   바뀌지 않는 한 유효하다.
 REVIEW_NOTES: dict[str, str] = {
     "의류": (
-        "3ffc0bf · 안전기준준수 부속서 1 [표 1] 중의류 \"셔츠, 타올, 장갑 … "
+        "930d95a · 안전기준준수 부속서 1 [표 1] 중의류 \"셔츠, 타올, 장갑 … "
         "헤어밴드, 가발, 귀마개, 토시 등\" · 외의류 \"모자, 숄, 머플러, "
         "스카프, 앞치마\". 만 14세 이상이라 어린이 표지어가 있으면 닫힌다"
     ),
     "의류 이외의 섬유제품": (
-        "150496f(모기장) · 3a0fac1(가방) · 안전기준준수 부속서 1 [표 1] "
+        "a85a3b5(모기장) · 4592440(가방) · 안전기준준수 부속서 1 [표 1] "
         "기타 제품류 \"가방, 쿠션류, 방석류, 모기장, 커튼, 수의, 덮개 등\". "
         "3.6 이 \"직접 착용하지 않는 제품\" 이라 적어 이 품목으로 보냈다"
     ),

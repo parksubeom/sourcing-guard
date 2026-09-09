@@ -216,7 +216,7 @@ def test_weak_match_is_context_not_a_confirmed_problem():
     """제조사와 제품명 단어만 겹친 것은 '이 상품이 리콜됨' 이 아니다.
 
     RED 로 두면 무관한 상품에 빨간불이 반복되고, 셀러가 모든 RED 를 무시하게
-    된다 - SCoC 오탐(7a6fd70) 때 세운 논리 그대로다.
+    된다 - SCoC 오탐(48e7787) 때 세운 논리 그대로다.
     """
     findings, result = run(PEN, [(rec(), Match(MatchStrength.WEAK, "maker+product"))])
 

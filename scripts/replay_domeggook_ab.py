@@ -82,7 +82,7 @@ def main() -> None:
     ap.add_argument("--src", default=str(_AB))
     ap.add_argument("--detail", default=str(_DETAIL))
     ap.add_argument("--label", required=True,
-                    help='예: "변경 전 (ac3f9ab)" — 숫자에 붙일 라벨')
+                    help='예: "변경 전 (7bcd492)" — 숫자에 붙일 라벨')
     ap.add_argument("--out", default="")
     args = ap.parse_args()
 
