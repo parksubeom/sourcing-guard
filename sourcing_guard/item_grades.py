@@ -1123,6 +1123,17 @@ class ItemGradeBook:
         *,
         extra_aliases: dict | None = None,
         raw_text: str | None = None,
+        # 1단계가 찾아온 후보를 **전부** 여기 적는다. 매처가 무엇을 왜 거부했는지
+        # 세려면 통과한 것만으로는 알 수 없다.
+        #
+        # ⚠ 이 인자가 생긴 이유 (4-f · 2026-09-09): `scripts/measure_matcher.py`
+        #   가 이 함수의 1단계를 **직접 재현**하고 있었고, 그 재현이 낡아 자기검사
+        #   에서 멈췄다. 가드 셋(`names_a_standifying_accessory` ·
+        #   `accessory_follows_the_key` · `is_excluded_by_marker`)과 접두 확장
+        #   단계가 재현에 없었다. **자기검사가 옳았고 재현이 틀렸다.**
+        #   재현을 고치는 대신 **재현을 없앤다** - 같은 규칙을 두 곳에 두면
+        #   반드시 갈라진다.
+        trace: list[dict] | None = None,
     ) -> list[ItemGrade]:
         """상품명에서 보이는 품목 후보를 **전부** 돌려준다. 강한 순.
 
@@ -1174,9 +1185,21 @@ class ItemGradeBook:
                     names_a_standalone_accessory(product_name or "", row["item"])
                     or accessory_follows_the_key(product_name or "", probe)
                 ):
+                    if trace is not None:
+                        trace.append({
+                            "item": row["item"], "grade": row["grade"],
+                            "how": how, "key": probe,
+                            "outcome": "guard", "reason": "부속품 가드",
+                        })
                     continue
                 # 원문이 명시한 제외 표기 - 부속서 11 의 "사무용품 및 전문가용".
                 if is_excluded_by_marker(product_name, row["item"]):
+                    if trace is not None:
+                        trace.append({
+                            "item": row["item"], "grade": row["grade"],
+                            "how": how, "key": probe,
+                            "outcome": "guard", "reason": "원문 제외 표기",
+                        })
                     continue
                 verdict = judge(
                     normalized_name=intact,
@@ -1194,6 +1217,19 @@ class ItemGradeBook:
                     # ('전기손난로')이 화학제와 자리를 다투기 때문이다.
                     chemical_rival=chemical_rival_wins(product_name, row["item"]),
                 )
+                if trace is not None:
+                    trace.append({
+                        "item": row["item"], "grade": row["grade"],
+                        "how": how, "key": probe,
+                        "outcome": "accepted" if verdict.accepted else "rejected",
+                        "confidence": verdict.confidence.value,
+                        "reason": verdict.reason,
+                        # 어느 신호가 거부했는지. 매처가 거부하는 쪽으로만
+                        # 강하므로 이 이름이 곧 "왜 안 붙었나" 다.
+                        "rejected_by": next(
+                            (sig.name for sig in verdict.signals if sig.rejects), None
+                        ),
+                    })
                 if not verdict.accepted:
                     continue
                 seen.add(mark)

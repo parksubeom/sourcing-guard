@@ -1,152 +1,131 @@
 #!/usr/bin/env python3
-"""매처가 신호별로 몇 건을 거부하는지 센다.
-
-1단계(검색)가 후보를 넓게 찾고 2단계(매처)가 참인 것을 가린다. 이전에는
-부속어 가드가 여섯 곳에 흩어져 있어 **무엇이 왜 거부됐는지 셀 수가 없었다.**
-한곳에 모았으니 이제 센다.
+"""매처가 신호별로 몇 건을 거부하는지 센다. 매칭률도 함께.
 
     PYTHONPATH=. python scripts/measure_matcher.py
+    PYTHONPATH=. python scripts/measure_matcher.py --sample tests/fixtures/도매꾹239.txt
+
+⚠⚠ **재현을 없앴다 (4-f · 2026-09-09).**
+
+  전에는 이 스크립트가 `ItemGradeBook.lookup_all` 의 1단계(검색)를 **직접
+  재현**했다. 통과한 후보만 돌려주는 API 로는 "거부된 후보" 를 셀 수 없었기
+  때문이다. 그래서 자기검사(`재현 == 실제`)를 두고 어긋나면 멈추게 했는데,
+  실제로 멈췄다:
+
+      재현이 실제 코드와 어긋납니다.
+        상품: 장갑 높이조절 스탠드 스팀 다리미판 행거 지지대
+        재현: ['스팀다리미', '의류']
+        실제: []
+
+  **자기검사가 옳았고 재현이 낡았다.** 재현에는 그 뒤 들어온 가드 셋
+  (`names_a_standalone_accessory` · `accessory_follows_the_key` ·
+  `is_excluded_by_marker`)과 접두 확장 단계가 없었다. 기대값을 현재 출력에
+  맞춰 덮어쓰면 검사가 아무것도 안 지킨다.
+
+  그래서 재현을 고치는 대신 **없앴다** - `lookup_all(..., trace=[])` 이 후보를
+  전부 적어 주므로 이 스크립트는 그것만 센다. 같은 규칙을 두 곳에 두면 반드시
+  갈라진다.
+
+⚠ `trace` 의 결과는 셋이다.
+
+    accepted  매처가 통과시켰다
+    rejected  매처(`judge`)가 거부했다 - `rejected_by` 에 어느 신호인지
+    guard     `judge` 앞의 가드가 걸렀다 (부속품 · 원문 제외 표기)
 """
 
 from __future__ import annotations
 
+import argparse
 import collections
 import pathlib
+import sys
 
-from sourcing_guard.item_grades import (
-    ItemGradeBook,
-    chemical_variant_dominates,
-    names_the_subject,
-    normalize,
-    rival_wins,
-    strip_modifiers,
-)
-from sourcing_guard.matcher import (
-    Confidence,
-    chemical_rival_wins,
-    has_consumable_hint,
-    judge,
-)
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1]))
 
-# ⚠ 기본 표본을 새표본235 로 옮겼다. 도매꾹239 는 별칭을 만들 때 쓴 표본이라
-#   거기서 재면 우리가 맞춘 것을 다시 맞춘 숫자가 나온다 - 71% vs 24% 차이가
-#   그것이다. 옛 표본으로 재려면 --sample 로 지정한다.
-_SAMPLE = pathlib.Path("tests/fixtures/새표본235.txt")
+from sourcing_guard.item_grades import ItemGradeBook  # noqa: E402
+
+_DEFAULT = pathlib.Path("tests/fixtures/새표본235.txt")
+
+# 09-04 작업로그 §7 이 적은 값. 지금 값과 다르므로 **라벨을 붙여 나란히 적는다.**
+#
+#   09-04 로그   "매칭 165 → 170/239 (69% → 71%)"
+#   재현          커밋 f555d52 에서 lookup_all 기준 170/239 = 71.1% (worktree 로 확인)
+#
+# ⚠ 두 숫자를 "개선/악화" 로 읽지 말 것. 아래 §차이 참조 - 3건 중 2건은 오답을
+#   지운 것이고 1건은 정답을 잃은 것이다.
+_LOG_0904 = {"sample": "도매꾹239", "matched": 170, "total": 239, "commit": "f555d52"}
 
 
 def main() -> None:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--sample", default=str(_DEFAULT))
+    args = ap.parse_args()
+
+    path = pathlib.Path(args.sample)
     names = [
-        n.strip() for n in _SAMPLE.read_text(encoding="utf-8").splitlines() if n.strip()
+        n.strip() for n in path.read_text(encoding="utf-8").splitlines() if n.strip()
     ]
     book = ItemGradeBook()
 
-    # 1단계가 찾아온 후보를 매처 없이 세려면 판정을 직접 돌려야 한다.
-    rejected = collections.Counter()
-    accepted = collections.Counter()
-    per_product_rejected = 0
+    rejected: collections.Counter = collections.Counter()
+    accepted: collections.Counter = collections.Counter()
+    guarded: collections.Counter = collections.Counter()
+    matched: list[str] = []
     products_with_rejection = 0
 
     for raw in names:
-        intact = normalize(raw)
-        consumable = has_consumable_hint(raw)
-        stripped = normalize(strip_modifiers(raw))
-        forms = [intact] + ([stripped] if stripped != intact else [])
-
-        seen: set[tuple[str, str]] = set()
-        hits: list[tuple[str, str, object]] = []
-
-        # 1단계 재현: 포함 · 정확 · 별칭
-        for base in (raw, strip_modifiers(raw)):
-            rows = book._by_name.get(normalize(base))
-            for row in rows or ():
-                hits.append(("exact", normalize(row["item"]), row))
-        for key, rows in book._contain_keys:
-            if key not in intact:
-                continue
-            # 경쟁 단계도 재현한다. 안 하면 새 규칙이 측정에 안 보인다 -
-            # chemical_rival 때 겪은 것과 같다.
-            winner = rival_wins(intact, key)
-            if winner is not None:
-                for row in book._by_name.get(normalize(winner)) or ():
-                    hits.append(("contains", key, row))
-                continue
-            for row in rows:
-                hits.append(("contains", key, row))
-        from sourcing_guard.item_grades import ALIASES
-
-        for target in forms:
-            for key, legal in ALIASES.items():
-                if normalize(key) not in target:
-                    continue
-                for name in (legal,) if isinstance(legal, str) else legal:
-                    for row in book._by_name.get(normalize(name)) or ():
-                        hits.append(("alias", normalize(key), row))
-
+        trace: list[dict] = []
+        got = book.lookup_all(raw, trace=trace)
+        if got:
+            matched.append(raw)
         any_reject = False
-        accepted_marks: set[tuple[str, str]] = set()
-        for how, key, row in hits:
-            mark = (row["item"], row["grade"])
-            if mark in seen:
-                continue
-            seen.add(mark)
-            # 매처는 신호를 계산하지 않고 받는다 - 호출측(ItemGradeBook)이
-            # 이미 정규화를 했으므로 규칙을 두 곳에 두지 않는다.
-            v = judge(
-                normalized_name=intact,
-                normalized_key=key,
-                matched_by=how,
-                names_subject=(
-                    True if how == "exact" else names_the_subject(intact, key)
-                ),
-                chemical_dominates=chemical_variant_dominates(
-                    intact, normalize(row["item"])
-                ),
-                consumable_hint=consumable,
-                chemical_rival=chemical_rival_wins(raw, row["item"]),
-            )
-            if v.confidence is Confidence.REJECTED:
-                name = next((s.name for s in v.signals if s.rejects), "알수없음")
-                rejected[name] += 1
-                any_reject = True
-                per_product_rejected += 1
+        for row in trace:
+            if row["outcome"] == "accepted":
+                accepted[row["confidence"]] += 1
+            elif row["outcome"] == "guard":
+                guarded[row["reason"]] += 1
             else:
-                accepted[v.confidence.value] += 1
-                accepted_marks.add(mark)
+                rejected[row.get("rejected_by") or "알수없음"] += 1
+                any_reject = True
         products_with_rejection += any_reject
-
-        # ⚠ 이 스크립트는 1단계(검색)를 **직접 재현한다.** 프로덕션 코드가
-        #   바뀌면 재현이 뒤처지고, 그러면 숫자가 조용히 틀린다 - 오늘 두 번
-        #   겪었다(chemical_rival · 경쟁 단계). 매번 실제 결과와 대조해서,
-        #   어긋나면 숫자를 내지 않고 멈춘다.
-        real = {(g.item, g.grade) for g in book.lookup_all(raw)}
-        if accepted_marks != real:
-            raise SystemExit(
-                "재현이 실제 코드와 어긋납니다. 이 스크립트를 고치기 전까지 "
-                "숫자를 믿을 수 없습니다.\n"
-                f"  상품: {raw[:60]}\n"
-                f"  재현: {sorted(i for i, _ in accepted_marks)}\n"
-                f"  실제: {sorted(i for i, _ in real)}"
-            )
 
     total_rej = sum(rejected.values())
     total_acc = sum(accepted.values())
-    print(f"도매꾹 실상품 {len(names)}건 (재현이 실제 코드와 일치함을 확인)\n")
-    print(f"1단계가 찾아온 후보  {total_acc + total_rej:4}개")
-    print(f"  매처가 통과시킴     {total_acc:4}개")
-    print(f"  매처가 거부함       {total_rej:4}개   "
-          f"(상품 {products_with_rejection}건에서 발생)\n")
+    total_guard = sum(guarded.values())
 
-    print("── 거부 신호별 ──")
-    for name, n in rejected.most_common():
-        print(f"  {n:4}개  {name}")
-    print("\n── 통과한 것의 신뢰도 ──")
-    for level in ("certain", "likely", "possible"):
-        if accepted[level]:
-            print(f"  {accepted[level]:4}개  {level}")
+    print(f"{path.name} · {len(names)}건 "
+          f"(재현 없음 - lookup_all 의 trace 를 그대로 센다)\n")
+    print(f"등급이 붙은 상품     {len(matched):4}/{len(names)} "
+          f"= {len(matched) / len(names) * 100:.1f}%")
+    print(f"  ⚠ 라벨: 원본 상품명 · lookup_all 기준 · LLM 없음\n")
+    print(f"1단계가 찾아온 후보  {total_acc + total_rej + total_guard:7}개")
+    print(f"  매처가 통과시킴     {total_acc:7}개")
+    print(f"  매처가 거부함       {total_rej:7}개   "
+          f"({products_with_rejection}개 상품에서)")
+    print(f"  가드가 걸러냄       {total_guard:7}개   (judge 앞)")
 
-    # 매처를 끄면 몇 건이 살아나는가 = 이전 상태
-    print(f"\n매처가 없으면 후보 {total_rej}개가 더 붙는다. "
-          f"그중 상당수가 오답이었다.")
+    if rejected:
+        print("\n매처 거부 사유")
+        for name, n in rejected.most_common():
+            print(f"  {n:7}개  {name}")
+    if guarded:
+        print("\n가드 사유")
+        for name, n in guarded.most_common():
+            print(f"  {n:7}개  {name}")
+    if accepted:
+        print("\n통과한 후보의 확신도")
+        for level, n in accepted.most_common():
+            print(f"  {n:7}개  {level}")
+
+    if path.name == f"{_LOG_0904['sample']}.txt":
+        then = _LOG_0904
+        print(f"\n{'=' * 70}")
+        print(f"09-04 로그와 대조 — **개선/악화로 읽지 말 것**")
+        print(f"  09-04 (커밋 {then['commit']})  {then['matched']}/{then['total']} "
+              f"= {then['matched'] / then['total'] * 100:.1f}%")
+        print(f"  지금                      {len(matched)}/{len(names)} "
+              f"= {len(matched) / len(names) * 100:.1f}%")
+        print(f"  차이 {len(matched) - then['matched']:+d}건 - 무엇이 빠졌는지는 "
+              f"docs/미완_목록.md 4-f 참조")
 
 
 if __name__ == "__main__":
