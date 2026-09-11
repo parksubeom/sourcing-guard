@@ -502,6 +502,24 @@ def extract_traced(
                             reason="parse_failed"),
         )
 
+    # ⚠⚠ **`json.loads` 성공이 곧 dict 를 뜻하지 않는다 (4-q · 2026-09-11).**
+    #
+    #   `[1, 2, 3]` 과 `null` 도 유효한 JSON 이다. 아래 `data.items()` 가
+    #   `AttributeError` 로 터지고, 그 예외는 이 함수 밖으로 나가 **스캔이
+    #   500 이 된다.** 오류 주입으로 실물 확인했다.
+    #
+    #   실제로 나올 수 있다 - 모델이 "답할 수 없음" 을 `null` 로 표현하거나,
+    #   프롬프트를 오해해 배열을 돌려주는 경우다. 벤더를 바꾸면 더 그렇다(R7).
+    #
+    # ⚠ 파싱 실패와 같은 자리로 보낸다 - 우리가 못 읽은 것이고, 못 읽은 것을
+    #   "안전" 으로 반올림하지 않는다 (R3).
+    if not isinstance(data, dict):
+        return (
+            ProductFacts(source_page_url=page_url),
+            ExtractionTrace(path="llm", vendor=used, model=_model_of(used),
+                            reason="parse_failed"),
+        )
+
     # Strip anything not in the schema. extra="forbid" would otherwise reject a
     # hallucinated verdict field ("risk_level" etc.) and lose the whole
     # extraction; dropping unknown keys keeps the good fields. R1 lives in the

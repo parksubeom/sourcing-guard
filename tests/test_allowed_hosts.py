@@ -62,13 +62,32 @@ def test_ensure_allowed_raises_before_going_out():
 def test_every_adapter_goes_through_the_gate():
     """어댑터가 나가기 전에 게이트를 부르는지 소스로 확인한다.
 
-    ⚠ 어댑터가 넷이 되면 여기 추가한다. 소스 검사인 이유는 실제 호출 없이
-      "부르는가" 를 확인해야 하기 때문이고, 아래 런타임 검사가 그 짝이다.
+    ⚠⚠ **2026-09-11 까지 `rra_client.py` 가 빠져 있었다 (4-q).** 이 주석이
+      "어댑터가 넷이 되면 여기 추가한다" 라고 적어 뒀는데 그때 이미 **셋**
+      이었고, R4 표에는 `emsit.go.kr`·`rra.go.kr` 이 있었다. 목록을 손으로
+      적으면 이런 일이 난다 - 그래서 이제 **파일을 훑어 자동으로 찾는다.**
+
+    소스 검사인 이유는 실제 호출 없이 "부르는가" 를 확인해야 하기 때문이고,
+    아래 런타임 검사가 그 짝이다.
     """
     root = Path(__file__).resolve().parents[1] / "sourcing_guard"
-    for name in ("domeggook_client.py", "kats_client.py"):
+    # 나가는 어댑터를 **자동으로 찾는다.**
+    #
+    # ⚠ `httpx.Client(` 만 보면 안 된다 - `domeggook_client` 는 모듈 함수
+    #   `httpx.get(...)` 을 직접 쓴다. 실제로 그렇게 짰다가 2개만 잡혔다.
+    _MARKERS = ("httpx.Client(", "httpx.get(", "httpx.post(", "httpx.request(")
+    adapters = sorted(
+        p.name for p in root.glob("*.py")
+        if any(mark in p.read_text(encoding="utf-8") for mark in _MARKERS)
+    )
+    assert adapters, "어댑터를 하나도 못 찾았다 - 검사 전제가 바뀌었나"
+    for name in adapters:
         src = (root / name).read_text(encoding="utf-8")
-        assert "ensure_allowed(" in src, f"{name} 에 게이트가 없다"
+        assert "ensure_allowed(" in src, (
+            f"{name} 이 httpx 로 나가는데 R4 게이트가 없다"
+        )
+    # 알고 있는 어댑터 수. 늘면 위 자동 탐색이 새 파일을 잡았다는 뜻이다.
+    assert len(adapters) == 3, f"어댑터가 바뀌었습니다: {adapters}"
 
 
 def test_kats_client_is_blocked_when_the_base_url_is_overridden_badly():

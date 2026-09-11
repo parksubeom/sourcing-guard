@@ -690,7 +690,22 @@ class KatsClient:
         # 설계서 p.19: HTTP 200 이어도 resultCode 로 실패를 알린다. 이걸 안 보면
         # 인증 실패(4000)나 IP 미등록(4001)을 "조회 결과 없음"으로 착각하고,
         # 그러면 멀쩡한 인증번호에 RED 를 띄우게 된다.
-        code = str(payload.get("resultCode", "")) if isinstance(payload, dict) else ""
+        # ⚠⚠ **`resultCode` 가 없으면 실패다 (4-q · 2026-09-11).**
+        #
+        #   전에는 `payload.get("resultCode", "")` 의 빈 문자열이 아래
+        #   `if code and ...` 에서 falsy 라 **그냥 통과했다.** 그러면 우리가
+        #   이해하지 못한 응답이 "조회 결과 없음" 이 되고, 셀러 화면에는
+        #   `kc_not_found` - 즉 **멀쩡한 인증번호에 경고**가 뜬다.
+        #
+        #   실측(오류 주입): `{"unexpected": [1, 2]}` 를 200 으로 주면
+        #   `cert=ok` · `kc_not_found` 가 나왔다. 응답 형식이 바뀌거나 점검
+        #   페이지가 JSON 으로 오면 그 순간 모든 인증 조회가 "없음" 이 된다.
+        #
+        # ⚠ 이것은 R3 다 - 우리가 못 읽은 것을 "없다" 로 반올림하지 않는다.
+        if not isinstance(payload, dict) or "resultCode" not in payload:
+            health.record_failure("parse", "resultCode 가 없는 응답")
+            raise KatsApiError("parse", "resultCode 가 없는 응답 - 형식이 다릅니다")
+        code = str(payload.get("resultCode", ""))
         if code == _CODE_NO_DATA:
             health.record_success()
             return []

@@ -225,6 +225,17 @@ def healthz() -> dict:
         "watched_items": _store.count(),
         "kats": health.snapshot(),
         "sync": {"enabled": settings.sync_enabled, **_store.sync_snapshot()},
+        # ⚠ 저장소가 손상돼 격리됐는지 (4-q). None 이 정상이다 - 값이 있으면
+        #   **등록된 워치 항목을 잃었다는 뜻**이고, 그러면 "리콜을 가장 먼저
+        #   알린다" 는 약속이 조용히 깨진 상태다 (R6).
+        "storage": {
+            "path": settings.watchlist_db_path,
+            "quarantined_from": _store.quarantined_from,
+            "note": (
+                "quarantined_from 이 null 이 아니면 DB 손상으로 새로 시작한 "
+                "것입니다. 워치 항목이 비어 있으니 격리 파일에서 복구하세요."
+            ),
+        },
         "limits": _limiter.snapshot(),
         # ⚠ **추출이 실제로 어느 경로로 갔는지 여기서 보여야 한다.**
         #   2026-09-08 에 Claude 크레딧이 소진돼 배포본이 매 스캔마다 400 을

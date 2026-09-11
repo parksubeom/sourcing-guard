@@ -15,12 +15,15 @@ CLAUDE.md R6 관련: 여기는 저장만 한다. 매칭 규칙은 watchlist.py �
 
 from __future__ import annotations
 
+import logging
 import sqlite3
-from datetime import date
+from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Iterable
 
 from .models import RecallAlert, WatchItem, WatchStatus
+
+_log = logging.getLogger(__name__)
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS watch_items (
@@ -97,10 +100,58 @@ class SqliteWatchStore:
     수준의 동시성에는 충분하고, 늘어나면 커넥션 풀로 바꾼다.
     """
 
+    #: 손상된 DB 를 치우고 새로 시작했을 때 그 사실. `/healthz` 가 읽는다.
+    #: ⚠ None 이 정상이다. 값이 있으면 **워치 데이터를 잃었다는 뜻**이다.
+    quarantined_from: str | None = None
+
     def __init__(self, path: str | Path) -> None:
         self._path = Path(path)
         if self._path.parent != Path("."):
             self._path.parent.mkdir(parents=True, exist_ok=True)
+        self.quarantined_from = None
+        try:
+            self._open()
+        except sqlite3.DatabaseError as exc:
+            # ⚠⚠ **DB 파일이 손상되면 전에는 앱이 부팅조차 못 했다 (4-q).**
+            #
+            #   실측: 0바이트는 괜찮지만(sqlite 가 새 DB 로 본다) 쓰레기 바이트나
+            #   잘린 파일이면 `DatabaseError: file is not a database` /
+            #   `database disk image is malformed` 로 **프로세스가 죽는다.**
+            #   Fly 에서는 재시작 루프가 되고, 그 사이 **스캔도 함께 죽는다.**
+            #
+            #   스캔은 이 DB 없이도 된다(리콜 축만 비고 `lookup_failed`). 투표
+            #   기간에 저장소 손상으로 전체가 죽는 것보다 스캔이 사는 것이 낫다.
+            #
+            # ⚠ **손상 파일을 지우지 않는다.** 옆으로 치우고 새로 시작한다 -
+            #   사람이 복구할 수 있어야 한다. 조용히 덮어쓰면 워치 데이터가
+            #   소리 없이 사라지고, 그러면 "리콜을 가장 먼저 알린다" 는 약속이
+            #   깨진 것도 모른다 (R6).
+            #
+            # ⚠ 그리고 **조용히 넘어가지 않는다.** `/healthz.storage` 가
+            #   격리 사실을 말하고, 로그에 error 로 남긴다.
+            stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+            spoiled = self._path.with_name(f"{self._path.name}.corrupt-{stamp}")
+            try:
+                self._path.replace(spoiled)
+            except OSError:  # pragma: no cover - 파일을 못 옮기면 원래대로 던진다
+                raise exc
+            for suffix in ("-wal", "-shm"):
+                side = Path(str(self._path) + suffix)
+                if side.exists():
+                    try:
+                        side.unlink()
+                    except OSError:
+                        pass
+            _log.error(
+                "워치리스트 DB 가 손상되어 격리했습니다: %s → %s (%s). "
+                "새 DB 로 시작하므로 **등록된 워치 항목이 비어 있습니다** - "
+                "복구하려면 격리 파일을 확인하세요.",
+                self._path, spoiled.name, exc,
+            )
+            self.quarantined_from = spoiled.name
+            self._open()
+
+    def _open(self) -> None:
         self._conn = sqlite3.connect(self._path, check_same_thread=False)
         self._conn.row_factory = sqlite3.Row
         # 동시 읽기/쓰기에서 잠금 대기를 줄인다.

@@ -34,6 +34,7 @@ from xml.etree import ElementTree
 import httpx
 import yaml
 
+from .allowed_hosts import ensure_allowed
 from .watchlist import normalize_model
 
 _log = logging.getLogger(__name__)
@@ -287,6 +288,17 @@ class RraClient:
 
         op = _OPEN_API["operations"]["auth_info"]
         url = f"{_OPEN_API['base_url'].rstrip('/')}/{op['path']}"
+        # 나가기 **전에** 승인 호스트를 확인한다 (CLAUDE.md R4).
+        #
+        # ⚠⚠ **2026-09-11 까지 이 어댑터에는 게이트가 없었다 (4-q).** R4 표에
+        #   `emsit.go.kr` · `rra.go.kr` 이 있고 `kats_client`·`domeggook_client`
+        #   는 게이트를 거치는데 여기만 빠져 있었다. 검사도 두 어댑터만 봤다 -
+        #   그 주석이 "어댑터가 넷이 되면 여기 추가한다" 라고 적어 뒀는데
+        #   **이미 셋이었다.**
+        #
+        # ⚠ URL 은 설정 파일(`_OPEN_API`·`_PUBLIC`)에서 온다. `kats_client` 와
+        #   같은 구조이므로 같은 이유로 게이트가 필요하다.
+        ensure_allowed(url)
         try:
             resp = self._client.get(url, params={op["param"]: number})
             resp.raise_for_status()
@@ -323,6 +335,7 @@ class RraClient:
 
         op = _PUBLIC["operations"]["search"]
         url = f"{_PUBLIC['base_url'].rstrip('/')}/{op['path']}"
+        ensure_allowed(url)   # R4
         try:
             # 한글 질의는 EUC-KR 퍼센트 인코딩이어야 한다. 폼이
             # accept-charset=euc-kr 이고, UTF-8 로 보내면 에러가 아니라 0건이
@@ -350,6 +363,7 @@ class RraClient:
             return None
         op = _PUBLIC["operations"]["detail_popup"]
         url = f"{_PUBLIC['base_url'].rstrip('/')}/{op['path']}"
+        ensure_allowed(url)   # R4
         try:
             resp = self._client.get(
                 url, params={op["param"]: internal_key}, timeout=SEARCH_TIMEOUT_SECONDS
@@ -414,6 +428,7 @@ class RraClient:
 
         cfg = _CFG.get("noncompliant", {})
         url = f"{cfg['base_url'].rstrip('/')}/{cfg['path']}"
+        ensure_allowed(url)   # R4
         paging = cfg.get("paging", {})
         out: list[dict] = []
         for page in range(1, max_pages + 1):
@@ -516,10 +531,27 @@ def _parse_auth_info(body: str, asked: str) -> RfCertRecord | None:
         el = root.find(tag)
         return el.text.strip() if el is not None and el.text else None
 
-    code = text("resultCode") or ""
+    # ⚠⚠ **`resultCode` 가 없으면 실패다 (4-q · 2026-09-11).**
+    #
+    #   `ElementTree` 는 `<html>점검중</html>` 을 **유효한 XML 로 파싱한다.**
+    #   태그 하나에 텍스트뿐이어도 문법상 맞기 때문이다. 그러면 위의 ParseError
+    #   가드를 통과하고, `resultCode` 가 없어 `code = ""` 가 되며, 아래
+    #   `if code and ...` 이 falsy 라 **그대로 성공 처리**됐다.
+    #
+    #   실측(오류 주입): emsit 이 `<html>점검중</html>` 을 200 으로 주면
+    #   모든 필드가 None 인 레코드가 만들어지고 `RfCertState.VERIFIED` 가 되어
+    #   화면에 **"전파인증 확인됨"** 이 떴다. **잘못된 초록불**이고, 이 도구가
+    #   가장 하면 안 되는 종류의 오류다(기획서 §3.2 · R3).
+    #
+    #   이 함수의 docstring 이 "400 HTML 을 조용히 없음으로 흘리면" 을 걱정했는데,
+    #   진짜 구멍은 반대쪽이었다 - **XML 처럼 보이지만 우리 스키마가 아닌 응답을
+    #   성공으로 읽는 것**이다.
+    code = text("resultCode")
+    if code is None:
+        raise RraApiError("parse", "resultCode 가 없는 응답 - 형식이 다릅니다")
     if code == "0001":
         return None
-    if code and code != "0000":
+    if code != "0000":
         raise RraApiError(code, text("resultMsg") or "")
 
     f = _OPEN_API["fields"]

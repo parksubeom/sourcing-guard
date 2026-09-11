@@ -140,3 +140,32 @@ def _fresh_rate_limiter(monkeypatch):
     rl = RateLimiter(per_minute=10_000, daily_llm=10_000)
     rl.register_exempt(*DEMO_TEXTS)
     monkeypatch.setattr(main, "_limiter", rl)
+
+
+@pytest.fixture(autouse=True)
+def _fresh_kats_health(monkeypatch):
+    """검사마다 **새 KatsHealth** 를 준다.
+
+    ⚠ `kats_client.health` 는 모듈 전역이라 검사가 남긴 실패가 다음 검사에
+      보인다. 지금은 `/healthz` 검사가 키 존재만 보므로 통과하지만, **절대값을
+      보는 검사가 생기는 순간 조용히 깨진다** - 전역 리미터가 그랬다(4-p).
+
+    ⚠ 자기 인스턴스를 쓰는 검사(`test_gov_lookup_observability`)는 이 픽스처
+      위에 자기 것을 덮으므로 영향이 없다.
+
+    ⚠⚠ **`main` 쪽도 함께 바꿔야 한다.** `main.py` 가
+      `from .kats_client import health` 로 **모듈 레벨에서** 가져가므로
+      `kats_client.health` 만 patch 하면 `/healthz` 는 여전히 옛 인스턴스를
+      읽는다. 실제로 그렇게 짰다가 `test_healthz_never_reports_not_ok_on_kats_
+      failure` 가 `assert None == '4001'` 로 깨졌다 - 검사는 새 인스턴스에
+      기록하고 `/healthz` 는 옛 것을 읽었다.
+
+      `from X import y` 로 가져간 이름은 **가져간 모듈의 속성**이 된다.
+      전역을 patch 할 때는 import 방식을 먼저 볼 것.
+    """
+    from sourcing_guard import kats_client, main
+
+    fresh = kats_client.KatsHealth()
+    monkeypatch.setattr(kats_client, "health", fresh)
+    if hasattr(main, "health"):
+        monkeypatch.setattr(main, "health", fresh)
