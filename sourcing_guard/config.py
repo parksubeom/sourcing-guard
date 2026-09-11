@@ -75,9 +75,12 @@ class Settings:
             #   추출은 짧은 입력·짧은 JSON 출력이라 mini 급으로 충분한지
             #   대조 측정으로 확인한다.
             gpt_model=os.getenv("GPT_MODEL", "gpt-5.4-mini"),
+            # ⚠⚠ **기준 추출기는 GPT 다 (2026-09-11 결정).** 발표 숫자가 GPT
+            #   기준이므로 기본값도 GPT 여야 한다 - 둘이 갈리면 "이 숫자가 어느
+            #   추출기 것인가" 를 말할 수 없다. CLAUDE.md R7 참조.
             extractor_order=tuple(
                 v.strip().lower()
-                for v in os.getenv("EXTRACTOR_ORDER", "claude,gpt").split(",")
+                for v in os.getenv("EXTRACTOR_ORDER", "gpt,claude").split(",")
                 if v.strip()
             ),
             kats_base_url=os.getenv("KATS_BASE_URL") or None,

@@ -375,7 +375,17 @@ def test_the_proposal_numbers_match_the_code():
     from replay_single_path import grades_for
     from sourcing_guard.verifier import RuleBook as _RuleBook
 
-    raw_path = root / "tests" / "fixtures" / "단건경로_claude_235.json"
+    # ⚠⚠ **기준 추출기의 원자료를 쓴다** (2026-09-11 · CLAUDE.md R7).
+    #   전에는 Claude 원자료가 박혀 있었는데, 기준이 GPT 로 옮겨 가면서
+    #   기획서 숫자와 이 대조가 갈렸다. `BASELINE_EXTRACTOR` 를 따라간다 -
+    #   기준을 옮길 때 고칠 자리가 한 곳이어야 한다.
+    from audit_tally import BASELINE_EXTRACTOR
+
+    _RAW = {
+        "gpt": "단건경로_gpt.json",
+        "claude": "단건경로_claude_235.json",
+    }
+    raw_path = root / "tests" / "fixtures" / _RAW[BASELINE_EXTRACTOR]
     raw = _json.loads(raw_path.read_text(encoding="utf-8"))
     assert len(raw) == 235, len(raw)
     # 재생 조건은 사이드카 md 에 적혀 있다 - JSON 은 주석을 담을 수 없다.
@@ -392,23 +402,37 @@ def test_the_proposal_numbers_match_the_code():
     # 대조에서 둘 다 필요하다.
     from audit_tally import load_reviewed_pairs as _load_reviewed
 
-    _reviewed_early = _load_reviewed(raw_path)
+    # ⚠⚠ **검수 쌍의 출처는 기준 추출기와 다르다.**
+    #
+    #   `load_reviewed_pairs` 는 "사람이 본 (상품명, 품목) 쌍" 을 모은다. 그
+    #   집합은 Claude 원자료 + `새표본235_오답.tsv` 에서 오고, **어느 추출기로
+    #   재든 같다** - 사람이 검수한 사실이 추출기에 따라 달라지지 않는다.
+    #   `replay_single_path.py` 도 같은 경로를 고정해서 부른다.
+    #
+    #   여기에 GPT 원자료를 주면 GPT 가 붙인 쌍이 전부 "검수됨" 이 되어 검수된
+    #   정답이 95 → 113 으로 부푼다. 실제로 그렇게 짰다가 걸렸다.
+    _reviewed_early = _load_reviewed(
+        root / "tests" / "fixtures" / "단건경로_claude_235.json"
+    )
     _s_rev_early = _tally(single, scope=scope, reviewed=_reviewed_early)
     s_rev_ok = _s_rev_early["ok"]
     s_rev_unreviewed = _s_rev_early["unreviewed"]
 
-    assert s_got["denominator"] == 135, s_got
-    assert s_got["ok"] == 113, s_got
-    assert s_got["vague"] == 2, s_got
-    assert s_got["wrong"] == 1, s_got
+    from audit_tally import BASELINE as _BASE
+
+    _b = _BASE[BASELINE_EXTRACTOR]
+    assert s_got["denominator"] == _b["denominator"], s_got
+    assert s_got["ok"] == _b["ok_upper"], s_got
+    assert s_got["vague"] == _b["vague"], s_got
+    assert s_got["wrong"] == _b["wrong"], s_got
     # ⚠ **비대상 0 이 우리 제품의 가장 센 주장이다.** 이 값이 0 이 아니면
     #   정답률이 얼마든 발표에 쓸 수 없다.
-    assert s_got["off_target"] == 0, s_got
+    assert s_got["off_target"] == _b["off_target"] == 0, s_got
     # ⚠⚠ **애매 부착도 잠근다 (2026-09-09).** 분모 밖이라 정답률에 안 보이지만
     #   화면에는 뜬다 - 애매로 판정한 줄에 등급이 붙으면 셀러는 그것을 답으로
     #   읽는다. 4-e 를 넣었을 때 이 값이 1 → 2 로 움직였고 **통과 기준에 없어
     #   보고에서 빠졌다.** 기준을 네 개만 세면 다섯째가 조용히 움직인다.
-    assert s_got["on_vague"] == 1, s_got
+    assert s_got["on_vague"] == _b["on_vague"], s_got
 
     s_pct = round(s_got["ok"] / s_got["denominator"] * 100, 1)
 
@@ -458,12 +482,17 @@ def test_the_proposal_numbers_match_the_code():
     #   반드시 손대게 되므로 잊히지 않는다.
     from audit_tally import load_reviewed_pairs
 
-    reviewed = load_reviewed_pairs(raw_path)
+    # ⚠ 검수 쌍의 출처는 항상 Claude 원자료다 - 위 주석 참조.
+    reviewed = load_reviewed_pairs(
+        root / "tests" / "fixtures" / "단건경로_claude_235.json"
+    )
     s_rev = _tally(single, scope=scope, reviewed=reviewed)
 
-    assert s_rev["ok_upper"] == 113, s_rev
-    assert s_rev["ok"] == 99, f"검수된 정답: {s_rev}"
-    assert s_rev["unreviewed"] == 14, s_rev
+    # ⚠ 기대값을 손으로 적지 않는다. 기준 추출기를 옮기면 여기도 따라가야 하고,
+    #   그때 숫자를 잊으면 검사가 낡은 값을 지킨다 (§6).
+    assert s_rev["ok_upper"] == _b["ok_upper"], s_rev
+    assert s_rev["ok"] == _b["ok"], f"검수된 정답: {s_rev}"
+    assert s_rev["unreviewed"] == _b["unreviewed"], s_rev
     # 비대상 0 은 검수와 무관하게 유지돼야 한다.
     assert s_rev["off_target"] == 0, s_rev
 
@@ -483,23 +512,28 @@ def test_the_proposal_numbers_match_the_code():
     # 애매 부착 수도 사이드카에 적혀 있어야 한다 (기준 ⑤).
     assert f"{s_got['on_vague']}건 부착" in side.read_text(encoding="utf-8")
 
-    assert compare_baseline(s_rev, "claude") == [], (
+    assert compare_baseline(s_rev, BASELINE_EXTRACTOR) == [], (
         f"기준선과 다르다 - 보고에 다섯을 다 적을 것: {s_rev}"
     )
 
-    # GPT 쪽도 같은 표로 잠근다. 발표 숫자는 아니지만 추출기를 바꿔 재는
-    # 측정의 기준선이고, 낡으면 다음 사람이 낡은 값을 옮긴다.
+    # **대조군(Claude)도 같은 표로 잠근다.** 발표 숫자는 아니지만 "추출기를
+    # 바꿔도 등급 결과가 크게 안 흔들린다" 의 증거이고, 낡으면 그 주장이 죽는다.
     gpt_raw = _json.loads(
-        (root / "tests" / "fixtures" / "단건경로_gpt.json").read_text(encoding="utf-8")
+        (root / "tests" / "fixtures" / "단건경로_claude_235.json").read_text(encoding="utf-8")
     )
     gpt = {r["name"]: grades_for(r, _kats, _rules) for r in gpt_raw
            if scope.get(r["name"])}
     g_rev = _tally(gpt, scope=scope, reviewed=reviewed)
-    assert compare_baseline(g_rev, "gpt") == [], g_rev
+    assert compare_baseline(g_rev, "claude") == [], g_rev
 
     # 애매 부착이 **어느 줄인지**까지 잠근다 (기준 ⑤). 수만 같고 줄이 바뀌면
     # 그것도 알아야 한다.
-    for which, results in (("claude", single), ("gpt", gpt)):
+    # ⚠ `single` 은 **기준 추출기**(BASELINE_EXTRACTOR)의 결과이고 `gpt` 라는
+    #   이름의 변수는 **대조군**(Claude)의 결과다. 2026-09-11 에 기준이 옮겨
+    #   가면서 이름과 내용이 어긋났다 - 이름을 믿지 말고 무엇을 재생했는지
+    #   위쪽 `raw_path` 를 볼 것.
+    _CONTROL = "claude" if BASELINE_EXTRACTOR == "gpt" else "gpt"
+    for which, results in ((BASELINE_EXTRACTOR, single), (_CONTROL, gpt)):
         attached = tuple(sorted(
             n for n, v in results.items() if v and scope.get(n) == "애매"
         ))
@@ -574,8 +608,24 @@ def test_the_submission_draft_uses_only_the_audited_rate():
     body = draft[draft.index("## 1. 해결하려는 문제"):]
     for banned in ("71%", "24%"):
         assert banned not in body, f"제출문 본문에 검수 전 숫자 '{banned}' 가 있습니다"
-    # 두 분모를 나란히 쓴다 - 한쪽만 쓰면 분모를 유리하게 바꾼 것이 된다.
-    assert "71.1%" in body and "40.9%" in body
+    # 두 값을 나란히 쓴다 - 검수 전 숫자를 검수된 숫자처럼 쓰지 않는다.
+    #
+    # ⚠⚠ **2026-09-11 정정.** 전에는 `"71.1%" in body and "40.9%" in body` 였다.
+    #   그 값은 9/7 시절 것이고 그 뒤 전수 검수로 두 값 체계(검수 완료 / 상한)로
+    #   바뀌었는데 **제출문과 이 가드만 낡아 있었다.** 검사가 낡은 숫자를
+    #   지키고 있었던 셈이다 - §6 "검사가 기대값을 현재 출력에 맞춰 쓰면 버그를
+    #   고정한다" 의 문서판이다.
+    from audit_tally import BASELINE, BASELINE_EXTRACTOR
+
+    base = BASELINE[BASELINE_EXTRACTOR]
+    ok_pct = f"{base['ok'] / base['denominator'] * 100:.1f}%"
+    upper_pct = f"{base['ok_upper'] / base['denominator'] * 100:.1f}%"
+    assert ok_pct in body, f"검수 완료 비율 {ok_pct} 가 제출문에 없습니다"
+    assert upper_pct in body, f"상한 비율 {upper_pct} 가 제출문에 없습니다"
+    assert f"{base['ok']}건" in body and f"{base['ok_upper']}건" in body
+    # ⚠ 낡은 값이 돌아오면 막는다.
+    for stale in ("71.1%", "40.9%", "96건"):
+        assert stale not in body, f"9/7 시절 숫자가 돌아왔습니다: {stale}"
 
     for item in ("## 1. 해결하려는 문제", "## 2. AI 활용 방식", "## 3. 사용한 AI 도구"):
         assert item in draft, item

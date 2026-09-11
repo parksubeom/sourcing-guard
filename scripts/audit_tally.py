@@ -202,8 +202,18 @@ def tally(
 #:     PYTHONPATH=. python scripts/replay_single_path.py
 #:     PYTHONPATH=. python scripts/replay_single_path.py \
 #:       --src tests/fixtures/단건경로_gpt.json
+#: **기준 추출기.** 발표 숫자는 이쪽이다 (2026-09-11 결정 · CLAUDE.md R7).
+#:
+#: ⚠ 화면이 GPT 로 돌므로 기준도 GPT 다. 둘이 갈리면 "이 숫자가 어느 추출기
+#:   것인가" 를 말할 수 없고, 실제로 09-08 ~ 09-11 사이 그 상태였다.
+BASELINE_EXTRACTOR = "gpt"
+
 BASELINE: dict[str, dict[str, int]] = {
     # Claude · 단건 · 상품명만 · 분모 대상 135 · 커밋 e61ce1e 되돌린 뒤
+    #
+    # ⚠ **2026-09-11 부터 대조군이다.** 기준은 `BASELINE_EXTRACTOR` 쪽이고
+    #   이쪽은 "추출기를 바꿔도 등급 결과가 크게 안 흔들린다"(상한 둘 다 113)
+    #   의 증거로 남긴다. 지우지 않는다.
     "claude": {
         "denominator": 135,
         "ok": 99,            # 검수된 쌍만 (73.3%)
@@ -215,7 +225,7 @@ BASELINE: dict[str, dict[str, int]] = {
         "off_target": 0,     # ⚠ 0 이 아니면 발표에 쓸 수 없다
         "on_vague": 1,       # 포워드테크 다림질 매트 → 스팀다리미 (오답표에 있던 줄)
     },
-    # GPT · 같은 조건
+    # GPT · 같은 조건. **이쪽이 기준이다** (BASELINE_EXTRACTOR).
     "gpt": {
         "denominator": 135,
         "ok": 95,            # (70.4%)
