@@ -168,3 +168,33 @@ def test_the_axes_list_matches_what_is_actually_used():
     assert used <= set(UNLOCKABLE_AXES)
     unused = set(UNLOCKABLE_AXES) - used - {"recall_match", "cert_lookup"}
     assert not unused, f"쓰이지 않는 축: {unused}"
+
+
+def test_no_info_request_asks_for_a_certificate_number():
+    """⚠⚠ **`cert_lookup` 을 여는 안내는 만들지 않는다** (2026-09-11 판정).
+
+    인증번호가 없는 것은 (가) 셀러가 안 적었다 (나) **그 등급은 번호가 없는
+    것이 정상이다**(공급자적합성확인·안전기준준수) 둘이다. (나)에 "인증번호를
+    넣으세요" 를 띄우면 **없는 의무를 만든다** - R3-b 가 막으려는 그것이다.
+
+    번호가 필요한 등급으로 확정됐는데 없는 경우는 이미
+    `kc_missing_but_required` 가 말한다. 그래서 이 축은 열 자리가 없다.
+
+    ⚠ 여기서 깨지면 **"셀러가 인증번호를 넣으면 조회된다" 를 무조건 띄우려는
+      것인지** 먼저 물을 것. 등급을 모르는 상태에서 그 말은 의무를 만든다.
+    """
+    from sourcing_guard.scoping import UNLOCKABLE_AXES, missing_inputs
+
+    assert "cert_lookup" in UNLOCKABLE_AXES, "식별자는 남겨 둔다"
+    for materials, age, cat in (
+        ([], None, ItemCategory.UNCLASSIFIED),
+        ([], None, ItemCategory.CHILDREN_TOY),
+        (["ABS"], "3세 이상", ItemCategory.ELECTRICAL),
+        ([], "3세 이상", ItemCategory.HOUSEHOLD),
+    ):
+        for gap in missing_inputs(materials=materials, target_age=age, category=cat):
+            assert "cert_lookup" not in gap.unlocks, (
+                f"인증 조회를 여는 안내가 생겼다: {gap.label} — "
+                "등급을 모르는 상태에서 인증번호를 요구하면 없는 의무를 만든다"
+            )
+            assert "kc_numbers" not in gap.asks_for, gap.label
