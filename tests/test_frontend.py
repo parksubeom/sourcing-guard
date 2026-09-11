@@ -16,7 +16,8 @@ import pytest
 from fastapi.testclient import TestClient
 
 STATIC = Path("sourcing_guard/static")
-PAGES = ["index.html", "watch.html"]
+# ⚠ landing.html 을 넣어야 이모지·h1·고지문·단정 표현 가드가 랜딩에도 걸린다.
+PAGES = ["index.html", "watch.html", "landing.html"]
 ASSETS = PAGES + ["app.css", "owner.js"]
 
 
@@ -35,7 +36,7 @@ def pages() -> dict[str, str]:
     return {f: (STATIC / f).read_text(encoding="utf-8") for f in PAGES}
 
 
-@pytest.mark.parametrize("path", ["/", "/watch"])
+@pytest.mark.parametrize("path", ["/", "/scan", "/watch"])
 def test_pages_are_served(path):
     from sourcing_guard.main import app
 
@@ -199,7 +200,8 @@ def test_matched_items_stay_marked_after_a_reload(pages):
 
 
 def test_watch_page_links_back_to_scan(pages):
-    assert 'href="/"' in pages["watch.html"]
+    # 2026-09-12 부터 도구는 /scan 이다. "/" 는 소개다.
+    assert 'href="/scan"' in pages["watch.html"]
     assert 'href="/watch"' in pages["index.html"]
 
 
@@ -355,10 +357,13 @@ def test_demo_buttons_clear_pasted_images(pages):
     보는 것이 그 결과다.
     """
     index = pages["index.html"]
-    demo_click = index[index.index('b.addEventListener("click"'):]
-    demo_click = demo_click[: demo_click.index('$("demos").appendChild(b)')]
-    assert "shots = []" in demo_click
-    assert "scan();" in demo_click
+    # 데모 실행 본문. G-1 에서 인라인 → `runDemo` 이름 붙은 함수로 옮겼다
+    # (버튼 클릭과 `/scan?demo=` 자동 실행이 같은 본문을 써야 해서). 검사는
+    # 이름이 아니라 **본문**을 본다 - 클릭 핸들러가 그 함수를 가리키는지까지.
+    start = index.index("function runDemo()")
+    demo_body = index[start: index.index('b.addEventListener("click", runDemo)')]
+    assert "shots = []" in demo_body
+    assert "scan();" in demo_body
 
 
 # ---------------------------------------------------------------------------

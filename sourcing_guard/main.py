@@ -180,11 +180,26 @@ _STATIC = Path(__file__).parent / "static"
 
 
 @app.get("/", response_class=FileResponse, include_in_schema=False)
+def landing() -> FileResponse:
+    """랜딩 (G-1 · 2026-09-12). 심사위원용 서사 + 투표자용 데모 버튼.
+
+    `/` 가 도구에서 소개로 바뀌었다 - 제출 링크는 `/` 그대로 두고, 도구는
+    `/scan` 으로 옮겼다 (docs/랜딩페이지_설계.md §1). 데모 버튼은
+    `/scan?demo=<tone>` 으로 보내고 그쪽이 자동으로 검사한다 - 투표자 클릭 1번.
+
+    ⚠ 디자인 무관 구조만이다. 로고·색·파비콘은 시피님이 새로 한다.
+    """
+    return FileResponse(_STATIC / "landing.html", media_type="text/html; charset=utf-8")
+
+
+@app.get("/scan", response_class=FileResponse, include_in_schema=False)
 def index() -> FileResponse:
-    """단일 페이지 프론트엔드.
+    """단일 페이지 프론트엔드 (도구). 2026-09-12 에 `/` 에서 `/scan` 으로 옮겼다.
 
     빌드 단계를 두지 않는다. 정적 HTML 하나를 그대로 돌려주면 되고, 그 편이
     투표 기간 18일 무중단에 유리하다 - 깨질 지점이 하나 줄어든다.
+
+    `?demo=<tone>` 을 읽어 서버 데모 문구로 자동 검사한다 (랜딩에서 온 경우).
     """
     return FileResponse(_STATIC / "index.html", media_type="text/html; charset=utf-8")
 

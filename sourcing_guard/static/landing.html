@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>안심 소싱 돋보기</title>
+<link rel="stylesheet" href="/static/app.css">
+<!--
+  [G-1] 랜딩 - 디자인 무관 구조만. 로고·색·파비콘 없음, app.css 기존 클래스만.
+  마크 자리는 빈 span 이다 (디자인은 시피님이 새로 한다 · 돋이 전제 2026-09-11 폐기).
+  데모 버튼 문구는 /api/v1/demos, 5절 숫자는 /healthz 에서 온다. 하드코딩하지 않는다.
+  4절 숫자는 tests/test_landing.py 가 audit_tally.BASELINE 과 대조한다.
+-->
+</head>
+<body>
+<a class="skip" href="#main">본문으로 건너가기</a>
+
+<header class="masthead">
+  <div class="container">
+    <span class="mark" aria-hidden="true"></span>
+    <span class="wordmark">안심 소싱 돋보기</span>
+    <nav class="pages" aria-label="주요 화면">
+      <a href="/" aria-current="page">소개</a>
+      <a href="/scan">상품 검사</a>
+      <a href="/batch">대량 검사</a>
+      <a href="/watch">감시 목록</a>
+    </nav>
+  </div>
+</header>
+
+<div class="intro">
+  <div class="container">
+    <h2>이 상품, 팔아도 되는지 확인합니다</h2>
+    <p>상품 상세페이지 내용을 붙여넣으면 KC 인증번호가 조회되는지, 이미 리콜된 모델인지,
+       어떤 유해물질 기준이 걸리는지를 정부 데이터로 확인합니다. 모든 결과에 원문 링크가 붙습니다.</p>
+    <p class="hint">아래 예시 세 개는 서버가 준비한 문구입니다. 누르면 검사 화면으로 넘어가 바로 결과가 나옵니다.</p>
+    <div class="demos" id="demos" aria-label="예시로 바로 보기"></div>
+    <p class="actions"><a class="btn" href="/scan">내 상품으로 해보기</a></p>
+  </div>
+</div>
+
+<main id="main">
+  <div class="container">
+
+    <section aria-labelledby="does-h">
+      <h3 id="does-h">1. 무엇을 확인하나</h3>
+      <dl class="axes">
+        <dt>KC 인증번호 조회</dt>
+        <dd>번호가 국가기술표준원 인증 DB 에 실재하는지, 상태가 무엇인지(적합·취소·효력상실 등)를 조회합니다.</dd>
+        <dt>리콜 대조</dt>
+        <dd>국내·국외 리콜 공표 목록과 모델명·인증번호·제조사로 대조합니다. 건수는 아래 5절에 매일 갱신됩니다.</dd>
+        <dt>유해물질 기준</dt>
+        <dd>고시·부속서 원문에서 우리가 직접 만든 규칙 DB 로, 이 품목에 어떤 기준이 걸리는지 보여 줍니다.</dd>
+      </dl>
+      <p class="hint">세 칸 모두 결과마다 정부 원문 링크가 붙습니다. 근거 없는 항목은 화면에 나올 수 없게 만들어져 있습니다.</p>
+    </section>
+
+    <section aria-labelledby="not-h">
+      <h3 id="not-h">2. 무엇을 하지 않나</h3>
+      <p class="promise">합법인지 불법인지 판정하지 않습니다.</p>
+      <ul>
+        <li>초록불은 보증이 아닙니다. 우리는 상세페이지에 적힌 글을 읽고, 단속은 실물을 수거해 시험합니다.</li>
+        <li>확인하지 못하는 것: 인증번호 도용, 실제 함유량, 아직 공표되지 않은 리콜, 식약처 소관 품목, 상표권·원산지.</li>
+        <li>이것은 빠진 기능이 아니라 이 도구의 전제입니다. "걸리지 않는다" 고 말하는 순간 사후 책임이 도구 쪽으로 옵니다. 그래서 사실과 근거만 놓고 판단은 셀러가 합니다.</li>
+      </ul>
+    </section>
+
+    <section aria-labelledby="how-h">
+      <h3 id="how-h">3. AI 는 어디에 쓰나</h3>
+      <dl class="axes">
+        <dt>언어 모델이 하는 일</dt>
+        <dd>상세페이지에서 상품명·모델명·재질·연령·인증번호를 뽑고, 법령 품목명으로 옮겨 적습니다. 추출·분류·설명까지입니다.</dd>
+        <dt>언어 모델이 하지 않는 일</dt>
+        <dd>위험도 판정. 신호등은 결정론 코드가 정부 조회 결과와 규칙 DB 만으로 계산하고, 같은 입력에는 항상 같은 답을 냅니다.</dd>
+        <dt>코드로 강제한 것</dt>
+        <dd>근거 URL 없는 결과는 생성 자체가 실패합니다. 단정 문구는 생성자에서 거부됩니다. 규칙 DB 는 사람이 원문과 대조해 승격한 것만 점수에 들어갑니다.</dd>
+      </dl>
+    </section>
+
+    <section aria-labelledby="num-h">
+      <h3 id="num-h">4. 숫자 - 이력을 그대로 둡니다</h3>
+      <p class="hint">실제 도매 사이트 상품명 235건을 사람이 전수 검수한 결과입니다. 데모와 같은 단건 경로 · 상품명만 입력 · 기준 추출기 GPT.</p>
+      <dl class="axes" id="figures">
+        <dt>검수 완료 정답</dt>
+        <dd>안전관리대상 135건 중 <b>95건 (70.4%)</b> - 사람이 확인한 (상품명, 품목) 쌍만 셉니다.</dd>
+        <dt>미검수 포함 상한</dt>
+        <dd><b>113건 (83.7%)</b> - 아직 검수하지 않은 18건을 모두 정답으로 가정한 값입니다. 검수가 끝나면 두 값이 하나로 합쳐집니다.</dd>
+        <dt>비대상에 등급을 붙인 수</dt>
+        <dd>비대상 53건 중 <b>0건</b>. 표에 없는 물건에 품목을 붙이면 셀러에게 없는 의무를 만들기 때문에, 이 숫자를 가장 먼저 봅니다.</dd>
+        <dt>애매한 상품에 등급이 붙은 수</dt>
+        <dd>애매 47건 중 <b>3건</b>. 정답률 분모 밖이지만 화면에는 뜨므로 함께 적습니다.</dd>
+      </dl>
+      <p class="hint">이 값에 이르기까지: 별칭을 만들 때 쓴 표본의 매칭률 71%, 새 표본의 검수 전 매칭률 24%, 첫 전수 검수 정답률 20.0% 를 거쳐 규칙을 넣고 사람이 다시 검수했습니다. 앞의 셋은 검수 전 값이라 발표 숫자로 쓰지 않습니다.</p>
+    </section>
+
+    <section aria-labelledby="data-h">
+      <h3 id="data-h">5. 데이터</h3>
+      <dl class="axes">
+        <dt>리콜 로컬 사본</dt>
+        <dd>국내 <span data-h="domestic">-</span>건 · 국외 <span data-h="overseas">-</span>건 · 최신 공표일 <span data-h="as_of">-</span> · 매일 갱신. 공개 트래픽이 정부 API 를 직접 건드리지 않습니다.</dd>
+        <dt>규칙 DB</dt>
+        <dd>검증 완료 <span data-h="active">-</span>건 · 초안 <span data-h="draft">-</span>건 (초안은 점수 계산에서 제외).</dd>
+        <dt>추출기</dt>
+        <dd>기준 <span data-h="gpt">-</span> · 예비 <span data-h="claude">-</span>. 어느 쪽이 뽑았는지 결과 화면 상단에 표시됩니다.</dd>
+        <dt>지금 돌고 있는 코드</dt>
+        <dd>커밋 <span data-h="commit">-</span></dd>
+      </dl>
+    </section>
+
+  </div>
+</main>
+
+<footer>
+  <div class="container">
+    <p>본 결과는 공개된 정부 데이터에 기반한 참고 정보이며, 법적 판단이나 안전 인증을 대체하지 않습니다.</p>
+    <p>출처 · 국가기술표준원 제품안전정보센터 공개 API, 어린이제품 공통안전기준(산업통상자원부고시 제2022-220호)</p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  function set(key, val) {
+    var els = document.querySelectorAll('[data-h="' + key + '"]');
+    for (var i = 0; i < els.length; i++) els[i].textContent = (val === null || val === undefined) ? "-" : String(val);
+  }
+  function fmtDate(s) { // YYYYMMDD → YYYY-MM-DD
+    return (s && s.length === 8) ? s.slice(0, 4) + "-" + s.slice(4, 6) + "-" + s.slice(6) : (s || "-");
+  }
+  function num(n) { return (typeof n === "number") ? n.toLocaleString("ko-KR") : "-"; }
+
+  // 데모 버튼 - 서버가 단일 출처다. 문구를 여기 적지 않는다.
+  fetch("/api/v1/demos")
+    .then(function (r) { return r.ok ? r.json() : []; })
+    .then(function (list) {
+      var box = document.getElementById("demos");
+      (list || []).forEach(function (d) {
+        var a = document.createElement("a");
+        a.className = "demo";
+        a.href = "/scan?demo=" + encodeURIComponent(d.tone);
+        var dot = document.createElement("span"); dot.className = "dot " + d.tone; dot.setAttribute("aria-hidden", "true");
+        var wrap = document.createElement("span");
+        var b = document.createElement("b"); b.textContent = d.title;
+        var n = document.createElement("span"); n.textContent = d.note;
+        wrap.appendChild(b); wrap.appendChild(n);
+        a.appendChild(dot); a.appendChild(wrap);
+        box.appendChild(a);
+      });
+    })
+    .catch(function () { /* 데모가 없어도 소개는 읽힌다 */ });
+
+  // 5절 숫자 - /healthz 에서 그린다. 문서와 코드가 갈리는 일을 여러 번 겪었다.
+  fetch("/healthz")
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (h) {
+      if (!h) return;
+      var rec = (h.sync && h.sync.recalls) || {};
+      set("domestic", num(rec.domestic));
+      set("overseas", num(rec.overseas));
+      set("as_of", fmtDate(h.sync && h.sync.latest_published_on));
+      set("active", num(h.active_rules));
+      set("draft", num(h.draft_rules));
+      set("gpt", h.extraction && h.extraction.gpt_model);
+      set("claude", h.extraction && h.extraction.claude_model);
+      set("commit", h.build && h.build.commit);
+    })
+    .catch(function () { /* 값이 없으면 - 로 남는다. 지어내지 않는다 */ });
+})();
+</script>
+</body>
+</html>
