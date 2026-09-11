@@ -158,6 +158,40 @@ class DomeggookClient:
             "pg": pg,
         })
 
+    def categories(self, *, only_registrable: bool = False) -> dict:
+        """카테고리 트리 `getCategoryList` ver 1.0. 원문 dict 그대로 (참조.md §4).
+
+        응답: `items.code` / `name` / `locked` / `int`, 하위는 `items.child[]` 재귀.
+        부모는 `locked`·`int` 가 null 이다.
+
+        ⚠ 원문 문서는 XML 예시만 있다. `child` 가 하나일 때 JSON 에서 dict 로
+          오는지 list 로 오는지 **미확인**이다 - 읽는 쪽이 둘 다 받는다.
+        """
+        params: dict[str, Any] = {"ver": "1.0", "mode": "getCategoryList"}
+        if only_registrable:
+            params["isReg"] = "true"
+        return self._get(params)
+
+    def category_counts(self, *, with_zero: bool = True) -> dict:
+        """카테고리별 상품 수 `getCat` ver 2.0. 원문 dict 그대로 (참조.md §5).
+
+        응답: `items.item` 의 `no` · `id`(코드) · `depth` · `itemCnt`, 텍스트가 이름.
+
+        ⚠ 원문은 XML 속성(`<item no= id= depth= itemCnt=>`)이다. JSON 에서
+          속성이 어떤 키(`id` / `@id` …)로 오는지 **미확인** - 지어내지 않고
+          읽는 쪽이 후보를 순서대로 찾는다. `with_zero=True` 가 기본인 이유는
+          지도에는 상품 0개 카테고리도 있어야 "여기는 비어 있다" 를 말할 수
+          있기 때문이다.
+
+        ⚠ `market` 은 `dome` / `domeme` 다 (검색의 `supply` 와 다르다 · 참조.md).
+        """
+        return self._get({
+            "ver": "2.0",
+            "mode": "getCat",
+            "market": self._market,
+            "withZero": "1" if with_zero else "0",
+        })
+
     def view(self, nos: list[int]) -> dict:
         """상품 상세. `multiple=true` 로 최대 100개. 원문 dict 그대로.
 
