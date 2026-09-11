@@ -50,7 +50,7 @@ def test_not_a_value_strings_become_none():
     f = ad.facts_from_item(_item(detail={"model": "해당없음", "manufacturer": "상세설명참조",
                                           "infoDuty": {"type": "기타 재화", "item": []}}))
     assert f.model_name is None and f.maker is None
-    for bad in ("해당없음", "해당 없음", "없음", "미기재", "-", "상세설명참조", "", None):
+    for bad in ("해당없음", "해당 없음", "없음", "미기재", "-", "상세설명참조", "상세페이지", "상세설명", "", None):
         assert ad.clean(bad) is None, bad
     assert ad.clean("K2018") == "K2018"
 

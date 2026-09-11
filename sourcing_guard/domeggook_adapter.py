@@ -39,7 +39,12 @@ from .kats_client import CERT_NUMBER_RE, normalize_kc
 from .models import ItemCategory, ProductFacts
 
 #: `is_placeholder` 가 모르는 "값 아님". 정규화(공백 제거) 후 비교한다.
-NOT_A_VALUE: frozenset[str] = frozenset({"해당없음", "없음", "미기재", "해당사항없음", "n/a", "na"})
+NOT_A_VALUE: frozenset[str] = frozenset({
+    "해당없음", "없음", "미기재", "해당사항없음", "n/a", "na",
+    # 실측(2026-09-12 · 21114291): model·maker 에 "상세페이지" 만 적힌 줄. `_PLACEHOLDER_CORE` 는
+    # "상세페이지참조" 는 알지만 "상세페이지" 홑말은 모른다.
+    "상세페이지", "상세설명", "상세참조", "본문",
+})
 
 #: 관찰된 항목 이름 (R5). 부분 일치가 아니라 **정확 일치**다 - 이름은 고시가 정한다.
 _ROW_MODEL = {INFODUTY_NAME_MODEL}
