@@ -188,6 +188,10 @@ def sanitize_list_item(item: dict, counts: dict[str, int]) -> dict:
     """
     it = copy.deepcopy(item)
     _drop(it, "id", counts, "list.item.id 제거")
+    # ⚠ `nick` 도 판매자 식별자다 (참조.md: `list.item.id / nick` 판매자 아이디/닉네임).
+    #   상세의 `seller.nick` 을 지우면서 목록의 `nick` 은 남겨 두고 있었다 -
+    #   [M-2] 에서 19,900행을 모으기 전에 막는다 (2026-09-12).
+    _drop(it, "nick", counts, "list.item.nick 제거")
     _drop(it, "thumb", counts, "list.item.thumb 제거")
     return it
 

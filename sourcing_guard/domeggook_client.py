@@ -138,25 +138,49 @@ class DomeggookClient:
             raise DomeggookApiError("JSON 이 아닌 응답을 받았습니다") from None
 
     # ── 공개 ────────────────────────────────────────────────────────
-    def search(self, kw: str, *, sz: int = 50, pg: int = 1) -> dict:
-        """상품 리스트. 원문 dict 그대로.
+    def search(
+        self,
+        kw: str | None = None,
+        *,
+        ca: str | None = None,
+        so: str | None = None,
+        sz: int = 50,
+        pg: int = 1,
+    ) -> dict:
+        """상품 리스트 `getItemList` ver 4.1. 원문 dict 그대로 (참조.md §2).
+
+        검색 조건은 `kw`(검색어) 또는 `ca`(카테고리 코드 `00_00_00_00_00`,
+        **중분류 이하만**) 중 하나 이상이어야 한다 - 원문이 그렇게 요구한다.
+
+        `so` 정렬: `se` 정확도순(kw 있을 때 기본) · `rd` 도매꾹랭킹순 · `da` 최근등록순.
+        [M-2] 카테고리 표본은 `so="rd"` 로 받는다 - 검색어가 없어 정확도순이
+        정의되지 않고, 랭킹순이 "셀러가 실제로 많이 보는 것" 에 가깝다.
 
         ⚠ 판매중지·판매종료·품절·단종은 **결과에 나오지 않는다** (참조.md).
           0건이 "그런 상품이 없다" 가 아니라 "지금 판매중이 아니다" 일 수 있다.
+          그래서 `header.numberOfItems` 와 getCat 의 `itemCnt` 가 다를 수 있다.
 
         ⚠ `kw` 검색이 형태소를 어떻게 분해하는지 우리는 모른다. 채택 판정은
           API 에 기대지 않고 `list.item.title` 을 우리가 비교한다.
         """
+        if not kw and not ca:
+            raise ValueError("kw 또는 ca 중 하나는 있어야 합니다 (참조.md §2)")
         if not 1 <= sz <= 200:
             raise ValueError("sz 는 1~200 입니다 (참조.md)")
-        return self._get({
+        params: dict[str, Any] = {
             "ver": _VER_LIST,
             "mode": "getItemList",
             "market": self._market,
-            "kw": kw,
             "sz": sz,
             "pg": pg,
-        })
+        }
+        if kw:
+            params["kw"] = kw
+        if ca:
+            params["ca"] = ca
+        if so:
+            params["so"] = so
+        return self._get(params)
 
     def categories(self, *, only_registrable: bool = False) -> dict:
         """카테고리 트리 `getCategoryList` ver 1.0. 원문 dict 그대로 (참조.md §4).
