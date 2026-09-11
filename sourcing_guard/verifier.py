@@ -900,6 +900,46 @@ def verify(
             "추출기는 out_of_scope 로 분류했으나 근거 표기를 찾지 못해 계속 검증합니다: %r",
             (facts.product_name or "")[:40],
         )
+        # ⚠⚠ **로그만으로는 셀러가 침묵의 이유를 알 수 없다.**
+        #
+        #   `scope_reason` 이 없으면 위의 단독 OUT_OF_SCOPE 안내도 안 나가고,
+        #   등급표 조회는 `_GRADE_LOOKUP_OPEN` 게이트에 막혀 돌지 않는다
+        #   (`OUT_OF_SCOPE` 는 그 집합에 없다). 그래서 **양쪽이 다 막혀** 화면에
+        #   우리 질문(`info_request`)만 남았다. A-5 실측에서 상세 109 중 2건이
+        #   그렇게 아무 말도 못 했다 - [146] 방수매트 · [165] 미술 앞치마.
+        #
+        # ⚠ 게이트를 **건드리지 않는다.** 4-e 가 등급 게이트를 여는 쪽으로
+        #   풀려다 애매 부착이 1 → 2 로 늘어 되돌렸다(미완 4-e′). 여기서는
+        #   침묵의 이유만 말하므로 등급 집계가 움직이지 않는다.
+        #
+        # ⚠ `scope_reason` 이 있는 경로에는 붙이지 않는다. 그때는 근거가 있고
+        #   (단독이거나 병기된) OUT_OF_SCOPE 안내가 나간다 - 두 개를 같이 내면
+        #   "확인했다" 와 "확인 못 했다" 가 한 화면에 같이 뜬다.
+        #
+        # ⚠ **어느 법인지 열거하지 않는다 (R5).** 코드가 근거를 못 찾았으므로
+        #   식약처·산업부 같은 이름을 대면 우리가 모르는 것을 말하는 것이다.
+        if not scope_reason:
+            findings.append(
+                Finding(
+                    kind=FindingKind.SCOPE_UNDETERMINED,
+                    signal=Signal.UNKNOWN,
+                    statement_ko=(
+                        "다른 법의 소관일 가능성이 있어 이 도구가 등급을 판단하지 "
+                        "않았습니다. 어느 법인지는 특정하지 못했습니다. "
+                        "이 도구는 전기용품·생활용품 세부품목 등급표(운용요령 "
+                        "별표 1~7)와 어린이제품 기준만 확인합니다."
+                    ),
+                    source_label=_GRADE_SOURCE[0],
+                    source_url=_GRADE_SOURCE[1],
+                    legal_basis=_GRADE_SOURCE[0],
+                    detail={
+                        # ⚠ 추출기 분류를 그대로 남긴다. 우리 판정이 아니다 (R1).
+                        "extractor_category": facts.category.value,
+                        "scope_reason_found": False,
+                    },
+                    checked_at=today,
+                )
+            )
 
     # 연령 표기를 먼저 해석한다. 어린이제품 기준을 적용할지, 인증번호를 요구할지
     # 모두 여기에 달려 있다. 공통안전기준은 만 13세 이하에 적용된다.

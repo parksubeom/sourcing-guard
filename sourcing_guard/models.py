@@ -151,6 +151,21 @@ class FindingKind(str, Enum):
     # 적용한다" 고 명시하므로, 이건 "판별 못 함" 이 아니라 확정된 답이다.
     CHILD_CATCH_ALL = "child_catch_all"
     OUT_OF_SCOPE = "out_of_scope"          # 우리 소관 밖 품목
+    # 추출기는 타 소관으로 봤지만 **코드가 근거 표기를 못 찾은** 경우.
+    #
+    # ⚠ `OUT_OF_SCOPE` 와 다르다. 저쪽은 "공통안전기준 1항이 제외하는 물품임을
+    #   확인했다" 이고, 이쪽은 "그 판단을 확인하지 못했다" 다. 두 개를 한
+    #   kind 로 묶으면 확인한 것과 못 한 것이 화면에서 같게 보인다 (R3).
+    #
+    # ⚠⚠ 이 경로는 전에 **통째로 침묵했다.** `scope_reason` 이 없으면
+    #   OUT_OF_SCOPE 안내도 안 나가고(verifier 의 단독 판정 조건), 등급표 조회도
+    #   `_GRADE_LOOKUP_OPEN` 게이트에 막혀 돌지 않는다. A-5 실측에서 상세 109 중
+    #   2건이 그렇게 아무 말도 못 했다 - [146] 방수매트 · [165] 미술 앞치마.
+    #
+    #   4-e 는 **등급 게이트를 여는 쪽**으로 풀려다 애매 부착이 1 → 2 로 늘어
+    #   되돌렸다(미완 4-e′). 이것은 게이트를 건드리지 않고 **침묵의 이유만**
+    #   말하는 출구다.
+    SCOPE_UNDETERMINED = "scope_undetermined"
     AGE_OUT_OF_CHILD_RANGE = "age_out_of_child_range"  # 14세 이상 표기
     INFO_REQUEST = "info_request"          # 공급처에 물어야 할 것
     RECALL_MATCH = "recall_match"
@@ -458,6 +473,15 @@ NON_SPECIFIC_FINDING_KINDS: frozenset["FindingKind"] = frozenset({
     #     놓친 알림이 더 비싸기 때문이다. 여기서 빼는 것은 **관측 지표**에서
     #     빼는 것이고, 알림을 끄는 것이 아니다.
     FindingKind.RECALL_WEAK_MATCH,
+    # ⚠⚠ `scope_undetermined` 는 **구체적이 아니다.** 이 finding 이 붙는 줄은
+    #   등급도 인증도 아무것도 못 받은 줄이고, 우리가 말한 것은 "판단하지
+    #   않았다" 다. SPECIFIC 에 넣으면 **아무것도 못 준 줄이 "유효" 로
+    #   뒤집혀 지표가 부푼다** - `recall_clear` · `recall_weak_match` 를 뺀 것과
+    #   정확히 같은 이유다.
+    #
+    #   그래도 만드는 이유는 셀러가 화면에서 **이유를 읽을 수 있어야** 하기
+    #   때문이다. 지표에 세는 것과 화면에 말하는 것은 다르다.
+    FindingKind.SCOPE_UNDETERMINED,
     FindingKind.INFO_REQUEST,
     FindingKind.COVERAGE_GAP,
     FindingKind.LOOKUP_FAILED,

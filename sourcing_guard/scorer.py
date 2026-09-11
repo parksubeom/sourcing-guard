@@ -76,7 +76,30 @@ _PENALTY: dict[FindingKind, int] = {
     # 0 이다. 아직 조회하지 않았다. 조회 전에 점수를 깎으면 이미지에 인증을
     # 붙여둔 상품이 안 붙인 상품보다 불리해지고, 그건 거꾸로다.
     FindingKind.KC_IMAGE_CANDIDATE: 0,
+    # 0 이다. "다른 법 소관 가능성이 있어 등급을 판단하지 않았다" 는 우리가
+    # 모른다는 말이고 위험 발견이 아니다. 점수를 깎으면 **모른다는 사실이
+    # 위험으로 읽힌다** - R3 을 정면으로 어긴다.
+    FindingKind.SCOPE_UNDETERMINED: 0,
 }
+
+# ⚠⚠ **모든 kind 가 이 표에 있어야 한다. 없으면 `score()` 가 KeyError 를 던진다.**
+#
+#   `score()` 는 `sum(_PENALTY[f.kind] for f in findings)` 로 감점을 모으므로,
+#   새 kind 를 추가하고 여기 안 넣으면 **그 finding 이 나오는 모든 스캔이
+#   500 이 된다.** 2026-09-11 에 `SCOPE_UNDETERMINED` 를 추가하며 실제로 겪었다.
+#
+# ⚠ `.get(kind, 0)` 으로 바꾸지 않는다. 그러면 KeyError 는 없어지지만 **감점이
+#   필요한 kind 를 추가했을 때 조용히 0** 이 되고, 위험을 놓치는 쪽으로 조용히
+#   틀린다. 시끄럽게 깨지는 것이 낫다.
+#
+# ⚠ 그래서 **임포트 시점에** 단정한다. 검사를 안 돌려도 앱이 부팅할 때 터지므로
+#   배포본이 500 을 내기 전에 드러난다. 부팅 실패가 런타임 500 보다 낫다.
+_MISSING_PENALTY = set(FindingKind) - set(_PENALTY)
+if _MISSING_PENALTY:  # pragma: no cover - 부팅 시점에 걸린다
+    raise RuntimeError(
+        "_PENALTY 에 없는 FindingKind 가 있습니다 - score() 가 KeyError 를 던집니다: "
+        + ", ".join(sorted(k.value for k in _MISSING_PENALTY))
+    )
 
 _HARD_RED = {
     # RED 는 정부 DB 가 문제를 적어둔 경우에만 준다. 부재는 증거가 아니다.
