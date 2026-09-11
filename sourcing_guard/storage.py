@@ -85,6 +85,19 @@ CREATE TABLE IF NOT EXISTS recall_alerts (
 );
 CREATE INDEX IF NOT EXISTS idx_alert_detected ON recall_alerts(detected_at);
 
+-- [D-백] 오답 신고. 셀러가 "이 품목이 아닙니다" 를 누른 것.
+--
+-- ⚠ 신고는 **판정을 바꾸지 않는다** (R1). 여기 쌓인 것을 사람이 검수해서
+--   tests/fixtures/새표본235_오답.tsv 로 옮긴다. 이 표는 검수 대기열이다.
+-- ⚠ 워치리스트와 같은 볼륨이다 - 재배포마다 사라지면 신고가 헛것이 된다.
+-- ⚠ client_ip 는 저장하지 않는다. 레이트리밋에만 쓰고 버린다.
+CREATE TABLE IF NOT EXISTS miss_reports (
+    id           TEXT PRIMARY KEY,
+    reported_at  TEXT NOT NULL,   -- UTC ISO datetime
+    payload      TEXT NOT NULL    -- MissReport 전체 (Pydantic JSON)
+);
+CREATE INDEX IF NOT EXISTS idx_miss_reported ON miss_reports(reported_at);
+
 CREATE TABLE IF NOT EXISTS sync_state (
     key   TEXT PRIMARY KEY,
     value TEXT NOT NULL
@@ -433,6 +446,34 @@ class SqliteWatchStore:
                 "SELECT COUNT(*) FROM recall_alerts"
             ).fetchone()[0]
         return after - before
+
+    # ── [D-백] 오답 신고 ───────────────────────────────────────────
+    def save_miss_report(self, report_id: str, reported_at: str, payload_json: str) -> None:
+        with self._conn:
+            self._conn.execute(
+                "INSERT INTO miss_reports (id, reported_at, payload) VALUES (?, ?, ?)",
+                (report_id, reported_at, payload_json),
+            )
+
+    def miss_reports(self, *, since: str | None = None) -> list[tuple[str, str, str]]:
+        """(id, reported_at, payload) 를 오래된 것부터. 내보내기 스크립트가 읽는다."""
+        if since:
+            rows = self._conn.execute(
+                "SELECT id, reported_at, payload FROM miss_reports "
+                "WHERE reported_at >= ? ORDER BY reported_at", (since,)
+            ).fetchall()
+        else:
+            rows = self._conn.execute(
+                "SELECT id, reported_at, payload FROM miss_reports ORDER BY reported_at"
+            ).fetchall()
+        return [(r["id"], r["reported_at"], r["payload"]) for r in rows]
+
+    def miss_report_snapshot(self) -> dict:
+        """`/healthz` 용. 몇 건 쌓였고 마지막이 언제인가 - 검수 대기열의 길이다."""
+        row = self._conn.execute(
+            "SELECT COUNT(*) AS n, MAX(reported_at) AS last FROM miss_reports"
+        ).fetchone()
+        return {"total": int(row["n"]), "last_reported_at": row["last"]}
 
     def alerts_for_owner(self, owner_id: str) -> list["RecallAlert"]:
         """이 소유자의 저장된 알림. 최근 것 먼저."""

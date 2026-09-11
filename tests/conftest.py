@@ -140,6 +140,9 @@ def _fresh_rate_limiter(monkeypatch):
     rl = RateLimiter(per_minute=10_000, daily_llm=10_000)
     rl.register_exempt(*DEMO_TEXTS)
     monkeypatch.setattr(main, "_limiter", rl)
+    # [D-백] 신고 버킷도 전역이다 - 같은 이유로 검사마다 새로 준다.
+    monkeypatch.setattr(main, "_report_limiter",
+                        RateLimiter(per_minute=10_000, daily_llm=10_000), raising=False)
 
 
 @pytest.fixture(autouse=True)

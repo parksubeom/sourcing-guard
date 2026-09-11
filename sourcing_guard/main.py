@@ -253,6 +253,8 @@ def healthz() -> dict:
         # ⚠ 이 값이 오래 안 움직이면 **약속이 조용히 깨진 것**이다 - 셀러는
         #   감시받고 있다고 믿는 채로 감시되지 않는다 (기획서 §6.1).
         "watch_sweep": _sweep_snapshot(),
+        # [D-백] 검수 대기열 길이. 늘기만 하면 검수가 안 되고 있다는 신호다.
+        "miss_reports": _store.miss_report_snapshot(),
         # 유효 결과율 - 매칭률과 별개로 우리가 움직여야 할 지표다 (E).
         # ⚠ 프로세스 메모리이고 단건 경로만 센다. note 에 그 사실을 적는다.
         "results": _result_stats.snapshot(),
@@ -269,6 +271,63 @@ def healthz() -> dict:
             **extraction_stats.snapshot(),
         },
     }
+
+
+class MissReport(BaseModel):
+    """[D-백] "이 품목이 아닙니다" — 셀러가 등급 카드에서 누른 것.
+
+    ⚠⚠ **신고는 판정을 바꾸지 않는다** (R1). 저장만 한다. 사람이 검수해서
+      `새표본235_오답.tsv` 로 옮기고, 그것이 별칭·가드를 고치는 근거가 된다.
+      신고 즉시 등급이 사라지면 셀러가 판정기가 되는 것이고, 그것은 없는
+      의무를 지우는 쪽으로도 악용된다.
+
+    ⚠ `page_text` 는 스캔과 같은 상한이다. 붙은 품목이 **왜** 오답인지 우리가
+      다시 볼 수 있어야 하므로 원문을 그대로 받는다. 개인정보는 셀러가 붙여
+      넣은 상세페이지 텍스트라 스캔이 이미 받는 것과 같다.
+
+    ⚠ `extraction_path` 등은 **화면이 `scan.meta` 에서 그대로 넘긴다.** 서버가
+      다시 추출하지 않는다 - 그러면 LLM 을 한 번 더 쓰고, 신고 시점의 값과
+      달라질 수 있다.
+    """
+
+    page_text: str = Field(min_length=1, max_length=200_000)
+    matched_items: list[str] = Field(min_length=1, max_length=10)
+    extraction_path: str = Field(max_length=32)
+    extractor_vendor: str | None = Field(default=None, max_length=32)
+    extractor_model: str | None = Field(default=None, max_length=64)
+    note: str | None = Field(default=None, max_length=500)
+
+
+class MissReportAck(BaseModel):
+    id: str
+    reported_at: str
+    message: str
+
+
+@app.post("/api/v1/report-miss", response_model=MissReportAck, status_code=201)
+def report_miss(req: MissReport, request: Request) -> MissReportAck:
+    """오답 신고를 **저장만** 한다. LLM 0회 · 정부 API 0회.
+
+    ⚠ 공개 엔드포인트다. 스캔과 **다른** 버킷으로 분당 10회 - 신고는 드물고,
+      스캔 예산을 신고가 갉아먹으면 안 된다.
+    """
+    client_ip = _client_ip(request)
+    if not _report_limiter.allow_request(client_ip):
+        raise HTTPException(
+            status_code=429,
+            detail="신고가 너무 잦습니다. 잠시 후 다시 시도해 주세요.",
+            headers={"Retry-After": str(_report_limiter.retry_after_seconds(client_ip))},
+        )
+    report_id = uuid4().hex[:12]
+    reported_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    _store.save_miss_report(report_id, reported_at, req.model_dump_json())
+    _log.info("오답 신고 %s · 품목 %s · 경로 %s", report_id, req.matched_items, req.extraction_path)
+    return MissReportAck(
+        id=report_id,
+        reported_at=reported_at,
+        # ⚠ 단정하지 않는다 (§9). "반영됐다" 가 아니라 "검수하겠다" 다.
+        message="신고가 접수되었습니다. 사람이 검수한 뒤 품목 표에 반영합니다 — 이 결과는 바뀌지 않습니다.",
+    )
 
 
 @app.post("/api/v1/sync")
@@ -489,6 +548,8 @@ _recalls = RecallIndex(_store)
 # 눌렀는데 429 를 보면 그대로 이탈한다 (핸드오프 §9).
 _limiter = RateLimiter()
 _limiter.register_exempt(*DEMO_TEXTS)
+# [D-백] 오답 신고 전용 버킷. 스캔 예산과 섞지 않는다.
+_report_limiter = RateLimiter(per_minute=10)
 
 
 def _full_sweep(*, on: date | None = None) -> dict:
