@@ -254,33 +254,3 @@ def test_the_readme_describes_the_automatic_sweep():
     assert row, "README 에서 main.py 행을 못 찾았다"
     assert "자동" in row and "스윕" in row, row
     assert "{items, sweep, alerts}" in row, "GET 응답 모양이 적혀 있지 않다"
-
-
-def test_the_hackathon2_snapshot_cannot_run():
-    """`해커톤2/` 가 **실행 불가능한 초기 뼈대**임을 기록해 둔다.
-
-    ⚠ 심사위원이 파일 목록을 보면 `/api/v1/watch` 가 두 곳에 있는 것으로
-      읽힌다. 지우는 것은 시피님 확인 뒤이므로(미완 §5) 지금은 "돌지 않는다" 는
-      사실만 잠근다 - 누가 실수로 살려 놓으면 여기서 깨진다.
-
-    ⚠ 이 검사가 깨지면 **디렉터리를 지웠는지 먼저 확인할 것.** 지웠으면 이
-      검사도 함께 지운다.
-    """
-    root = Path(__file__).resolve().parents[1]
-    old = root / "해커톤2"
-    if not old.is_dir():
-        pytest.skip("해커톤2/ 가 이미 정리됐다 - 이 검사도 지울 것")
-
-    # 상대 import 인데 패키지가 아니다.
-    assert not (old / "__init__.py").exists()
-    main_src = (old / "main.py").read_text(encoding="utf-8")
-    assert "from .config import settings" in main_src
-
-    # main.py 가 필요로 하는 모듈 대부분이 이 디렉터리에 없다.
-    needed = set(re.findall(r"from \.([a-z_]+) import", main_src))
-    present = {p.stem for p in old.glob("*.py")}
-    assert needed - present, "필요 모듈이 다 있다 - 돌 수 있게 됐나"
-
-    # pytest 가 수집하지 않는다.
-    ini = (root / "pytest.ini").read_text(encoding="utf-8")
-    assert "testpaths = tests" in ini
