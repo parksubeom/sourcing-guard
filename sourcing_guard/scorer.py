@@ -614,6 +614,73 @@ def downgrade_unqualified_recall_reds(
     return out
 
 
+def gov_lookup_state(findings: list[Finding]) -> dict[str, str]:
+    """**이 스캔**에서 정부 조회가 됐나. 축별로 셋 중 하나다 (4-p).
+
+        ok              조회해서 답을 받았다
+        failed          조회를 시도했는데 실패했다
+        not_attempted   조회할 것이 없었다 (번호가 없거나 대조 대상이 없음)
+
+    ⚠⚠ **"조회했더니 없다" 와 "조회를 못 했다" 는 다르다.** 이것이 R3 의
+      핵심이고 화면이 반드시 갈라야 하는 것이다. 실증이 있다 - 같은 스크립트를
+      키 있는 환경과 없는 환경에서 돌리면 인증 축이 이렇게 갈린다:
+
+          키 있음   kc_verified 22 · expired 6 · revoked 2 · not_found 2  = 32
+          키 없음   kc_not_found 32                                        = 32
+
+      **합이 같고 그림이 정반대다.** 후자만 보면 "조회했더니 32건이 없더라" 로
+      읽히는데 실제로는 조회 자체를 못 한 것이다.
+
+    ⚠ `/healthz` 의 `kats` 는 **프로세스 누적값**이라 "이 결과" 를 말하지
+      못한다. [B-백] 의 `extraction` 과 같은 이유로 스캔 응답에 따로 넣는다.
+
+    ⚠ 순수 함수다 - 주어진 findings 만 읽는다. `_axes` 와 같은 신호를 보지만
+      화면 문구가 아니라 **기계가 읽는 상태값**을 준다.
+    """
+    kinds = {f.kind for f in findings}
+    failed_scopes = {
+        str((f.detail or {}).get("scope") or "")
+        for f in findings
+        if f.kind is FindingKind.LOOKUP_FAILED
+    }
+
+    if "인증" in failed_scopes:
+        cert = "failed"
+    elif kinds & {
+        FindingKind.KC_VERIFIED, FindingKind.KC_NOT_FOUND, FindingKind.KC_UNDER_ACTION,
+        FindingKind.KC_REVOKED, FindingKind.KC_EXPIRED, FindingKind.KC_SUSPENDED,
+    }:
+        cert = "ok"
+    else:
+        cert = "not_attempted"
+
+    if "리콜" in failed_scopes:
+        recall = "failed"
+    elif kinds & {
+        FindingKind.RECALL_MATCH, FindingKind.RECALL_WEAK_MATCH,
+        FindingKind.RECALL_CLEAR, FindingKind.MAKER_OTHER_RECALLS,
+    }:
+        recall = "ok"
+    else:
+        recall = "not_attempted"
+
+    # ⚠ scope 문자열은 `verifier._lookup_failed(...)` 의 첫 인자다. 실제 값은
+    #   "인증" · "리콜" · **"전파인증"** 셋이다 - 처음에 "전파" 로 적었다가
+    #   실측에서 틀렸다(그러면 RF 조회 실패가 not_attempted 로 잘못 보인다).
+    #   아래 검사가 이 셋을 verifier 소스와 대조한다.
+    if "전파인증" in failed_scopes:
+        rf = "failed"
+    elif kinds & {
+        FindingKind.RF_CERT_VERIFIED, FindingKind.RF_CERT_NOT_FOUND,
+        FindingKind.RF_NONCOMPLIANT,
+    }:
+        rf = "ok"
+    else:
+        rf = "not_attempted"
+
+    return {"cert": cert, "recall": recall, "rf": rf}
+
+
 def has_specific_finding(findings: list[Finding]) -> bool:
     """이 검사가 셀러에게 **구체적인 것을 하나라도 줬는가** (E).
 

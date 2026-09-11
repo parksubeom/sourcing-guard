@@ -34,7 +34,7 @@ from .models import (
     SellerHints,
     WatchItem,
 )
-from .scorer import has_specific_finding, score
+from .scorer import gov_lookup_state, has_specific_finding, score
 from .demos import DEMOS, DEMO_TEXTS
 
 _log = logging.getLogger(__name__)
@@ -426,6 +426,9 @@ def scan(req: ScanRequest, request: Request) -> ScanResult:
             extractor_vendor=trace.vendor,
             extractor_model=trace.model,
             extraction_reason=trace.reason,
+            # ⚠ **이 스캔에서 정부 조회가 됐나** (4-p). /healthz 의 kats 는
+            #   프로세스 누적값이라 "이 결과" 를 말하지 못한다.
+            gov_lookup=gov_lookup_state(findings),
         ),
     )
     # 유효 결과율 (E). 판정에 쓰지 않는다 - 세기만 한다.

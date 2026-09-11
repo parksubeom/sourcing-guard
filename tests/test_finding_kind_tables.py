@@ -167,6 +167,7 @@ def test_a_new_finding_kind_forces_a_review_of_every_table():
         "  [부분집합]    verifier._CERT_STATE_FINDING\n"
         "  [부분집합]    scorer._signal_for 안의 AMBER 집합\n"
         "  [부분집합]    scorer._axes 안의 인증 축 집합\n"
+        "  [부분집합]    scorer.gov_lookup_state 의 축별 집합 (4-p)\n"
         "  [화면]        static/index.html 의 kind 별 문구\n"
         "  검토 후 이 숫자를 갱신하세요."
     )
@@ -203,10 +204,16 @@ def test_the_sweep_that_found_these_tables_is_written_down():
                 if u.count("FindingKind.") >= 4:
                     found.append(f"{p.relative_to(_ROOT)}:{node.lineno}")
     # 알고 있는 자리 수. 늘면 새 표가 생긴 것이다.
-    # ⚠ 7 이다 - 처음에 6 으로 적었다가 실측에서 틀렸다. 세어 보고 적을 것.
-    #   models 2 · scorer 4(_PENALTY · _HARD_RED · _signal_for AMBER · _axes 인증)
-    #   · verifier 1(_CERT_STATE_FINDING)
-    assert len(found) == 7, (
+    # ⚠ 9 다. 이력을 남긴다 - 처음 6 으로 적었다가 실측 7 이었고, [4-p] 의
+    #   `gov_lookup_state` 가 인증(6개)·리콜(4개) 집합을 더해 9 가 됐다.
+    #   **이 가드가 그것을 잡았다** - 표를 만들고 목록에 안 적는 것을 막는 것이
+    #   목적이므로 정상 동작이다.
+    #
+    #   models 2    SPECIFIC · NON_SPECIFIC
+    #   scorer 6    _PENALTY · _HARD_RED · _signal_for AMBER · _axes 인증
+    #               · gov_lookup_state 인증 · gov_lookup_state 리콜
+    #   verifier 1  _CERT_STATE_FINDING
+    assert len(found) == 9, (
         "FindingKind 를 4개 이상 담은 자리가 바뀌었습니다:\n  "
         + "\n  ".join(found)
         + "\n  새 표면 _SUBSETS 에 추가하거나 완전성 단정을 붙이세요."

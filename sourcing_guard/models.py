@@ -118,6 +118,7 @@ class ProductFacts(BaseModel):
 #     scorer._UNKNOWN_HEADLINE        축이 빠진 사유
 #     scorer._signal_for 의 AMBER 집합
 #     scorer._axes 의 인증 축 집합
+#     scorer.gov_lookup_state 의 축별 집합   인증·리콜·전파 (4-p)
 #     verifier._CERT_STATE_FINDING    certState → kind 매핑 (kind 가 값이다)
 #     static/index.html 의 kind 별 문구
 #
@@ -540,6 +541,17 @@ class ScanMeta(BaseModel):
     extractor_model: str | None = None    # 설정에서 온 실제 모델 이름
     extraction_reason: str | None = None  # 휴리스틱으로 내려간 이유
     # 리콜 로컬 사본 기준일. ScanResult.recall_data_as_of 와 같은 값을 메타
+    # ⚠⚠ **이 스캔에서 정부 조회가 됐나** (4-p). 축별로 ok|failed|not_attempted.
+    #
+    #   2026-09-11 에 safetykorea.kr 가 다운돼 조회가 전부 실패했다. 설계대로
+    #   `lookup_failed` 로 떨어지는 것은 맞지만(R3) **우리도 셀러도 그 사실을
+    #   화면에서 알 수 없었다.** `/healthz` 의 `kats` 는 프로세스 누적값이라
+    #   "이 결과" 를 말하지 못한다 - `extraction` 과 같은 문제다.
+    #
+    # ⚠ "조회했더니 없다"(`ok` + kc_not_found)와 "조회를 못 했다"(`failed`)를
+    #   화면이 반드시 갈라야 한다. 둘을 섞으면 장애 중에 "인증이 없는 상품" 이
+    #   무더기로 만들어진다.
+    gov_lookup: dict[str, str] = Field(default_factory=dict)
     # 자리에도 둔다 - 화면 상단 두 줄이 한 곳에서 읽히게 하기 위해서다.
     recall_data_as_of: str | None = None
 

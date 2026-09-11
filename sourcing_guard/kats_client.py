@@ -90,27 +90,68 @@ class KatsHealth:
         self.last_error_at: str | None = None
         self.last_error_message: str | None = None
         self.consecutive_failures: int = 0
+        # ⚠⚠ **실패율과 마지막 성공 시각** (4-p · 2026-09-11).
+        #
+        #   전에는 `consecutive_failures` 만 셌다. 그러면 "지금 연속 실패 중인가"
+        #   는 알지만 **"오늘 얼마나 자주 실패했나" 를 알 수 없다.** 한 번씩
+        #   실패하고 회복하는 상태는 연속 실패가 0 이라 정상으로 보인다.
+        #
+        #   2026-09-11 에 safetykorea.kr 가 죽어 3회 전부 실패했다. 투표 18일
+        #   (9/21~10/5) 동안 같은 일이 생기면 셀러 화면이 전부 `lookup_failed`
+        #   로 떨어지는데, **우리가 모르고 지나갈 수 있다** - 09-08 에 Claude
+        #   크레딧이 바닥났는데 휴리스틱 결과를 "실물 확인" 으로 보고한 그
+        #   구조와 같다.
+        #
+        # ⚠ 재시도·캐시를 넣지 않는다. 남의 API 장애로 우리를 죽이지 않는
+        #   설계는 그대로다. 추가하는 것은 **관측**뿐이다.
+        self.calls: int = 0
+        self.failures: int = 0
+        self.last_success_at: str | None = None
+
+    @staticmethod
+    def _now() -> str:
+        from datetime import datetime, timezone
+
+        return datetime.now(timezone.utc).isoformat(timespec="seconds")
 
     def record_success(self) -> None:
         self.consecutive_failures = 0
+        self.calls += 1
+        self.last_success_at = self._now()
 
     def record_failure(self, code: str, message: str = "") -> None:
-        from datetime import datetime, timezone
-
         self.last_error_code = code
-        self.last_error_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
+        self.last_error_at = self._now()
         self.last_error_message = message or None
         self.consecutive_failures += 1
+        self.calls += 1
+        self.failures += 1
 
     def is_operator_fault(self) -> bool:
         """우리 설정 문제인가. 셀러에게 '다시 시도' 를 권하면 안 되는 경우다."""
         return self.last_error_code in OPERATOR_FAULT_CODES
 
     def snapshot(self) -> dict:
+        """⚠ 프로세스 메모리다. 재배포하면 0 이 된다 - 누적 통계가 아니라
+        "지금 뜬 이 프로세스가 정부 API 를 부를 수 있나" 를 보는 값이다.
+        """
         return {
             "last_error_code": self.last_error_code,
             "last_error_at": self.last_error_at,
             "consecutive_failures": self.consecutive_failures,
+            # 4-p. 실패율은 호출이 0 이면 None 이다 - 0.0 으로 두면 "전부
+            # 성공" 으로 읽히는데 실제로는 **한 번도 부르지 않은 것**이다.
+            "calls": self.calls,
+            "failures": self.failures,
+            "failure_rate": (
+                round(self.failures / self.calls, 3) if self.calls else None
+            ),
+            "last_success_at": self.last_success_at,
+            "note": (
+                "프로세스 메모리 · 재배포하면 0. 실패율이 None 이면 이 프로세스가 "
+                "정부 API 를 한 번도 부르지 않은 것입니다(목 모드이거나 조회할 "
+                "번호가 없었음)."
+            ),
         }
 
 
@@ -609,12 +650,31 @@ class KatsClient:
         # 인증은 HTTP 헤더 AuthKey. 쿼리 파라미터가 아니며 대소문자를 구분한다
         # (설계서 v2.0 p.2).
         query = {**cfg.get("defaults", {}), **params}
-        resp = self._client.get(
-            url,
-            params=query,
-            headers={_AUTH_HEADER: self._key or ""},
-        )
+        # ⚠⚠ **전송 자체를 try 안에 둔다 (4-p · 2026-09-11).**
+        #
+        #   전에는 `self._client.get(...)` 이 try **밖**에 있었다. 그래서
+        #   `raise_for_status()`·`resp.json()` 의 오류만 `KatsApiError` 로
+        #   변환되고, **연결 단계 오류(ConnectError·ConnectTimeout·ReadError)는
+        #   httpx 예외 그대로 밖으로 나갔다.**
+        #
+        #   결과가 둘이었다:
+        #     (1) `health.record_failure` 가 안 불려 **관측이 안 된다**
+        #     (2) `verifier` 가 `KatsApiError` 만 잡으므로 `lookup_failed` 경로를
+        #         타지 않고 **스캔이 500 이 된다**
+        #
+        #   2026-09-11 에 safetykorea.kr 가 `Connection reset by peer` 를 냈다.
+        #   그 순간 배포본의 **모든 스캔이 500** 이었을 것이다. "설계대로
+        #   lookup_failed 로 떨어진다" 고 두 번 보고했는데 틀렸다 - 재현해서
+        #   상태코드 500 을 실물로 확인했다.
+        #
+        # ⚠ 이것은 재시도가 아니다. 예외를 **올바른 타입으로 변환**하는 것이고,
+        #   남의 API 장애로 우리를 죽이지 않는 설계를 실제로 지키게 만든다.
         try:
+            resp = self._client.get(
+                url,
+                params=query,
+                headers={_AUTH_HEADER: self._key or ""},
+            )
             resp.raise_for_status()
             payload = resp.json()
         except httpx.HTTPStatusError as exc:

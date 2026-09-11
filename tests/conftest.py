@@ -111,3 +111,32 @@ def _no_real_network(monkeypatch, request):
 
     monkeypatch.setattr(httpx.HTTPTransport, "handle_request", _blocked)
     monkeypatch.setattr(httpx.AsyncHTTPTransport, "handle_async_request", _blocked)
+
+
+@pytest.fixture(autouse=True)
+def _fresh_rate_limiter(monkeypatch):
+    """검사마다 **새 레이트 리미터**를 준다.
+
+    ⚠⚠ `main._limiter` 는 프로세스 전역이다. 그래서 `/api/v1/scan` 을 부르는
+      검사가 예산을 소진하면 **그 뒤에 오는 검사가 429 를 받는다** - 검사
+      순서에 따라 결과가 갈리는 격리 위반이다.
+
+      2026-09-11 에 실제로 터졌다. [4-p] 검사가 스캔을 10회 넘게 부르자
+      `test_scan_meta` · `test_result_rate` · `test_rf_lookup_endpoint` 가
+      429 를 받아 `KeyError: 'meta'` 로 깨졌다. **파일별로 돌리면 통과하고
+      전체 수트에서만 깨졌다** - 가장 찾기 어려운 종류다.
+
+    ⚠ 한도를 넉넉히 준다(분당 10,000 · 일 10,000). 상한 자체를 검증하는
+      `test_ratelimit` 은 자기 리미터를 monkeypatch 로 덮으므로 영향이 없다 -
+      이 픽스처가 먼저 돌고 그 위에 테스트가 덮는다.
+
+    ⚠ 데모 면제를 다시 등록한다. 안 하면 데모 스캔이 예산을 쓰고,
+      `/healthz.limits.exempt_fingerprints` 가 0 이 되어 검사가 깨진다.
+    """
+    from sourcing_guard import main
+    from sourcing_guard.demos import DEMO_TEXTS
+    from sourcing_guard.ratelimit import RateLimiter
+
+    rl = RateLimiter(per_minute=10_000, daily_llm=10_000)
+    rl.register_exempt(*DEMO_TEXTS)
+    monkeypatch.setattr(main, "_limiter", rl)
