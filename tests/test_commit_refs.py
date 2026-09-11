@@ -295,3 +295,26 @@ def test_the_new_pc_checklist_tells_existing_clones_how_to_recover():
     assert "git status --short" in text, "확인 절차 없이 reset 을 권하고 있다"
     # pull 을 먼저 하면 안 되는 이유도 적혀 있어야 한다.
     assert "divergent" in text or "머지 커밋" in text
+
+
+# ── §7: 테스트는 네트워크에 나가지 않는다 ───────────────────────────
+def test_the_network_block_lives_in_conftest_not_in_each_file():
+    """§7 을 **한 곳에서** 강제한다.
+
+    ⚠ 파일마다 막으면 다음에 추가되는 테스트가 조용히 라이브로 돌아간다.
+      실제로 그렇게 됐다 - 2026-09-11 실측에서 **18개 검사가 네트워크에
+      나가고 있었고 대부분 통과하고 있었다.** 통과하는 것과 나가지 않는 것은
+      다르다.
+
+    ⚠ 이 가드를 지우면 `TestClient(app)` 하나로 lifespan 동기화가 정부 API 를
+      부른다 - 검사 본문과 무관하게 앱을 띄우기만 하면 나간다.
+    """
+    src = (_ROOT / "tests/conftest.py").read_text(encoding="utf-8")
+    assert "_no_real_network" in src, "conftest 의 네트워크 차단이 사라졌다"
+    assert "httpx.HTTPTransport" in src and "handle_request" in src
+    # 동기 · 비동기 양쪽을 막아야 한다.
+    assert "handle_async_request" in src, "비동기 전송이 열려 있다"
+    # 탈출구가 있고 그 이름이 적혀 있어야 한다.
+    assert "SG_LIVE_NET" in src
+    # 왜 막는지가 함께 있어야 한다 - 이유 없는 금지는 지워진다.
+    assert "§7" in src and "18개" in src

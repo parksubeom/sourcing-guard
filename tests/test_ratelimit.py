@@ -105,6 +105,26 @@ def test_fingerprint_ignores_whitespace_differences():
 # ---------------------------------------------------------------------------
 
 
+@pytest.fixture(autouse=True)
+def _mock_government_apis(monkeypatch):
+    """엔드포인트 검사가 실 정부 API 로 나가지 않게 한다 (CLAUDE.md §7).
+
+    ⚠ 전에는 데모 스캔이 **실제 safetykorea.kr 인증 조회**를 했다. 데모 텍스트에
+      인증번호가 들어 있기 때문이다. 2026-09-11 전체 수트에서 그 조회가
+      `ConnectTimeout` 으로 터져 검사가 깨졌고, 바로 직전 실행에서는 통과했다 -
+      **네트워크 상태에 따라 갈리는 비결정적 검사**였다.
+
+    ⚠ 목 모드 클라이언트를 쓴다. 이 파일이 확인하는 것은 상한·면제·헤더이지
+      인증 조회 내용이 아니므로, 픽스처 응답이면 충분하다.
+    """
+    from sourcing_guard import main
+    from sourcing_guard.kats_client import KatsClient
+    from sourcing_guard.rra_client import RraClient
+
+    monkeypatch.setattr(main, "_kats", KatsClient(None, None, mock=True))
+    monkeypatch.setattr(main, "_rra", RraClient(mock=True))
+
+
 def test_scan_returns_429_with_retry_after(monkeypatch):
     from sourcing_guard import main
 

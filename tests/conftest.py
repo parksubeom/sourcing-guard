@@ -40,6 +40,7 @@ extract() 는 ANTHROPIC_API_KEY 가 있고 MOCK_MODE=false 면 실제 Anthropic 
 import os
 from dataclasses import replace
 
+import httpx
 import pytest
 
 
@@ -60,3 +61,53 @@ def _no_live_llm(monkeypatch):
             gpt_api_key=None,
         ),
     )
+
+
+@pytest.fixture(autouse=True)
+def _no_real_network(monkeypatch, request):
+    """테스트는 **실제 HTTP 를 보내지 않는다** (CLAUDE.md §7).
+
+    왜 픽스처로 강제하나
+    --------------------
+    LLM 을 위에서 막은 것과 같은 논리다 - 파일마다 막으면 다음에 추가되는
+    테스트가 조용히 라이브로 돌아간다. 실제로 그렇게 됐다.
+
+    2026-09-11 실측(임시로 HTTP 를 막고 전체 수트를 돌림): **18개 검사가
+    네트워크에 나가고 있었다.**
+
+        16개   `with TestClient(app)` 의 lifespan 이 리콜 동기화를 시작해
+               safetykorea.kr/openapi/api/recall/*.json 을 부른다.
+               검사 본문과 무관하게 앱을 띄우기만 하면 나간다.
+         1개   test_ratelimit 의 데모 스캔이 cert/certificationList.json 조회
+         2개   test_rf_lookup_endpoint 가 rra.go.kr 조회
+
+    ⚠ 그중 대부분은 **통과하고 있었다.** 실패를 삼키는 경로라서 조용히
+      느려지고, 정부 API 쿼터를 쓰고, 네트워크 상태에 따라 비결정적이 된다.
+      실제로 2026-09-11 전체 수트에서 `ConnectTimeout` 으로 1건이 깨졌고,
+      그 직전 실행에서는 같은 검사가 통과했다.
+
+    ⚠⚠ [E-1] 에서 "환경 의존 검사 0" 이라고 보고한 것의 **정정**이다. 그때는
+      개발 PC 에서 네트워크가 됐고, 새 PC 재현에서는 키가 없어 목 모드로
+      돌았기 때문에 양쪽 다 통과해 못 봤다. **통과하는 것과 나가지 않는 것은
+      다르다.**
+
+    실 API 로 재야 할 때만 연다:
+
+        SG_LIVE_NET=1 pytest tests/test_kats_client.py
+
+    ⚠ `scripts/` 의 계측은 이 픽스처의 영향을 받지 않는다(pytest 대상이 아니다).
+      측정은 거기서 하고 회차를 기록한다 - CLAUDE.md §6.
+    """
+    if os.getenv("SG_LIVE_NET"):
+        return
+
+    def _blocked(self, request_):  # pragma: no cover - 나가면 곧바로 터진다
+        raise RuntimeError(
+            "테스트가 실제 네트워크로 나가려 했습니다 (CLAUDE.md §7): "
+            f"{request_.url}\n"
+            "  어댑터를 목킹하거나 httpx.MockTransport 를 쓰세요. "
+            "실 API 로 재야 하면 SG_LIVE_NET=1 로 여세요."
+        )
+
+    monkeypatch.setattr(httpx.HTTPTransport, "handle_request", _blocked)
+    monkeypatch.setattr(httpx.AsyncHTTPTransport, "handle_async_request", _blocked)

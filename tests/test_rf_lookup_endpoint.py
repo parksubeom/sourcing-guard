@@ -21,6 +21,23 @@ from sourcing_guard import main as main_mod
 _STATIC = Path(__file__).resolve().parent.parent / "sourcing_guard" / "static"
 
 
+@pytest.fixture(autouse=True)
+def _mock_rra(monkeypatch):
+    """실 rra.go.kr 조회를 막는다 (CLAUDE.md §7).
+
+    ⚠ 전에는 이 검사가 **실제로 국립전파연구원에 나갔다.** 문서 머리가
+      "결과가 있으면 실측 12초" 라고 적어 둔 그 조회다 - 검사 두 건이 매번
+      그만큼 걸리고, 연구원 서버 상태에 따라 결과가 흔들렸다.
+
+    ⚠ 목 모드 클라이언트를 쓴다(`RraClient(mock=True)`). MagicMock 이 아니라
+      실제 클래스라서 응답 파싱·Finding 생성 경로가 그대로 돈다 - 여기서
+      확인하려는 것이 "스캔 결과와 같은 Finding 모양인가" 이기 때문이다.
+    """
+    from sourcing_guard.rra_client import RraClient
+
+    monkeypatch.setattr(main_mod, "_rra", RraClient(mock=True))
+
+
 @pytest.fixture
 def client():
     return TestClient(main_mod.app)

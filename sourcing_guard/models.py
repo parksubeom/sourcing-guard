@@ -103,6 +103,30 @@ class ProductFacts(BaseModel):
     model_config = {"extra": "forbid"}  # blocks silent addition of verdict fields
 
 
+# ⚠⚠ **이 enum 을 키로 쓰는 표 목록.** kind 를 추가하면 여기를 먼저 읽고
+#   아래를 **하나씩** 검토할 것. 빠뜨리면 터지거나 조용히 틀린다.
+#
+#   [완전해야 함]
+#     scorer._PENALTY                 빠지면 score() 가 KeyError → 스캔이 500 이 된다.
+#                                     임포트 시점에 단정하므로 앱 부팅이 실패한다.
+#     SPECIFIC_FINDING_KINDS
+#       | NON_SPECIFIC_FINDING_KINDS  빠지면 그 kind 가 유효 결과율에서 사라진다.
+#
+#   [부분집합이어도 됨 — 특정 kind 만 다루는 것이 의도다]
+#     scorer._HARD_RED                정부 DB 가 문제를 적어둔 것만 (R3-b)
+#     scorer._UNKNOWN_HEADLINE_FIRST  확정된 판단이라 먼저 말하는 것
+#     scorer._UNKNOWN_HEADLINE        축이 빠진 사유
+#     scorer._signal_for 의 AMBER 집합
+#     scorer._axes 의 인증 축 집합
+#     verifier._CERT_STATE_FINDING    certState → kind 매핑 (kind 가 값이다)
+#     static/index.html 의 kind 별 문구
+#
+#   `tests/test_finding_kind_tables.py` 가 이 목록을 잠근다 - 완전해야 하는
+#   것은 완전성을, 부분집합은 **현재 구성을** 검사하므로 새 kind 가 조용히
+#   들어오거나 빠지면 거기서 깨진다.
+#
+# ⚠ 2026-09-11 에 `SCOPE_UNDETERMINED` 를 추가하며 `_PENALTY` 를 빠뜨려
+#   `score()` 가 KeyError 를 던졌다. 그래서 이 목록이 생겼다.
 class FindingKind(str, Enum):
     KC_NOT_FOUND = "kc_not_found"
     KC_VERIFIED = "kc_verified"

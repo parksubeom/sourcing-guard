@@ -79,9 +79,21 @@ def test_the_statement_speaks_to_the_seller_not_about_our_internals(kats, rules)
     for word in ("추출기", "LLM", "분류기", "헷갈", "category"):
         assert word not in f.statement_ko, f"내부 사정이 노출됐다: {word}"
 
-    # 셀러가 알아야 하는 두 가지 - 판단하지 않았다 · 어느 법인지 모른다.
-    assert "판단하지 않았습니다" in f.statement_ko
+    # ⚠⚠ **두 가능성을 나란히 적는다. 소관 쪽으로 단정하지 않는다.**
+    #
+    #   첫 문구는 "다른 법의 소관일 가능성이 있어 … 판단하지 않았습니다" 였다.
+    #   그런데 이 finding 이 붙는 12건 중 **2건이 대상으로 검수된 줄**이었다 -
+    #   [CU] 핏미업 러닝벨트 · [202] 지압슬리퍼. 그 줄에서 "다른 법 소관" 은
+    #   틀린 정보이고 셀러를 전안법에서 멀어지게 한다.
+    assert "찾지 못했습니다" in f.statement_ko
+    assert "다른 법의 소관일 수도" in f.statement_ko
+    assert "이 표가 놓친 것일 수도" in f.statement_ko
     assert "특정하지 못했습니다" in f.statement_ko
+
+    # ⚠ 소관 쪽으로 기울지 않는다 - 두 갈래가 대등해야 한다.
+    assert "가능성이 있어" not in f.statement_ko, (
+        "소관 쪽으로 단정하는 옛 문구가 돌아왔다"
+    )
 
     # ⚠ 어느 법인지 모르면 법 이름을 열거하지 않는다 (R5).
     for law in ("식약처", "식품의약품안전처", "산업통상자원부", "화장품법",
@@ -245,3 +257,64 @@ def test_the_detail_records_the_extractor_verdict_not_ours(kats, rules):
     # 판정 필드를 두지 않는다.
     for banned in ("risk_score", "is_safe", "verdict", "is_legal"):
         assert banned not in f.detail
+
+
+# ── 판정: 대상 줄에도 틀리지 않아야 한다 ────────────────────────────
+@pytest.mark.parametrize("pn,note", [
+    ("[CU] 핏미업 러닝벨트 힙색 슬링백 벨트백 스포츠 러닝", "부속서 1 기타 제품류"),
+    ("지압슬리퍼 사무실 실내화 다이어트 슬리퍼", "신발류"),
+])
+def test_the_statement_is_not_false_on_rows_that_are_actually_in_scope(pn, note, kats, rules):
+    """**대상으로 검수된 줄에도 틀리지 않는다.**
+
+    추출기가 `out_of_scope` 로 오분류한 줄이 실측 12건 중 2건이었다. 그 줄은
+    "이 표가 놓친" 쪽이므로, 두 갈래를 나란히 적은 문구는 참이다.
+
+    ⚠ 소관 쪽으로 단정하면 셀러를 전안법에서 멀어지게 한다 - 없는 의무를
+      만드는 것의 거울이고, 우리 오류 비대칭에서 더 비싼 쪽이다.
+    """
+    _facts, findings = _verify(pn, ItemCategory.OUT_OF_SCOPE, kats, rules)
+    f = next(x for x in findings if x.kind is FindingKind.SCOPE_UNDETERMINED)
+    # 두 갈래가 모두 있어야 이 줄에서 참이 된다.
+    assert "다른 법의 소관일 수도" in f.statement_ko
+    assert "이 표가 놓친 것일 수도" in f.statement_ko, note
+
+
+def test_it_says_something_coverage_gap_does_not(kats, rules):
+    """`coverage_gap` 과 중복이 아니다.
+
+    ⚠ "판단하지 못했습니다" 로 일반화하면 `coverage_gap` 과 같은 말이 된다 -
+      침묵 줄에는 이미 그것이 붙어 있다. 이 finding 의 몫은 **두 갈래를
+      명시하는 것**이고, 그것이 실제 우리 앎의 상태다 (R3).
+    """
+    _facts, findings = _verify("무독성 방수매트 김장매트", ItemCategory.OUT_OF_SCOPE,
+                               kats, rules)
+    kinds = {f.kind for f in findings}
+    assert FindingKind.COVERAGE_GAP in kinds, "이 검사의 전제가 바뀌었다"
+
+    gap = next(x for x in findings if x.kind is FindingKind.COVERAGE_GAP)
+    ours = next(x for x in findings if x.kind is FindingKind.SCOPE_UNDETERMINED)
+    # 두 갈래를 말하는 것은 우리 쪽뿐이다.
+    assert "다른 법의 소관일 수도" not in gap.statement_ko
+    assert "다른 법의 소관일 수도" in ours.statement_ko
+
+
+def test_self_limitation_is_allowed_but_internals_are_not(kats, rules):
+    """"우리 표가 놓쳤을 수도" 는 자기 한계 표기이지 내부 사정 노출이 아니다.
+
+    금지되는 것은 "추출기가 헷갈렸다" 처럼 **우리 구현을 셀러에게 설명하는
+    것**이고, "우리 표에 없다" 는 셀러가 다음 행동을 정하는 데 쓰는 사실이다.
+    그 구분을 코드에도 적어 뒀는지 확인한다.
+    """
+    import inspect
+
+    from sourcing_guard import verifier
+
+    src = inspect.getsource(verifier.verify)
+    assert "자기 한계 표기" in src, "구분이 주석에 없다"
+
+    _facts, findings = _verify("무독성 방수매트 김장매트", ItemCategory.OUT_OF_SCOPE,
+                               kats, rules)
+    f = next(x for x in findings if x.kind is FindingKind.SCOPE_UNDETERMINED)
+    for word in ("추출기", "LLM", "분류기", "헷갈", "category", "scope_reason"):
+        assert word not in f.statement_ko
