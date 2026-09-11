@@ -30,6 +30,7 @@ from typing import Any
 import httpx
 import yaml
 
+from .placeholders import is_not_a_value
 from .allowed_hosts import ensure_allowed
 
 _MAP_PATH = Path(__file__).parent / "data" / "kats_field_map.yaml"
@@ -305,9 +306,11 @@ def classify_cert_state(raw: str | None, states: dict[str, list[str]]) -> CertSt
 # 명시 목록은 로그 노이즈를 줄이는 용도다. 판별의 원칙은 아래 is_cert_number()
 # 에 있다 — 인증번호 패턴을 하나도 못 찾으면 자리표시자로 본다. 그래야
 # 미등록 신종("비대상" 54건, "공급자적합성대상" 19건이 그랬다)도 자동으로 걸린다.
+#: **"인증번호가 아니다"** — 층 2. 층 1("값이 아니다")과 겹친 것은 빼고
+#: `is_cert_number` 가 층 1 을 먼저 부른다 (2026-09-12 · §6).
+#: 판별의 원칙은 여전히 정규식이고 이 목록은 로그 노이즈를 줄이는 용도다.
 CERT_PLACEHOLDERS = frozenset({
     "공급자적합성", "공급자적합성대상", "비대상",
-    "해당없음", "해당사항없음", "없음", "N/A", "-",
     "(제품에 표시 없음)", "(인증모델: )",
 })
 
@@ -324,7 +327,7 @@ def is_cert_number(value: str) -> bool:
     일치로 잡힌다.
     """
     v = (value or "").strip()
-    if not v or v in CERT_PLACEHOLDERS:
+    if not v or is_not_a_value(v) or v in CERT_PLACEHOLDERS:
         return False
     return bool(CERT_NUMBER_RE.search(_denoise(v)))
 

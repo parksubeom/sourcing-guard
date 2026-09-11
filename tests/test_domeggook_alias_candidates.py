@@ -47,24 +47,11 @@ def test_in_table_marks_item_names_and_aliases():
 
 
 def _code_only(src: str) -> str:
-    """docstring·주석을 벗긴 **코드**만. 금지 문자열이 설명 문장에 있으면 걸리는
-    자기 문구 함정을 피한다 - 이 검사도 처음에 그렇게 걸렸다(이번 주 네 번째)."""
-    import ast, io, tokenize as tk
+    """⚠ 판단은 `tests/srccheck.code_only` 가 한다 (2026-09-12). 같은 함정에 다섯 번
+    걸려서 한 곳으로 모았다 - 그 모듈 머리 주석에 다섯 건이 적혀 있다."""
+    from tests.srccheck import code_only
 
-    tree = ast.parse(src)
-    doc_lines: set[int] = set()
-    for node in ast.walk(tree):
-        if isinstance(node, (ast.Module, ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
-            d = ast.get_docstring(node, clean=False)
-            if d and node.body and isinstance(node.body[0], ast.Expr):
-                e = node.body[0]
-                doc_lines.update(range(e.lineno, e.end_lineno + 1))
-    out = []
-    for tok in tk.generate_tokens(io.StringIO(src).readline):
-        if tok.type == tk.COMMENT or tok.start[0] in doc_lines:
-            continue
-        out.append(tok.string)
-    return " ".join(out)
+    return code_only(src)
 
 
 def test_the_script_never_touches_the_grade_table():

@@ -15,6 +15,8 @@ from __future__ import annotations
 
 import re
 
+from .placeholders import is_not_a_value
+
 # ── 1. 내용 없는 표기 ────────────────────────────────────────────────
 #
 # 실측(2026-09-08 · 상세 100건)에서 나온 것만 넣는다. 짐작으로 늘리지 않는다.
@@ -23,6 +25,9 @@ import re
 #   [상세정보 별도표기]
 #   상세페이지 참조 · 상세페이지참조
 #   -  ·  '' (빈 값)
+#: ⚠ **더 이상 판정에 쓰이지 않는다** (2026-09-12). 소유자는 `placeholders.NOT_A_VALUE`
+#: 다. 여기 남긴 것은 "도매꾹 응답에서 이 표기를 봤다" 는 실측 기록이다 -
+#: 지우면 그 출처를 잃는다.
 _PLACEHOLDER_CORE = (
     "상세설명참조",
     "상세설명 참조",
@@ -46,23 +51,15 @@ def _norm(value: str) -> str:
 def is_placeholder(value: str | None) -> bool:
     """값이 있으나 내용이 없는가.
 
-    슬래시로 이은 항목(`상세설명참조 / 상세설명참조`)은 **조각 전부가**
-    placeholder 일 때만 참이다. 한쪽에 실제 모델명이 있으면 내용이 있다.
+    ⚠ **판단은 `placeholders.is_not_a_value` 가 한다** (2026-09-12). 전에는 이
+      함수가 `_PLACEHOLDER_CORE` 로 직접 판정했고, 같은 판단이 여섯 곳에
+      흩어져 LLM 경로가 뒤처졌다 - 그 모듈 머리 주석 참조. 이름은 호출부가
+      많아 그대로 두고 위임만 한다.
 
-    ⚠ `-` 와 빈 값도 참이다. 도매꾹은 미입력을 `-` 로 채운다.
+    ⚠ 그래서 이제 "해당없음"·"미상"·"N/A" 도 참이다. 전에는 거짓이었다 -
+      A-4 의 `내용없음` 플래그와 A-5 필드 수치가 그만큼 움직인다.
     """
-    if value is None:
-        return True
-    parts = [p for p in re.split(r"[/·]", str(value)) if p.strip()]
-    if not parts:
-        return True
-    for p in parts:
-        n = _norm(p)
-        if not n or n == "-":
-            continue
-        if not any(_norm(m) == n for m in _PLACEHOLDER_CORE):
-            return False
-    return True
+    return is_not_a_value(value)
 
 
 # ── 2. 고시 항목 이름 ────────────────────────────────────────────────

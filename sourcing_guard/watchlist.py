@@ -17,6 +17,7 @@ from datetime import date
 from typing import Iterable, Protocol
 
 from .kats_client import RecallRecord, is_cert_number, normalize_kc, recall_evidence
+from .placeholders import is_not_a_value
 from .models import MatchStrength, RecallAlert, WatchItem, WatchStatus, matched_on_label
 
 # Model names shorter than this produce too many coincidental hits
@@ -152,11 +153,16 @@ def _contain_is_distinctive(shorter: str) -> bool:
 #
 # ⚠ 격하가 아니라 제외인 이유: '비대상' 일치는 정보량이 0 이다. 참고 정보로
 #   내려도 수백 건 소음이 그대로 남고, 소음이 된 경고는 꺼진 경고와 같다.
+#: **"모델명이 아니다"** — 층 2. "값이 아니다"(층 1)는 `placeholders` 가 소유한다.
+#:
+#: ⚠ 층 1 과 겹쳤던 것(`해당없음`·`해당사항없음`·`미상`)은 **빼고** 아래 판정
+#:   함수가 층 1 을 먼저 부른다 (2026-09-12 · §6 "같은 판단을 두 곳에 적지 마라").
+#:   여기 남은 것은 **값이긴 하지만 모델명은 아닌 것**이다 - 색상명 `BLACK` 은
+#:   값이고, 그래서 `materials` 에서는 살아야 한다.
 _MODEL_PLACEHOLDERS = {
     # 인증·규제 라벨
     "공급자적합성", "공급자적합성확인", "공급자적합성대상", "비대상", "안전품질표시",
-    "안전품질", "안전확인", "안전인증", "자율안전확인", "KC인증", "해당없음", "미상",
-    "해당사항없음", "전기용품안전",
+    "안전품질", "안전확인", "안전인증", "자율안전확인", "KC인증", "전기용품안전",
     # 필드 라벨 (값이 아니라 필드 이름이 들어온 것)
     "바코드", "BARCODE", "MODEL", "제품명", "상품명", "품명", "품번", "모델명",
     "번호", "LOT번호", "REF", "ITEMNO", "EAN", "EAN코드", "ART", "CODE", "SKU",
@@ -172,9 +178,9 @@ _MODEL_PLACEHOLDERS = {
 # 빈 문자열 가드로 중국어·그리스문자만인 이름과 '-' 는 막았지만, 정규화 후에도
 # 남는 자리표시자가 있다. 사본 실측: '미상' 1,417건 · '0' 1,026건.
 # 셀러 제조사가 '미상' 이면 오탐 134건이 걸렸다.
+#: **"업체명이 아니다"** — 층 2. 층 1 과 겹친 것은 빼고 판정 함수가 층 1 을 부른다.
 _MAKER_PLACEHOLDERS = {
-    "미상", "0", "회사정보없음", "정보없음", "해당없음", "해당사항없음", "없음",
-    "불명", "NA", "UNKNOWN", "NONE", "NULL", "기타",
+    "0", "회사정보없음", "정보없음", "불명", "UNKNOWN", "NONE", "NULL", "기타",
 }
 
 
@@ -183,13 +189,18 @@ def is_model_placeholder(normalized: str) -> bool:
 
     양쪽에 같은 기준을 적용한다 - 셀러가 적은 값에만 쓰면 정부 데이터의
     자리표시자가 남고, 정부 쪽에만 쓰면 셀러가 적은 자리표시자가 남는다.
+
+    ⚠ **R6(놓친 알림이 더 비싸다)는 이 판정과 무관하다.** 비대칭은 **매칭 강도**
+      에 걸리는 것이지 자리표시자 판정이 아니다 - "해당없음" 을 모델명으로 받아
+      관대하게 매칭하는 것은 관대함이 아니라 **엉뚱한 상품과의 일치**다. 그래서
+      워치리스트도 층 1(`placeholders`)을 부른다.
     """
-    return normalized in _MODEL_PLACEHOLDERS
+    return is_not_a_value(normalized) or normalized in _MODEL_PLACEHOLDERS
 
 
 def is_maker_placeholder(normalized: str) -> bool:
-    """정규화된 제조사가 '업체명 아님' 인가."""
-    return normalized in _MAKER_PLACEHOLDERS
+    """정규화된 제조사가 '업체명 아님' 인가. 층 1 + 업체명 전용."""
+    return is_not_a_value(normalized) or normalized in _MAKER_PLACEHOLDERS
 
 
 _STOPWORDS = {

@@ -98,6 +98,39 @@ class ProductFacts(BaseModel):
     category: ItemCategory = ItemCategory.UNCLASSIFIED
     category_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
     source_page_url: str | None = None
+
+    # ⚠⚠ **값이 아닌 문자열은 여기서 None 이 된다** (2026-09-12 · 판정 1+2).
+    #
+    #   판단은 `placeholders.is_not_a_value` 한 곳이 한다. 이 자리에 둔 이유는
+    #   **모든 경로가 지나가기 때문**이다 - LLM 추출 · 도매꾹 어댑터 · 재생
+    #   스크립트 · 목. extractor 후처리에만 두면 재생이 안 타서 ④ 상세 109 가
+    #   움직이지 않고, 그러면 "재생으로 닫는다" 가 성립하지 않는다.
+    #
+    #   실측(도매꾹 상세 109): `model_name` 이 값 아닌 문자열인 줄 **34건**.
+    #   그 값으로 `RecallIndex.can_compare()` 가 True 가 되어 "리콜 대조했다" 고
+    #   말했다. 사본에 같은 문자열이 있으면 가짜 일치다 (R3).
+    #
+    # ⚠ 정규화이지 판정이 아니다 (R1). 값을 **고치지 않고** 자리표시자를 None 으로
+    #   만들 뿐이다. 프롬프트는 건드리지 않았다 - 바꾸면 R7 대로 235건을 다시 재야
+    #   한다. 후처리는 결정적 코드라 재생으로 닫힌다.
+    #
+    # ⚠ `kc_numbers`·`rf_numbers`·`kc_numbers_from_image` 는 **건드리지 않는다.**
+    #   그쪽은 정규식(`CERT_NUMBER_RE`·`RF_NUMBER_RE`)이 형식을 보고, 인증번호
+    #   자리표시자는 `kats_client.is_cert_number` 가 따로 가린다.
+    @field_validator("product_name", "model_name", "maker", "target_age",
+                     "legal_item_name", mode="before")
+    @classmethod
+    def _drop_placeholder_text(cls, v: object) -> object:
+        from .placeholders import clean
+
+        return clean(v) if isinstance(v, str) else v
+
+    @field_validator("materials", "substances_mentioned", mode="before")
+    @classmethod
+    def _drop_placeholder_items(cls, v: object) -> object:
+        from .placeholders import clean_list
+
+        return clean_list(v) if isinstance(v, (list, tuple)) else v
     raw_language: Literal["ko", "zh", "en", "mixed", "unknown"] = "unknown"
 
     model_config = {"extra": "forbid"}  # blocks silent addition of verdict fields

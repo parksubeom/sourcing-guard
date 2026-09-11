@@ -188,6 +188,9 @@ def main() -> None:
     ap.add_argument("--base", default="tests/fixtures/도매꾹_정제_2026-09-08")
     ap.add_argument("--expand", default="tests/fixtures/도매꾹_확장_2026-09-08")
     ap.add_argument("--out-dir", default="tests/fixtures")
+    # ⚠ 파일명 날짜는 **원자료 수집일**이지 조립일이 아니다. 재조립할 때 오늘
+    #   날짜로 쓰면 원자료 2026-09-08 과 어긋나고, 참조처 9곳이 깨진다.
+    ap.add_argument("--stamp", default="", help="파일명 날짜. 기본은 오늘 (재조립 시 원자료 날짜를 준다)")
     args = ap.parse_args()
 
     base, expand = Path(args.base), Path(args.expand)
@@ -216,7 +219,7 @@ def main() -> None:
     for sample_no, name, _no, _how, _item in rows:
         counts[scope[name][1]] += 1
 
-    stamp = f"{date.today():%Y-%m-%d}"
+    stamp = args.stamp or f"{date.today():%Y-%m-%d}"
     out_txt = Path(args.out_dir) / f"도매꾹_상세텍스트_{stamp}.txt"
     out_json = Path(args.out_dir) / f"도매꾹_구조_{stamp}.json"
 
@@ -237,6 +240,7 @@ def main() -> None:
     payload = {
         "만든것": "scripts/build_domeggook_detail.py",
         "재료": [str(base), str(expand)],
+        "재조립": f"{date.today():%Y-%m-%d}",
         "정제": {
             "치환_토큰": list(TOKENS),
             "설명": "seller·return.addr·thumb 는 저장 단계에서 제거됐다. "

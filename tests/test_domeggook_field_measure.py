@@ -119,3 +119,36 @@ def test_placeholder_ratio_is_the_headline_and_is_computed_from_rows():
     assert o["항목줄"] > 0
     ratio = o["내용없음줄"] / o["항목줄"]
     assert 0.5 < ratio < 1.0, f"내용없음 비율 {ratio:.1%} - 눈으로 확인할 것"
+
+
+def test_the_a5_document_numbers_match_the_measurement_file():
+    """A-5 문서의 수치가 원자료 json 과 같은가.
+
+    ⚠ 이 가드가 없어서 문서가 낡았다 (2026-09-12). 자리표시자 판정을 한 소유자로
+      합치면서 `내용 없음` 이 645 → 655 로 움직였는데, 문서도 json 도 자동으로
+      갱신되지 않았고 **검사가 그것을 잡지 않았다.**
+
+    ⚠ 재측정 스크립트는 `--out` 없이 돌리면 json 을 쓰지 않는다. 그래서 화면에는
+      새 숫자가 나오는데 파일은 옛 숫자인 상태가 될 수 있다 - 이 검사가 그 상태를
+      잡는다.
+    """
+    import json
+    import re
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[1]
+    data = json.loads((root / "tests/fixtures/도매꾹_필드실측_2026-09-08.json").read_text(encoding="utf-8"))
+    doc = (root / "docs/A5_도매꾹_상세효과_2026-09-08.md").read_text(encoding="utf-8")
+    n = data["내용없음"]
+    rows, empty = n["항목줄"], n["내용없음줄"]
+
+    # 문서가 "814줄 중 내용 없음  655줄 (80.5%)" 꼴로 적는다.
+    m = re.search(r"고시 항목\(type=item\) (\d+)줄 중 내용 없음\s+\*{0,2}(\d+)줄 \(([\d.]+)%\)", doc)
+    assert m, "A-5 문서에서 '내용 없음' 줄을 못 찾았다 - 형식이 바뀌었나"
+    assert int(m.group(1)) == rows, f"항목줄: 문서 {m.group(1)} vs 원자료 {rows}"
+    assert int(m.group(2)) == empty, f"내용없음줄: 문서 {m.group(2)} vs 원자료 {empty}"
+    assert abs(float(m.group(3)) - empty / rows * 100) < 0.1
+
+    m2 = re.search(r"항목 전부가 내용 없는 상품\s+\*{0,2}(\d+)", doc)
+    assert m2 and int(m2.group(1)) == n["전부빈상품"], (
+        f"전부빈상품: 문서 {m2.group(1) if m2 else '없음'} vs 원자료 {n['전부빈상품']}")

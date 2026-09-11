@@ -11,10 +11,10 @@
   없는 의무를 만드는 방향이다. `legal_item_name` 은 항상 None, `category` 는 UNCLASSIFIED.
   분류는 규칙·추출기의 일이다 (R1).
 
-⚠ **값이 아닌 값을 값으로 넘기지 않는다 (R3).** `is_placeholder()` 가 아는 "상세설명참조"
-  류 외에 도매꾹은 미입력을 **"해당없음"** 으로 채운다 - 실측 `model="해당없음"` 71/190.
-  `is_placeholder("해당없음")` 은 False 라서 그대로 두면 모델명 "해당없음" 으로 리콜 대조를
-  하게 된다. 공유 헬퍼는 다른 측정이 쓰고 있어 건드리지 않고, 여기서 한 겹 더 거른다.
+⚠ **값이 아닌 값을 값으로 넘기지 않는다 (R3).** 판단은 `placeholders` 한 곳이 한다
+  (2026-09-12 · 전에는 이 모듈이 자기 목록을 들고 있었다). 도매꾹은 미입력을 "해당없음"
+  으로 채운다 - 실측 `model="해당없음"` 71/190. 그대로 넘기면 모델명 "해당없음" 으로
+  리콜 대조를 한다.
 
 ⚠ 항목 이름은 **관찰된 것만** 쓴다 (R5). 190건 `infoDuty.item[].name` 빈도:
   품명 및 모델명 170 · 법에 의한 인증·허가… 113 · 제조사 113 · 제조자 75 · KC 인증정보 43 ·
@@ -32,19 +32,11 @@ from .domeggook_fields import (
     INFODUTY_MAKER,
     INFODUTY_NAME_MODEL,
     infoduty_rows,
-    is_placeholder,
     safety_certs,
 )
+from .placeholders import clean, is_not_a_value
 from .kats_client import CERT_NUMBER_RE, normalize_kc
 from .models import ItemCategory, ProductFacts
-
-#: `is_placeholder` 가 모르는 "값 아님". 정규화(공백 제거) 후 비교한다.
-NOT_A_VALUE: frozenset[str] = frozenset({
-    "해당없음", "없음", "미기재", "해당사항없음", "n/a", "na",
-    # 실측(2026-09-12 · 21114291): model·maker 에 "상세페이지" 만 적힌 줄. `_PLACEHOLDER_CORE` 는
-    # "상세페이지참조" 는 알지만 "상세페이지" 홑말은 모른다.
-    "상세페이지", "상세설명", "상세참조", "본문",
-})
 
 #: 관찰된 항목 이름 (R5). 부분 일치가 아니라 **정확 일치**다 - 이름은 고시가 정한다.
 _ROW_MODEL = {INFODUTY_NAME_MODEL}
@@ -57,17 +49,8 @@ _SPLIT = re.compile(r"\s*[/,·]\s*")
 
 
 def is_value(raw: object) -> bool:
-    """placeholder 도, "해당없음" 류도 아닌 실제 값인가."""
-    if raw is None:
-        return False
-    s = str(raw).strip()
-    if not s or is_placeholder(s):
-        return False
-    return re.sub(r"\s+", "", s).lower() not in NOT_A_VALUE
-
-
-def clean(raw: object) -> str | None:
-    return str(raw).strip() if is_value(raw) else None
+    """실제 값인가. 판단은 `placeholders` 가 한다 - 소유자는 하나다 (§6)."""
+    return not is_not_a_value(None if raw is None else str(raw))
 
 
 def _rows_named(item: dict, names: set[str]) -> list[str]:
