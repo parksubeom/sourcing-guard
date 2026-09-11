@@ -1415,7 +1415,14 @@ def verify(
                 ),
                 source_label="국가기술표준원 리콜정보",
                 source_url=recall_evidence(None)[1],
-                detail={"missing_for": "recall_match"},
+                # ⚠ 다른 `info_request` 와 **같은 모양**이어야 화면이 합친다 (4-s).
+                detail={
+                    "missing": "리콜 대조 정보",
+                    "asks_for": ["model_name", "maker", "kc_numbers"],
+                    "unlocks": ["recall_match"],
+                    # 뒤로 호환 - 기존 검사가 이 키를 본다.
+                    "missing_for": "recall_match",
+                },
                 checked_at=today,
             )
         )
@@ -1495,17 +1502,20 @@ def verify(
     # --- (b-3) 공급처에 물어야 할 것 ----------------------------------------
     # "모르겠습니다" 로 끝내지 않는다. 소싱 단계에서 셀러가 실제로 할 수 있는
     # 행동은 공급처에 묻는 것뿐이고, 무엇을 물어야 하는지가 실질 가치다.
-    for label, ask in missing_inputs(
+    # ⚠ `detail` 에 **(필요한 입력, 열리는 축)** 을 담는다 (4-s). 화면이 여러
+    #   줄을 합쳐 "모델명·제조사를 넣으면 리콜 대조와 인증 조회가 가능합니다"
+    #   한 줄로 그릴 수 있게 - 실측에서 한 행에 3~4줄이 쌓였다.
+    for gap in missing_inputs(
         materials=facts.materials, target_age=facts.target_age, category=facts.category
     ):
         findings.append(
             Finding(
                 kind=FindingKind.INFO_REQUEST,
                 signal=Signal.UNKNOWN,
-                statement_ko=f"[{label} 확인 필요] {ask}",
+                statement_ko=f"[{gap.label} 확인 필요] {gap.ask}",
                 source_label="제품안전정보센터 대상 품목 안내",
                 source_url="https://www.safetykorea.kr/policy/targetsSafetyCheck3",
-                detail={"missing": label},
+                detail=gap.as_detail(),
                 checked_at=today,
             )
         )

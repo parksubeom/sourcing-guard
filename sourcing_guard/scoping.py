@@ -19,6 +19,8 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 import re
 import unicodedata
 from enum import Enum
@@ -137,31 +139,85 @@ CHILDREN_CATEGORIES = {
 }
 
 
+@dataclass(frozen=True)
+class MissingInput:
+    """"무엇을 넣으면 무엇이 가능해지는가" (4-s · 2026-09-11).
+
+    ⚠⚠ **화면이 여러 줄을 합쳐 한 줄로 그릴 수 있어야 한다.**
+
+      실측(새표본235): `info_request` 가 **228/235 행**에 붙고 한 행에 **3~4줄**
+      이 쌓인다. 셀러가 매번 같은 안내를 보면 안 읽고, 그러면 진짜 안내도 같이
+      안 읽힌다 - R3-b 가 금지한 "항상 켜지는 경고" 와 같은 구조다.
+
+      축마다 한 줄씩 쌓지 말고 화면이 이렇게 합칠 수 있게 한다:
+
+          모델명·제조사를 넣으면 리콜 대조와 인증 조회가 가능합니다
+
+    ⚠ **줄을 줄이려고 안내를 없애지 않는다. 합치는 것과 감추는 것은 다르다.**
+      문구(`ask`)는 그대로 두고 구조만 얹는다 - 화면이 합칠지 펼칠지 고른다.
+
+    필드
+        label     화면 머리말. 기존 문구가 쓰던 것
+        ask       공급처에 물을 말. 그대로 유지한다
+        asks_for  **셀러가 넣을 것.** `ProductFacts` 필드명을 쓴다
+        unlocks   **그것이 열어 주는 축.** 화면이 "무엇이 가능해지는지" 를 말한다
+    """
+
+    label: str
+    ask: str
+    asks_for: tuple[str, ...]
+    unlocks: tuple[str, ...]
+
+    def as_detail(self) -> dict:
+        """`Finding.detail` 에 담을 모양. 화면이 이것을 읽어 합친다."""
+        return {
+            "missing": self.label,
+            "asks_for": list(self.asks_for),
+            "unlocks": list(self.unlocks),
+        }
+
+
+#: 축 이름. 화면 문구는 화면이 정하고 여기서는 **식별자만** 준다.
+#: ⚠ 값을 늘리면 화면이 모르는 축이 생긴다 - 화면과 함께 늘릴 것.
+UNLOCKABLE_AXES = ("recall_match", "cert_lookup", "hazard_rule", "item_grade")
+
+
 def missing_inputs(
     *, materials: list[str], target_age: str | None, category: ItemCategory
-) -> list[tuple[str, str]]:
+) -> list[MissingInput]:
     """판정에 필요한데 페이지에 없는 정보와, 공급처에 물을 문구.
 
     "모르겠습니다" 로 끝내지 않고 무엇을 물어야 하는지까지 준다. 소싱 단계에서
     셀러가 실제로 할 수 있는 행동은 공급처에 묻는 것뿐이다.
+
+    ⚠ 반환형이 `tuple[str, str]` 에서 `MissingInput` 으로 바뀌었다 (4-s).
+      이유는 위 클래스 주석 참조.
     """
-    gaps: list[tuple[str, str]] = []
+    gaps: list[MissingInput] = []
     if not materials:
-        gaps.append((
-            "재질",
-            "재질(합성수지 종류, 도장·코팅 유무)을 확인해 주세요. "
-            "합성수지제는 프탈레이트 기준이, 도장면은 유해원소 용출 기준이 적용됩니다.",
+        gaps.append(MissingInput(
+            label="재질",
+            ask="재질(합성수지 종류, 도장·코팅 유무)을 확인해 주세요. "
+                "합성수지제는 프탈레이트 기준이, 도장면은 유해원소 용출 기준이 적용됩니다.",
+            asks_for=("materials",),
+            unlocks=("hazard_rule",),
         ))
     if not target_age or not target_age.strip():
-        gaps.append((
-            "대상연령",
-            "대상연령(또는 권장 사용연령) 표기를 확인해 주세요. "
-            "만 13세 이하이면 어린이제품 공통안전기준이 적용됩니다.",
+        gaps.append(MissingInput(
+            label="대상연령",
+            ask="대상연령(또는 권장 사용연령) 표기를 확인해 주세요. "
+                "만 13세 이하이면 어린이제품 공통안전기준이 적용됩니다.",
+            asks_for=("target_age",),
+            # 연령이 정해져야 어린이제품 기준 적용 여부가 정해지고, 그것이
+            # 등급·유해물질 양쪽을 가른다.
+            unlocks=("item_grade", "hazard_rule"),
         ))
     if category is ItemCategory.UNCLASSIFIED:
-        gaps.append((
-            "품목 구분",
-            "어떤 안전기준 품목에 해당하는지 확인해 주세요. "
-            "안전인증·안전확인·공급자적합성확인 중 어디인지에 따라 의무가 달라집니다.",
+        gaps.append(MissingInput(
+            label="품목 구분",
+            ask="어떤 안전기준 품목에 해당하는지 확인해 주세요. "
+                "안전인증·안전확인·공급자적합성확인 중 어디인지에 따라 의무가 달라집니다.",
+            asks_for=("legal_item_name",),
+            unlocks=("item_grade",),
         ))
     return gaps
