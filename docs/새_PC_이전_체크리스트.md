@@ -20,6 +20,39 @@
 
 ---
 
+## 0-B. ⚠ 이미 클론이 있다면 — 2026-09-09 rewrite 때문에 pull 이 깨진다
+
+**새로 클론하는 경우는 이 절을 건너뛴다.** 2026-09-09 이전에 클론해 둔 사본이
+있으면 다음 `git pull` 이 실패한다.
+
+그날 author·committer 이메일만 바꾸는 히스토리 rewrite 를 했고 **커밋 해시
+168개가 전부 바뀌었다.** 파일 내용은 한 글자도 안 바뀌었다(트리 해시 동일).
+
+```powershell
+git fetch --all
+git reset --hard origin/main
+```
+
+⚠ `git reset --hard` 는 **커밋하지 않은 변경을 버린다.** 먼저 확인할 것:
+
+```powershell
+git status --short          # 비어 있어야 안전하다
+git stash list              # stash 도 확인
+```
+
+작업 중인 것이 있으면 `git stash` 하거나 다른 곳에 복사한 뒤 reset 한다.
+로컬 브랜치가 있으면 그 브랜치는 옛 히스토리 위에 남으므로, 옮길 커밋이 있으면
+`git cherry-pick` 으로 새 `main` 위에 다시 얹는다.
+
+⚠ `git pull` 을 먼저 시도하면 "divergent branches" 로 멈추거나 옛 히스토리와
+  새 히스토리가 **양쪽 다 들어간 머지 커밋**이 생긴다. 그러면 같은 작업이
+  히스토리에 두 벌 남는다 - `pull` 이 아니라 `reset --hard` 다.
+
+옛 해시를 되짚어야 하면 `docs/해시_대응표_rewrite_2026-09-09.md` 와
+원격 `backup/pre-rewrite-2026-09-09` 를 본다(**영구 보존 ref** · CLAUDE.md §6).
+
+---
+
 ## 1. 저장소만으로 되는 것
 
 ```powershell

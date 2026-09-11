@@ -240,3 +240,58 @@ def test_korean_filenames_are_compared_after_nfc_normalization():
     assert not any("작업로그_" in name for name in live), (
         "작업로그가 검사 대상에 들어왔다 - 정규화가 안 먹었다"
     )
+
+
+def test_the_backup_ref_is_documented_as_permanent_in_three_places():
+    """백업 ref 가 **영구 보존**임을 세 문서가 말한다.
+
+    ⚠⚠ 이 ref 를 지우면 `docs/작업로그_*.md` 의 옛 해시 97건이 죽은 링크가
+      되고, 대응표의 옛 해시 열이 조회 불가가 된다. 44KB 짜리 ref 하나가
+      6개월 뒤 "왜 09-04 로그의 해시가 main 에 없나" 에 대한 답 전부를 붙들고
+      있다.
+
+    ⚠ 원격에 실제로 있는지는 여기서 확인하지 않는다 - 네트워크에 의존하면
+      검사가 환경마다 갈린다([E-1]). 확인하는 것은 **우리가 그것을 지우지 않기로
+      적어 뒀는가** 다. 사람이 지우려 할 때 읽는 것이 문서이기 때문이다.
+    """
+    ref = "backup/pre-rewrite-2026-09-09"
+    targets = {
+        "CLAUDE.md": _ROOT / "CLAUDE.md",
+        "대응표": _TABLE,
+        "작업로그": _ROOT / "docs/작업로그_2026-09-09.md",
+    }
+    for label, path in targets.items():
+        assert path.exists(), f"{label} 이 없다: {path}"
+        text = path.read_text(encoding="utf-8")
+        assert ref in text, f"{label} 에 백업 ref 이름이 없다"
+        assert "영구 보존" in text or "지우지 않는다" in text, (
+            f"{label} 이 보존을 말하지 않는다 - 누가 정리하다 지운다"
+        )
+
+    # 지우면 무엇을 잃는지가 적혀 있어야 한다. 이유 없는 금지는 지켜지지 않는다.
+    rules = (_ROOT / "CLAUDE.md").read_text(encoding="utf-8")
+    assert "97건" in rules, "지우면 잃는 것(작업로그 97건)이 적혀 있지 않다"
+
+
+def test_the_rewrite_rule_is_in_the_coding_rules():
+    """되돌릴 수 없는 공유 변경은 총괄 확인 없이 하지 않는다 - 2026-09-09 위반.
+
+    ⚠ 이 검사는 규칙 문장의 **존재**만 본다. 절차는 코드가 강제할 수 없다.
+      그래서 최소한 문장이 사라지지 않게 잠근다.
+    """
+    rules = (_ROOT / "CLAUDE.md").read_text(encoding="utf-8")
+    for token in ("히스토리 rewrite", "force push", "총괄 확인 없이 하지 않는다"):
+        assert token in rules, f"§6 에 '{token}' 이 없다"
+    # 왜인지가 함께 있어야 한다.
+    assert "해시가" in rules and "검증 좌표" in rules
+
+
+def test_the_new_pc_checklist_tells_existing_clones_how_to_recover():
+    """rewrite 이후 기존 클론은 pull 이 아니라 reset --hard 다."""
+    text = (_ROOT / "docs/새_PC_이전_체크리스트.md").read_text(encoding="utf-8")
+    assert "git fetch --all" in text
+    assert "git reset --hard origin/main" in text
+    # ⚠ reset --hard 는 변경을 버린다 - 그 경고가 함께 있어야 한다.
+    assert "git status --short" in text, "확인 절차 없이 reset 을 권하고 있다"
+    # pull 을 먼저 하면 안 되는 이유도 적혀 있어야 한다.
+    assert "divergent" in text or "머지 커밋" in text
