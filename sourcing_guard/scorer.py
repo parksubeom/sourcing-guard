@@ -815,6 +815,15 @@ def _axes(
     elif kinds & {FindingKind.RECALL_MATCH, FindingKind.RECALL_WEAK_MATCH}:
         recall = ("일치 있음", True)
     elif FindingKind.RECALL_CLEAR in kinds:
+        # ⚠⚠ **`RECALL_CLEAR` 가 있을 때만 "대조함" 이다 (4-r).**
+        #
+        #   전에는 `verifier` 가 `product_name` 만 있어도 `RECALL_CLEAR` 를
+        #   붙였고, 그래서 **대조를 안 했는데 이 축이 "대조함 ✅" 으로 떴다.**
+        #   실측 233/233 = 100%(상품명만 경로). 그 표시가 거짓 안심의 절반이다.
+        #
+        #   이제 `RecallIndex.can_compare()` 가 참일 때만 `RECALL_CLEAR` 가
+        #   붙으므로 이 분기는 그대로 두어도 맞다 - **여기에 조건을 또 적지
+        #   않는다.** 조건이 두 곳에 있었던 것이 그 결함의 원인이었다.
         recall = ("대조함", True)
     else:
         recall = ("대조 못 함", False)

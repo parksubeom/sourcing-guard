@@ -95,6 +95,32 @@ class RecallIndex:
     def is_empty(self) -> bool:
         return not self._load()
 
+    def can_compare(self, facts: ProductFacts, *, today: date) -> bool:
+        """**이 상품으로 리콜 대조가 가능한가.**
+
+        ⚠⚠ 이 판단은 **여기 한 곳에만 있어야 한다** (4-r · 2026-09-11).
+
+          전에는 `verifier` 가 `recall_clear` 를 붙일지 정할 때 조건을 **따로
+          적었고**, 그 조건이 여기와 달랐다:
+
+              verifier   facts.product_name or facts.model_name
+              여기        model_name or kc_numbers or (maker and product_name)
+
+          그래서 `product_name` 만 있으면 `find()` 는 대조를 **안 하고** 빈
+          목록을 주는데 `verifier` 는 "일치 항목이 없습니다" 를 붙였다.
+          **대조하지 않고 대조했다고 말한 것**이다 (R3).
+
+          실측: 새표본235 상품명만 **233/233 = 100%** · 도매꾹109 상품명만
+          87/109 = 79.8% 가 그 상태였다. 크롬 확장이 그 경로다.
+
+        ⚠ 조건을 두 곳에 적어서 갈린 것이 원인이므로, **고치는 방법도 한 곳에서만
+          판단하는 것**이어야 한다. `verifier` 는 이 함수를 부르고 조건을 다시
+          적지 않는다 - 검사가 그것을 막는다.
+        """
+        return WatchItem.from_facts(
+            id="__scan__", owner_id="__scan__", facts=facts, on=today
+        ).is_matchable()
+
     def find(
         self,
         facts: ProductFacts,
@@ -106,6 +132,9 @@ class RecallIndex:
 
         스윕과 같은 match() 를 쓴다. 매칭 규칙이 두 벌로 갈라지지 않게 하려고
         ProductFacts 를 임시 WatchItem 으로 감싼다 — 저장하지 않는다.
+
+        ⚠ 빈 목록은 **"일치가 없다" 와 "대조를 못 했다" 둘 다**를 뜻한다.
+          호출자는 `can_compare()` 로 갈라야 한다.
         """
         records = self._load()
         if not records:

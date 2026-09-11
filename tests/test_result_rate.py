@@ -148,20 +148,32 @@ def test_these_are_something_we_gave_the_seller(kind):
 
 
 # ── recall_clear 를 뺀 이유 ─────────────────────────────────────────
-def test_recall_clear_alone_does_not_count_or_the_metric_never_moves():
-    """`recall_clear` 는 **모든 검사에 붙는다.**
+def test_recall_clear_alone_does_not_count():
+    """`recall_clear` 단독은 "구체적인 것을 줬다" 가 아니다.
 
-    URL 만 붙여넣어 우리가 아무것도 못 읽은 검사에도 붙고, 그때 "일치 항목을
-    찾지 못했습니다" 는 대조할 것이 없어서 못 찾은 것이다. 넣으면 지표가 항상
-    1.0 이 되고 **움직이지 않는 지표는 지표가 아니다.**
+    ⚠⚠ **이 검사의 전제가 2026-09-11 에 바뀌었다 (4-r).**
+
+      처음엔 "`recall_clear` 는 **모든 검사에 붙는다** - 넣으면 지표가 항상
+      1.0 이 된다" 가 이유였다. 그런데 **왜 늘 붙는지를 묻지 않았다.**
+
+      답은 `verifier` 가 대조 가능 여부를 `RecallIndex` 와 다른 조건으로
+      판단해서, `product_name` 만 있어도 "대조했고 없었다" 를 말했기 때문이다.
+      **대조를 안 하고 붙은 것**이다. 그 결함을 고치니 URL 만 붙여넣은 검사에는
+      더 이상 안 붙는다.
+
+    ⚠ 그래도 NON_SPECIFIC 에 남긴다. 남은 이유는 **R3-b** 다 - 부재의 증명은
+      약하고 "공표 목록에 없다" 는 "안전하다" 가 아니다.
     """
+    # 대조가 실제로 일어난 경우에도 이것 하나로는 "구체적" 이 아니다.
+    assert not has_specific_finding([_f(FindingKind.RECALL_CLEAR)])
+
+    # 그리고 **아무것도 못 읽은 검사에는 이제 붙지 않는다.**
     body = client.post(
         "/api/v1/scan", json={"page_text": "https://example.com/goods/12345"}
     ).json()
     kinds = {f["kind"] for f in body["findings"]}
-    # ⚠ 색인은 fixture 가 만든다. 로컬 DB 에 의존하면 이 줄이 환경마다 갈린다.
-    assert "recall_clear" in kinds, (
-        f"이 검사의 전제가 바뀌었다 - 나온 것: {sorted(kinds)}"
+    assert "recall_clear" not in kinds, (
+        f"대조할 정보가 없는데 '대조했다' 를 말한다 (4-r): {sorted(kinds)}"
     )
     assert not has_specific_finding(
         [Finding(**{**f, "checked_at": None}) for f in body["findings"]]

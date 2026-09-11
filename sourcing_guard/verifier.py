@@ -1381,7 +1381,46 @@ def verify(
             )
         )
 
-    if not confirmed and recall_available and (facts.product_name or facts.model_name):
+    # ⚠⚠ **대조가 가능했는지는 `RecallIndex` 가 판단한다 (4-r · 2026-09-11).**
+    #
+    #   전에는 여기서 `facts.product_name or facts.model_name` 을 **따로 적었고**
+    #   그 조건이 `RecallIndex` 의 것과 달랐다:
+    #
+    #       여기            product_name or model_name
+    #       RecallIndex     model_name or kc_numbers or (maker and product_name)
+    #
+    #   그래서 `product_name` 만 있으면 `find()` 는 대조를 **안 하고** 빈 목록을
+    #   주는데 여기서는 "일치 항목이 없습니다" 를 붙였다. **대조하지 않고
+    #   대조했다고 말한 것**이다 (R3).
+    #
+    #   실측: 새표본235 상품명만 **233/233 = 100%** · 도매꾹109 상품명만
+    #   87/109 = 79.8%. 크롬 확장이 그 경로다.
+    #
+    # ⚠ 조건을 두 곳에 적어서 갈린 것이 원인이므로 **여기서 다시 적지 않는다.**
+    #   검사가 이 함수에 `model_name`/`kc_numbers`/`maker` 조합이 다시 나타나면
+    #   실패시킨다.
+    can_compare_recalls = recall_available and recalls.can_compare(facts, today=today)
+
+    if not confirmed and recall_available and not can_compare_recalls:
+        # 대조할 정보가 부족하다. **새 kind 를 만들지 않는다** - 셀러에게
+        # "무엇을 더 넣어라" 를 말하는 자리는 이미 `info_request` 다.
+        findings.append(
+            Finding(
+                kind=FindingKind.INFO_REQUEST,
+                signal=Signal.UNKNOWN,
+                statement_ko=(
+                    "리콜 목록과 대조하려면 모델명·제조사·인증번호 중 하나가 "
+                    "필요합니다. 상품명만으로는 같은 이름의 다른 제품과 구분할 "
+                    "수 없어 대조하지 않았습니다. 상세페이지에서 확인해 주세요."
+                ),
+                source_label="국가기술표준원 리콜정보",
+                source_url=recall_evidence(None)[1],
+                detail={"missing_for": "recall_match"},
+                checked_at=today,
+            )
+        )
+
+    if not confirmed and can_compare_recalls:
         # "리콜 이력 없음" 에는 유효기간이 있다. 로컬 사본이라 오늘 공표된
         # 리콜은 다음 동기화 전까지 안 잡힌다. 숨기면 안 되는 트레이드오프다.
         #

@@ -14,6 +14,7 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
+from sourcing_guard.recall_index import RecallIndex
 from sourcing_guard.kats_client import KatsClient
 from sourcing_guard.models import (
     FindingKind,
@@ -31,6 +32,9 @@ TODAY = date(2026, 9, 4)
 
 
 class NoRecalls:
+    # ⚠ 대조 가능 여부는 **진짜 로직을 빌린다** (4-r). 여기서 따로 적으면
+    #   조건이 또 갈리고, 그 갈림이 이 결함의 원인이었다.
+    can_compare = RecallIndex.can_compare
     as_of = "20260903"
 
     def is_empty(self):

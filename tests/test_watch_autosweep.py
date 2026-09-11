@@ -158,8 +158,8 @@ def test_healthz_says_when_we_last_checked(app_with_tmp_store):
 
     after = client.get("/healthz").json()["watch_sweep"]
     assert after["last_full_sweep_at"]
-    assert after["last_full_sweep_items"] == "1"
-    assert after["last_full_sweep_new"] == "1"
+    assert after["last_full_sweep_items"] == 1
+    assert after["last_full_sweep_new"] == 1
     assert after["alerts_stored"] == 1
 
 
@@ -177,7 +177,7 @@ def test_the_watch_endpoint_carries_the_sweep_and_the_stored_alerts(
     assert set(body) == {"items", "sweep", "alerts"}
     assert len(body["items"]) == 1
     assert len(body["alerts"]) == 1
-    assert body["sweep"]["last_full_sweep_new"] == "1"
+    assert body["sweep"]["last_full_sweep_new"] == 1
 
 
 def test_the_screen_tolerates_both_response_shapes():
@@ -241,6 +241,19 @@ def test_the_watch_response_schema_is_pinned():
     for key in ("last_full_sweep_at", "last_full_sweep_items",
                 "last_full_sweep_new", "alerts_stored"):
         assert key in body["sweep"], f"{key} 가 없다: {sorted(body['sweep'])}"
+
+    # ⚠ **타입까지 본다.** 배포본에서 `"5"`·`"1"` 이 나왔다 - `sync_state` 가
+    #   TEXT 저장소라 문자열이 그대로 새 나갔다. 화면이 그걸 받으면 비교·합산이
+    #   조용히 틀린다(`"5" > "10"` 이 참이다).
+    sweep = body["sweep"]
+    for key in ("last_full_sweep_items", "last_full_sweep_new", "alerts_stored"):
+        assert sweep[key] is None or isinstance(sweep[key], int), (
+            f"{key} 가 {type(sweep[key]).__name__} 이다 - int 여야 한다: {sweep[key]!r}"
+        )
+    # 시각은 문자열(ISO)이고 값이 없으면 None 이다.
+    assert sweep["last_full_sweep_at"] is None or isinstance(
+        sweep["last_full_sweep_at"], str
+    )
 
 
 def test_the_readme_describes_the_automatic_sweep():

@@ -15,6 +15,7 @@ from datetime import date
 
 import pytest
 
+from sourcing_guard.recall_index import RecallIndex
 from sourcing_guard.kats_client import (
     RECALL_BOARD_URL,
     KatsClient,
@@ -39,6 +40,9 @@ TODAY = date(2026, 9, 1)
 
 class FakeIndex:
     """RecallIndex 대역. find() 가 돌려줄 (레코드, 강도) 를 직접 지정한다."""
+    # ⚠ 대조 가능 여부는 **진짜 로직을 빌린다** (4-r). 여기서 따로 적으면
+    #   조건이 또 갈리고, 그 갈림이 이 결함의 원인이었다.
+    can_compare = RecallIndex.can_compare
 
     def __init__(self, hits=(), records=()):
         self._hits = list(hits)

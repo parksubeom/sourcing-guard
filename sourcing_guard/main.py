@@ -534,12 +534,29 @@ def _full_sweep(*, on: date | None = None) -> dict:
     return {"items": len(items), "new_alerts": new_count}
 
 
+def _as_int(raw: str | None) -> int | None:
+    """`sync_state` 의 TEXT 값을 숫자로. 값이 없으면 **None 이다.**
+
+    ⚠ 0 으로 채우지 않는다 - "아직 한 번도 안 돌았다" 와 "돌았는데 0건" 은
+      다르다. 전자를 0 으로 만들면 스윕이 안 도는 것을 못 본다 (R3).
+    """
+    if raw is None:
+        return None
+    try:
+        return int(raw)
+    except (TypeError, ValueError):
+        return None
+
+
 def _sweep_snapshot(owner_id: str | None = None) -> dict:
     """"마지막 sweep 시각 · 새 알림 N". 화면 상단이 읽는 값 (주말 배선)."""
     return {
         "last_full_sweep_at": _store.get_sync_state("last_full_sweep_at"),
-        "last_full_sweep_items": _store.get_sync_state("last_full_sweep_items"),
-        "last_full_sweep_new": _store.get_sync_state("last_full_sweep_new"),
+        # ⚠ **숫자는 int 로 낸다.** `sync_state` 는 TEXT 저장소라 문자열이
+        #   나오는데, 그대로 내보내면 화면이 `"5"` 를 받아 비교·합산에서
+        #   조용히 틀린다("5" > "10" 이 참이다). 스키마 검사가 타입까지 본다.
+        "last_full_sweep_items": _as_int(_store.get_sync_state("last_full_sweep_items")),
+        "last_full_sweep_new": _as_int(_store.get_sync_state("last_full_sweep_new")),
         "alerts_stored": _store.alert_count(owner_id=owner_id),
     }
 
