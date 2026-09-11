@@ -1,5 +1,49 @@
 # Fly.io 배포 절차
 
+## ⚠⚠ 규칙 — 화면에 닿는 커밋은 **그날 배포한다**
+
+2026-09-11 에 배포본이 **09-08 자**였다. 그 사이 고친 것이 배포되지 않아,
+투표 링크가 가리키는 코드에 이것들이 **전부 없었다**:
+
+    스캔 500 방지 (4-p)             정부 API 가 흔들리면 투표자가 에러 화면을 본다
+    잘못된 초록불 방지 (4-q 결함 3)   전파인증 **점검 페이지**를 "확인됨" 으로 보여준다
+    SQLite 손상 격리                 DB 가 깨지면 앱이 부팅조차 못 한다
+    gov_lookup · results · watch_sweep · scan meta   관측이 전부 없다
+
+**배포본이 전파인증 점검 페이지를 "확인됨" 으로 보여주는 코드였다.** 비대상
+부착 0 을 지켜 온 제품에서 잘못된 초록불은 존재 이유를 뒤집는다.
+
+그래서 규칙은 하나다:
+
+> **셀러 화면의 판단을 바꾸는 커밋은 그날 배포한다.**
+> 문서·측정 스크립트·검사만 바꾼 커밋은 모아서 배포해도 된다.
+
+판단을 바꾸는 것의 예: `verifier`·`scorer`·`extractor`·어댑터·`models` 의
+`FindingKind`·화면 문구. 확신이 안 서면 배포하는 쪽으로 판단한다.
+
+### 배포 명령 — 커밋 해시를 반드시 박는다
+
+```
+fly deploy \
+  --build-arg GIT_SHA=$(git rev-parse --short=9 HEAD) \
+  --build-arg BUILT_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+```
+
+⚠ 빌드 인자를 빼면 `/healthz.build.commit` 이 `null` 이고, 그러면 **필드 유무로
+배포 버전을 역추적**하게 된다. 2026-09-11 에 실제로 그래야 했다.
+
+### 배포 뒤 확인 넷
+
+```
+curl -s https://sourcing-guard.fly.dev/healthz | jq '.build, .kats, .storage, .extraction.order'
+```
+
+1. `build.commit` 이 **방금 푸시한 해시**인가
+2. 실스캔 1건이 **200** 인가 · `meta.gov_lookup` 이 있는가
+3. `storage.quarantined_from` 이 `null` 인가 (값이 있으면 워치 데이터를 잃었다)
+4. `extraction.order` — `["gpt","claude"]` 는 **Claude 잔액 0 동안의 임시값**이다.
+   충전되면 fly secret `EXTRACTOR_ORDER` 와 `.env` 를 **함께** 지운다 (R7).
+
 ## ✅ 배포 완료 (2026-08-31)
 
 **https://sourcing-guard.fly.dev** — 목 모드로 가동 중. 9/2 목표 이틀 앞당김.

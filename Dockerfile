@@ -19,6 +19,22 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY sourcing_guard/ ./sourcing_guard/
 COPY scripts/ ./scripts/
 
+# ⚠⚠ **배포된 것이 어느 커밋인지 이미지에 박는다.**
+#
+#   2026-09-11 에 총괄이 /healthz 의 **필드 유무로 배포 버전을 역추적**해야
+#   했다. 그건 추론이지 사실이 아니다. 같은 날 배포본이 09-08 자라서 전파인증
+#   점검 페이지를 "확인됨" 으로 보여주는 코드가 투표 링크 뒤에 있었다.
+#
+#   배포:
+#     fly deploy --build-arg GIT_SHA=$(git rev-parse --short=9 HEAD) \
+#                --build-arg BUILT_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+#
+# ⚠ 이미지에 .git 을 넣지 않는다(크기·보안). 그래서 빌드 인자로 받는다.
+ARG GIT_SHA=""
+ARG BUILT_AT=""
+ENV GIT_SHA=$GIT_SHA \
+    BUILT_AT=$BUILT_AT
+
 # 루트로 돌리지 않는다. 볼륨 마운트 지점(/data)의 소유권을 넘겨야
 # SQLite 가 쓰기에 실패하지 않는다.
 RUN useradd --create-home --uid 1000 app \

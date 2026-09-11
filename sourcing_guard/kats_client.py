@@ -76,6 +76,33 @@ _log = logging.getLogger(__name__)
 OPERATOR_FAULT_CODES = frozenset({"4000", "4001", "4005"})
 
 
+#: 파싱 실패 시 응답 본문을 남긴다. **다음 장애가 픽스처가 되게.**
+#:
+#: ⚠⚠ 2026-09-11 에 safetykorea.kr 가 죽었을 때 **응답 본문을 못 잡았다.**
+#:   그래서 [4-q] 의 파싱 오류 6종은 우리가 상상해서 고른 모양이고, 정부 API 가
+#:   실제로 무엇을 주는지는 모른다. 다음 장애 때는 픽스처가 남게 한다.
+#:
+#: ⚠ 정부 공개 API 응답이라 개인정보가 없다. 그래도 앞부분만 남긴다 - 로그를
+#:   채우지 않기 위해서이고, 형식을 알아보는 데는 500자면 충분하다.
+_UNREADABLE_BODY_CHARS = 500
+
+
+def _log_unreadable_body(op: str, resp: "httpx.Response | None") -> None:
+    """우리가 못 읽은 응답을 로그에 남긴다. 호출자는 예외를 계속 던진다."""
+    if resp is None:
+        return
+    try:
+        body = resp.text[:_UNREADABLE_BODY_CHARS]
+    except Exception:  # noqa: BLE001 - 로깅이 원인 예외를 덮으면 안 된다
+        return
+    _log.error(
+        "KATS 응답을 읽지 못했습니다 (op=%s · status=%s · content-type=%s). "
+        "다음 장애 분석용으로 앞 %d자를 남깁니다: %r",
+        op, resp.status_code, resp.headers.get("content-type"),
+        _UNREADABLE_BODY_CHARS, body,
+    )
+
+
 class KatsHealth:
     """정부 API 호출 상태를 프로세스 메모리에 들고 있는다.
 
@@ -685,6 +712,9 @@ class KatsClient:
             raise KatsApiError(code, f"HTTP {exc.response.status_code}") from exc
         except (httpx.HTTPError, ValueError) as exc:
             health.record_failure("network", type(exc).__name__)
+            # ValueError 는 `resp.json()` 의 파싱 실패다 - 본문을 남긴다.
+            if isinstance(exc, ValueError):
+                _log_unreadable_body(op, locals().get("resp"))
             raise KatsApiError("network", str(exc)) from exc
 
         # 설계서 p.19: HTTP 200 이어도 resultCode 로 실패를 알린다. 이걸 안 보면
@@ -704,6 +734,7 @@ class KatsClient:
         # ⚠ 이것은 R3 다 - 우리가 못 읽은 것을 "없다" 로 반올림하지 않는다.
         if not isinstance(payload, dict) or "resultCode" not in payload:
             health.record_failure("parse", "resultCode 가 없는 응답")
+            _log_unreadable_body(op, resp)
             raise KatsApiError("parse", "resultCode 가 없는 응답 - 형식이 다릅니다")
         code = str(payload.get("resultCode", ""))
         if code == _CODE_NO_DATA:

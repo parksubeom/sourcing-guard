@@ -516,6 +516,22 @@ def _strip_tags(html: str) -> str:
     return re.sub(r"\s+", " ", re.sub(r"(?is)<[^>]+>", " ", html))
 
 
+#: 파싱 실패 시 응답 본문을 남긴다. `kats_client._log_unreadable_body` 와 같은
+#: 이유다 - **다음 장애가 픽스처가 되게.** 2026-09-11 장애 때 본문을 못 잡아서
+#: [4-q] 의 파싱 오류 6종은 우리가 상상해서 고른 모양이다.
+_UNREADABLE_BODY_CHARS = 500
+
+
+def _log_unreadable_body(op: str, body: str | None) -> None:
+    if not body:
+        return
+    _log.error(
+        "전파 응답을 읽지 못했습니다 (op=%s). 다음 장애 분석용으로 앞 %d자를 "
+        "남깁니다: %r",
+        op, _UNREADABLE_BODY_CHARS, body[:_UNREADABLE_BODY_CHARS],
+    )
+
+
 def _parse_auth_info(body: str, asked: str) -> RfCertRecord | None:
     """emsit XML 응답을 레코드로. 파싱 실패는 예외로 올린다.
 
@@ -525,6 +541,7 @@ def _parse_auth_info(body: str, asked: str) -> RfCertRecord | None:
     try:
         root = ElementTree.fromstring(body)
     except ElementTree.ParseError as exc:
+        _log_unreadable_body("auth_info", body)
         raise RraApiError("parse", "XML 이 아닌 응답 - 레이트 초과 가능") from exc
 
     def text(tag: str) -> str | None:
@@ -548,6 +565,7 @@ def _parse_auth_info(body: str, asked: str) -> RfCertRecord | None:
     #   성공으로 읽는 것**이다.
     code = text("resultCode")
     if code is None:
+        _log_unreadable_body("auth_info", body)
         raise RraApiError("parse", "resultCode 가 없는 응답 - 형식이 다릅니다")
     if code == "0001":
         return None

@@ -20,6 +20,7 @@ from pydantic import BaseModel, Field, model_validator
 from datetime import date, datetime, timezone
 from uuid import uuid4
 
+from .build_info import snapshot as build_snapshot
 from .config import settings
 from .batch import MAX_ROWS, BatchReport, screen
 from .extractor import extract_traced, stats as extraction_stats
@@ -223,6 +224,9 @@ def healthz() -> dict:
         "active_rules": len(_rules.active),
         "draft_rules": len(_rules.drafts),
         "watched_items": _store.count(),
+        # ⚠ **배포된 것이 어느 커밋인가.** 필드 유무로 버전을 역추적하는 일이
+        #   없게 한다 - 2026-09-11 에 실제로 그래야 했다.
+        "build": build_snapshot(),
         "kats": health.snapshot(),
         "sync": {"enabled": settings.sync_enabled, **_store.sync_snapshot()},
         # ⚠ 저장소가 손상돼 격리됐는지 (4-q). None 이 정상이다 - 값이 있으면

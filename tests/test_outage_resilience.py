@@ -313,3 +313,63 @@ def test_no_retry_or_cache_was_introduced():
     call = src.split("def _call(")[1].split("\n    def ")[0]
     for banned in ("for attempt", "while True", "time.sleep", "backoff"):
         assert banned not in call, f"_call 에 {banned} 가 들어왔다"
+
+
+# ── 다음 장애가 픽스처가 되게 ───────────────────────────────────────
+def test_an_unreadable_response_body_is_logged(caplog):
+    """⚠⚠ 2026-09-11 장애 때 **응답 본문을 못 잡았다.**
+
+    그래서 이 파일의 파싱 오류 6종은 우리가 **상상해서 고른 모양**이고, 정부
+    API 가 실제로 무엇을 주는지는 모른다. 다음 장애 때는 픽스처가 남게 한다.
+
+    ⚠ 정부 공개 API 응답이라 개인정보가 없다. 그래도 앞 500자만 남긴다.
+    """
+    from sourcing_guard.kats_client import KatsApiError
+    from sourcing_guard.rra_client import RraApiError
+
+    k = KatsClient(None, "K", mock=False)
+    k._client = httpx.Client(transport=httpx.MockTransport(
+        lambda r: httpx.Response(200, json={"unexpected": [1, 2]})))
+    with caplog.at_level(logging.ERROR):
+        with pytest.raises(KatsApiError):
+            k.lookup_certification("CB061R2170-3018")
+    assert any("읽지 못했습니다" in r.message for r in caplog.records), caplog.text
+    assert any("unexpected" in str(r.args) for r in caplog.records), "본문이 없다"
+
+    caplog.clear()
+    r = RraClient(mock=False)
+    r._client = httpx.Client(transport=httpx.MockTransport(
+        lambda rq: httpx.Response(200, text="<html>서비스 점검중입니다</html>")))
+    with caplog.at_level(logging.ERROR):
+        with pytest.raises(RraApiError):
+            r.lookup_number("R-C-ABC-DEF123")
+    assert any("읽지 못했습니다" in rec.message for rec in caplog.records)
+    assert any("점검중" in str(rec.args) for rec in caplog.records), "본문이 없다"
+
+
+def test_healthz_says_which_commit_is_deployed():
+    """⚠ 필드 유무로 배포 버전을 역추적하는 일이 없게 한다.
+
+    2026-09-11 에 총괄이 실제로 그래야 했다 - `storage` 키가 없으니 09-08
+    배포본이구나, 하는 식이다. 그건 추론이지 사실이 아니다.
+    """
+    import sourcing_guard.main as m
+
+    with TestClient(m.app) as c:
+        build = c.get("/healthz").json()["build"]
+    for key in ("commit", "built_at", "source", "note"):
+        assert key in build, key
+    # 로컬에서는 git 에서 읽는다 - 배포본과 구분되게 source 가 말한다.
+    assert build["source"] in {"build-arg", "git", "unknown"}
+
+
+def test_the_dockerfile_accepts_the_build_args():
+    """빌드 인자를 빼면 `build.commit` 이 null 이 된다 - 그 통로가 살아 있는지."""
+    root = Path(__file__).resolve().parents[1]
+    dockerfile = (root / "Dockerfile").read_text(encoding="utf-8")
+    assert "ARG GIT_SHA" in dockerfile and "ARG BUILT_AT" in dockerfile
+    assert "ENV GIT_SHA=$GIT_SHA" in dockerfile
+    # 배포 문서가 그 명령을 적고 있어야 한다 - 사람이 읽는 곳이다.
+    deploy_doc = (root / "docs/배포_Fly.io.md").read_text(encoding="utf-8")
+    assert "--build-arg GIT_SHA=" in deploy_doc
+    assert "그날 배포한다" in deploy_doc
