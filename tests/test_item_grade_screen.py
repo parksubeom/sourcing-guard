@@ -315,19 +315,22 @@ def test_opening_the_gate_does_not_demand_a_certificate():
     assert "kc_missing_but_required" not in kinds
 
 
-def test_a_child_marker_alone_yields_neither_a_grade_nor_the_catch_all():
-    """'초등학생 책가방' 화면에 실제로 무엇이 남는지 사실로 적어 둔다.
+def test_a_child_marker_in_the_name_opens_the_catch_all_conditionally():
+    """[판정 3 · 2026-09-12] '초등학생 책가방' 이 이제 답을 받는다.
 
-    ⚠ ALIASES_IF_NO_CHILD_MARKER 를 만들 때 "품목을 안 붙여도 어린이제품
-      포괄 규정이 받는다" 고 적었는데 **틀렸다.** catch-all 은
-      age is CHILD_PRODUCT 를 요구하고, 그 값은 페이지가 대상연령을
-      표기했을 때만 채워진다. '초등학생' 은 용도 설명이라 추출이
-      target_age 로 옮기지 않는다 - verifier 주석이 "UNKNOWN 에는 안
-      붙인다" 라고 이미 못박아 둔 의도된 동작이다.
+    ⚠⚠ **이 검사는 2026-09-11 에 정반대였다.** 그때 이름은
+      `test_a_child_marker_alone_yields_neither_a_grade_nor_the_catch_all`
+      이었고 "현재 동작의 기록" 이라 적었다. 그 docstring 이 스스로
+      "바꾸려면 표지어를 연령 표기로 승격시켜야 하고, 그건 우리가
+      '어린이제품이다' 를 판정하는 쪽으로 한 걸음 가는 일" 이라고 걱정했다.
 
-    그래서 이 검사는 "고쳐야 할 결함" 이 아니라 **현재 동작의 기록**이다.
-    바꾸려면 표지어를 연령 표기로 승격시켜야 하고, 그건 우리가
-    "어린이제품이다" 를 판정하는 쪽으로 한 걸음 가는 일이라 별도 결정이다.
+    **승격시키지 않는 방법으로 열었다.** `target_age` 는 그대로 None 이고
+    문구가 조건문이다 - "이 상품이 만 13세 이하 어린이용이라면". 우리가
+    어린이제품이라고 말하지 않는다 (R1). 법 내용 자체는 확정된 것이고,
+    불확실한 것은 이 상품이 그 법의 대상인가다. 그 불확실을 문장 안에 둔다.
+
+    왜 열었나: `target_age` 가 도매꾹 상세 109 에서 1건뿐이라 연령 표기만
+    입구로 두면 축이 안 열린다. 원인은 추출기가 아니라 셀러가 안 적는 것이다.
     """
     from unittest.mock import MagicMock
 
@@ -341,16 +344,66 @@ def test_a_child_marker_alone_yields_neither_a_grade_nor_the_catch_all():
         category=ItemCategory.UNCLASSIFIED,
         target_age=None,
     )
-    kinds = [f.kind for f in verify(facts, kats, RuleBook())]
+    found = verify(facts, kats, RuleBook())
+    kinds = [f.kind for f in found]
 
-    assert FindingKind.ITEM_GRADE_MATCHED not in kinds
-    assert FindingKind.CHILD_CATCH_ALL not in kinds
-    # 남는 것은 확인 요청이다 - 셀러가 대상연령을 채우면 그때 갈린다.
+    assert FindingKind.ITEM_GRADE_MATCHED not in kinds   # 품목은 여전히 모른다
+    assert FindingKind.CHILD_CATCH_ALL in kinds          # 포괄 규정은 받는다
+
+    catch = next(f for f in found if f.kind is FindingKind.CHILD_CATCH_ALL)
+    # ⚠ 어느 입구로 들어왔는지 센다. 출력 모양으로 추론하지 않는다 (R7 by_vendor).
+    assert catch.detail["entry"] == "product_name_marker"
+    assert catch.detail["markers"] == ["초등"]
+    assert catch.detail["target_age"] is None, "표지어를 연령 표기로 승격시켰다"
+    # ⚠⚠ 문구가 조건문이어야 한다. 단정하면 우리가 판정한 것이다 (R1 · R3).
+    assert "라면" in catch.statement_ko
+    assert "어린이제품입니다" not in catch.statement_ko
+    # 대상연령을 아직 모르므로 확인 요청은 남는다.
     assert FindingKind.INFO_REQUEST in kinds
 
-    # 대상연령이 표기되면 포괄 규정이 받는다.
+    # 대상연령이 표기되면 같은 규정을 **단정문**으로 받는다.
     facts_aged = facts.model_copy(
         update={"target_age": "만 7세 이상", "category": ItemCategory.CHILDREN_TEXTILE}
     )
-    kinds_aged = [f.kind for f in verify(facts_aged, kats, RuleBook())]
-    assert FindingKind.CHILD_CATCH_ALL in kinds_aged
+    aged = verify(facts_aged, kats, RuleBook())
+    catch_aged = next(f for f in aged if f.kind is FindingKind.CHILD_CATCH_ALL)
+    assert catch_aged.detail["entry"] == "target_age"
+    assert "어린이제품입니다" in catch_aged.statement_ko
+
+
+def test_a_child_marker_that_modifies_another_item_does_not_open_it():
+    """[판정 3] 표지어가 **다른 품목을 수식**하면 열지 않는다.
+
+    실측(새표본235)에서 게이트를 열었을 때 비대상 오염이 딱 하나 나왔다:
+
+        [115] 안전벨트락 스토퍼 고정 클립 임산부 **어린이 카시트** 홀더
+
+    카시트는 자동차관리법 소관이다. '카시트' 는 새표본235 6건 · 도매꾹190
+    5건이고 **열한 건 전부 비대상**이라 제외어로 안전하다.
+    """
+    from unittest.mock import MagicMock
+
+    from sourcing_guard.item_grades import CHILD_MARKER_EXCLUSIONS, has_child_marker
+    from sourcing_guard.models import FindingKind, ItemCategory, ProductFacts
+    from sourcing_guard.verifier import RuleBook, verify
+
+    kats = MagicMock()
+    kats.lookup_certification_cached.return_value = MagicMock(record=None)
+    facts = ProductFacts(
+        product_name="안전벨트락 스토퍼 고정 클립 임산부 어린이 카시트 홀더",
+        category=ItemCategory.UNCLASSIFIED,
+    )
+    kinds = [f.kind for f in verify(facts, kats, RuleBook())]
+    assert FindingKind.CHILD_CATCH_ALL not in kinds
+
+    # ⚠⚠ **반대 방향도 잰다** (§6). 제외어를 '자동차'·'차량' 으로 넓히면
+    #   정답을 죽인다 - 실측으로 확인한 세 줄이다. 짧은 일반어를 넣지 않는다.
+    for word in ("자동차", "차량"):
+        assert word not in CHILD_MARKER_EXCLUSIONS, (
+            f"'{word}' 는 제외어가 될 수 없다 - 놀이방매트 '자동차도로'·"
+            "'차량용 청소기' 같은 정상 대상이 함께 죽는다"
+        )
+    assert has_child_marker("놀이방매트 아기바닥 자동차도로 장판보온 유아용쿠션")
+
+    # 소유자가 하나다 - 별칭 게이트와 포괄 규정 게이트가 같은 함수를 본다.
+    assert has_child_marker("안전벨트락 … 어린이 카시트 홀더") is False

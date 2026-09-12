@@ -32,7 +32,12 @@ from .scoping import (
     missing_inputs,
     out_of_scope_reason,
 )
-from .item_grades import ALIASES_IF_MAINS, ItemGradeBook
+from .item_grades import (
+    ALIASES_IF_MAINS,
+    _CHILD_MARKERS,
+    ItemGradeBook,
+    has_child_marker,
+)
 from .item_grades import normalize as normalize_item
 from .noncompliant_index import NoncompliantIndex
 from .rra_client import (
@@ -1074,17 +1079,47 @@ def verify(
     #   상품이 어린이제품인지 모르는 상태에서 "어린이제품이면 공통안전기준이
     #   적용됩니다" 를 붙이면 모든 상품에 붙는 소음이 되고, 그러면 셀러가
     #   이 문장을 읽지 않게 된다.
-    if age is AgeScope.CHILD_PRODUCT and not _graded:
+    #
+    # ⚠⚠ **(1) 을 2026-09-12 에 넓혔다 — 상품명 표지어도 입구로 받는다.**
+    #
+    #   왜. `target_age` 가 도매꾹 상세 109 에서 **1건**뿐이다. 원인은 추출기가
+    #   아니라 셀러가 안 적는 것이다 - 상세 165,685자에서 '사용연령' 항목명이
+    #   10회였다. 연령 표기만 입구로 두면 축 자체가 열리지 않는다.
+    #
+    #   대가를 먼저 쟀다 (새표본235 · 상품명 · `_CHILD_MARKERS`):
+    #
+    #       걸린 행 19   대상 17 · 비대상 1 · 애매 1
+    #
+    #   비대상 1건이 `[115] … 임산부 어린이 카시트 홀더` 였고, '카시트' 를
+    #   `CHILD_MARKER_EXCLUSIONS` 로 좁혀 떨어뜨렸다. 좁힌 뒤 **대상 17 은
+    #   그대로**다. 근거와 넓히면 안 되는 이유는 그 상수 주석에 있다.
+    #
+    # ⚠ **본문이 아니라 상품명만 본다.** 도매꾹 109 에서 본문에만 표지어가 있는
+    #   16건은 차량용 청소기·전기그릴처럼 어린이제품과 무관했다 - 광고 문구와
+    #   주의사항에 섞인 것이다. 상품명 신호는 강하고 본문 신호는 약하다.
+    #
+    # ⚠⚠ **문구를 가른다.** 연령 표기는 셀러가 적은 사실이고, 표지어는 우리가
+    #   읽은 단서다. 둘을 같은 문장으로 말하면 단서를 사실로 승격시키는 것이고
+    #   그것이 R1·R3 이 막는 자리다. 표지어 경로는 조건문으로 쓴다.
+    _child_marked = has_child_marker(facts.product_name)
+    if (age is AgeScope.CHILD_PRODUCT or _child_marked) and not _graded:
         _catch = _grade_book().child_catch_all if _grade_book() else None
         if _catch:
+            if age is AgeScope.CHILD_PRODUCT:
+                _lead = f"사용연령이 '{facts.target_age}' 로 표기되어 어린이제품입니다. "
+                _entry = "target_age"
+            else:
+                _marks = [m for m in _CHILD_MARKERS if m in (facts.product_name or "")]
+                _lead = (
+                    f"상품명에 '{_marks[0]}' 표기가 있습니다. "
+                    "이 상품이 만 13세 이하 어린이용이라면, "
+                )
+                _entry = "product_name_marker"
             findings.append(
                 Finding(
                     kind=FindingKind.CHILD_CATCH_ALL,
                     signal=Signal.UNKNOWN,
-                    statement_ko=(
-                        f"사용연령이 '{facts.target_age}' 로 표기되어 어린이제품입니다. "
-                        + _catch["statement_ko"]
-                    ),
+                    statement_ko=_lead + _catch["statement_ko"],
                     source_label=_catch["source"],
                     source_url="https://www.law.go.kr/법령/어린이제품안전특별법시행규칙",
                     legal_basis=_catch["source"],
@@ -1093,6 +1128,10 @@ def verify(
                         "standard": _catch["standard"],
                         "source_text": _catch["source_text"],
                         "target_age": facts.target_age,
+                        # 어느 입구로 들어왔는지 센다. 출력 모양으로 추론하지
+                        # 않는다 - R7 의 by_vendor 와 같은 이유다.
+                        "entry": _entry,
+                        "markers": _marks if not age is AgeScope.CHILD_PRODUCT else [],
                     },
                     checked_at=today,
                 )
