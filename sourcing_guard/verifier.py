@@ -1283,9 +1283,7 @@ def verify(
             # 조회만 셀러 확인 뒤로 미룬다.
             findings.append(_image_candidate_finding(image_candidates, today))
         else:
-            # 합의 등급만 넘긴다. 갈릴 때(ITEM_GRADE_SPLIT)는 None 이 되어
-            # 기존 AMBER 경로로 간다 - 느슨한 쪽을 골라 감점을 빼면 화면에서
-            # 막은 "한쪽 단정" 을 신호등에서 하는 셈이다.
+            # 합의 등급만 넘긴다.
             # ITEM_GRADE_NOT_APPLIED 는 등급으로 세지 않는다 - 셀러가
             # 적용하지 말라고 답한 등급을 근거로 부재를 해석하면 앞뒤가 맞지
             # 않는다.
@@ -1297,7 +1295,50 @@ def verify(
                 ),
                 None,
             )
-            findings.append(_kc_missing_finding(facts, today, grade=agreed))
+            # ⚠⚠ **[판정 4 · 2026-09-12] 갈리면 인증번호 부재를 해석하지 않는다.**
+            #
+            #   전에는 갈릴 때 `agreed=None` 으로 떨어져 일반형
+            #   `kc_missing_but_required` 가 붙었다. 그러면 화면이 **같은 말을
+            #   두 번** 한다. 실물([5] 발열무릎담요 · 전기방석이 안전인증과
+            #   공급자적합성확인으로 갈린다):
+            #
+            #     kc_missing_but_required  "…인증번호를 찾지 못했습니다.
+            #                               안전인증·안전확인 대상이면 인증번호가
+            #                               있어야 하고, 공급자적합성확인
+            #                               대상이면 없는 것이 정상입니다."
+            #     item_grade_split         "…갈리지 않습니다. 안전인증 대상이면
+            #                               … 공급자적합성확인 대상이면 …"
+            #
+            #   ⚠ 더 나쁜 것은 **틀을 씌운 것**이다. "찾지 못했습니다" 는
+            #     있어야 할 것이 없다는 틀인데, 갈리는 동안 우리는 **있어야
+            #     하는지조차 모른다.** 부재의 의미를 모르면서 부재를 지적하는
+            #     것은 R3 이 막는 자리다.
+            #
+            #   갈림 finding 이 아래에서 이미 나가므로 여기서는 내지 않고,
+            #   그 finding 에 인증번호 축 한 줄을 붙인다. **새 kind 를 만들지
+            #   않는다** - [4-o] 의 FindingKind 표를 또 건드리지 않는다.
+            #
+            # ⚠ 확정일 때는 그대로다. `agreed` 가 있으면 등급별 문구가 나가고,
+            #   등급 자체가 없으면(표에 없음) 일반형이 나간다 - 둘 다 부재를
+            #   해석할 수 있는 상태다.
+            _split = next(
+                (g for g in graded if g.kind is FindingKind.ITEM_GRADE_SPLIT), None
+            )
+            if _split is None:
+                findings.append(_kc_missing_finding(facts, today, grade=agreed))
+            else:
+                # ⚠ `graded` 는 `_graded` 와 **같은 리스트 객체**다. 제자리에서
+                #   바꿔야 아래 `findings.extend(graded)` 와 그 뒤의 중복 방지
+                #   검사(`f in findings`)가 같은 객체를 본다.
+                _said = _split.statement_ko
+                _with_cert = (
+                    _said.replace(SPLIT_CLOSING, SPLIT_CERT_CLAUSE + SPLIT_CLOSING, 1)
+                    if SPLIT_CLOSING in _said
+                    else _said + " " + SPLIT_CERT_CLAUSE.strip()
+                )
+                graded[graded.index(_split)] = _split.model_copy(
+                    update={"statement_ko": _with_cert}
+                )
 
         if _cert_required_here:
             # 어느 위해도 단계(안전인증 / 안전확인 / 공급자적합성확인)인지 모르면
@@ -2148,9 +2189,7 @@ def _item_grade_findings(
             signal=Signal.UNKNOWN,
             statement_ko=(
                 f"상품명만으로는 어느 세부품목인지 갈리지 않습니다 ({lines}). "
-                f"{meanings}. "
-                "어느 쪽인지 공급처에 확인하세요. "
-                "저희가 한쪽으로 단정하지 않습니다."
+                f"{meanings}. " + SPLIT_CLOSING
             ),
             source_label=label,
             source_url=url,
@@ -2168,6 +2207,19 @@ def _item_grade_findings(
             checked_at=today,
         )
     ]
+
+
+# 갈림 finding 의 마무리 문장. **상수로 두는 이유**: verifier 가 인증번호 축
+# 한 줄을 이 문장 **앞에** 끼우기 때문이다(판정 4). 문구를 여기서만 고치면
+# 끼우는 자리도 따라온다 - 두 곳에 적으면 한쪽만 고쳐도 끼우기가 조용히 실패해
+# 문장이 뒤에 덧붙는다.
+SPLIT_CLOSING = "어느 쪽인지 공급처에 확인하세요. 저희가 한쪽으로 단정하지 않습니다."
+
+# [판정 4] 갈리는 동안에는 인증번호 부재를 해석하지 않는다는 것을 화면이 말한다.
+SPLIT_CERT_CLAUSE = (
+    "인증번호가 보이지 않아도 그것이 문제인지 아닌지는 어느 쪽인지에 따라 "
+    "달라지므로, 저희가 해석하지 않습니다. "
+)
 
 
 def _image_candidate_finding(candidates: list[str], today: date) -> Finding:

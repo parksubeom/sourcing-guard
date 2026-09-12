@@ -445,3 +445,77 @@ def test_a_child_marker_that_modifies_another_item_does_not_open_it():
 
     # 소유자가 하나다 - 별칭 게이트와 포괄 규정 게이트가 같은 함수를 본다.
     assert has_child_marker("안전벨트락 … 어린이 카시트 홀더") is False
+
+
+def test_a_split_grade_does_not_claim_a_missing_certificate():
+    """[판정 4 · 2026-09-12] 품목이 갈리면 인증번호 부재를 해석하지 않는다.
+
+    전에는 갈릴 때 `agreed=None` 으로 떨어져 일반형 `kc_missing_but_required`
+    가 함께 붙었다. 화면이 **같은 말을 두 번** 했다 - 실물 [5] 발열무릎담요
+    (전기방석이 안전인증과 공급자적합성확인으로 갈린다):
+
+        kc_missing_but_required  "…인증번호를 찾지 못했습니다. 안전인증·안전확인
+                                  대상이면 있어야 하고, 공급자적합성확인 대상이면
+                                  없는 것이 정상입니다."
+        item_grade_split         "…갈리지 않습니다. 안전인증 대상이면 … 공급자
+                                  적합성확인 대상이면 …"
+
+    ⚠⚠ 더 나쁜 것은 **틀을 씌운 것**이다. "찾지 못했습니다" 는 있어야 할 것이
+      없다는 틀인데, 갈리는 동안 우리는 **있어야 하는지조차 모른다.** 부재의
+      의미를 모르면서 부재를 지적하는 것은 R3 이 막는 자리다.
+    """
+    from unittest.mock import MagicMock
+
+    from sourcing_guard.models import FindingKind, ItemCategory, ProductFacts
+    from sourcing_guard.verifier import (
+        SPLIT_CERT_CLAUSE,
+        SPLIT_CLOSING,
+        RuleBook,
+        verify,
+    )
+
+    kats = MagicMock()
+    kats.lookup_certification_cached.return_value = MagicMock(record=None)
+    facts = ProductFacts(
+        product_name="USB 포켓 발열무릎담요 플란넬 양털 극세사 대형 무릎담요",
+        category=ItemCategory.ELECTRICAL,
+    )
+    found = verify(facts, kats, RuleBook())
+    kinds = [f.kind for f in found]
+
+    split = next((f for f in found if f.kind is FindingKind.ITEM_GRADE_SPLIT), None)
+    assert split is not None, "이 상품은 전기방석 두 등급으로 갈려야 한다"
+    assert len(split.detail["grades"]) > 1
+    assert FindingKind.KC_MISSING_BUT_REQUIRED not in kinds
+
+    # 갈림 finding 이 인증번호 축을 스스로 말한다 - 새 kind 를 만들지 않았다.
+    assert SPLIT_CERT_CLAUSE.strip() in split.statement_ko
+    # ⚠ **마무리 문장 앞에** 들어가야 읽힌다. 뒤에 덧붙으면 "단정하지 않습니다"
+    #   다음에 "해석하지 않습니다" 가 와서 같은 말을 두 번 하게 된다.
+    assert split.statement_ko.index(SPLIT_CERT_CLAUSE.strip()) < split.statement_ko.index(
+        SPLIT_CLOSING
+    )
+    # 갈림이 한 번만 나간다 (중복 방지 검사가 같은 객체를 보는지).
+    assert kinds.count(FindingKind.ITEM_GRADE_SPLIT) == 1
+
+
+def test_a_settled_grade_still_says_the_certificate_is_missing():
+    """⚠⚠ 반대 방향. **확정일 때는 그대로다** (§6 - 가드의 반대 방향도 잰다).
+
+    갈림에서 뺐다고 확정에서도 빼면, 안전인증 대상인데 번호가 없는 상품에
+    아무 말도 안 하게 된다 - 그건 판정 4 가 고치려던 것의 정반대다.
+    """
+    from unittest.mock import MagicMock
+
+    from sourcing_guard.models import FindingKind, ItemCategory, ProductFacts
+    from sourcing_guard.verifier import RuleBook, verify
+
+    kats = MagicMock()
+    kats.lookup_certification_cached.return_value = MagicMock(record=None)
+    for name in ("전기 온수매트 싱글 온열매트", "가정용 전기주전자 커피포트"):
+        facts = ProductFacts(product_name=name, category=ItemCategory.ELECTRICAL)
+        found = verify(facts, kats, RuleBook())
+        kinds = [f.kind for f in found]
+        if FindingKind.ITEM_GRADE_SPLIT in kinds:
+            continue  # 갈리는 줄은 이 검사의 대상이 아니다
+        assert FindingKind.KC_MISSING_BUT_REQUIRED in kinds, name
