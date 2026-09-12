@@ -99,13 +99,23 @@ fly launch --no-deploy --name sourcing-guard --region nrt
 # 2) 볼륨 생성. 워치리스트 + 리콜 동기화 DB 양쪽이 들어간다.
 fly volumes create sg_data --region nrt --size 3
 
-# 3) 배포
-fly deploy
+# 3) 배포 — **빌드 인자를 반드시 준다.** 안 주면 /healthz 의 build.commit 이
+#    null 이 되고, 랜딩 5절의 커밋 표시가 "-" 가 된다.
+fly deploy \
+  --build-arg GIT_SHA=$(git rev-parse --short=9 HEAD) \
+  --build-arg BUILT_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 
 # 4) 확인
 fly status
 curl -s https://<앱이름>.fly.dev/healthz
 ```
+
+⚠⚠ **2026-09-12 에 이 자리의 맨 `fly deploy` 때문에 두 번 배포했다.** 위 §정기
+  배포에는 인자가 적혀 있었는데 이 설치 절에는 없어서, 기억으로 친 쪽이 인자
+  없는 형태였다. `build.commit: null` 을 보고 다시 쳤다.
+
+  **같은 명령을 두 곳에 적으면 한쪽이 낡는다** (§6). 여기를 고쳤지만, 다음에
+  또 갈리면 `scripts/` 로 옮기는 것을 검토할 것.
 
 `/healthz` 가 이렇게 나오면 성공이다.
 
