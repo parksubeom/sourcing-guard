@@ -33,9 +33,28 @@ def _load_dotenv(path: Path = _ENV_PATH) -> None:
 
 def _flag(name: str, default: bool) -> bool:
     raw = os.getenv(name)
-    if raw is None:
+    # ⚠⚠ **빈 값은 "설정 안 함" 으로 읽는다 (2026-09-12).**
+    #
+    #   `.env.example` 이 `SYNC_ENABLED=` 를 빈 채로 배포하면서 주석에는
+    #   "기본값은 MOCK_MODE 가 false 이면 켬" 이라고 적어 뒀다. 그런데 전에는
+    #   빈 문자열이 `None` 이 아니라서 기본값을 건너뛰고 **False** 가 됐다 -
+    #   안내대로 복사한 사람은 **리콜 동기화가 꺼진 줄도 모른다.**
+    #
+    #   조용히 꺼지는 것이 이 서비스에서 가장 비싼 실패다 (R6).
+    if raw is None or not raw.strip():
         return default
     return raw.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _csv(name: str, default: str) -> tuple[str, ...]:
+    """쉼표 목록. **비어 있으면 기본값이다.**
+
+    ⚠ `os.getenv(name, default)` 로는 안 된다. 기본값은 키가 **없을 때만** 쓰이고,
+      `EXTRACTOR_ORDER=` 처럼 **있는데 빈** 경우에는 안 쓰인다. `.env.example` 이
+      바로 그 모양으로 "비워 두는 것이 정상" 이라고 안내한다.
+    """
+    parsed = tuple(v.strip().lower() for v in (os.getenv(name) or "").split(",") if v.strip())
+    return parsed or tuple(v.strip().lower() for v in default.split(",") if v.strip())
 
 
 @dataclass(frozen=True)
@@ -78,11 +97,9 @@ class Settings:
             # ⚠⚠ **기준 추출기는 GPT 다 (2026-09-11 결정).** 발표 숫자가 GPT
             #   기준이므로 기본값도 GPT 여야 한다 - 둘이 갈리면 "이 숫자가 어느
             #   추출기 것인가" 를 말할 수 없다. CLAUDE.md R7 참조.
-            extractor_order=tuple(
-                v.strip().lower()
-                for v in os.getenv("EXTRACTOR_ORDER", "gpt,claude").split(",")
-                if v.strip()
-            ),
+            #   ⚠ 빈 값도 기본값으로 떨어진다 - `_csv` 주석 참조. 전에는
+            #     `EXTRACTOR_ORDER=` 가 **빈 순서**가 되어 추출기가 하나도 없었다.
+            extractor_order=_csv("EXTRACTOR_ORDER", "gpt,claude"),
             kats_base_url=os.getenv("KATS_BASE_URL") or None,
             kats_service_key=os.getenv("KATS_SERVICE_KEY") or None,
             # 배포 시 반드시 영구 볼륨 경로를 지정한다. 컨테이너 기본 파일시스템에

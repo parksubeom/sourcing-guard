@@ -15,10 +15,10 @@
 | # | 무엇 | 크기 | 안 가져가면 |
 |---|---|---|---|
 | 1 | `.env` 의 **비밀값 5개** | 텍스트 | 목 모드로만 돈다. 실제 인증 조회·리콜 조회·LLM 추출이 안 된다 |
-| 2 | `data/watchlist.db` | 33,419,264 바이트 (33.4MB) | 리콜 대조가 0건이 된다. 다시 만들 수는 있으나 **아래 §2-2 의 이유로 권하지 않는다** |
+| 2 | `data/watchlist.db` | 약 33.4MB (매일 조금씩 는다) | 리콜 대조가 0건이 된다. 다시 만들 수는 있으나 **아래 §2-2 의 이유로 권하지 않는다** |
 | 3 | **Fly 재로그인** (파일 복사 아님) | — | 배포를 못 한다 |
 
-**아무것도 안 가져가도 `pytest -q` 는 통과한다** (2026-09-12 기준 **1,386 passed**).
+**아무것도 안 가져가도 `pytest -q` 는 통과한다** (2026-09-12 기준 **1,396 passed**).
 목 모드가 기본값이라 키 없이 전 파이프라인이 돈다. 코드만 볼 거라면 §1 만 하면 된다.
 
 ⚠ **윈도우에서 작업한다면 §0-C 를 먼저 본다.** 2026-09-12 이전에서 실제로
@@ -111,7 +111,7 @@ cd sourcing-guard
 python -m venv .venv
 source .venv/Scripts/activate      # PowerShell 이면 .venv\Scripts\activate
 pip install -r requirements.txt
-PYTHONUTF8=1 pytest -q             # 1,386 passed 나오면 정상
+PYTHONUTF8=1 pytest -q             # 1,396 passed 나오면 정상
 ```
 
 - **Python 3.11 이상 필수.** 런타임에 평가되는 `X | None` 표기를 써서 3.10
@@ -177,11 +177,14 @@ SYNC_ENABLED=true
 2026-09-12 개발 PC 실측:
 
 ```
-recalls            37,329      국내 4,244 + 국외 33,085
+recalls            37,350      국내 4,245 + 국외 33,105
 rf_noncompliant     2,749      부적합 방송통신기자재
 watch_items             0
 sync_state              4      initial_load_at / last_sync_at 등
 ```
+
+⚠ **이 수는 매일 는다.** 일일 동기화가 새 공표를 받아 오기 때문이다. 정확히
+맞을 필요는 없고, **0 이거나 파일이 없으면** 안 옮긴 것이다.
 
 `.gitignore` 의 `/data/` 로 빠져 있다. 파일 하나만 통째로 복사하면 된다.
 
@@ -241,10 +244,10 @@ fly deploy `
 
 ```bash
 PYTHONUTF8=1 pytest -q
-# -> 1386 passed.  실패하면 코드가 아니라 Python 버전(3.11+)과 §0-C 를 먼저 볼 것
+# -> 1396 passed.  실패하면 코드가 아니라 Python 버전(3.11+)과 §0-C 를 먼저 볼 것
 
 python -c "import sqlite3;print(sqlite3.connect('data/watchlist.db').execute('select count(*) from recalls').fetchone())"
-# -> (37329,).  0 이나 파일 없음이면 2-2 를 안 옮긴 것
+# -> (37350,) 이상.  0 이나 파일 없음이면 2-2 를 안 옮긴 것
 
 uvicorn sourcing_guard.main:app --reload
 curl http://127.0.0.1:8000/healthz
@@ -256,7 +259,7 @@ curl http://127.0.0.1:8000/healthz
 |---|---|---|
 | `mock_mode` | `false` | `.env` 의 `MOCK_MODE` 또는 키를 안 옮긴 것 |
 | `active_rules` | `21` | 규칙 DB 승격 상태가 다르다 |
-| `sync.recalls` | 국내 `4244` · 국외 `33085` | 2-2 를 안 옮겼거나 동기화가 더 돌았다 |
+| `sync.recalls` | 국내 `4245` 이상 · 국외 `33105` 이상 | 0 이면 2-2 를 안 옮긴 것. 매일 늘어난다 |
 | `sync.rf_noncompliant.count` | `2749` | 위와 같다 |
 | `extraction.order` | `['gpt','claude']` | R7 개정 전 상태다 |
 | `extraction.gpt_key` | `true` | **`GPT_API_KEY` 를 안 옮긴 것** (§2-1 ⚠⚠) |
@@ -279,6 +282,15 @@ fly status --app sourcing-guard
 | 1 | `test_outage_resilience` **2건 실패** | 손상 DB 격리가 커넥션을 연 채로 rename → `PermissionError WinError 32` | **수정** `65c5988`. `_open()` 이 실패 시 스스로 닫는다 |
 | 2 | `test_report_miss` **2건 플래키**(8회 중 6회 실패) | 공유 커넥션에 락이 없어 `with self._conn:` 이 겹침 | **수정** `dcafe9b`. `RLock` |
 
+| 3 | (검사는 안 깨졌다) | `.env.example` 이 빈 값으로 안내하는 키를 읽는 쪽이 기본값으로 못 읽었다 | **수정** `[③]`. `_flag`·`_csv` 가 빈 값을 "설정 안 함" 으로 읽는다 |
+
+⚠⚠ **3 번은 검사가 하나도 안 깨져서 안 보였다.** `.env` 를 `.env.example` 에
+맞춰 채우다가 `/healthz.extraction.order` 가 `['gpt','claude']` 에서 `[]` 로
+바뀐 것을 보고 찾았다. `os.getenv(name, default)` 의 기본값은 키가 **없을 때만**
+쓰이는데, 예시 파일은 `EXTRACTOR_ORDER=`·`SYNC_ENABLED=` 를 **빈 채로** 배포하며
+주석에는 기본값을 적어 뒀다. **안내대로 복사한 사람이 가장 크게 당한다** -
+추출기 0개(휴리스틱으로 조용히 강등) · 리콜 동기화 꺼짐. 둘 다 오류가 없다.
+
 ⚠ **1 번은 윈도우에서만 보인다.** POSIX 는 열린 파일의 rename 이 되므로 리눅스
 배포본은 영향이 없었다. 원래 검사가 "격리가 됐는가" 만 봐서 이 경로가 비어
 있었다 - 지금은 **"실패한 `_open` 이 커넥션을 남기지 않는다"** 는 불변식으로
@@ -295,11 +307,11 @@ RLock 적용 후    저장 1,600 · 오류   0
 
 예외 수만 세는 검사였다면 못 잡았다. **검사의 기대값을 건수로 쓴 이유가 이것이다.**
 
-**두 수정 뒤 `1,386 passed` 연속 2회** (4:35 · 5:00), `test_report_miss.py` 단독
+**두 수정 뒤 `1,386 passed` 연속 3회** (4:35 · 5:00 · 4:50), `test_report_miss.py` 단독
 연속 10회 전부 초록. 그 파일은 손대지 않았다(타임아웃 조정·flaky 마킹 없음).
 
 검사 수 이력: 09-04 로컬 트리 **1,380**(1,378 passed + 격리 2 failed)
-→ 격리 검사 +3, 동시성 검사 +3 → **1,386**.
+→ 격리 +3 · 동시성 +3 → **1,386** → 설정 빈 값 +10 → **1,396**.
 
 ---
 
