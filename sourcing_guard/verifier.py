@@ -1106,20 +1106,42 @@ def verify(
         _catch = _grade_book().child_catch_all if _grade_book() else None
         if _catch:
             if age is AgeScope.CHILD_PRODUCT:
-                _lead = f"사용연령이 '{facts.target_age}' 로 표기되어 어린이제품입니다. "
+                # 연령 표기는 셀러가 적은 사실이다. 단정문을 그대로 쓴다.
+                _marks = []
                 _entry = "target_age"
+                _statement = (
+                    f"사용연령이 '{facts.target_age}' 로 표기되어 어린이제품입니다. "
+                    + _catch["statement_ko"]
+                )
             else:
                 _marks = [m for m in _CHILD_MARKERS if m in (facts.product_name or "")]
-                _lead = (
-                    f"상품명에 '{_marks[0]}' 표기가 있습니다. "
-                    "이 상품이 만 13세 이하 어린이용이라면, "
-                )
                 _entry = "product_name_marker"
+                # ⚠⚠ **표지어 경로는 yaml 의 단정문을 쓰지 않는다.**
+                #
+                #   `_catch["statement_ko"]` 는 "… 공급자적합성확인 대상입니다"
+                #   로 끝난다. 어린이제품인 것이 표기로 확인됐을 때는 맞지만,
+                #   표지어만 있을 때 그대로 쓰면 **우리가 대상이라고 단정**하는
+                #   것이다 (§9 · R1).
+                #
+                #   두 가지를 문장이 스스로 말해야 한다:
+                #     (1) 근거가 무엇인가 - "상품명의 '초등' 표기를 근거로"
+                #     (2) 확정이 아니다 - "대상일 수 있습니다"
+                #
+                #   법 내용 자체는 확정이므로 그 부분은 단정으로 둔다("안전관리
+                #   대상에서 빠지지 않습니다"). 불확실한 것은 **이 상품이 그
+                #   법의 대상인가**이고, 그 조건만 조건문으로 쓴다.
+                _statement = (
+                    f"상품명의 '{_marks[0]}' 표기를 근거로 확인합니다. "
+                    "이 상품이 만 13세 이하 어린이용이라면, 목록에 없는 "
+                    "어린이제품도 안전관리 대상에서 빠지지 않습니다 - 개별 "
+                    "안전기준이 없으면 어린이제품 공통안전기준이 적용되는 "
+                    "공급자적합성확인 대상일 수 있습니다."
+                )
             findings.append(
                 Finding(
                     kind=FindingKind.CHILD_CATCH_ALL,
                     signal=Signal.UNKNOWN,
-                    statement_ko=_lead + _catch["statement_ko"],
+                    statement_ko=_statement,
                     source_label=_catch["source"],
                     source_url="https://www.law.go.kr/법령/어린이제품안전특별법시행규칙",
                     legal_basis=_catch["source"],
@@ -1131,7 +1153,7 @@ def verify(
                         # 어느 입구로 들어왔는지 센다. 출력 모양으로 추론하지
                         # 않는다 - R7 의 by_vendor 와 같은 이유다.
                         "entry": _entry,
-                        "markers": _marks if not age is AgeScope.CHILD_PRODUCT else [],
+                        "markers": _marks,
                     },
                     checked_at=today,
                 )

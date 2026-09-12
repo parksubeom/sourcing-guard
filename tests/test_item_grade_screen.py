@@ -355,8 +355,16 @@ def test_a_child_marker_in_the_name_opens_the_catch_all_conditionally():
     assert catch.detail["entry"] == "product_name_marker"
     assert catch.detail["markers"] == ["초등"]
     assert catch.detail["target_age"] is None, "표지어를 연령 표기로 승격시켰다"
-    # ⚠⚠ 문구가 조건문이어야 한다. 단정하면 우리가 판정한 것이다 (R1 · R3).
-    assert "라면" in catch.statement_ko
+    # ⚠⚠ 문구 셋을 잠근다 (총괄 판정 2026-09-12).
+    #
+    #   이 finding 은 SPECIFIC(유효 결과)로 세어진다. 법은 확정이고 근거 URL 이
+    #   있으며, 근거가 **셀러 자신이 상품명에 쓴 표기**이기 때문이다. 그러면
+    #   문장이 그 근거와 그 한계를 스스로 말해야 한다.
+    assert "표기를 근거로" in catch.statement_ko, "근거가 상품명 표기임을 안 밝힌다"
+    assert "라면" in catch.statement_ko, "조건문이 아니다"
+    # §9 - 단정 금지. "대상입니다" 가 아니라 "대상일 수 있습니다".
+    assert "대상일 수 있습니다" in catch.statement_ko
+    assert "대상입니다" not in catch.statement_ko, "표지어만으로 대상이라고 단정했다"
     assert "어린이제품입니다" not in catch.statement_ko
     # 대상연령을 아직 모르므로 확인 요청은 남는다.
     assert FindingKind.INFO_REQUEST in kinds
@@ -368,7 +376,37 @@ def test_a_child_marker_in_the_name_opens_the_catch_all_conditionally():
     aged = verify(facts_aged, kats, RuleBook())
     catch_aged = next(f for f in aged if f.kind is FindingKind.CHILD_CATCH_ALL)
     assert catch_aged.detail["entry"] == "target_age"
+    assert catch_aged.detail["markers"] == []
     assert "어린이제품입니다" in catch_aged.statement_ko
+    # ⚠ 반대 방향도 잠근다 - 연령 표기 경로까지 조건문으로 약해지면 셀러가
+    #   적어 준 사실을 우리가 안 믿는 것이 된다.
+    assert "대상입니다" in catch_aged.statement_ko
+    assert "표기를 근거로" not in catch_aged.statement_ko
+
+
+def test_the_marker_path_is_a_specific_result_and_says_why():
+    """[판정 · 2026-09-12] 표지어 경로 `child_catch_all` 은 **SPECIFIC 이다.**
+
+    셋을 나란히 놓으면 갈린다:
+
+        recall_weak_match   우리가 말하는 **사실**이 불확실하다(우연 일치)   NON
+        scope_undetermined  어느 법인지 **모른다**                          NON
+        child_catch_all     법은 **확정**이고 근거 URL 이 있다. 불확실한 것은
+        (표지어)            대상 여부이고, 그 근거는 **셀러 자신이 상품명에
+                            쓴 표기**다                                    SPECIFIC
+
+    "이 상품명은 어린이용으로 표기됐고, 그 경우 어린이제품법 포괄규정이
+    적용된다" 는 이 상품에 대한 구체적이고 근거 있는 사실이다. 지표에서 빼면
+    **실제로 준 것을 안 줬다고 세는 것**이다.
+
+    ⚠ kind 는 하나로 둔다. 갈래는 `detail.entry` 다 - [4-o] 의 FindingKind 표를
+      또 건드리지 않는다.
+    """
+    from sourcing_guard.models import SPECIFIC_FINDING_KINDS, FindingKind
+
+    assert FindingKind.CHILD_CATCH_ALL in SPECIFIC_FINDING_KINDS
+    assert FindingKind.RECALL_WEAK_MATCH not in SPECIFIC_FINDING_KINDS
+    assert FindingKind.SCOPE_UNDETERMINED not in SPECIFIC_FINDING_KINDS
 
 
 def test_a_child_marker_that_modifies_another_item_does_not_open_it():
