@@ -260,6 +260,104 @@ def test_a_corrupt_database_is_quarantined_not_fatal(kind, tmp_path):
         assert spoiled[0].stat().st_size > 0
 
 
+class _RecordingConnection:
+    """진짜 sqlite3 커넥션을 감싸고 `close()` 호출만 기록한다.
+
+    목이 아니다 - 모든 동작은 진짜 커넥션이 한다. 기록하는 것은 **닫혔는가**
+    하나뿐이고, 그래야 `_open()` 의 실패 경로가 진짜 sqlite 오류를 그대로
+    타면서도 정리 여부를 볼 수 있다.
+    """
+
+    def __init__(self, conn, closed: list) -> None:
+        object.__setattr__(self, "_conn", conn)
+        object.__setattr__(self, "_closed", closed)
+
+    def close(self) -> None:
+        self._closed.append(self)
+        self._conn.close()
+
+    # 나머지는 전부 진짜 커넥션에 넘긴다. dunder 는 타입에서 찾으므로 따로 건다.
+    def __getattr__(self, name):
+        return getattr(object.__getattribute__(self, "_conn"), name)
+
+    def __setattr__(self, name, value):
+        setattr(object.__getattribute__(self, "_conn"), name, value)
+
+    def __enter__(self):
+        return self._conn.__enter__()
+
+    def __exit__(self, *exc):
+        return self._conn.__exit__(*exc)
+
+
+@pytest.mark.parametrize("kind", ["garbage", "truncated"])
+def test_a_failed_open_leaves_no_connection_behind(kind, tmp_path, monkeypatch):
+    """**`_open()` 이 실패하면 열린 커넥션이 남지 않는다.**
+
+    ⚠⚠ 이 검사를 "Windows 에서 rename 이 된다" 로 쓰면 안 된다. POSIX 는 열린
+      파일의 rename 이 되므로 그렇게 쓴 검사는 리눅스에서 **항상 통과하고 아무
+      것도 잡지 못한다.** 실제로 그래서 4-q 가 이 구멍을 못 봤다 - 측정이 POSIX
+      에서만 돌았고, 배포본(Linux)은 지금도 영향이 없다.
+
+    그래서 OS 동작이 아니라 **불변식**을 본다: 커넥션을 만든 곳이 실패 시
+    닫는다. 이건 양쪽 OS 에서 같이 돈다.
+
+    (발견 경로: 개발 PC(Windows)에서 `PermissionError WinError 32` 로 격리가
+     실패해 `raise exc` 로 떨어졌다 - 격리가 아니라 부팅 실패였다.)
+    """
+    from sourcing_guard.storage import SqliteWatchStore
+
+    p = tmp_path / "watchlist.db"
+    if kind == "garbage":
+        p.write_bytes(b"not a sqlite file at all" * 20)
+    else:
+        conn = sqlite3.connect(p)          # ⚠ 패치 전에 만든다
+        conn.execute("create table t(a)")
+        conn.commit()
+        conn.close()
+        data = p.read_bytes()
+        p.write_bytes(data[: len(data) // 2])
+
+    opened: list = []
+    closed: list = []
+    real_connect = sqlite3.connect
+
+    def _recording_connect(*args, **kwargs):
+        wrapped = _RecordingConnection(real_connect(*args, **kwargs), closed)
+        opened.append(wrapped)
+        return wrapped
+
+    monkeypatch.setattr(sqlite3, "connect", _recording_connect)
+
+    logging.disable(logging.CRITICAL)
+    try:
+        store = SqliteWatchStore(p)
+    finally:
+        logging.disable(logging.NOTSET)
+
+    # 손상 → 실패한 첫 열기, 격리 → 성공한 두 번째 열기.
+    assert len(opened) == 2, f"커넥션을 {len(opened)}번 열었다"
+    assert opened[0] in closed, "실패한 열기가 커넥션을 닫지 않았다 - 손상 파일을 잡은 채로 남는다"
+    assert opened[1] not in closed, "성공한 커넥션까지 닫았다"
+    assert store.quarantined_from, "손상인데 격리 기록이 없다"
+
+
+def test_a_failed_open_clears_the_connection_attribute(tmp_path):
+    """실패한 뒤 `_conn` 은 None 이다 - 반쯤 열린 store 로 조용히 돌지 않는다."""
+    from sourcing_guard.storage import SqliteWatchStore
+
+    store = SqliteWatchStore(tmp_path / "good.db")
+    store.close()
+
+    spoiled = tmp_path / "spoiled.db"
+    spoiled.write_bytes(b"not a sqlite file at all" * 20)
+    store._path = spoiled
+    with pytest.raises(sqlite3.DatabaseError):
+        store._open()
+
+    assert store._conn is None, "실패했는데 커넥션 자리가 그대로 남았다"
+
+
 def test_healthz_says_the_database_was_quarantined(monkeypatch, tmp_path):
     """격리를 조용히 넘기지 않는다 - `/healthz` 가 말한다."""
     import sourcing_guard.main as m

@@ -117,6 +117,11 @@ class SqliteWatchStore:
     #: ⚠ None 이 정상이다. 값이 있으면 **워치 데이터를 잃었다는 뜻**이다.
     quarantined_from: str | None = None
 
+    #: 열린 커넥션. `_open()` 이 실패하면 **None 으로 남는다** - 그 상태로는
+    #: 아무 메서드도 쓸 수 없고, 쓰려 하면 AttributeError 로 바로 드러난다.
+    #: 조용히 도는 것보다 낫다. 정상 경로에서는 `__init__` 이 끝날 때 값이 있다.
+    _conn: sqlite3.Connection | None = None
+
     def __init__(self, path: str | Path) -> None:
         self._path = Path(path)
         if self._path.parent != Path("."):
@@ -165,12 +170,32 @@ class SqliteWatchStore:
             self._open()
 
     def _open(self) -> None:
-        self._conn = sqlite3.connect(self._path, check_same_thread=False)
-        self._conn.row_factory = sqlite3.Row
-        # 동시 읽기/쓰기에서 잠금 대기를 줄인다.
-        self._conn.execute("PRAGMA journal_mode=WAL")
-        self._conn.executescript(_SCHEMA)
-        self._conn.commit()
+        # ⚠ **커넥션을 만든 곳이 실패 시 닫는다** - 소유자를 하나로 둔다.
+        #
+        #   전에는 `PRAGMA` 가 던지면 열린 커넥션이 손상 파일을 **잡은 채로
+        #   남았다.** 그러면 `__init__` 의 격리가 그 파일을 옆으로 치우려다
+        #   Windows 에서 `PermissionError WinError 32`(다른 프로세스가 사용 중)
+        #   로 실패하고, `raise exc` 로 떨어져 **격리가 아니라 부팅 실패**가
+        #   된다 - 4-q 가 막으려던 바로 그 상태다.
+        #
+        #   POSIX 는 열린 파일의 rename 이 되므로 배포본(Linux)에서는 보이지
+        #   않았고, 4-q 측정이 POSIX 에서만 이뤄져 이 경로가 비어 있었다.
+        #
+        # ⚠ 정리를 `__init__` 의 except 로 옮기지 않는다. 커넥션을 연 쪽이
+        #   닫아야 소유자가 하나로 남는다. 여기서 닫으면 격리 경로가 **양쪽
+        #   OS 에서 같은 코드로** 돈다.
+        conn = sqlite3.connect(self._path, check_same_thread=False)
+        conn.row_factory = sqlite3.Row
+        try:
+            # 동시 읽기/쓰기에서 잠금 대기를 줄인다.
+            conn.execute("PRAGMA journal_mode=WAL")
+            conn.executescript(_SCHEMA)
+            conn.commit()
+        except BaseException:
+            conn.close()
+            self._conn = None
+            raise
+        self._conn = conn
 
     # -- writes ------------------------------------------------------------
     def add(self, item: WatchItem) -> WatchItem:
