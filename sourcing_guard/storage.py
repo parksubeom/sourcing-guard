@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import logging
 import sqlite3
+import threading
 from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Iterable
@@ -108,9 +109,34 @@ CREATE TABLE IF NOT EXISTS sync_state (
 class SqliteWatchStore:
     """WatchItem 저장소.
 
-    스레드 안전: FastAPI 는 요청을 여러 스레드에서 처리하므로 커넥션을 공유하되
-    `check_same_thread=False` 로 열고 쓰기는 짧은 트랜잭션으로 끝낸다. 데모
-    수준의 동시성에는 충분하고, 늘어나면 커넥션 풀로 바꾼다.
+    스레드 안전: FastAPI 는 요청을 여러 스레드에서 처리하므로 커넥션 하나를
+    공유하되 `check_same_thread=False` 로 열고, **모든 공개 메서드가 `_lock`
+    안에서 돈다.**
+
+    ⚠⚠ **전에는 락이 없었고, 그래서 쓰기가 조용히 사라졌다 (2026-09-12).**
+
+    이 docstring 은 "쓰기는 짧은 트랜잭션으로 끝낸다. 데모 수준의 동시성에는
+    충분하다" 고 적고 있었다. **틀렸다.** `sync_loop` 는 이벤트 루프에서,
+    요청 핸들러는 `run_in_threadpool` 에서 돌아 둘이 같은 커넥션을 공유하는데,
+    `with self._conn:` 의 "트랜잭션 중인가 확인 → COMMIT" 두 단계가 원자적이지
+    않다. 겹치면 한쪽 커밋이 다른 쪽 트랜잭션을 걷어간다.
+
+        실측 (리눅스 · c80b03c · 8스레드 × 200 save_miss_report = 1,600)
+          락 없음    저장 1,047 · 오류 152 · **무음 손실 약 400**
+          RLock      저장 1,600 · 오류 0
+
+    ⚠ **오류보다 무음 손실이 더 많다.** 예외 수만 세면 이 결함이 안 보인다 -
+      그래서 검사는 예외가 아니라 **저장 건수**를 본다. 워치 등록이 조용히
+      사라지면 셀러는 감시받는다고 믿는 채로 감시되지 않는다 (R6).
+
+    ⚠ **읽기도 잠근다.** 쓰기만 잠그면 읽기 커서가 끼어들어 같은 커넥션의
+      트랜잭션 상태를 흔든다.
+
+    ⚠ **락은 소유자가 하나다.** 호출부가 각자 잠그지 않는다. `RLock` 이라
+      공개 메서드끼리 서로 불러도 데드락이 아니다.
+
+    ⚠ **스레드별 커넥션은 하지 않는다.** WAL 잠금·busy timeout 이라는 새 실패
+      모양이 생긴다. 필요해지면 본선에서 본다 (미완 §6).
     """
 
     #: 손상된 DB 를 치우고 새로 시작했을 때 그 사실. `/healthz` 가 읽는다.
@@ -124,6 +150,8 @@ class SqliteWatchStore:
 
     def __init__(self, path: str | Path) -> None:
         self._path = Path(path)
+        # ⚠ `_open()` 보다 먼저 만든다 - 아래 모든 메서드가 이 락을 쓴다.
+        self._lock = threading.RLock()
         if self._path.parent != Path("."):
             self._path.parent.mkdir(parents=True, exist_ok=True)
         self.quarantined_from = None
@@ -199,8 +227,9 @@ class SqliteWatchStore:
 
     # -- writes ------------------------------------------------------------
     def add(self, item: WatchItem) -> WatchItem:
-        self._upsert(item)
-        return item
+        with self._lock:
+            self._upsert(item)
+            return item
 
     def _upsert(self, item: WatchItem) -> None:
         with self._conn:  # 트랜잭션. 예외 시 롤백된다.
@@ -220,29 +249,33 @@ class SqliteWatchStore:
         이미 알린 리콜을 다음 스윕에서 다시 알리지 않으려면 지문이 반드시
         남아야 한다. 지문 저장이 실패하면 셀러는 같은 리콜을 매일 다시 받는다.
         """
-        item = self.get(item_id)
-        if item is None:
-            return
-        seen = list(item.seen_recall_fingerprints)
-        seen.extend(fp for fp in new_fingerprints if fp not in seen)
-        self._upsert(item.model_copy(update={"last_swept_at": on, "seen_recall_fingerprints": seen}))
+        with self._lock:
+            item = self.get(item_id)
+            if item is None:
+                return
+            seen = list(item.seen_recall_fingerprints)
+            seen.extend(fp for fp in new_fingerprints if fp not in seen)
+            self._upsert(item.model_copy(update={"last_swept_at": on, "seen_recall_fingerprints": seen}))
 
     # -- reads -------------------------------------------------------------
     def get(self, item_id: str) -> WatchItem | None:
-        row = self._conn.execute(
-            "SELECT payload FROM watch_items WHERE id = ?", (item_id,)
-        ).fetchone()
-        return WatchItem.model_validate_json(row["payload"]) if row else None
+        with self._lock:
+            row = self._conn.execute(
+                "SELECT payload FROM watch_items WHERE id = ?", (item_id,)
+            ).fetchone()
+            return WatchItem.model_validate_json(row["payload"]) if row else None
 
     def active_items(self) -> Iterable[WatchItem]:
-        return self._by("status = ?", (WatchStatus.ACTIVE.value,))
+        with self._lock:
+            return self._by("status = ?", (WatchStatus.ACTIVE.value,))
 
     def for_owner(self, owner_id: str, *, active_only: bool = True) -> list[WatchItem]:
-        if active_only:
-            return self._by(
-                "owner_id = ? AND status = ?", (owner_id, WatchStatus.ACTIVE.value)
-            )
-        return self._by("owner_id = ?", (owner_id,))
+        with self._lock:
+            if active_only:
+                return self._by(
+                    "owner_id = ? AND status = ?", (owner_id, WatchStatus.ACTIVE.value)
+                )
+            return self._by("owner_id = ?", (owner_id,))
 
     def _by(self, where: str, args: tuple) -> list[WatchItem]:
         # id 순 정렬: 스윕 결과가 호출마다 같은 순서로 나오게 한다
@@ -253,10 +286,12 @@ class SqliteWatchStore:
         return [WatchItem.model_validate_json(r["payload"]) for r in rows]
 
     def count(self) -> int:
-        return self._conn.execute("SELECT COUNT(*) AS n FROM watch_items").fetchone()["n"]
+        with self._lock:
+            return self._conn.execute("SELECT COUNT(*) AS n FROM watch_items").fetchone()["n"]
 
     def close(self) -> None:
-        self._conn.close()
+        with self._lock:
+            self._conn.close()
 
     # -- recalls -----------------------------------------------------------
     #
@@ -266,35 +301,37 @@ class SqliteWatchStore:
     # 깨뜨린다 (CLAUDE.md R6).
 
     def known_recall_uids(self, scope: str) -> set[str]:
-        rows = self._conn.execute(
-            "SELECT uid FROM recalls WHERE scope = ?", (scope,)
-        ).fetchall()
-        return {r["uid"] for r in rows}
+        with self._lock:
+            rows = self._conn.execute(
+                "SELECT uid FROM recalls WHERE scope = ?", (scope,)
+            ).fetchall()
+            return {r["uid"] for r in rows}
 
     def upsert_recalls(self, rows: Iterable[dict], *, scope: str, fetched_at: str) -> int:
         """리콜 레코드를 저장하고 '새로 들어온' 건수를 돌려준다.
 
         rows 는 {uid, published_on, payload} 형태. payload 는 직렬화된 JSON 문자열.
         """
-        known = self.known_recall_uids(scope)
-        new = 0
-        with self._conn:
-            for row in rows:
-                uid = row.get("uid")
-                if not uid:
-                    continue
-                if uid not in known:
-                    new += 1
-                self._conn.execute(
-                    "INSERT INTO recalls (uid, scope, published_on, payload, fetched_at) "
-                    "VALUES (?, ?, ?, ?, ?) "
-                    "ON CONFLICT(uid, scope) DO UPDATE SET "
-                    "  published_on = excluded.published_on, "
-                    "  payload = excluded.payload, "
-                    "  fetched_at = excluded.fetched_at",
-                    (uid, scope, row.get("published_on"), row["payload"], fetched_at),
-                )
-        return new
+        with self._lock:
+            known = self.known_recall_uids(scope)
+            new = 0
+            with self._conn:
+                for row in rows:
+                    uid = row.get("uid")
+                    if not uid:
+                        continue
+                    if uid not in known:
+                        new += 1
+                    self._conn.execute(
+                        "INSERT INTO recalls (uid, scope, published_on, payload, fetched_at) "
+                        "VALUES (?, ?, ?, ?, ?) "
+                        "ON CONFLICT(uid, scope) DO UPDATE SET "
+                        "  published_on = excluded.published_on, "
+                        "  payload = excluded.payload, "
+                        "  fetched_at = excluded.fetched_at",
+                        (uid, scope, row.get("published_on"), row["payload"], fetched_at),
+                    )
+            return new
 
     def commit_full_load(
         self,
@@ -327,68 +364,70 @@ class SqliteWatchStore:
           는 두 스코프가 예외 없이 끝났는지만 보지, 행이 왔는지는 보지 않는다.
           국내가 0건이어도 국외 33,070건에 묻혀 합계는 통과한다.
         """
-        counts: dict[str, int] = {}
-        # 쓰기 전에 배치부터 잰다. 트랜잭션 안에서 재도 결과는 같지만, 검사가
-        # 저장소 상태와 무관하다는 것이 코드에서 바로 보이는 편이 낫다.
-        sizes = {
-            scope: sum(1 for row in rows if row.get("uid"))
-            for scope, rows in batches.items()
-        }
-        batch_total = sum(sizes.values())
-        # minimum <= 0 은 "타당성 검사를 걸지 않는다" 는 명시적 옵트아웃이다
-        # (스텁으로 두세 건만 넣는 테스트가 쓴다). 프로덕션 기본값은 1000 이다.
-        if minimum > 0:
-            empty = sorted(scope for scope, n in sizes.items() if n == 0)
-            if empty:
-                raise ValueError(
-                    f"전량 적재 배치에 {', '.join(empty)} 스코프가 비어 있어 완료로 "
-                    "기록하지 않습니다. 정부 API 가 빈 응답을 돌려줬을 수 있습니다."
-                )
-            if batch_total < minimum:
-                raise ValueError(
-                    f"전량 적재 배치가 {batch_total}건뿐이라 완료로 기록하지 않습니다 "
-                    f"(기대 {minimum}건 이상, 스코프별 {sizes}). "
-                    "정부 API 가 빈 응답을 돌려줬을 수 있습니다."
-                )
-
-        with self._conn:
-            for scope, rows in batches.items():
-                known = self.known_recall_uids(scope)
-                new = 0
-                for row in rows:
-                    uid = row.get("uid")
-                    if not uid:
-                        continue
-                    if uid not in known:
-                        new += 1
-                    self._conn.execute(
-                        "INSERT INTO recalls (uid, scope, published_on, payload, fetched_at) "
-                        "VALUES (?, ?, ?, ?, ?) "
-                        "ON CONFLICT(uid, scope) DO UPDATE SET "
-                        "  published_on = excluded.published_on, "
-                        "  payload = excluded.payload, "
-                        "  fetched_at = excluded.fetched_at",
-                        (uid, scope, row.get("published_on"), row["payload"], fetched_at),
+        with self._lock:
+            counts: dict[str, int] = {}
+            # 쓰기 전에 배치부터 잰다. 트랜잭션 안에서 재도 결과는 같지만, 검사가
+            # 저장소 상태와 무관하다는 것이 코드에서 바로 보이는 편이 낫다.
+            sizes = {
+                scope: sum(1 for row in rows if row.get("uid"))
+                for scope, rows in batches.items()
+            }
+            batch_total = sum(sizes.values())
+            # minimum <= 0 은 "타당성 검사를 걸지 않는다" 는 명시적 옵트아웃이다
+            # (스텁으로 두세 건만 넣는 테스트가 쓴다). 프로덕션 기본값은 1000 이다.
+            if minimum > 0:
+                empty = sorted(scope for scope, n in sizes.items() if n == 0)
+                if empty:
+                    raise ValueError(
+                        f"전량 적재 배치에 {', '.join(empty)} 스코프가 비어 있어 완료로 "
+                        "기록하지 않습니다. 정부 API 가 빈 응답을 돌려줬을 수 있습니다."
                     )
-                counts[scope] = new
+                if batch_total < minimum:
+                    raise ValueError(
+                        f"전량 적재 배치가 {batch_total}건뿐이라 완료로 기록하지 않습니다 "
+                        f"(기대 {minimum}건 이상, 스코프별 {sizes}). "
+                        "정부 API 가 빈 응답을 돌려줬을 수 있습니다."
+                    )
 
-            self._conn.execute(
-                "INSERT INTO sync_state (key, value) VALUES ('initial_load_at', ?) "
-                "ON CONFLICT(key) DO UPDATE SET value = excluded.value",
-                (completed_at,),
-            )
-        return counts
+            with self._conn:
+                for scope, rows in batches.items():
+                    known = self.known_recall_uids(scope)
+                    new = 0
+                    for row in rows:
+                        uid = row.get("uid")
+                        if not uid:
+                            continue
+                        if uid not in known:
+                            new += 1
+                        self._conn.execute(
+                            "INSERT INTO recalls (uid, scope, published_on, payload, fetched_at) "
+                            "VALUES (?, ?, ?, ?, ?) "
+                            "ON CONFLICT(uid, scope) DO UPDATE SET "
+                            "  published_on = excluded.published_on, "
+                            "  payload = excluded.payload, "
+                            "  fetched_at = excluded.fetched_at",
+                            (uid, scope, row.get("published_on"), row["payload"], fetched_at),
+                        )
+                    counts[scope] = new
+
+                self._conn.execute(
+                    "INSERT INTO sync_state (key, value) VALUES ('initial_load_at', ?) "
+                    "ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+                    (completed_at,),
+                )
+            return counts
 
     def recall_payloads(self, *, scope: str | None = None) -> list[str]:
-        if scope:
-            rows = self._conn.execute(
-                "SELECT payload FROM recalls WHERE scope = ? ORDER BY uid", (scope,)
-            ).fetchall()
-        else:
-            rows = self._conn.execute(
-                "SELECT payload FROM recalls ORDER BY scope, uid"
-            ).fetchall()
-        return [r["payload"] for r in rows]
+        with self._lock:
+            if scope:
+                rows = self._conn.execute(
+                    "SELECT payload FROM recalls WHERE scope = ? ORDER BY uid", (scope,)
+                ).fetchall()
+            else:
+                rows = self._conn.execute(
+                    "SELECT payload FROM recalls ORDER BY scope, uid"
+                ).fetchall()
+            return [r["payload"] for r in rows]
 
     def replace_rf_noncompliant(self, rows: list[dict], *, fetched_at: str) -> int:
         """부적합 현황을 통째로 교체한다.
@@ -399,47 +438,52 @@ class SqliteWatchStore:
         빈 목록으로 덮어쓰지 않는다 - 수집이 실패했는데 테이블을 비우면 RED
         소스가 조용히 사라진다 (반쪽 적재를 완료로 기록하던 것과 같은 함정).
         """
-        if not rows:
-            raise ValueError("빈 목록으로 부적합 현황을 덮어쓸 수 없습니다")
-        with self._conn:
-            self._conn.execute("DELETE FROM rf_noncompliant")
-            self._conn.executemany(
-                "INSERT OR REPLACE INTO rf_noncompliant"
-                " (seq, company, cert_number, model, acted_on, fetched_at)"
-                " VALUES (?, ?, ?, ?, ?, ?)",
-                [
-                    (r["seq"], r.get("company"), r.get("cert_number"),
-                     r.get("model"), r.get("acted_on"), fetched_at)
-                    for r in rows
-                ],
-            )
-        return len(rows)
+        with self._lock:
+            if not rows:
+                raise ValueError("빈 목록으로 부적합 현황을 덮어쓸 수 없습니다")
+            with self._conn:
+                self._conn.execute("DELETE FROM rf_noncompliant")
+                self._conn.executemany(
+                    "INSERT OR REPLACE INTO rf_noncompliant"
+                    " (seq, company, cert_number, model, acted_on, fetched_at)"
+                    " VALUES (?, ?, ?, ?, ?, ?)",
+                    [
+                        (r["seq"], r.get("company"), r.get("cert_number"),
+                         r.get("model"), r.get("acted_on"), fetched_at)
+                        for r in rows
+                    ],
+                )
+            return len(rows)
 
     def rf_noncompliant_rows(self) -> list[dict]:
-        rows = self._conn.execute(
-            "SELECT seq, company, cert_number, model, acted_on FROM rf_noncompliant"
-        ).fetchall()
-        return [dict(r) for r in rows]
+        with self._lock:
+            rows = self._conn.execute(
+                "SELECT seq, company, cert_number, model, acted_on FROM rf_noncompliant"
+            ).fetchall()
+            return [dict(r) for r in rows]
 
     def rf_noncompliant_count(self) -> int:
-        return self._conn.execute(
-            "SELECT COUNT(*) AS n FROM rf_noncompliant"
-        ).fetchone()["n"]
+        with self._lock:
+            return self._conn.execute(
+                "SELECT COUNT(*) AS n FROM rf_noncompliant"
+            ).fetchone()["n"]
 
     def recall_count(self, scope: str | None = None) -> int:
-        if scope:
-            row = self._conn.execute(
-                "SELECT COUNT(*) AS n FROM recalls WHERE scope = ?", (scope,)
-            ).fetchone()
-        else:
-            row = self._conn.execute("SELECT COUNT(*) AS n FROM recalls").fetchone()
-        return row["n"]
+        with self._lock:
+            if scope:
+                row = self._conn.execute(
+                    "SELECT COUNT(*) AS n FROM recalls WHERE scope = ?", (scope,)
+                ).fetchone()
+            else:
+                row = self._conn.execute("SELECT COUNT(*) AS n FROM recalls").fetchone()
+            return row["n"]
 
     def latest_published_on(self) -> str | None:
-        row = self._conn.execute(
-            "SELECT MAX(published_on) AS d FROM recalls"
-        ).fetchone()
-        return row["d"] if row and row["d"] else None
+        with self._lock:
+            row = self._conn.execute(
+                "SELECT MAX(published_on) AS d FROM recalls"
+            ).fetchone()
+            return row["d"] if row and row["d"] else None
 
     # -- sync state --------------------------------------------------------
 
@@ -450,108 +494,117 @@ class SqliteWatchStore:
         ⚠ 돌려주는 것은 **실제로 새로 들어간 수**다. `sweep()` 이 낸 수가
           아니다 - 같은 리콜을 두 번 세면 "새 알림 N" 이 거짓이 된다.
         """
-        rows = [
-            (a.watch_item_id, a.recall_fingerprint, a.detected_at.isoformat(),
-             a.model_dump_json())
-            for a in alerts
-        ]
-        if not rows:
-            return 0
-        with self._conn:
-            before = self._conn.execute(
-                "SELECT COUNT(*) FROM recall_alerts"
-            ).fetchone()[0]
-            self._conn.executemany(
-                "INSERT OR IGNORE INTO recall_alerts "
-                "(watch_item_id, recall_fingerprint, detected_at, payload) "
-                "VALUES (?, ?, ?, ?)",
-                rows,
-            )
-            after = self._conn.execute(
-                "SELECT COUNT(*) FROM recall_alerts"
-            ).fetchone()[0]
-        return after - before
+        with self._lock:
+            rows = [
+                (a.watch_item_id, a.recall_fingerprint, a.detected_at.isoformat(),
+                 a.model_dump_json())
+                for a in alerts
+            ]
+            if not rows:
+                return 0
+            with self._conn:
+                before = self._conn.execute(
+                    "SELECT COUNT(*) FROM recall_alerts"
+                ).fetchone()[0]
+                self._conn.executemany(
+                    "INSERT OR IGNORE INTO recall_alerts "
+                    "(watch_item_id, recall_fingerprint, detected_at, payload) "
+                    "VALUES (?, ?, ?, ?)",
+                    rows,
+                )
+                after = self._conn.execute(
+                    "SELECT COUNT(*) FROM recall_alerts"
+                ).fetchone()[0]
+            return after - before
 
     # ── [D-백] 오답 신고 ───────────────────────────────────────────
     def save_miss_report(self, report_id: str, reported_at: str, payload_json: str) -> None:
-        with self._conn:
-            self._conn.execute(
-                "INSERT INTO miss_reports (id, reported_at, payload) VALUES (?, ?, ?)",
-                (report_id, reported_at, payload_json),
-            )
+        with self._lock:
+            with self._conn:
+                self._conn.execute(
+                    "INSERT INTO miss_reports (id, reported_at, payload) VALUES (?, ?, ?)",
+                    (report_id, reported_at, payload_json),
+                )
 
     def miss_reports(self, *, since: str | None = None) -> list[tuple[str, str, str]]:
         """(id, reported_at, payload) 를 오래된 것부터. 내보내기 스크립트가 읽는다."""
-        if since:
-            rows = self._conn.execute(
-                "SELECT id, reported_at, payload FROM miss_reports "
-                "WHERE reported_at >= ? ORDER BY reported_at", (since,)
-            ).fetchall()
-        else:
-            rows = self._conn.execute(
-                "SELECT id, reported_at, payload FROM miss_reports ORDER BY reported_at"
-            ).fetchall()
-        return [(r["id"], r["reported_at"], r["payload"]) for r in rows]
+        with self._lock:
+            if since:
+                rows = self._conn.execute(
+                    "SELECT id, reported_at, payload FROM miss_reports "
+                    "WHERE reported_at >= ? ORDER BY reported_at", (since,)
+                ).fetchall()
+            else:
+                rows = self._conn.execute(
+                    "SELECT id, reported_at, payload FROM miss_reports ORDER BY reported_at"
+                ).fetchall()
+            return [(r["id"], r["reported_at"], r["payload"]) for r in rows]
 
     def miss_report_snapshot(self) -> dict:
         """`/healthz` 용. 몇 건 쌓였고 마지막이 언제인가 - 검수 대기열의 길이다."""
-        row = self._conn.execute(
-            "SELECT COUNT(*) AS n, MAX(reported_at) AS last FROM miss_reports"
-        ).fetchone()
-        return {"total": int(row["n"]), "last_reported_at": row["last"]}
+        with self._lock:
+            row = self._conn.execute(
+                "SELECT COUNT(*) AS n, MAX(reported_at) AS last FROM miss_reports"
+            ).fetchone()
+            return {"total": int(row["n"]), "last_reported_at": row["last"]}
 
     def alerts_for_owner(self, owner_id: str) -> list["RecallAlert"]:
         """이 소유자의 저장된 알림. 최근 것 먼저."""
-        rows = self._conn.execute(
-            "SELECT a.payload FROM recall_alerts a "
-            "JOIN watch_items w ON w.id = a.watch_item_id "
-            "WHERE w.owner_id = ? "
-            "ORDER BY a.detected_at DESC, a.recall_fingerprint",
-            (owner_id,),
-        ).fetchall()
-        from .models import RecallAlert
+        with self._lock:
+            rows = self._conn.execute(
+                "SELECT a.payload FROM recall_alerts a "
+                "JOIN watch_items w ON w.id = a.watch_item_id "
+                "WHERE w.owner_id = ? "
+                "ORDER BY a.detected_at DESC, a.recall_fingerprint",
+                (owner_id,),
+            ).fetchall()
+            from .models import RecallAlert
 
-        return [RecallAlert.model_validate_json(r[0]) for r in rows]
+            return [RecallAlert.model_validate_json(r[0]) for r in rows]
 
     def alert_count(self, *, owner_id: str | None = None) -> int:
-        if owner_id is None:
+        with self._lock:
+            if owner_id is None:
+                return self._conn.execute(
+                    "SELECT COUNT(*) FROM recall_alerts"
+                ).fetchone()[0]
             return self._conn.execute(
-                "SELECT COUNT(*) FROM recall_alerts"
+                "SELECT COUNT(*) FROM recall_alerts a "
+                "JOIN watch_items w ON w.id = a.watch_item_id WHERE w.owner_id = ?",
+                (owner_id,),
             ).fetchone()[0]
-        return self._conn.execute(
-            "SELECT COUNT(*) FROM recall_alerts a "
-            "JOIN watch_items w ON w.id = a.watch_item_id WHERE w.owner_id = ?",
-            (owner_id,),
-        ).fetchone()[0]
 
     def get_sync_state(self, key: str) -> str | None:
-        row = self._conn.execute(
-            "SELECT value FROM sync_state WHERE key = ?", (key,)
-        ).fetchone()
-        return row["value"] if row else None
+        with self._lock:
+            row = self._conn.execute(
+                "SELECT value FROM sync_state WHERE key = ?", (key,)
+            ).fetchone()
+            return row["value"] if row else None
 
     def set_sync_state(self, key: str, value: str) -> None:
-        with self._conn:
-            self._conn.execute(
-                "INSERT INTO sync_state (key, value) VALUES (?, ?) "
-                "ON CONFLICT(key) DO UPDATE SET value = excluded.value",
-                (key, value),
-            )
+        with self._lock:
+            with self._conn:
+                self._conn.execute(
+                    "INSERT INTO sync_state (key, value) VALUES (?, ?) "
+                    "ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+                    (key, value),
+                )
 
     def sync_snapshot(self) -> dict:
-        return {
-            "initial_load_at": self.get_sync_state("initial_load_at"),
-            "last_sync_at": self.get_sync_state("last_sync_at"),
-            "last_sync_error": self.get_sync_state("last_sync_error"),
-            "recalls": {
-                "domestic": self.recall_count("domestic"),
-                "overseas": self.recall_count("overseas"),
-            },
-            "latest_published_on": self.latest_published_on(),
-            # 전파인증 축의 유일한 RED 소스다. 0 이면 RED 가 한 번도 안 뜬다 -
-            # 조용히 비어 있는 것을 healthz 가 말해줘야 한다.
-            "rf_noncompliant": {
-                "count": self.rf_noncompliant_count(),
-                "synced_at": self.get_sync_state("rf_noncompliant_synced_at"),
-            },
-        }
+        with self._lock:
+            return {
+                "initial_load_at": self.get_sync_state("initial_load_at"),
+                "last_sync_at": self.get_sync_state("last_sync_at"),
+                "last_sync_error": self.get_sync_state("last_sync_error"),
+                "recalls": {
+                    "domestic": self.recall_count("domestic"),
+                    "overseas": self.recall_count("overseas"),
+                },
+                "latest_published_on": self.latest_published_on(),
+                # 전파인증 축의 유일한 RED 소스다. 0 이면 RED 가 한 번도 안 뜬다 -
+                # 조용히 비어 있는 것을 healthz 가 말해줘야 한다.
+                "rf_noncompliant": {
+                    "count": self.rf_noncompliant_count(),
+                    "synced_at": self.get_sync_state("rf_noncompliant_synced_at"),
+                },
+            }
