@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import ast
 import io
+import textwrap
 import tokenize as tk
 
 
@@ -25,7 +26,12 @@ def code_only(src: str) -> str:
     토큰을 공백으로 이어 붙이므로 호출부는 `"ALIASES . update"` 처럼 **띄어 쓴
     모양**으로 찾아야 한다. 원본 간격을 보존하지 않는 것은 의도다 - `f(x)` 와
     `f( x )` 가 같은 문자열이 된다.
+
+    ⚠ `inspect.getsource` 로 **메서드**를 넘기면 들여쓰기가 남아 `ast.parse` 가
+      IndentationError 를 낸다. 먼저 편다 - 파일 전체를 넘길 때는 아무것도
+      바뀌지 않는다.
     """
+    src = textwrap.dedent(src)
     tree = ast.parse(src)
     doc_lines: set[int] = set()
     for node in ast.walk(tree):

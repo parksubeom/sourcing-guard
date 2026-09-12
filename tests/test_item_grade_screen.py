@@ -519,3 +519,45 @@ def test_a_settled_grade_still_says_the_certificate_is_missing():
         if FindingKind.ITEM_GRADE_SPLIT in kinds:
             continue  # 갈리는 줄은 이 검사의 대상이 아니다
         assert FindingKind.KC_MISSING_BUT_REQUIRED in kinds, name
+
+
+def test_the_two_marker_gates_read_different_inputs_on_purpose():
+    """⚠⚠ 같은 신호(어린이 표지어)를 두 게이트가 **다른 입력**에서 읽는다.
+
+    실수가 아니다. 재고 정했다 (2026-09-12).
+
+        별칭      등급표 **조회**를 넓힌다 → 틀려도 확인 화면이 뜬다 → 원본까지
+        포괄 규정  **의무를 새로 만든다**  → 틀리면 없는 의무 → 상품명만
+
+    통일하고 싶어지면 **먼저 재라.** 별칭 쪽을 상품명으로 좁혀 본 측정:
+
+        다섯 기준   ① 95 → 93 · ③ 113 → 112
+        도매꾹 상세  정답 89 → 86 · 미매칭 16 → 19
+
+    잃는 3건이 전부 진짜 상품이었다 - [179] 산리오 필통(학용품보관) ·
+    [181] 초등필통 · [200] EVA 실내화. 셋 다 LLM 이 정리한 상품명에서 표지어가
+    떨어졌고, 원본에는 있었다.
+    """
+    import inspect
+
+    from sourcing_guard import item_grades, verifier
+    from tests.srccheck import code_only
+
+    alias_gate = code_only(inspect.getsource(item_grades.ItemGradeBook.lookup_all))
+    # ⚠ `code_only` 는 토큰을 공백으로 이어 붙이므로 간격이 늘어난다. 두 이름이
+    #   **gate_text 를 만드는 같은 줄에** 있는지만 본다.
+    gate_line = next(
+        (ln for ln in alias_gate.splitlines() if "gate_text =" in ln), ""
+    )
+    assert "product_name" in gate_line and "raw_text" in gate_line, (
+        "별칭 게이트가 원본을 안 본다 - 좁히면 진짜 상품 3건을 잃는다. "
+        "바꾸려면 다섯 기준과 도매꾹 상세 109 를 먼저 재라"
+    )
+
+    catch_gate = code_only(inspect.getsource(verifier.verify))
+    assert "has_child_marker ( facts . product_name )" in catch_gate, (
+        "포괄 규정 게이트가 상품명 말고 다른 것을 본다 - 본문을 열면 도매꾹 109 의 "
+        "오탐 16건(차량용 청소기·전기그릴 광고 문구)이 들어온다"
+    )
+    # ⚠ 근거가 주석에 남아 있어야 한다. 없으면 다음 사람이 "중복" 으로 보고 합친다.
+    assert "일부러 다르다" in inspect.getsource(verifier.verify)
