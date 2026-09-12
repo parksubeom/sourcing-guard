@@ -561,3 +561,60 @@ def test_the_two_marker_gates_read_different_inputs_on_purpose():
     )
     # ⚠ 근거가 주석에 남아 있어야 한다. 없으면 다음 사람이 "중복" 으로 보고 합친다.
     assert "일부러 다르다" in inspect.getsource(verifier.verify)
+
+
+def test_suppressing_the_missing_cert_drops_amber_to_unknown_not_green():
+    """[판정 4 · 방향 고정] 갈림에서 인증부재를 빼면 **AMBER → UNKNOWN** 이다.
+
+    ⚠⚠ 실물 표본에 **갈림 + AMBER 조합이 없다.** 하나뿐인 갈림 줄
+      ([5] 발열무릎담요)은 `coverage_gap` 때문에 이미 UNKNOWN 이었다
+      (`scorer._signal_for` 가 COVERAGE_GAP 을 AMBER 집합보다 먼저 본다).
+
+      그래서 이 검사는 **합성 finding 으로 방향만 고정**한다. 실물 표본이
+      생기면 그때 실측으로 바꾼다 (미완).
+
+    왜 UNKNOWN 이 옳은가: 갈리는 동안 우리는 인증번호가 **있어야 하는지조차
+    모른다.** 모르는 것을 "확인 필요"(AMBER)로 올리면 셀러가 할 수 있는 일이
+    없는 경고를 받는다. 모르면 UNKNOWN 이다 (R3).
+
+    ⚠ **GREEN 으로는 절대 안 내려간다.** 초록불은 두 축의 적극적 증거를
+      요구하고(`KC_VERIFIED` + `RECALL_CLEAR`), 갈림 줄에는 그것이 없다.
+      이것이 이 고침에서 가장 비싼 오류였을 것이다 (R3-b).
+    """
+    from datetime import date
+
+    from sourcing_guard.models import (
+        Finding,
+        FindingKind,
+        ItemCategory,
+        ProductFacts,
+        Signal,
+    )
+    from sourcing_guard.scorer import score
+
+    today = date(2026, 9, 12)
+    facts = ProductFacts(product_name="전기방석", category=ItemCategory.ELECTRICAL)
+
+    def _f(kind: FindingKind, signal: Signal) -> Finding:
+        return Finding(
+            kind=kind,
+            signal=signal,
+            statement_ko="(검사용)",
+            source_label="검사",
+            source_url="https://www.safetykorea.kr/",
+            checked_at=today,
+        )
+
+    # ⚠ COVERAGE_GAP 을 일부러 빼서 AMBER 가 실제로 나올 수 있는 상태를 만든다.
+    split_only = [
+        _f(FindingKind.ITEM_GRADE_SPLIT, Signal.UNKNOWN),
+        _f(FindingKind.RECALL_CLEAR, Signal.GREEN),
+    ]
+    with_missing = split_only + [
+        _f(FindingKind.KC_MISSING_BUT_REQUIRED, Signal.AMBER)
+    ]
+
+    assert score(facts, with_missing, today=today).signal is Signal.AMBER
+    after = score(facts, split_only, today=today).signal
+    assert after is Signal.UNKNOWN
+    assert after is not Signal.GREEN, "부재 지적을 뺀 것이 초록불이 되면 안 된다"

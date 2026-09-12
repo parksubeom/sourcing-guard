@@ -41,6 +41,10 @@ from sourcing_guard.storage import SqliteWatchStore  # noqa: E402
 from sourcing_guard.verifier import RuleBook, split_cert_regimes, verify  # noqa: E402
 
 _AB = Path("tests/fixtures/도매꾹_AB_2026-09-08.json")
+# ⚠⚠ **본문의 정본은 이 파일이다.** `도매꾹_구조_2026-09-08.json`(구조 필드)을
+#   `split_details` 에 넘기면 조용히 다른 수가 나온다 - 2026-09-12 에 실제로
+#   그랬고, **이 스크립트의 재생값과 어긋나서** 잡았다. 재생 스크립트를 살려
+#   두는 이유가 그것이다: 손으로 잰 수를 대조할 기준이 있어야 한다.
 _DETAIL = Path("tests/fixtures/도매꾹_상세텍스트_2026-09-08.txt")
 _SCOPE = Path("tests/fixtures/새표본235_대상분류.tsv")
 
