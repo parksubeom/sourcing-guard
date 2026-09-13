@@ -49,7 +49,12 @@
   --border-default:var(--gray-30); --border-focus:var(--primary-50);
 
   /* ── 모서리: 기존보다 한 단계 둥글게 — 캐릭터와 같은 곡률 ── */
-  --r-xs:6px; --r-s:8px; --r-m:12px; --r-l:14px; --r-xl:16px; --r-pill:999px;
+  --r-xs:6px; --r-s:8px; --r-m:12px; --r-l:14px; --r-xl:16px;
+  /* v2 큰 카드 (design/README 10-4 '큰 카드 반경 20~28'). 토큰 없이 생짜
+     px 를 쓰면 test_corner_radius_stays_within_scale 이 막는다 - 그 검사가
+     상한을 여기서 읽기 때문이다. 눈금을 올릴 자리가 여기 한 곳이다. */
+  --r-2xl:20px; --r-3xl:24px; --r-4xl:28px;
+  --r-pill:999px;
 
   /* ── 간격: 기존 그대로 ── */
   --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:20px; --s6:24px; --s8:32px; --s10:40px; --s12:48px; --s16:64px;

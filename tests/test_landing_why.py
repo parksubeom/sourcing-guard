@@ -41,15 +41,18 @@ def _landing() -> str:
     return _LANDING.read_text(encoding="utf-8")
 
 
-def _why_section() -> str:
-    """랜딩의 ⓪ 절 마크업만 잘라낸다 (`<script>` 는 포함하지 않는다)."""
-    # ⚠ `<section>` 에 class 가 붙을 수 있다 - 속성 순서를 가정하지 않는다.
-    #   2026-09-13 디자인 적용에서 `<section class="sec why" aria-labelledby=…>`
-    #   이 되면서 옛 정규식이 절을 통째로 못 찾았다.
-    m = re.search(r'<section[^>]*aria-labelledby="why-h"[^>]*>(.*?)</section>',
-                  _landing(), re.S)
-    assert m, "랜딩에 ⓪ 절(why-h)이 없습니다"
-    return m.group(1)
+def _body() -> str:
+    """랜딩 **본문 마크업**. 스크립트·주석·`<head>` 는 뺀다.
+
+    ⚠ v2 에서 절 번호(⓪①②…)를 지웠다 (design/README §10-3). 그래서 절 하나를
+      잘라낼 앵커가 없다 - 대신 **본문 전체**를 본다. 검사가 넓어진 것이고,
+      v2 는 숫자를 하나도 마크업에 두지 않으므로 그래야 맞다.
+    """
+    html = _landing()
+    m = re.search(r"<main\b[^>]*>(.*?)</main>", html, re.S)
+    assert m, "랜딩에 <main> 이 없습니다"
+    body = re.sub(r"<script\b.*?</script>", "", m.group(1), flags=re.S)
+    return re.sub(r"<!--.*?-->", "", body, flags=re.S)
 
 
 # ── (a) 원자료 ──────────────────────────────────────────────────────
@@ -89,35 +92,39 @@ def test_item_rates_match_their_own_numerator_and_denominator():
 
 
 # ── (b) 숫자의 출처는 하나다 ─────────────────────────────────────────
-def test_the_why_section_hardcodes_no_numbers():
-    """⓪ 절 마크업에 숫자가 있으면 실패한다. 전부 원자료에서 그린다.
+def test_the_landing_body_hardcodes_no_numbers_at_all():
+    """랜딩 **본문 전체**에 숫자가 있으면 실패한다. 넷 다 그 자리에서 그린다.
 
-    ⚠ **절 번호는 제외한다** - `0. 왜 만들었나` 의 0 이나 `<span class="sec-num">0`
-      은 다른 절과 같은 번호 매김이고 **데이터가 아니다.** 2026-09-13 디자인
-      적용에서 제목이 `<h2>` 로 바뀌고 번호가 별도 span 으로 빠지면서 이 검사가
-      절 번호를 데이터로 읽었다.
-
-      제외 대상을 넓히되 **한 글자 번호만** 봐 준다 - 두 자리가 들어오면
-      그것은 통계값이므로 잡아야 한다.
+    ⚠ v2 에서 이 검사가 넓어졌다. 전에는 ⓪ 절만 봤고 나머지 절은 70.4%·135건을
+      마크업에 적어 두고 **다른 검사가 기준선과 대조**했다 - 같은 숫자를 두 곳에
+      적는 것이라 §6 이 막는 모양 그대로였다. 이제 마크업에 숫자가 0 이다.
     """
-    body = re.sub(r"<h[23]\b.*?</h[23]>", "", _why_section(), flags=re.S)
-    body = re.sub(r'<span class="sec-num">\d</span>', "", body)
-    body = re.sub(r"<[^>]+>", " ", body)          # 태그(속성 포함) 제거
+    body = re.sub(r"<[^>]+>", " ", _body())        # 태그(속성 포함) 제거
     found = re.findall(r"\d+", body)
     assert not found, (
-        f"⓪ 절 본문에 숫자가 박혀 있습니다: {found}. "
-        "숫자는 안전성조사_보도자료.json 에서 fetch 해 그립니다."
+        f"랜딩 본문에 숫자가 박혀 있습니다: {found}. "
+        "리콜 수·공표일은 /healthz, 보도자료 수는 안전성조사_보도자료.json, "
+        "70.4%·135건·0건은 /healthz.baseline 에서 그립니다."
     )
 
 
-def test_the_why_section_draws_from_the_raw_data_file():
-    """마크업이 비어 있기만 하면 안 된다 - 실제로 그 파일을 읽어야 한다."""
+def test_the_landing_draws_the_four_numbers_from_their_sources():
+    """마크업이 비어 있기만 하면 안 된다 - 실제로 그 출처를 읽어야 한다.
+
+    넷 = 리콜 수 · 공표일(healthz) · 5개 중 1개(보도자료 원자료) ·
+    70.4%·135건(healthz.baseline) · 0건(healthz.baseline).
+    """
     html = _landing()
-    assert "/static/data/안전성조사_보도자료.json" in html, (
-        "⓪ 절이 원자료를 fetch 하지 않습니다"
-    )
-    for key in ("card1-dt", "card1-dd", "card2-dt", "card2-dd", "card3-dt", "card3-dd"):
+    assert "/static/data/안전성조사_보도자료.json" in html, "보도자료 원자료를 읽지 않는다"
+    assert "/healthz" in html, "healthz 를 읽지 않는다"
+    for key in ("band-k", "band-big", "band-b", "band-src"):
         assert f'data-p="{key}"' in html, f"{key} 자리가 없습니다"
+    for key in ("recalls", "as_of", "ok_rate", "denominator", "off_target"):
+        assert f'data-h="{key}"' in html, f"{key} 자리가 없습니다"
+    # 후킹 숫자는 **원자료에서 만든다** - "5개 중 1개" 를 적어 두지 않는다.
+    assert "조사_수 / a.부적합_수" in html.replace("a.조사_수", "조사_수"), (
+        "'N개 중 1개' 를 원자료에서 계산하지 않는다"
+    )
 
 
 def _numbers_in(text: str) -> set[int]:
@@ -180,22 +187,36 @@ def test_the_draft_actually_carries_the_headline_figures():
 @pytest.mark.parametrize(
     "banned", ["안전합니다", "합법입니다", "판매 가능합니다", "문제없습니다", "걸리지 않습니다."]
 )
-def test_the_why_section_makes_no_verdict(banned):
-    """⓪ 절도 §9 단정 금지 대상이다. 위험을 말하는 절이라 더 쉽게 미끄러진다."""
-    assert banned not in _why_section(), f"⓪ 절에 단정 표현 '{banned}' 가 있습니다"
+def test_the_landing_makes_no_verdict(banned):
+    """§9 단정 금지는 랜딩 본문 전체에 걸린다. 위험을 말하는 절에서 더 쉽게 미끄러진다."""
+    assert banned not in _body(), f"랜딩 본문에 단정 표현 '{banned}' 가 있습니다"
 
 
-def test_the_why_section_does_not_claim_a_direct_multiple():
+def test_the_landing_does_not_claim_a_direct_multiple():
     """'국내의 4배' 같은 직접 비교는 조사 설계가 달라 성립하지 않는다.
 
     `test_failure_rate_honesty` 가 기획서에서 막는 것과 같은 실수다. 표적 조사와
     유통제품 평균은 표본 설계가 다르다.
     """
-    text = _why_section()
+    text = _body()
     for phrase in ("4배", "네 배", "배입니다"):
-        assert phrase not in text, f"직접 비교 표현이 ⓪ 절에 있습니다: {phrase}"
+        assert phrase not in text, f"직접 비교 표현이 랜딩에 있습니다: {phrase}"
 
 
-def test_the_why_section_says_the_sampling_was_targeted():
-    """표적 조사임을 밝히지 않으면 20% 가 전체 평균으로 읽힌다."""
-    assert "표적 조사" in _why_section(), "⓪ 절에 표적 조사라는 단서가 없습니다"
+def test_the_raw_data_still_records_that_the_sampling_was_targeted():
+    """⚠⚠ **v2 에서 이 단서가 화면에서 사라졌다.** 총괄 확인이 필요하다.
+
+    옛 랜딩은 "표적 조사" 라고 적었다 - 안 적으면 20% 가 전체 평균으로 읽히기
+    때문이다. v2 문구(design/landing-v2.html)에는 그 단서가 없고, 문구는 "글자
+    그대로" 옮기라는 지시라 여기서 지어내지 않았다.
+
+    지금 남은 방어는 둘이다:
+      - 모집단을 문장에 적는다 ("온라인 구매대행 제품 420개를 사서 시험했더니")
+      - 직접 비교("국내의 4배")를 금지한다 (위 검사)
+
+    원자료의 단서는 **지우지 않는다** - 화면에 다시 넣기로 하면 여기서 읽는다.
+    """
+    notes = " ".join(_data()["_주석"])
+    assert "표적 조사" in notes, "원자료에서 표적 조사 단서가 사라졌다"
+    # 모집단이 화면 문장에 남아 있는지 - 스크립트가 그리므로 원문에서 본다.
+    assert "온라인 구매대행 제품" in _landing()

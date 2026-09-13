@@ -21,6 +21,7 @@ from pydantic import BaseModel, Field, model_validator
 from datetime import date, datetime, timezone
 from uuid import uuid4
 
+from .baseline import BASELINE, BASELINE_EXTRACTOR
 from .build_info import snapshot as build_snapshot
 from .config import settings
 from .batch import MAX_ROWS, BatchReport, screen
@@ -38,6 +39,7 @@ from .models import (
 )
 from .scorer import gov_lookup_state, has_specific_finding, score
 from .demos import DEMOS, DEMO_TEXTS
+from .demos import preview as demo_preview
 
 _log = logging.getLogger(__name__)
 from .ratelimit import RateLimiter, text_fingerprint
@@ -351,6 +353,11 @@ def healthz() -> dict:
         "watch_sweep": _sweep_snapshot(),
         # [D-백] 검수 대기열 길이. 늘기만 하면 검수가 안 되고 있다는 신호다.
         "miss_reports": _store.miss_report_snapshot(),
+        # 랜딩이 "70.4% · 135건" 과 "0건" 을 **그 자리에서** 그린다
+        #   (design/README §10-2 · 하드코딩 금지). 전에는 HTML 에 숫자를 적고
+        #   검사가 기준선과 대조했는데, 그것은 같은 숫자를 두 곳에 적는 것이라
+        #   한쪽만 고치면 나머지가 거짓말을 계속한다 (§6).
+        "baseline": _baseline_snapshot(),
         # 유효 결과율 - 매칭률과 별개로 우리가 움직여야 할 지표다 (E).
         # ⚠ 프로세스 메모리이고 단건 경로만 센다. note 에 그 사실을 적는다.
         "results": _result_stats.snapshot(),
@@ -447,13 +454,21 @@ def trigger_sync(
 
 
 @app.get("/api/v1/demos", include_in_schema=False)
-def demos() -> list[dict]:
-    """데모 3종. 서버가 단일 출처다.
+def demos() -> dict:
+    """데모 3종 + 랜딩 히어로의 "예시 결과". 서버가 단일 출처다.
 
     프론트가 문구를 따로 들고 있으면 서버의 면제 목록과 갈라지고, 상한을
     넘긴 순간 데모 버튼이 429 를 받는다.
+
+    ⚠ 응답이 **배열에서 객체로** 바뀌었다 ([디자인 v2] ⓷). 소비자는
+      `landing.html` 하나뿐이지만 `watch` 응답에서 같은 변경을 했을 때
+      화면이 조용히 비는 것을 겪었으므로 양쪽을 받게 둔다.
+
+    ⚠ `preview` 는 **랜딩이 `/api/v1/scan` 을 부르지 않게** 하려고 있다.
+      부르면 방문마다 LLM 호출이 나가고 투표자가 첫 화면에서 429 를 본다.
+      파일이 없으면 `null` 이고, 화면은 그러면 카드를 안 그린다 (R5).
     """
-    return DEMOS
+    return {"items": DEMOS, "preview": demo_preview()}
 
 
 def _client_ip(request: Request) -> str:
@@ -703,6 +718,24 @@ def _as_int(raw: str | None) -> int | None:
         return int(raw)
     except (TypeError, ValueError):
         return None
+
+
+def _baseline_snapshot() -> dict:
+    """발표 숫자 다섯 중 **랜딩이 그리는 둘** + 라벨에 필요한 분모·추출기.
+
+    ⚠ 상한(`ok_upper`)은 내지 않는다. 랜딩에서 뺀 숫자다 - 검수 전 숫자를
+      검수된 숫자처럼 읽게 만든 전례가 있어(제출문 82.2%) 화면에 두지 않는다.
+      기획서 링크로만 간다 (design/README §10-2).
+    """
+    b = BASELINE[BASELINE_EXTRACTOR]
+    return {
+        "extractor": BASELINE_EXTRACTOR,
+        "denominator": b["denominator"],
+        "ok": b["ok"],
+        # 소수 한 자리. 화면이 다시 계산하면 반올림이 갈린다.
+        "ok_rate": round(b["ok"] / b["denominator"] * 100, 1),
+        "off_target": b["off_target"],
+    }
 
 
 def _sweep_snapshot(owner_id: str | None = None) -> dict:

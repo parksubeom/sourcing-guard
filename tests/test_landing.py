@@ -17,6 +17,8 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
+from sourcing_guard import main as app_module
+
 _ROOT = Path(__file__).resolve().parents[1]
 _STATIC = _ROOT / "sourcing_guard" / "static"
 _LANDING = (_STATIC / "landing.html").read_text(encoding="utf-8")
@@ -45,8 +47,9 @@ def test_root_is_the_landing_and_scan_is_the_tool():
     with TestClient(app) as c:
         root = c.get("/").text
         scan = c.get("/scan").text
-    assert "내 상품으로 해보기" in root and 'id="pt"' not in root
-    assert 'id="pt"' in scan and "내 상품으로 해보기" not in scan
+    # v2 문구 (design/landing-v2.html). 랜딩은 소개, /scan 이 도구다.
+    assert "내 상품 검사하기" in root and 'id="pt"' not in root
+    assert 'id="pt"' in scan and "내 상품 검사하기" not in scan
 
 
 def test_every_page_links_the_tool_at_scan_not_root():
@@ -96,64 +99,60 @@ def test_scan_runs_the_demo_from_the_query_and_labels_it():
     assert re.search(r'\$\("demo-note"\)\.hidden\s*=\s*true', _SCAN)
 
 
-# ── 4절 숫자 - 정본과 대조 (설계 §3-④ · test_docs 와 같은 방식) ───
-def test_the_figures_match_the_baseline():
+# ── 숫자 넷 (design/README §10-2) ────────────────────────────────
+def test_the_landing_asks_the_server_for_the_baseline_figures():
+    """70.4% · 135건 · 0건을 **마크업에 적지 않는다.**
+
+    ⚠⚠ 전에는 HTML 에 숫자를 적어 두고 이 검사가 `audit_tally.BASELINE` 과
+      대조했다. 그것은 같은 숫자를 **두 곳에 적는** 것이라 §6 이 막는 모양
+      그대로였다 - 기준선을 옮기면 화면이 낡는다. 이제 서버가 낸다.
+    """
+    from fastapi.testclient import TestClient as _TC
+
     sys.path.insert(0, str(_ROOT / "scripts"))
     from audit_tally import BASELINE, BASELINE_EXTRACTOR
 
     b = BASELINE[BASELINE_EXTRACTOR]
-    v = _visible(_LANDING)
-    ok_pct = f"{b['ok'] / b['denominator'] * 100:.1f}%"
-    up_pct = f"{b['ok_upper'] / b['denominator'] * 100:.1f}%"
-    assert f"{b['ok']}건 ({ok_pct})" in v, f"검수 완료 정답이 기준선 {b['ok']} ({ok_pct}) 와 다르다"
-    assert f"{b['ok_upper']}건 ({up_pct})" in v
-    assert f"{b['unreviewed']}건을 모두 정답으로 가정" in v
-    assert f"비대상 53건 중 {b['off_target']}건" in v
-    assert f"애매 47건 중 {b['on_vague']}건" in v
-    # 기준 추출기를 밝힌다 - 어느 추출기 숫자인지 없는 숫자는 라벨 없는 숫자다.
-    assert "기준 추출기 GPT" in v
-    # 검수 전 값은 발표 숫자가 아님을 말한다.
-    assert "발표 숫자로 쓰지 않습니다" in v
+    got = _TC(app_module.app).get("/healthz").json()["baseline"]
+    assert got["ok"] == b["ok"]
+    assert got["denominator"] == b["denominator"]
+    assert got["off_target"] == b["off_target"]
+    assert got["ok_rate"] == round(b["ok"] / b["denominator"] * 100, 1)
+    assert got["extractor"] == BASELINE_EXTRACTOR
+    # 상한은 내지 않는다 - 검수 전 숫자를 검수된 숫자처럼 읽게 만든 전례가 있다.
+    assert "ok_upper" not in got
 
 
-def test_the_history_numbers_say_what_they_measured():
-    """[판정 5] 71%·24%·20.0% 에 **무엇을 잰 값인지**가 붙어 있어야 한다.
+def test_the_numbers_dropped_in_v2_are_really_gone():
+    """랜딩에서 뺀 숫자들 (design/README §10-2).
 
-    ⚠⚠ 라벨 없는 숫자를 어디에도 적지 않는다. 이력을 보여주는 것이 이 랜딩의
-      가장 큰 판단인데, 라벨이 없으면 읽는 사람이 **71% 를 정답률로 읽는다** -
-      그것이 09-04 에 우리가 실제로 한 실수다(`M_커버리지지도` 머리 주석).
-
-    라벨에 들어가야 하는 것: 무엇을 잰 값인가 · 분모 · 언제 · 어느 추출기 ·
-    검수 여부.
+    ⚠ 빼기로 한 것을 빼지 않으면 "숫자가 너무 많다" 는 비평이 그대로 남는다.
     """
     v = _visible(_LANDING)
-
-    # (1) 매칭률과 정답률을 가른다 - 이것이 71% 를 오독하게 만든 축이다.
-    assert "매칭률" in v and "정답률" in v
-    assert "정답률이 아닙니다" in v
-
-    # (2) 분모가 셋 다 다르다는 것을 말한다 (239 · 235 · 135).
-    for n in ("239", "235", "135"):
-        assert n in v, f"분모 {n} 이 안 보인다"
-
-    # (3) 71% 는 **별칭을 만들 때 쓴 표본**이라는 것 - 값이 부풀려진 이유다.
-    assert "별칭을 만들 때 쓴 표본" in v
-
-    # (4) 추출기를 밝힌다. 71%·24% 는 GPT 전환(2026-09-11) 전 값이다 (R7).
-    assert "추출기 Claude" in v, "옛 숫자가 어느 추출기 것인지 없다"
-    assert "기준 추출기 GPT" in v
-
-    # (5) 검수 전인지 후인지.
-    assert "검수 전" in v and "전수 검수" in v
+    for gone in ("71%", "24%", "20.0%", "83.7%", "94개", "88%", "83%", "80%", "70%",
+                 "2026-08-06", "verified", "draft"):
+        assert gone not in v, f"v2 에서 빼기로 한 숫자가 남아 있다: {gone}"
+    # 절 번호도 지웠다.
+    for num in "⓪①②③④⑤⑥":
+        assert num not in v, f"절 번호 {num} 가 남아 있다"
 
 
-# ── 5절 - 하드코딩 금지, /healthz 에서 그린다 (설계 §3-⑤) ─────────
-def test_data_figures_are_not_hardcoded():
+def test_the_phrases_dropped_in_v2_are_really_gone():
+    """지운 말투 (design/README §10-3). "AI 같은 말투는 집어치워" - 시피님."""
     v = _visible(_LANDING)
-    for stale in ("4,244", "4,245", "33,085", "33,105", "verified 21", "draft 55"):
-        assert stale not in v, f"5절 숫자가 하드코딩됐다: {stale}"
+    for gone in ("조사 결과가 먼저 말합니다", "확인해 보자고 만들었습니다",
+                 "이건 결함이 아니라 전제입니다", "안 한 것과 없는 것은 다르다",
+                 "정직한 숫자"):
+        assert gone not in v, f"지우기로 한 문구가 남아 있다: {gone}"
+
+
+def test_data_figures_are_not_hardcoded():
+    """리콜 수·공표일도 그 자리에서 그린다."""
+    v = _visible(_LANDING)
+    for stale in ("4,244", "4,245", "33,085", "33,105", "37,350"):
+        assert stale not in v, f"리콜 수가 하드코딩됐다: {stale}"
     assert 'fetch("/healthz")' in _LANDING
-    for key in ("domestic", "overseas", "as_of", "active", "draft", "gpt", "claude", "commit"):
+    for key in ("recalls", "as_of", "ok_rate", "denominator", "off_target"):
         assert f'data-h="{key}"' in _LANDING, key
     # 값이 안 오면 "-" 로 남는다 - 지어내지 않는다.
     assert '"-"' in _LANDING
@@ -162,9 +161,16 @@ def test_data_figures_are_not_hardcoded():
 # ── 2절 - 무엇을 안 하나 (설계 §3-②) ─────────────────────────────
 def test_the_landing_says_what_it_does_not_do():
     v = _visible(_LANDING)
-    assert "판정하지 않습니다" in v
+    assert "판정은 하지 않습니다" in v
     assert "초록불은 보증이 아닙니다" in v
-    assert "원문 링크" in v                          # R2 를 말한다
+    # R2 를 말한다. v2 에서 자리가 둘로 갈렸다 - 세 칸은 정부 원문으로 링크하고,
+    # 예시 카드 아래가 "모든 줄에 원문 링크가 붙습니다" 를 말한다(스크립트가 그린다).
+    assert v.count("원문 ·") >= 3, "세 칸에 정부 원문 링크가 없다"
+    assert "모든 줄에 원문 링크가 붙습니다" in _LANDING
+    # 무엇을 확인하지 않는지 그대로 적는다 (v2 문구).
+    for item in ("인증번호 도용", "실제 함유량", "앞으로의 리콜",
+                 "상표권 · 원산지", "식약처 소관 품목"):
+        assert item in v, item
     for banned in ("안전합니다", "합법입니다", "판매 가능합니다", "문제없습니다", "걸리지 않습니다."):
         assert banned not in v, banned
 

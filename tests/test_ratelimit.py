@@ -163,8 +163,12 @@ def test_demos_endpoint_is_the_single_source(monkeypatch):
     with TestClient(main.app) as client:
         body = client.get("/api/v1/demos").json()
 
-    assert [d["tone"] for d in body] == ["green", "amber", "red"]
-    assert {d["text"] for d in body} == set(DEMO_TEXTS)
+    # ⚠ 응답이 배열 → 객체로 바뀌었다 ([디자인 v2] ⓷ · 랜딩 예시 카드가
+    #   `preview` 를 읽는다). 면제 목록의 단일 출처라는 계약은 그대로다.
+    items = body["items"]
+    assert [d["tone"] for d in items] == ["green", "amber", "red"]
+    assert {d["text"] for d in items} == set(DEMO_TEXTS)
+    assert "preview" in body
 
 
 def test_healthz_exposes_limit_state():

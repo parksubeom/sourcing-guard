@@ -266,8 +266,11 @@
   var wantDemo = new URLSearchParams(location.search).get("demo");
   fetch("/api/v1/demos")
     .then(function (r) { return r.ok ? r.json() : []; })
-    .then(function (list) {
-      (list || []).forEach(function (d) {
+    .then(function (data) {
+      // 주의: 응답이 배열 → 객체로 바뀌었다(랜딩 예시 카드가 preview 를 쓴다).
+      //   양쪽을 받는다 - watch 에서 같은 변경을 했을 때 화면이 조용히 비었다.
+      var list = (data && data.items) || data || [];
+      list.forEach(function (d) {
         var b = document.createElement("button");
         b.type = "button";
         b.className = "demo";
