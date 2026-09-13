@@ -188,7 +188,10 @@ h3{font-size:19px; line-height:1.3; margin:0 0 var(--s3)}
 .dot{width:12px; height:12px; border-radius:999px; flex:none; margin-top:7px}
 .dot.green{background:var(--success)} .dot.amber{background:var(--warning)} .dot.red{background:var(--danger)}
 .demo b{display:block; font-size:15px; font-weight:700}
-.demo span{display:block; font-size:13px; color:var(--fg-3); margin-top:2px}
+/* 주의: 전에는 `.demo span{display:block}` 이었다. 랜딩 데모가 칩을 span 으로
+   쓰면서 **칩과 점이 block 으로 눕었다**(0,1,1 이 .chip 의 0,1,0 을 이긴다).
+   이 규칙이 노리는 것은 `/scan` 데모 버튼의 **부제 한 줄**이므로 거기로 좁힌다. */
+.demo > span:not([class]){display:block; font-size:13px; color:var(--fg-3); margin-top:2px}
 
 /* ── input ────────────────────────────────────────────── */
 textarea{
@@ -629,7 +632,7 @@ nav.pages a[aria-current="page"]{
 .hero-cta{display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin-top:0}
 .hero-cta a{text-decoration:none}
 @media (max-width:1100px){
-  .hero{grid-template-columns:1fr; padding-top:48px; padding-bottom:48px}
+  .hero{grid-template-columns:1fr; padding-top:48px; padding-bottom:40px}
   .hero-art{display:none}
 }
 
@@ -643,7 +646,8 @@ nav.pages a[aria-current="page"]{
   position:relative; text-decoration:none; box-shadow:none;
 }
 .demo:hover{transform:translateY(-2px); border-color:var(--border-default); box-shadow:none}
-.demo .chip{align-self:flex-start}
+.demo .chip{align-self:flex-start; display:inline-flex}
+.demo .chip .dot{display:inline-block; margin:0}
 .demo .t{display:block; font-size:15px; font-weight:700; line-height:1.4}
 .demo .n{display:block; font-size:12px; line-height:1.5; color:var(--fg-2); margin-top:0}
 /* 앞의 둘은 같은 상품이라 "+" 로 이어 그린다 (설계 2절). */
@@ -660,7 +664,11 @@ nav.pages a[aria-current="page"]{
 .blob1{position:absolute; right:40px; top:20px; width:380px; height:380px; border-radius:50%; background:var(--gray-20)}
 .blob2{position:absolute; left:20px; bottom:40px; width:220px; height:220px; border-radius:50%; background:var(--brand-tint)}
 .mascot-hero{position:absolute; right:24px; top:10px; width:232px; height:232px}
-.paste{
+/* 주의: `/scan` 의 붙여넣기 **버튼**도 `.paste` 다(위 225행 근처). 그쪽이
+   `text-align:center` 라 랜딩 카드 글이 가운데로 정렬됐다 - 이름이 같아서다.
+   여기서 되돌린다. 이름을 가르는 것이 더 낫지만 그건 /scan 을 손볼 때 함께 한다. */
+.hero-art .paste{
+  text-align:left;
   position:absolute; left:40px; top:190px; width:440px; box-sizing:border-box;
   background:var(--bg-canvas); border:1px solid var(--border-default);
   /* 정본(design/landing-hero.html)은 20px 인데 토큰 눈금 최대가 16px(--r-xl)
@@ -669,14 +677,14 @@ nav.pages a[aria-current="page"]{
   border-radius:var(--r-xl); padding:24px 26px;
   display:flex; flex-direction:column; gap:14px;
 }
-.paste .k{font-size:12px; font-weight:700; color:var(--fg-4)}
-.paste .lines{display:flex; flex-direction:column; gap:10px; font-size:15px; line-height:24px}
-.paste .hl{
+.hero-art .paste .k{font-size:12px; font-weight:700; color:var(--fg-4)}
+.hero-art .paste .lines{display:flex; flex-direction:column; gap:10px; font-size:15px; line-height:24px}
+.hero-art .paste .hl{
   align-self:flex-start; padding:2px 8px; margin-left:-8px; border-radius:8px;
   background:var(--brand-tint); color:var(--brand-strong); font-weight:700;
 }
-.paste .rule{height:1px; background:var(--border-default)}
-.paste .foot{font-size:12px; color:var(--fg-4); line-height:1.5}
+.hero-art .paste .rule{height:1px; background:var(--border-default)}
+.hero-art .paste .foot{font-size:12px; color:var(--fg-4); line-height:1.5}
 
 /* 절 공통 -- 카드 문법. 그림자 없음, 선 하나. */
 .sec{padding:56px 0 0}
@@ -760,9 +768,13 @@ nav.pages a[aria-current="page"]{
 .sec .hint{font-size:13px; color:var(--fg-3); margin:12px 0 0}
 
 /* 컨테이너 여백 - 정본(design/landing-hero.html)은 데스크톱 64px · 800 아래 20px.
-   기존 24px 고정이라 넓은 화면에서 본문이 가장자리에 붙어 보였다. */
-.container{padding:0 var(--s16)}
-@media (max-width:800px){ .container{padding:0 var(--s5)} }
+   기존 24px 고정이라 넓은 화면에서 본문이 가장자리에 붙어 보였다.
+
+   주의: `padding:0 64px` shorthand 를 쓰면 **세로 여백까지 0 으로 덮는다.**
+     이 규칙이 .hero 보다 뒤에 있어서 .hero 의 padding-top:88px 이 지워졌고,
+     1440 에서 히어로가 헤더에 붙었다(2026-09-13 측정). 가로만 준다. */
+.container{padding-inline:var(--s16)}
+@media (max-width:800px){ .container{padding-inline:var(--s5)} }
 
 /* 헤더 - 좁은 폭에서는 워드마크와 메뉴를 두 줄로. 한 줄에 밀어 넣으면
    메뉴 글자가 서로 붙는다(390px 실측). */

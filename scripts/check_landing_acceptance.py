@@ -124,6 +124,69 @@ def main() -> int:
                 if "Gowun Dodum" not in family:
                     bad.append(f"[{tag}] 제목 서체가 display 가 아니다: {family}")
 
+                # ⑨ 칩이 눕지 않았나 (2026-09-13 추가)
+                #
+                # ⚠⚠ **눈에 보이는 결함을 이 스크립트가 못 잡았다.** 옛
+                #   `.demo span{display:block}` 이 칩과 점을 block 으로 눕혀
+                #   점이 글자 위에 얹혔는데, 앞의 검사는 "칩이 있나" 만 봤다.
+                #   **있는지가 아니라 어떻게 그려지는지를 본다.**
+                # ⚠ `display` 이름으로 재지 않는다. `.demo` 가 flex 컨테이너라
+                #   자식의 `inline-flex` 는 명세대로 `flex` 로 **블록화**된다 -
+                #   이름만 보면 정상을 결함으로 읽는다(실제로 그랬다).
+                #   **점과 글자가 가로로 나란한가**를 좌표로 잰다.
+                chips = page.evaluate("""() => {
+                    const out = [];
+                    for (const c of document.querySelectorAll('#demos .demo .chip')) {
+                        const dot = c.querySelector('.dot');
+                        const r = c.getBoundingClientRect();
+                        if (!dot) { out.push({err: 'no-dot'}); continue; }
+                        const d = dot.getBoundingClientRect();
+                        // 칩 안 글자만의 상자 = 칩에서 점을 뺀 나머지
+                        const range = document.createRange();
+                        range.selectNodeContents(c);
+                        const t = range.getBoundingClientRect();
+                        out.push({
+                            chipW: r.width, chipH: r.height,
+                            dotRight: d.right, textLeft: t.left,
+                            sameRow: Math.abs((d.top + d.height / 2) - (r.top + r.height / 2)) < 6,
+                            tall: r.height > 40,
+                        });
+                    }
+                    return out;
+                }""")
+                if len(chips) != 3:
+                    bad.append(f"[{tag}] 칩이 3개가 아니다: {len(chips)}")
+                for i, c in enumerate(chips):
+                    if c.get("err"):
+                        bad.append(f"[{tag}] 데모 {i} 칩에 점이 없다")
+                        continue
+                    if not c["sameRow"]:
+                        bad.append(f"[{tag}] 데모 {i} 점이 글자와 같은 줄이 아니다")
+                    if c["tall"]:
+                        bad.append(
+                            f"[{tag}] 데모 {i} 칩이 {c['chipH']:.0f}px 로 높다 - "
+                            "점이 글자 위에 얹혔을 때의 모양이다")
+
+                # ⑩ 히어로 상단 여백 (1440 에서만 · 좁은 폭은 값이 다르다)
+                #
+                # ⚠ `.container{padding:0 64px}` shorthand 가 `.hero` 의 세로
+                #   여백을 0 으로 덮은 적이 있다. 가로를 고치다 세로를 날렸다.
+                if width >= 1100:
+                    pad = page.eval_on_selector(
+                        ".hero", "e => parseFloat(getComputedStyle(e).paddingTop)")
+                    if pad < 64:
+                        bad.append(f"[{tag}] 히어로 상단 여백이 {pad:.0f}px (64 이상이어야 한다)")
+
+                # ⑪ 붙여넣기 카드가 왼쪽 정렬인가
+                #
+                # ⚠ `/scan` 의 붙여넣기 **버튼**도 `.paste` 라 그쪽의
+                #   `text-align:center` 를 물려받아 카드 글이 가운데로 갔다.
+                #   **이름이 같은 것이 원인이다.**
+                    align = page.eval_on_selector(
+                        ".hero-art .paste", "e => getComputedStyle(e).textAlign")
+                    if align not in ("left", "start"):
+                        bad.append(f"[{tag}] 붙여넣기 카드 정렬이 {align} 다 (left 여야 한다)")
+
                 # ⑧ 파비콘
                 icon = page.eval_on_selector("link[rel=icon]", "e => e.href")
                 if not icon or not icon.endswith("favicon.svg"):
