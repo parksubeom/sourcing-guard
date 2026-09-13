@@ -58,7 +58,9 @@ def test_both_pages_use_the_same_stylesheet(pages):
     """배지·색·톤이 두 화면에서 갈리면 같은 RED 를 다른 것으로 읽는다."""
     for name, src in pages.items():
         assert '/static/app.css' in src, name
-        assert "<style>" not in src, f"{name} 에 페이지 전용 스타일이 생겼습니다"
+        # ⚠ 실제 태그만 본다 - 주석의 설명 문구에 걸리지 않게.
+        assert not re.search(r"<style[\s>]", src), (
+            f"{name} 에 페이지 전용 스타일이 생겼습니다")
 
 
 def test_no_emoji_anywhere(html):
@@ -74,17 +76,50 @@ def test_focus_outline_is_never_removed(html):
 
 
 def test_body_does_not_use_h1(html):
-    """헤딩 위계는 H2 이하로 운영한다."""
-    assert not re.search(r"<h1[\s>]", html, re.I)
+    """도구 화면(`/scan` 등)은 H2 이하로 운영한다.
+
+    ⚠⚠ **랜딩은 예외다** (2026-09-13). 도구 화면은 페이지 제목이 워드마크이고
+      본문이 h2 부터인데, **랜딩의 주제목은 그 페이지가 무엇인가를 말하는
+      한 줄**이라 h1 이 맞다 - 스크린리더가 페이지를 식별하는 자리다.
+      `design/landing-hero.html` 정본도 `<h1 class="t-display">` 다.
+
+    ⚠ 예외를 두되 **하나만** 허용한다. 둘 이상이면 위계가 무너진다.
+    """
+    from pathlib import Path as _Path
+
+    for name in PAGES:
+        body = (STATIC / name).read_text(encoding="utf-8")
+        found = re.findall(r"<h1[\s>]", body, re.I)
+        if _Path(name).stem == "landing":
+            assert len(found) <= 1, f"{name}: h1 이 {len(found)}개 - 하나만 둔다"
+            continue
+        assert not found, f"{name}: 도구 화면은 h2 이하로 운영한다"
 
 
 def test_corner_radius_stays_within_scale(html):
-    """12px 상한. pill(999px)은 칩·점 전용으로 예외."""
-    over = [
-        v for v in re.findall(r"border-radius:\s*(\d+)px", html)
-        if 12 < int(v) < 999
-    ]
-    assert not over, f"라운드 상한 초과: {over}"
+    """반경은 **토큰 눈금 안**에 있어야 한다. pill(999px)은 칩·점 전용 예외.
+
+    ⚠⚠ **2026-09-13 에 상한이 12 → 토큰 최대값으로 바뀌었다.** 디자인 시스템
+      v0.1 이 카드 16px · 붙여넣기 카드 20px 을 쓴다. 숫자를 여기 다시 적지
+      않고 `design/tokens.css` 의 `--r-*` 최대값을 읽는다 - 두 곳에 적으면
+      토큰을 올릴 때 이 검사만 낡는다 (6절).
+    """
+    import re as _re
+    from pathlib import Path as _Path
+
+    tokens = (_Path(__file__).resolve().parents[1] / "design/tokens.css").read_text(
+        encoding="utf-8")
+    scale = sorted(int(v) for v in _re.findall(r"--r-[a-z]+:\s*(\d+)px", tokens)
+                   if int(v) < 999)
+    assert scale, "토큰에서 --r-* 를 못 읽었다"
+    ceiling = scale[-1]
+    over = sorted({
+        int(v) for v in re.findall(r"border-radius:\s*(\d+)px", html)
+        if ceiling < int(v) < 999
+    })
+    assert not over, (
+        f"라운드 상한({ceiling}px · design/tokens.css 의 --r-* 최대값) 초과: {over}"
+    )
 
 
 def test_no_government_identity_is_borrowed(html):

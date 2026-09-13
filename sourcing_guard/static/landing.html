@@ -10,10 +10,16 @@
 <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
 <link rel="stylesheet" href="/static/app.css">
 <!--
-  [G-1] 랜딩 - 디자인 무관 구조만. 로고·색·파비콘 없음, app.css 기존 클래스만.
-  마크 자리는 빈 span 이다 (디자인은 시피님이 새로 한다 · 돋이 전제 2026-09-11 폐기).
-  데모 버튼 문구는 /api/v1/demos, 5절 숫자는 /healthz 에서 온다. 하드코딩하지 않는다.
-  4절 숫자는 tests/test_landing.py 가 audit_tally.BASELINE 과 대조한다.
+  랜딩 - 디자인 시스템 v0.1 적용 (2026-09-13 · design/landing-hero.html 이 정본).
+  스타일은 app.css 의 "랜딩 첫 화면" 절에만 있다. 페이지 전용 스타일 태그를
+  여기 두지 않는다 (검사가 막는다 - 그 태그 이름을 주석에 적어도 걸린다).
+
+  숫자는 어디에도 하드코딩하지 않는다:
+    데모 문구  /api/v1/demos
+    0절 숫자   /static/data/안전성조사_보도자료.json
+    4절 숫자   tests/test_landing.py 가 audit_tally.BASELINE 과 대조
+    5절 숫자   /healthz
+  마스코트는 aria-hidden 이다 - 뜻을 나르지 않는다.
 -->
 </head>
 <body>
@@ -21,8 +27,10 @@
 
 <header class="masthead">
   <div class="container">
-    <span class="mark" aria-hidden="true"></span>
-    <span class="wordmark">안심 소싱 돋보기</span>
+    <a class="brand" href="/">
+      <svg class="mark" viewBox="0 0 120 120" aria-hidden="true"><use href="/static/mascot.svg#mungchi-calm"/></svg>
+      <span class="wordmark">안심 소싱 돋보기</span>
+    </a>
     <nav class="pages" aria-label="주요 화면">
       <a href="/" aria-current="page">소개</a>
       <a href="/scan">상품 검사</a>
@@ -32,39 +40,78 @@
   </div>
 </header>
 
-<div class="intro">
-  <div class="container">
-    <h2>이 상품, 팔아도 되는지 확인합니다</h2>
-    <p>상품 상세페이지 내용을 붙여넣으면 KC 인증번호가 조회되는지, 이미 리콜된 모델인지,
-       어떤 유해물질 기준이 걸리는지를 정부 데이터로 확인합니다. 모든 결과에 원문 링크가 붙습니다.</p>
-    <p class="hint">아래 예시 세 개는 서버가 준비한 문구입니다. 누르면 검사 화면으로 넘어가 바로 결과가 나옵니다.</p>
-    <div class="demos" id="demos" aria-label="예시로 바로 보기"></div>
-    <p class="actions"><a class="btn" href="/scan">내 상품으로 해보기</a></p>
+<section class="container hero">
+  <div class="hero-left">
+    <div class="hero-copy">
+      <h1 class="t-display">이 상품, 팔아도 되는지<br>확인합니다</h1>
+      <p class="lead">상품 상세페이지 내용을 붙여넣으면 KC 인증번호가 조회되는지, 이미 리콜된
+         모델인지, 어떤 유해물질 기준이 걸리는지를 정부 데이터로 확인합니다. 모든 결과에
+         원문 링크가 붙습니다.</p>
+    </div>
+    <div class="demos-wrap">
+      <div class="demos-label">예시로 바로 보기</div>
+      <!-- 문구·순서·개수는 /api/v1/demos 가 단일 출처. 스크립트가 그린다. -->
+      <div class="demos" id="demos" aria-label="예시로 바로 보기"></div>
+    </div>
+    <div class="hero-cta">
+      <a class="btn-primary" href="/scan">내 상품으로 해보기</a>
+      <a class="btn-ghost" href="#not-h">무엇을 안 하는지 먼저 보기 ↓</a>
+    </div>
   </div>
-</div>
+  <div class="hero-art" aria-hidden="true">
+    <div class="blob1"></div><div class="blob2"></div>
+    <!-- 마스코트가 카드 뒤에서 내려다본다 (DOM 순서: 마스코트 → 카드) -->
+    <svg class="mascot-hero" viewBox="0 0 120 120"><use href="/static/mascot.svg#mungchi-look"/></svg>
+    <div class="paste">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <span class="k">붙여넣은 상세페이지</span><span class="foot">4줄</span>
+      </div>
+      <div class="lines">
+        <span>완구 매직액체 슬라임 장난감</span>
+        <span>KC 인증번호 <b>CB061R2170-3018</b></span>
+        <span>대상연령 3세 이상</span>
+        <span class="hl">재질 PVC</span>
+      </div>
+      <div class="rule"></div>
+      <div class="foot">이 한 줄이 초록을 주의로 바꿉니다. 왜 그런지는 결과에 원문 링크로 붙습니다.</div>
+    </div>
+  </div>
+</section>
 
 <main id="main">
   <div class="container">
 
-    <section aria-labelledby="why-h">
-      <h3 id="why-h">0. 왜 만들었나</h3>
-      <p class="hint">아래 숫자는 정부 보도자료 원문에서 옮긴 것입니다. 표적 조사라 무작위
-         표본이 아니고, 국내 평균은 조사 설계가 달라 직접 비교할 수 없습니다.</p>
-      <dl class="axes" id="why-figures">
-        <dt data-p="card1-dt">-</dt>
-        <dd data-p="card1-dd">-</dd>
-        <dt data-p="card2-dt">-</dt>
-        <dd data-p="card2-dd">-</dd>
-        <dt data-p="card3-dt">-</dt>
-        <dd data-p="card3-dd">-</dd>
-      </dl>
-      <p class="promise">부적합으로 공표되면 판매 중지 통보와 공개, 고발·과태료가 그 상품을
+    <section class="sec why" aria-labelledby="why-h">
+      <div class="sec-head"><span class="sec-num">0</span><h2 id="why-h">왜 만들었나 - 조사 결과가 먼저 말합니다</h2></div>
+      <p class="lead">국가기술표준원은 온라인에서 팔리는 제품을 사서 국내 안전기준으로
+         시험합니다. 부적합으로 공표되면 판매 중지 통보와 공개, 고발·과태료가 그 상품을
          올린 사람의 몫으로 이어집니다. 소싱 단계에서 확인할 수 있는 것부터 확인해
          보자고 만들었습니다.</p>
+      <!-- 숫자·문구·출처는 /static/data/안전성조사_보도자료.json 에서 그린다.
+           HTML 에는 숫자를 적지 않는다 (tests/test_landing_why.py 가 막는다). -->
+      <div class="cards3" id="why-figures">
+        <div class="card">
+          <div class="num" data-p="card1-dt">-</div>
+          <div class="body" data-p="card1-dd">-</div>
+          <a class="src" data-p="card1-src" href="#">-</a>
+        </div>
+        <div class="card">
+          <div class="num" data-p="card2-dt">-</div>
+          <div class="body" data-p="card2-dd">-</div>
+          <a class="src" data-p="card2-src" href="#">-</a>
+        </div>
+        <div class="card soft">
+          <div class="num" data-p="card3-dt">-</div>
+          <div class="body" data-p="card3-dd">-</div>
+          <span class="src muted">있는 것과 없는 것을 같은 칸에 적습니다</span>
+        </div>
+      </div>
+      <p class="note">표적 조사라 무작위 표본이 아니고, 국내 평균은 조사 설계가 달라
+         직접 비교할 수 없습니다.</p>
     </section>
 
-    <section aria-labelledby="does-h">
-      <h3 id="does-h">1. 무엇을 확인하나</h3>
+    <section class="sec" aria-labelledby="does-h">
+      <div class="sec-head"><span class="sec-num">1</span><h2 id="does-h">무엇을 확인하나</h2></div>
       <dl class="axes">
         <dt>KC 인증번호 조회</dt>
         <dd>번호가 국가기술표준원 인증 DB 에 실재하는지, 상태가 무엇인지(적합·취소·효력상실 등)를 조회합니다.</dd>
@@ -76,18 +123,20 @@
       <p class="hint">세 칸 모두 결과마다 정부 원문 링크가 붙습니다. 근거 없는 항목은 화면에 나올 수 없게 만들어져 있습니다.</p>
     </section>
 
-    <section aria-labelledby="not-h">
-      <h3 id="not-h">2. 무엇을 하지 않나</h3>
-      <p class="promise">합법인지 불법인지 판정하지 않습니다.</p>
+    <section class="sec sec-not" aria-labelledby="not-h">
+      <div class="sec-head"><span class="sec-num">2</span><h2 id="not-h">무엇을 하지 않나</h2></div>
+      <div class="card">
+      <p class="big">합법인지 불법인지 판정하지 않습니다.</p>
       <ul>
         <li>초록불은 보증이 아닙니다. 우리는 상세페이지에 적힌 글을 읽고, 단속은 실물을 수거해 시험합니다.</li>
         <li>확인하지 못하는 것: 인증번호 도용, 실제 함유량, 아직 공표되지 않은 리콜, 식약처 소관 품목, 상표권·원산지.</li>
         <li>이것은 빠진 기능이 아니라 이 도구의 전제입니다. "걸리지 않는다" 고 말하는 순간 사후 책임이 도구 쪽으로 옵니다. 그래서 사실과 근거만 놓고 판단은 셀러가 합니다.</li>
       </ul>
+      </div>
     </section>
 
-    <section aria-labelledby="how-h">
-      <h3 id="how-h">3. AI 는 어디에 쓰나</h3>
+    <section class="sec" aria-labelledby="how-h">
+      <div class="sec-head"><span class="sec-num">3</span><h2 id="how-h">AI 는 어디에 쓰나</h2></div>
       <dl class="axes">
         <dt>언어 모델이 하는 일</dt>
         <dd>상세페이지에서 상품명·모델명·재질·연령·인증번호를 뽑고, 법령 품목명으로 옮겨 적습니다. 추출·분류·설명까지입니다.</dd>
@@ -98,9 +147,14 @@
       </dl>
     </section>
 
-    <section aria-labelledby="num-h">
-      <h3 id="num-h">4. 숫자 - 이력을 그대로 둡니다</h3>
-      <p class="hint">실제 도매 사이트 상품명 235건을 사람이 전수 검수한 결과입니다. 데모와 같은 단건 경로 · 상품명만 입력 · 기준 추출기 GPT.</p>
+    <section class="sec" aria-labelledby="num-h">
+      <div class="sec-head"><span class="sec-num">4</span><h2 id="num-h">숫자 - 이력을 그대로 둡니다</h2></div>
+      <p class="lead">실제 도매 사이트 상품명 235건을 사람이 전수 검수한 결과입니다. 데모와 같은 단건 경로 · 상품명만 입력 · 기준 추출기 GPT.</p>
+      <div class="card">
+      <div class="fig-pair">
+        <div class="fig"><span class="v">70.4%</span><span class="k">검수 완료 정답 · 135건 중 95건</span></div>
+        <div class="fig dim"><span class="v">83.7%</span><span class="k">미검수 포함 상한 · 113건</span></div>
+      </div>
       <dl class="axes" id="figures">
         <dt>검수 완료 정답</dt>
         <dd>안전관리대상 135건 중 <b>95건 (70.4%)</b> - 사람이 확인한 (상품명, 품목) 쌍만 셉니다.</dd>
@@ -121,10 +175,11 @@
         <dd>그 235건을 <b>사람이 전수 검수한 첫 정답률</b>입니다 (2026-09-06 · 분모 235). 붙은 것 중 상당수가 틀렸습니다. 이후 분모를 안전관리대상만으로 좁히고(135건) 규칙을 넣어 위 표의 값이 되었습니다.</dd>
       </dl>
       <p class="hint">71%와 24%는 <b>매칭률</b>(품목이 붙은 비율)이고 20.0%부터가 <b>정답률</b>(사람이 맞다고 확인한 비율)입니다. 분모도 다릅니다 - 71%는 239건, 24%와 20.0%는 235건 전체, 위 표는 그중 안전관리대상 135건입니다.</p>
+      </div>
     </section>
 
-    <section aria-labelledby="data-h">
-      <h3 id="data-h">5. 데이터</h3>
+    <section class="sec" aria-labelledby="data-h">
+      <div class="sec-head"><span class="sec-num">5</span><h2 id="data-h">데이터</h2></div>
       <dl class="axes">
         <dt>리콜 로컬 사본</dt>
         <dd>국내 <span data-h="domestic">-</span>건 · 국외 <span data-h="overseas">-</span>건 · 최신 공표일 <span data-h="as_of">-</span> · 매일 갱신. 공개 트래픽이 정부 API 를 직접 건드리지 않습니다.</dd>
@@ -163,16 +218,31 @@
     .then(function (r) { return r.ok ? r.json() : []; })
     .then(function (list) {
       var box = document.getElementById("demos");
-      (list || []).forEach(function (d) {
+      // tone(green/amber/red) → 칩 클래스와 짧은 말. 서버의 SIGNAL_SHORT 와 같다.
+      var SHORT = { green: "정상", amber: "주의", red: "위험" };
+      (list || []).forEach(function (d, i) {
         var a = document.createElement("a");
         a.className = "demo";
         a.href = "/scan?demo=" + encodeURIComponent(d.tone);
-        var dot = document.createElement("span"); dot.className = "dot " + d.tone; dot.setAttribute("aria-hidden", "true");
-        var wrap = document.createElement("span");
-        var b = document.createElement("b"); b.textContent = d.title;
-        var n = document.createElement("span"); n.textContent = d.note;
-        wrap.appendChild(b); wrap.appendChild(n);
-        a.appendChild(dot); a.appendChild(wrap);
+
+        var chip = document.createElement("span");
+        chip.className = "chip " + String(d.tone || "").toUpperCase();
+        var dot = document.createElement("span"); dot.className = "dot";
+        chip.appendChild(dot);
+        chip.appendChild(txt(SHORT[d.tone] || ""));
+
+        var b = document.createElement("span"); b.className = "t"; b.textContent = d.title;
+        var n = document.createElement("span"); n.className = "n"; n.textContent = d.note;
+        a.appendChild(chip); a.appendChild(b); a.appendChild(n);
+
+        // 앞의 둘은 같은 상품이라 "+" 로 이어 그린다 (랜딩 설계 2절).
+        // 서버가 준 순서에서 첫째 칸에만 붙인다 - 개수가 늘면 안 붙는다.
+        if (i === 0 && (list || []).length >= 2) {
+          var plus = document.createElement("span");
+          plus.className = "plus"; plus.setAttribute("aria-hidden", "true");
+          plus.textContent = "+";
+          a.appendChild(plus);
+        }
         box.appendChild(a);
       });
     })
@@ -181,11 +251,13 @@
   // ⓪ 절 숫자 - 정부 보도자료 원자료에서 그린다. **HTML 에 적지 않는다.**
   //   검사가 이 절의 마크업에 숫자가 있으면 실패시킨다 (tests/test_landing_why.py).
   //   ④ 가 기획서를 잠그는 것과 같은 방식이다 - 숫자의 출처를 하나로 둔다.
-  function setP(key, node) {
+  function setP(key, node, href) {
     var els = document.querySelectorAll('[data-p="' + key + '"]');
     for (var i = 0; i < els.length; i++) {
       els[i].textContent = "";
       els[i].appendChild(node.cloneNode(true));
+      // 출처 링크는 주소도 원자료에서 온다 - HTML 에 적지 않는다.
+      if (href) { els[i].setAttribute("href", href); els[i].setAttribute("rel", "noopener"); els[i].setAttribute("target", "_blank"); }
     }
   }
   function txt(t) { return document.createTextNode(t); }
@@ -200,6 +272,23 @@
     a.rel = "noopener"; a.target = "_blank"; return a;
   }
   function ratio(it) { return it.부적합_수 + "/" + it.조사_수 + "(" + it.부적합률 + "%)"; }
+  // 큰 숫자 한 칸: 값 + 단위 + 옆의 작은 부제. 숫자는 전부 원자료에서 온다.
+  function bigNum(value, unit, sub, small) {
+    var wrap = document.createElement("span");
+    wrap.className = "t-num";
+    if (small) { wrap.style.fontSize = "30px"; wrap.style.lineHeight = "40px"; }
+    wrap.appendChild(txt(String(value)));
+    if (unit) {
+      var u = document.createElement("span");
+      u.className = "numlbl";
+      u.style.fontSize = small ? "18px" : "22px";
+      u.textContent = unit;
+      wrap.appendChild(u);
+    }
+    var out = [wrap];
+    if (sub) { var sm = document.createElement("small"); sm.textContent = sub; out.push(sm); }
+    return frag(out);
+  }
 
   fetch("/static/data/안전성조사_보도자료.json")
     .then(function (r) { return r.ok ? r.json() : null; })
@@ -213,18 +302,21 @@
       var b = pick("2026-08-06-해외직구");
       if (!a || !b) return;
 
-      setP("card1-dt", frag(["해외 구매대행 제품 ", bold(a.부적합률 + "%"), "가 국내 안전기준에 부적합했습니다"]));
+      setP("card1-dt", bigNum(a.부적합률, "%",
+        "국내 유통 평균 " + a.국내_유통_평균_부적합률 + "% 와 조사 설계가 다릅니다"));
       setP("card1-dd", frag([
-        a.조사_수 + "개를 조사해 " + a.부적합_수 + "개가 부적합. 같은 자료가 적은 국내 유통제품 평균은 "
-          + a.국내_유통_평균_부적합률 + "% 입니다. ",
-        a.기관 + " " + a.게시일 + " ", link(a.url, "원문")
+        "국내 온라인 플랫폼의 해외 구매대행 제품 ",
+        bold(a.조사_수 + "개 중 " + a.부적합_수 + "개"), "가 안전기준 부적합. ",
+        (a.조치 && a.조치[0]) ? a.조치[0] + "." : ""
       ]));
+      setP("card1-src", frag([a.기관 + " 보도자료 · " + a.게시일 + " → 원문"]), a.url);
 
-      setP("card2-dt", frag([bold(b.부적합_수 + "개"), " 제품이 통관·판매에서 차단됐습니다"]));
+      setP("card2-dt", bigNum(b.부적합_수, "개", "해외직구 " + b.조사_수 + "개 조사"));
       setP("card2-dd", frag([
-        b.조사_수 + "개 중 " + b.부적합_수 + "개(" + b.부적합률 + "%). " + (b.조치[0] || "") + ", " + (b.조치[1] || "") + ". ",
-        b.기관 + " " + b.게시일 + " ", link(b.url, "원문")
+        b.조사_수 + "개 중 " + b.부적합_수 + "개(" + b.부적합률 + "%). ",
+        (b.조치[0] || ""), ", ", (b.조치[1] || ""), "."
       ]));
+      setP("card2-src", frag([b.기관 + " 보도자료 · " + b.게시일 + " → 원문"]), b.url);
 
       // 셋째 칸 - 품목별로 크게 갈린다. 있는 것과 없는 것을 **같은 칸에** 적는다.
       var picked = ["속눈썹 열 성형기", "LED등기구", "휴대용 레이저용품", "승차용 안전모"];
@@ -234,7 +326,11 @@
       }).filter(Boolean);
       var top = a.품목별.reduce(function (m, x) { return Math.max(m, x.부적합률); }, 0);
 
-      setP("card3-dt", frag(["품목에 따라 ", bold(top + "%"), " 까지 올라갑니다"]));
+      var rates = picked.map(function (name) {
+        var hit = a.품목별.filter(function (x) { return x.품목 === name; })[0];
+        return hit ? hit.부적합률 : null;
+      }).filter(function (v) { return v !== null; });
+      setP("card3-dt", bigNum(rates.join(" · "), "%", "", true));
       setP("card3-dd", frag([
         items.join(" · ") + ". ",
         "이 중 승차용 안전모·휴대용 레이저용품·속눈썹 열 성형기는 규칙 DB 에 검수된 기준이 있어, "

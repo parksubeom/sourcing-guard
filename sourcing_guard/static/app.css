@@ -150,7 +150,9 @@ body{
 }
 .container{max-width:1248px; margin:0 auto; padding:0 var(--s6)}
 :focus-visible{outline:2px solid var(--border-focus); outline-offset:2px}
-.skip{position:absolute; left:-9999px}
+/* 주의: 색을 지정하지 않으면 브라우저 기본 링크색(파랑)이 남는다. 화면 밖에
+   있어 사람 눈엔 안 보이지만 '파란색 0곳' 기준에는 걸린다 - 실제로 걸렸다. */
+.skip{position:absolute; left:-9999px; color:var(--brand)}
 .skip:focus{left:var(--s4); top:var(--s4); z-index:10; background:var(--primary-50); color:#fff; padding:var(--s2) var(--s4); border-radius:var(--r-s)}
 
 /* ── masthead ─────────────────────────────────────────── */
@@ -585,3 +587,191 @@ h1, h2, .wordmark, .intro h2{
  * 주의: var(--surface-2, transparent) 는 폴백이 있어 무해하다. 폴백이 있으면
  *   선언이 무효가 되지 않는다 - 그래서 고치지 않았다.
  */
+
+/* == 랜딩 첫 화면 (design/landing-hero.html 을 옮겨 온 것) =============
+ * 정본은 design/landing-hero.html 이다. 값을 여기서 고치지 말고 그쪽을
+ * 고친 뒤 옮긴다 - 두 곳에 적으면 한쪽이 낡는다 (CLAUDE.md 6절).
+ *
+ * 주의: 이 절은 랜딩(/)만 쓴다. /scan · /batch · /watch 는 위의 공용 규칙을
+ *   그대로 쓴다 - 헤더·칩·로딩은 다음 커밋에서 옮긴다.
+ */
+
+/* 헤더 -- 마크가 실제 그림이라 자리가 맞는다. 빈 span 이던 때는 워드마크가
+   본문보다 오른쪽으로 밀려 보였다(좌측선 불일치). */
+.masthead .container{justify-content:space-between}
+.brand{display:flex; align-items:center; gap:10px; text-decoration:none; color:inherit}
+.brand .mark{width:32px; height:32px; flex:none}
+.wordmark{font-family:var(--font-display); font-weight:400; font-size:20px}
+nav.pages{display:flex; gap:28px; font-size:14px; font-weight:500; color:var(--fg-2)}
+nav.pages a{color:inherit; text-decoration:none}
+/* 활성 메뉴는 칩이 아니라 밑줄이다 - 칩은 신호등 칩과 헷갈린다. */
+nav.pages a[aria-current="page"]{
+  color:var(--fg-1); font-weight:700;
+  background:none; border-radius:0; padding:0 0 2px;
+  border-bottom:2px solid var(--brand);
+}
+
+/* 히어로 -- 2열. 크림 바탕 위에 띠를 두지 않는다. */
+.hero{
+  display:grid; grid-template-columns:640px minmax(0,1fr); gap:56px;
+  align-items:center; box-sizing:border-box;
+  /* 주의: 좌우는 .container 가 준다. `padding:88px 0 72px` 로 쓰면 좌우가 0 이
+     되고, 넓은 화면에서는 max-width 여백에 가려 안 보이다가 **390px 에서만
+     본문이 가장자리에 붙는다.** 2026-09-13 에 그렇게 나왔다. */
+  padding-top:88px; padding-bottom:72px;
+}
+.hero-left{display:flex; flex-direction:column; gap:28px}
+.hero-copy{display:flex; flex-direction:column; gap:18px}
+.hero h1{margin:0}
+.hero .lead{margin:0; font-size:17px; line-height:28px; color:var(--fg-2); max-width:560px}
+.demos-wrap{display:flex; flex-direction:column; gap:10px}
+.demos-label{font-size:12px; font-weight:700; color:var(--fg-4); letter-spacing:.04em}
+.hero-cta{display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin-top:0}
+.hero-cta a{text-decoration:none}
+@media (max-width:1100px){
+  .hero{grid-template-columns:1fr; padding-top:48px; padding-bottom:48px}
+  .hero-art{display:none}
+}
+
+/* 데모 카드 -- 칩 + 굵은 제목 + 회색 부제. 밑줄 없음. */
+.demos{display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px}
+@media (max-width:800px){ .demos{grid-template-columns:1fr} }
+.demo{
+  display:flex; flex-direction:column; gap:8px; padding:16px 18px;
+  border-radius:16px; text-align:left; font:inherit; color:inherit; cursor:pointer;
+  background:var(--bg-canvas); border:1px solid var(--border-default);
+  position:relative; text-decoration:none; box-shadow:none;
+}
+.demo:hover{transform:translateY(-2px); border-color:var(--border-default); box-shadow:none}
+.demo .chip{align-self:flex-start}
+.demo .t{display:block; font-size:15px; font-weight:700; line-height:1.4}
+.demo .n{display:block; font-size:12px; line-height:1.5; color:var(--fg-2); margin-top:0}
+/* 앞의 둘은 같은 상품이라 "+" 로 이어 그린다 (설계 2절). */
+.demo .plus{
+  position:absolute; right:-19px; top:50%; transform:translateY(-50%);
+  width:26px; height:26px; border-radius:50%; background:var(--brand); color:#fff;
+  display:flex; align-items:center; justify-content:center;
+  font-size:16px; font-weight:700; z-index:1;
+}
+@media (max-width:800px){ .demo .plus{display:none} }
+
+/* 히어로 오른쪽 그림 */
+.hero-art{position:relative; height:520px}
+.blob1{position:absolute; right:40px; top:20px; width:380px; height:380px; border-radius:50%; background:var(--gray-20)}
+.blob2{position:absolute; left:20px; bottom:40px; width:220px; height:220px; border-radius:50%; background:var(--brand-tint)}
+.mascot-hero{position:absolute; right:24px; top:10px; width:232px; height:232px}
+.paste{
+  position:absolute; left:40px; top:190px; width:440px; box-sizing:border-box;
+  background:var(--bg-canvas); border:1px solid var(--border-default);
+  /* 정본(design/landing-hero.html)은 20px 인데 토큰 눈금 최대가 16px(--r-xl)
+     이다. 눈금 밖 값을 하나 두면 다음 사람이 22·24 를 더한다 - 눈금에 맞춘다.
+     정본을 고칠지는 시피님 확정(README 9절) 때 함께 본다. */
+  border-radius:var(--r-xl); padding:24px 26px;
+  display:flex; flex-direction:column; gap:14px;
+}
+.paste .k{font-size:12px; font-weight:700; color:var(--fg-4)}
+.paste .lines{display:flex; flex-direction:column; gap:10px; font-size:15px; line-height:24px}
+.paste .hl{
+  align-self:flex-start; padding:2px 8px; margin-left:-8px; border-radius:8px;
+  background:var(--brand-tint); color:var(--brand-strong); font-weight:700;
+}
+.paste .rule{height:1px; background:var(--border-default)}
+.paste .foot{font-size:12px; color:var(--fg-4); line-height:1.5}
+
+/* 절 공통 -- 카드 문법. 그림자 없음, 선 하나. */
+.sec{padding:56px 0 0}
+.sec-head{display:flex; align-items:baseline; gap:16px; margin-bottom:10px}
+.sec-num{font-family:var(--font-display); font-size:14px; color:var(--brand)}
+.sec h2{margin:0; font-family:var(--font-display); font-weight:400; font-size:28px}
+.sec .lead{margin:0 0 24px; font-size:15px; line-height:24px; color:var(--fg-2); max-width:880px}
+.card{
+  display:flex; flex-direction:column; gap:10px; padding:24px;
+  background:var(--bg-canvas); border:1px solid var(--border-default);
+  border-radius:16px;
+}
+.card.soft{background:var(--bg-subtle)}
+.cards3{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px}
+@media (max-width:900px){ .cards3{grid-template-columns:1fr} }
+.cards2{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px}
+@media (max-width:900px){ .cards2{grid-template-columns:1fr} }
+
+/* 0절 카드 */
+.why .num{display:flex; align-items:baseline; gap:10px}
+.why .num small{font-size:13px; color:var(--fg-2)}
+.why .body{font-size:14px; line-height:22px; color:var(--fg-2)}
+.why .body b{color:var(--fg-1)}
+.why .src{font-size:12px; color:var(--brand); margin-top:auto; text-decoration:none}
+/* 링크가 아닌 꼬리말. 인라인 색을 쓰지 않는다 - 검사가 막고, 옳다. */
+.why .src.muted{color:var(--fg-4)}
+.numlbl{color:var(--fg-4)}
+.why .note{font-family:var(--font-mono); font-size:11px; line-height:1.5; color:var(--fg-4); margin:16px 0 0}
+
+/* 2절 -- 안 하는 것. 오키드 왼쪽 띠. */
+.sec-not .card{
+  background:var(--bg-subtle);
+  border-left:6px solid var(--brand);
+  border-radius:16px;
+}
+.sec-not .big{margin:0; font-size:34px; line-height:44px; font-family:var(--font-display); font-weight:400}
+.sec-not ul{margin:16px 0 0; padding-left:20px; color:var(--fg-2); font-size:15px; line-height:26px}
+
+/* 4절 -- 큰 숫자 둘 나란히 */
+.fig-pair{display:flex; gap:40px; flex-wrap:wrap; align-items:baseline}
+.fig{display:flex; flex-direction:column; gap:4px}
+.fig .v{font-family:var(--font-display); font-size:44px; line-height:52px}
+.fig.dim .v{color:var(--fg-3)}
+.fig .k{font-size:13px; color:var(--fg-2)}
+
+/* 목록형 카드 (1·3·5절) */
+.rows{display:flex; flex-direction:column; gap:0}
+.row{display:grid; grid-template-columns:180px minmax(0,1fr); gap:16px; padding:14px 0; border-top:1px solid var(--border-default)}
+.row:first-child{border-top:0}
+.row .k{font-weight:700; font-size:14px}
+.row .v{font-size:14px; line-height:22px; color:var(--fg-2)}
+@media (max-width:640px){ .row{grid-template-columns:1fr; gap:4px} }
+
+/* 랜딩의 dl.axes 는 결과 화면의 인라인 요약과 **다른 것**이다.
+   결과 화면 .axes 는 한 줄 요약 띠이고, 랜딩은 "항목 - 설명" 목록이다.
+   같은 클래스를 쓰고 있었어서 베이지 띠로 그려졌다 - 랜딩 안에서만 덮는다.
+   주의: 결과 화면(.axes) 규칙은 그대로 둔다. 여기서 덮는 것은 landing 뿐이다. */
+.sec .axes{
+  display:grid; grid-template-columns:180px minmax(0,1fr); gap:0 16px;
+  padding:0; background:none; border-bottom:0;
+}
+.sec .axes dt{
+  font-weight:700; font-size:14px; padding:14px 0;
+  border-top:1px solid var(--border-default);
+}
+.sec .axes dd{
+  margin:0; font-size:14px; line-height:22px; color:var(--fg-2); padding:14px 0;
+  border-top:1px solid var(--border-default);
+}
+.sec .axes dt:first-of-type, .sec .axes dt:first-of-type + dd{border-top:0}
+@media (max-width:640px){
+  .sec .axes{grid-template-columns:1fr}
+  .sec .axes dd{padding-top:0; border-top:0}
+}
+/* 목록형 절도 카드 안에 담는다 - 절마다 배경 띠가 다르면 페이지가 얼룩진다. */
+.sec > .axes, .sec > ul{
+  background:var(--bg-canvas); border:1px solid var(--border-default);
+  border-radius:var(--r-xl); padding:8px 24px;
+}
+.sec > ul{padding:16px 24px 16px 44px; color:var(--fg-2); line-height:26px}
+.sec .hint{font-size:13px; color:var(--fg-3); margin:12px 0 0}
+
+/* 컨테이너 여백 - 정본(design/landing-hero.html)은 데스크톱 64px · 800 아래 20px.
+   기존 24px 고정이라 넓은 화면에서 본문이 가장자리에 붙어 보였다. */
+.container{padding:0 var(--s16)}
+@media (max-width:800px){ .container{padding:0 var(--s5)} }
+
+/* 헤더 - 좁은 폭에서는 워드마크와 메뉴를 두 줄로. 한 줄에 밀어 넣으면
+   메뉴 글자가 서로 붙는다(390px 실측). */
+@media (max-width:640px){
+  .masthead .container{
+    flex-wrap:wrap; justify-content:flex-start; gap:var(--s2) var(--s4);
+    padding-top:10px; padding-bottom:10px; min-height:0;
+  }
+  nav.pages{gap:var(--s4); flex-basis:100%; font-size:13px}
+  .hero{padding-top:32px; padding-bottom:40px}
+  .hero h1{font-size:32px; line-height:42px}
+}

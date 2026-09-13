@@ -182,14 +182,22 @@ def test_landing_keeps_its_styles_in_app_css_and_its_mark_empty():
       금지가 아니라 **요구**가 된 것은 `tests/test_design_tokens.py` 가 맡는다
       (네 화면이 같은 파비콘·폰트를 쓴다). 같은 단정을 두 곳에 적지 않는다.
 
-    ⚠ 마크는 아직 빈 span 이 맞다. `mark.svg` 로 채우는 것은 README §8-4 이고
-      **단계 4~5** 다. 그때 이 검사도 함께 뒤집는다.
+    ⚠⚠ **2026-09-13 에 마크를 뒤집었다.** 위에서 "단계 4~5 에서 채운다" 고
+      적었고 그대로 됐다 - 빈 span 이던 자리에 `#mungchi-calm` 32px 이 들어갔다.
+      빈 span 이 자리만 차지하고 있어 **워드마크가 본문보다 오른쪽으로 밀려
+      보였다**(헤더-본문 좌측선 불일치). 그림이 들어가면서 정렬이 맞았다.
     """
-    assert "<style" not in _LANDING
-    for f in ("mark.svg", "logo.svg"):
-        assert f not in _LANDING, f"{f} 는 단계 4~5 에서 붙인다"
-    assert re.search(r'<span class="mark" aria-hidden="true"></span>', _LANDING), "마크 자리는 빈 span 이어야 한다"
-    assert '<svg class="mark"' not in _LANDING
+    # ⚠ **실제 태그만 본다.** 주석이 "페이지 전용 스타일 태그를 두지 않는다"
+    #   라고 적으면 그 문구에 걸린다 - 이 저장소에서 열 번째 자기 함정이다.
+    assert not re.search(r"<style[\s>]", _LANDING), "페이지 전용 스타일이 생겼다"
+    assert "logo.svg" not in _LANDING
+    # 마크는 마스코트 스프라이트를 참조한다. aria-hidden 이어야 한다 -
+    # 뜻을 나르지 않는 그림이다.
+    m = re.search(r'<svg class="mark"[^>]*>', _LANDING)
+    assert m, "헤더 마크가 없다"
+    assert "aria-hidden" in m.group(0), "마크에 aria-hidden 이 없다"
+    assert 'href="/static/mascot.svg#mungchi-calm"' in _LANDING
+    assert '<span class="mark"' not in _LANDING, "빈 span 이 남아 있다"
     # 인라인 색상 지정이 없다 - app.css 토큰만.
     assert not re.search(r'style="[^"]*(color|background)', _LANDING)
     assert "/static/app.css" in _LANDING

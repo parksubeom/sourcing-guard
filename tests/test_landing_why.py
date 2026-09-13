@@ -43,7 +43,11 @@ def _landing() -> str:
 
 def _why_section() -> str:
     """랜딩의 ⓪ 절 마크업만 잘라낸다 (`<script>` 는 포함하지 않는다)."""
-    m = re.search(r'<section aria-labelledby="why-h">(.*?)</section>', _landing(), re.S)
+    # ⚠ `<section>` 에 class 가 붙을 수 있다 - 속성 순서를 가정하지 않는다.
+    #   2026-09-13 디자인 적용에서 `<section class="sec why" aria-labelledby=…>`
+    #   이 되면서 옛 정규식이 절을 통째로 못 찾았다.
+    m = re.search(r'<section[^>]*aria-labelledby="why-h"[^>]*>(.*?)</section>',
+                  _landing(), re.S)
     assert m, "랜딩에 ⓪ 절(why-h)이 없습니다"
     return m.group(1)
 
@@ -88,10 +92,16 @@ def test_item_rates_match_their_own_numerator_and_denominator():
 def test_the_why_section_hardcodes_no_numbers():
     """⓪ 절 마크업에 숫자가 있으면 실패한다. 전부 원자료에서 그린다.
 
-    ⚠ 제목(`0. 왜 만들었나`)은 다른 절과 같은 번호 매김이라 제외한다. 그 외의
-      본문·속성에 숫자가 보이면 원자료와 갈릴 수 있는 자리다.
+    ⚠ **절 번호는 제외한다** - `0. 왜 만들었나` 의 0 이나 `<span class="sec-num">0`
+      은 다른 절과 같은 번호 매김이고 **데이터가 아니다.** 2026-09-13 디자인
+      적용에서 제목이 `<h2>` 로 바뀌고 번호가 별도 span 으로 빠지면서 이 검사가
+      절 번호를 데이터로 읽었다.
+
+      제외 대상을 넓히되 **한 글자 번호만** 봐 준다 - 두 자리가 들어오면
+      그것은 통계값이므로 잡아야 한다.
     """
-    body = re.sub(r"<h3\b.*?</h3>", "", _why_section(), flags=re.S)
+    body = re.sub(r"<h[23]\b.*?</h[23]>", "", _why_section(), flags=re.S)
+    body = re.sub(r'<span class="sec-num">\d</span>', "", body)
     body = re.sub(r"<[^>]+>", " ", body)          # 태그(속성 포함) 제거
     found = re.findall(r"\d+", body)
     assert not found, (
