@@ -6,7 +6,8 @@
     "언제": "2026-09-13",
     "배포본": "be4c2f114",
     "추출 회차": "llm 0 → 1 (by_vendor {'gpt': 1} · 실패 0)",
-    "주의": "문장 형식이 바뀌면 tests/test_landing_preview.py 가 깨진다. 그때 다시 재서 이 파일을 갱신한다 - 손으로 고치지 않는다."
+    "주의": "문장 형식이 바뀌면 tests/test_landing_preview.py 가 깨진다. 그때 다시 재서 이 파일을 갱신한다 - 손으로 고치지 않는다.",
+    "자리": "sourcing_guard/data/ 다. 처음에 tests/fixtures/ 에 뒀다가 배포본에서 예시 카드가 안 그려졌다 - Dockerfile 이 tests/ 를 담지 않는다(인수 검사가 잡았다). 이것은 시험 자료가 아니라 **앱이 화면에 내는 런타임 자료**다."
   },
   "signal": "AMBER",
   "headline": "확인 후 소싱 — 공급처에 아래 항목을 확인한 뒤 판단하세요.",

@@ -18,7 +18,7 @@ from sourcing_guard.demos import preview
 from sourcing_guard.models import FindingKind, Signal
 from sourcing_guard.scorer import _HEADLINE, _axes
 
-_FIXTURE = Path("tests/fixtures/demo_amber_result.json")
+_FIXTURE = Path("sourcing_guard/data/demo_amber_result.json")
 
 
 def test_the_fixture_exists_and_records_where_it_came_from():
@@ -109,3 +109,36 @@ def test_the_preview_is_not_drawn_by_calling_scan():
     code = re.sub(r"<!--.*?-->|/\*.*?\*/", "", html, flags=re.S)
     code = re.sub(r"(?m)^\s*//.*$", "", code)
     assert "/api/v1/scan" not in code, "랜딩이 스캔을 부른다"
+
+
+def test_the_app_never_reads_anything_the_deploy_image_does_not_ship():
+    """⚠⚠ **배포본에서 예시 카드가 안 그려졌다** (2026-09-13 · 인수 검사가 잡았다).
+
+    fixture 를 `tests/fixtures/` 에 뒀는데 `Dockerfile` 은 `sourcing_guard/` 와
+    `scripts/` 만 담는다. 로컬에서는 전부 통과하고 **배포본에서만** 비는
+    종류의 결함이라, 배포 전에 잡을 가드가 필요하다.
+
+    여기서는 두 가지를 본다:
+      (1) 패키지 코드가 `tests/` 경로를 런타임에 읽지 않는다
+      (2) 프리뷰 파일이 실제로 이미지에 담기는 디렉터리 아래에 있다
+    """
+    root = Path(__file__).resolve().parents[1]
+    shipped = {
+        line.split()[1].rstrip("/")
+        for line in (root / "Dockerfile").read_text(encoding="utf-8").splitlines()
+        if line.startswith("COPY ") and len(line.split()) >= 3
+    }
+    assert "sourcing_guard" in shipped, shipped
+    assert "tests" not in shipped, "Dockerfile 이 시험 자료를 담는다"
+
+    for py in (root / "sourcing_guard").rglob("*.py"):
+        code = re.sub(r"#[^\n]*", "", py.read_text(encoding="utf-8"))
+        assert '"tests' not in code and "'tests" not in code, (
+            f"{py.name} 이 런타임에 tests/ 를 읽는다 - 배포 이미지에 없다"
+        )
+
+    from sourcing_guard.demos import _PREVIEW_PATH
+
+    rel = _PREVIEW_PATH.relative_to(root)
+    assert rel.parts[0] in shipped, f"{rel} 는 배포 이미지에 담기지 않는다"
+    assert _PREVIEW_PATH.exists(), rel

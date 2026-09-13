@@ -38,7 +38,7 @@ TOOL_PAGES = ("/scan", "/batch", "/watch")
 #:   사라진다.
 SMALL_OK = (".rc-ax .n", ".rc-ax .m", ".rc-tag", ".rc-foot .hint")
 
-_FIXTURE = Path("tests/fixtures/demo_amber_result.json")
+_FIXTURE = Path("sourcing_guard/data/demo_amber_result.json")
 
 
 def _js_small_text(small_ok: list[str]) -> str:

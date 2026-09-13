@@ -54,7 +54,11 @@ DEMO_TEXTS: tuple[str, ...] = tuple(d["text"] for d in DEMOS)
 # ⚠ 문장 형식이 바뀌면 `tests/test_landing_preview.py` 가 깨진다. 그때
 #   **다시 재서** 파일을 갱신한다 - 손으로 고치면 화면이 없는 문장을 말한다.
 
-_PREVIEW_PATH = Path(__file__).resolve().parent.parent / "tests" / "fixtures" / "demo_amber_result.json"
+# ⚠ **`tests/` 가 아니라 패키지 안이다.** 처음에 tests/fixtures/ 에 뒀더니
+#   배포본에서 카드가 안 그려졌다 - Dockerfile 이 `sourcing_guard/` 와
+#   `scripts/` 만 담는다. 인수 검사가 잡았고, 잡은 것이 맞다: 이것은 시험
+#   자료가 아니라 **앱이 화면에 내는 런타임 자료**다.
+_PREVIEW_PATH = Path(__file__).resolve().parent / "data" / "demo_amber_result.json"
 
 #: 예시 카드에 그리는 근거 줄. 열여덟 줄을 다 그리면 히어로가 900px 을 넘는다.
 #: 하나는 **주의의 이유**(규제 물질 표기), 하나는 **정상으로 확인된 것**
