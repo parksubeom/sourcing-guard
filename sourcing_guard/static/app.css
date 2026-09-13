@@ -149,7 +149,13 @@
 html{-webkit-text-size-adjust:100%}
 body{
   margin:0; background:var(--bg-canvas); color:var(--fg-1);
-  font-family:"Pretendard GOV","Pretendard",-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;
+  /* 주의: 전에는 공공 디자인 시스템 폰트를 맨 앞에 두고 "Noto Sans KR" 을
+     맨 뒤에 뒀다. 그래서 **웹폰트를 받아 놓고 안 썼다** - 맥은 Apple SD
+     Gothic Neo, 윈도우는 맑은 고딕으로 그려지고 제목(고운돋움)과 본문 글꼴이
+     섞인다. 그것이 "폰트가 조잡하다" 의 절반이었다 (design/README §10-1).
+     토큰 하나로 몬다. 공공 디자인 시스템 폰트는 쓰지 않는다 - 이 파일 머리
+     주석의 "정부 식별 요소를 가져오지 않는다" 와 같은 이유다. */
+  font-family:var(--font-body);
   font-size:17px; line-height:1.55; letter-spacing:0;
 }
 .container{max-width:1248px; margin:0 auto; padding:0 var(--s6)}

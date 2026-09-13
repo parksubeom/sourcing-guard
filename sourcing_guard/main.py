@@ -7,13 +7,14 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import re
 from contextlib import asynccontextmanager, suppress
 
 from pathlib import Path
 from typing import Literal
 
 from fastapi import FastAPI, Header, HTTPException, Request
-from fastapi.responses import FileResponse
+from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field, model_validator
 
@@ -178,9 +179,71 @@ class ScanRequest(BaseModel):
 
 _STATIC = Path(__file__).parent / "static"
 
+#: `/static/…` 참조를 찾는다. 셋을 지켜야 한다.
+#:
+#:   ① 조각(`#mungchi-calm`)은 **쿼리 뒤에** 와야 한다 - `mascot.svg#x?v=1` 이면
+#:      조각 이름이 `x?v=1` 이 되어 아이콘이 사라진다.
+#:   ② 작은따옴표도 받는다. `index.html` 의 결과 카드가 표정을 런타임에 이어
+#:      붙인다(`'/static/mascot.svg#mungchi-' + FACE[sig]`). 큰따옴표만 보면
+#:      **그 자산만 버전 없이 남는다** - 검사가 실제로 그것을 잡았다.
+#:   ③ 여는 따옴표만 본다. 닫는 따옴표를 짝으로 요구하면 **JS 안의 HTML**
+#:      을 놓친다 - `'<use href="/static/mascot.svg#mungchi-' + FACE[sig]` 은
+#:      `"` 로 열리고 `'` 로 닫힌다. 실제로 그 한 자산만 버전 없이 남았다.
+_STATIC_REF = re.compile(
+    r"""(?<=["'])(?P<path>/static/[^"'?\#\s]+)(?P<frag>\#[^"'\s]*)?"""
+)
 
-@app.get("/", response_class=FileResponse, include_in_schema=False)
-def landing() -> FileResponse:
+_IMMUTABLE = "public, max-age=31536000, immutable"
+
+
+@app.middleware("http")
+async def _cache_headers(request: Request, call_next):
+    """정적 자산은 버전이 붙었을 때만 오래 캐시한다.
+
+    ⚠⚠ **왜 필요한가.** 2026-09-13 배포본(7185d2b)의 `/static/app.css` 에 버전
+      쿼리가 없었다. 브라우저가 옛 CSS 를 들고 있으면 **디자인을 고쳐 배포해도
+      셀러 화면은 그대로**다. 투표 기간에 그러면 고친 줄도 모르고 지나간다.
+
+    ⚠ 버전이 **없으면 오래 캐시하지 않는다.** 빌드 커밋을 모르는 상태(로컬에
+      .git 도 없고 build-arg 도 없는 경우)에서 1년을 캐시하면 되돌릴 방법이
+      없다. 모르면 캐시하지 않는 쪽이 안전하다 (R3 와 같은 태도).
+    """
+    response = await call_next(request)
+    if request.url.path.startswith("/static/"):
+        response.headers["Cache-Control"] = (
+            _IMMUTABLE if request.query_params.get("v") else "no-cache"
+        )
+    return response
+
+
+def _page(name: str) -> HTMLResponse:
+    """HTML 을 내면서 정적 자산 참조에 `?v=<build.commit>` 를 박는다.
+
+    ⚠⚠ **HTML 파일에 해시를 하드코딩하지 않는다.** 그러면 배포마다 네 파일을
+      손으로 고쳐야 하고, 한 곳을 빼먹으면 그 자산만 옛 것이 남는다 - 가장
+      찾기 어려운 종류의 결함이다. 서버가 낼 때 한 곳에서 박는다.
+
+    ⚠ HTML 자체는 `no-cache` 다. HTML 이 캐시되면 그 안의 버전 쿼리도 옛 것이라
+      캐시 무효화가 한 바퀴 늦는다.
+
+    ⚠ 커밋을 모르면 쿼리를 **붙이지 않는다.** 지어낸 버전을 박으면 그것이
+      바뀌지 않는 한 영원히 옛 자산이 남는다 (R5).
+    """
+    html = (_STATIC / name).read_text(encoding="utf-8")
+    commit = build_snapshot()["commit"]
+    if commit:
+        html = _STATIC_REF.sub(
+            lambda m: f"{m.group('path')}?v={commit}{m.group('frag') or ''}",
+            html,
+        )
+    return HTMLResponse(
+        html, headers={"Cache-Control": "no-cache"},
+        media_type="text/html; charset=utf-8",
+    )
+
+
+@app.get("/", response_class=HTMLResponse, include_in_schema=False)
+def landing() -> HTMLResponse:
     """랜딩 (G-1 · 2026-09-12). 심사위원용 서사 + 투표자용 데모 버튼.
 
     `/` 가 도구에서 소개로 바뀌었다 - 제출 링크는 `/` 그대로 두고, 도구는
@@ -189,11 +252,11 @@ def landing() -> FileResponse:
 
     ⚠ 디자인 무관 구조만이다. 로고·색·파비콘은 시피님이 새로 한다.
     """
-    return FileResponse(_STATIC / "landing.html", media_type="text/html; charset=utf-8")
+    return _page("landing.html")
 
 
-@app.get("/scan", response_class=FileResponse, include_in_schema=False)
-def index() -> FileResponse:
+@app.get("/scan", response_class=HTMLResponse, include_in_schema=False)
+def index() -> HTMLResponse:
     """단일 페이지 프론트엔드 (도구). 2026-09-12 에 `/` 에서 `/scan` 으로 옮겼다.
 
     빌드 단계를 두지 않는다. 정적 HTML 하나를 그대로 돌려주면 되고, 그 편이
@@ -201,28 +264,28 @@ def index() -> FileResponse:
 
     `?demo=<tone>` 을 읽어 서버 데모 문구로 자동 검사한다 (랜딩에서 온 경우).
     """
-    return FileResponse(_STATIC / "index.html", media_type="text/html; charset=utf-8")
+    return _page("index.html")
 
 
-@app.get("/batch", response_class=FileResponse, include_in_schema=False)
-def batch_page() -> FileResponse:
+@app.get("/batch", response_class=HTMLResponse, include_in_schema=False)
+def batch_page() -> HTMLResponse:
     """대량 검사 화면.
 
     셀러는 상품을 한 건씩 붙여넣지 않는다 - 도매 플랫폼에서 엑셀을 받아
     수백 건을 한 번에 올린다. API 만 있고 화면이 없으면 그 흐름에 못 들어간다.
     """
-    return FileResponse(_STATIC / "batch.html", media_type="text/html; charset=utf-8")
+    return _page("batch.html")
 
 
-@app.get("/watch", response_class=FileResponse, include_in_schema=False)
-def watch_page() -> FileResponse:
+@app.get("/watch", response_class=HTMLResponse, include_in_schema=False)
+def watch_page() -> HTMLResponse:
     """감시 목록 화면.
 
     기획서 §3-4단계. 스캔은 시점 판단이라 "지금 안전하다"를 보증할 수 없지만,
     "나중에 리콜 공표되면 놓치지 않는다"는 보증할 수 있다. 그것이 이 서비스가
     유일하게 약속하는 것이고, 그래서 별도 화면을 준다.
     """
-    return FileResponse(_STATIC / "watch.html", media_type="text/html; charset=utf-8")
+    return _page("watch.html")
 
 
 @app.get("/healthz")
