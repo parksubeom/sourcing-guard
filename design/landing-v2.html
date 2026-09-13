@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="ko">
+<!-- design/landing-v2.html — 총괄 참조 문서 v2 (2026-09-13 저녁 · 시피님 비평 반영).
+     디자인 캔버스 보드를 그대로 옮긴 것. 화면 코드가 아니다 — 문구·눈금·간격·색 이름을 이 문서에서 읽고 landing.html/index.html·app.css 에 옮긴다.
+     문구는 전부 서버 상수(demos · _HEADLINE · axes · statement_ko · grouped_findings.header)이고, 숫자는 그 자리에서 그리는 값의 예시다.
+     점선 상자(구현 메모)와 접힘선은 참조 문서 전용 — 화면에 그리지 않는다. -->
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>안심 소싱 돋보기 — 랜딩 v2 참조 (1440)</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+  <link rel="stylesheet" href="./tokens.css">
+  <style>
+    /* 참조 문서 전용 보조 토큰. app.css 로 옮길 때 :root 에 같은 이름으로 넣는다. */
+    :root{ --illust-blob:#FBEBDD; --signal-amber-border:#EFC28A; }
+    [data-theme="dark"]{ --illust-blob:rgba(255,194,155,.10); --signal-amber-border:rgba(217,123,0,.45); }
+    @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ --illust-blob:rgba(255,194,155,.10); --signal-amber-border:rgba(217,123,0,.45); } }
+  </style><style>
+    body { margin: 0; font-family: "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif; -webkit-font-smoothing: antialiased; word-break: keep-all; overflow-wrap: break-word; }
+    .h { font-family: "Gowun Dodum", "Apple SD Gothic Neo", sans-serif; font-weight: 400; }
+    .face { fill: #3B2A5E; stroke: #3B2A5E; stroke-width: 3.2; stroke-linecap: round; stroke-linejoin: round; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+    .chip { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 999px; font-size: 15px; font-weight: 700; line-height: 20px; white-space: nowrap; }
+    .demo { display: flex; flex-direction: column; gap: 12px; padding: 20px 22px; border-radius: 16px; text-align: left; font-family: inherit; cursor: pointer; }
+    .demo:hover { transform: translateY(-2px); }
+    .demo .t { font-size: 17px; font-weight: 700; line-height: 26px; }
+    .tile { display: flex; flex-direction: column; gap: 14px; padding: 32px 32px 28px; border-radius: 20px; }
+    .tile .k { font-size: 26px; line-height: 34px; }
+    .tile .b { font-size: 17px; line-height: 28px; }
+    .src { font-size: 15px; line-height: 22px; font-weight: 500; text-decoration: underline; text-underline-offset: 3px; margin-top: auto; }
+    .fold { position: absolute; left: 0; right: 0; top: 900px; border-top: 2px dashed #B08BEA; pointer-events: none; }
+    .fold span { position: absolute; right: 24px; top: -12px; background: #8B4CCB; color: #fff; font-size: 12px; padding: 3px 9px; border-radius: 999px; font-family: ui-monospace, Menlo, monospace; }
+    .memo { font-family: ui-monospace, Menlo, monospace; font-size: 13px; line-height: 21px; }
+  </style>
+</head>
+<body>
+
+
+<div style="position: relative; width: 1440px; min-height: 3100px; box-sizing: border-box; background: var(--bg-page); color: var(--fg-1); display: flex; flex-direction: column;">
+
+  <svg width="0" height="0" style="position: absolute;" aria-hidden="true">
+    <defs>
+      <g id="bodyA"><path d="M62 12 C88 10 108 30 106 58 C104 88 84 108 58 108 C30 108 12 88 14 60 C16 32 36 14 62 12 Z" fill="#FFC29B"></path></g>
+      <g id="blush"><ellipse cx="34" cy="10" rx="7" ry="4" fill="#F29B6B" opacity="0.55"></ellipse><ellipse cx="86" cy="10" rx="7" ry="4" fill="#F29B6B" opacity="0.55"></ellipse></g>
+      <g id="faceCalm" class="face"><use href="#blush"></use><circle cx="44" cy="0" r="5" stroke="none"></circle><circle cx="76" cy="0" r="5" stroke="none"></circle><path d="M50 14 Q60 23 70 14" fill="none"></path></g>
+      <g id="faceAlert" class="face"><use href="#blush"></use><circle cx="44" cy="0" r="5" stroke="none"></circle><circle cx="76" cy="0" r="5" stroke="none"></circle><path d="M36 -11 L49 -14" fill="none"></path><path d="M71 -12 L84 -12" fill="none"></path><path d="M52 16 L68 16" fill="none"></path></g>
+    </defs>
+  </svg>
+
+  <!-- 헤더 72 -->
+  <header style="display: flex; align-items: center; justify-content: space-between; height: 72px; padding: 0 64px; border-bottom: 1px solid var(--border-default); box-sizing: border-box;">
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <svg viewBox="0 0 120 120" width="36" height="36" aria-hidden="true"><use href="#bodyA"></use><use href="#faceCalm" transform="translate(0 58)"></use></svg>
+      <span class="h" style="font-size: 22px; letter-spacing: -0.01em;">안심 소싱 돋보기</span>
+    </div>
+    <nav style="display: flex; gap: 32px; font-size: 16px; line-height: 24px; font-weight: 500; color: var(--fg-2);">
+      <span style="color: var(--fg-1); font-weight: 700; border-bottom: 2px solid var(--brand); padding-bottom: 2px;">소개</span><span>상품 검사</span><span>대량 검사</span><span>감시 목록</span>
+    </nav>
+  </header>
+
+  <!-- 히어로: 72 ~ 900. 왼쪽은 한 문장과 버튼, 오른쪽은 실제 결과 카드 하나. -->
+  <section style="display: grid; grid-template-columns: 680px minmax(0, 1fr); gap: 56px; align-items: center; padding: 56px 64px 56px; min-height: 828px; box-sizing: border-box;">
+    <div style="display: flex; flex-direction: column; gap: 32px;">
+      <div style="display: flex; flex-direction: column; gap: 22px;">
+        <span style="align-self: flex-start; display: inline-flex; align-items: center; gap: 10px; padding: 8px 14px; border-radius: 999px; background: var(--bg-canvas); border: 1px solid var(--border-default); font-size: 15px; line-height: 20px; font-weight: 700; color: var(--fg-2);">셀러용 · 무료 · 로그인 없음</span>
+        <h1 class="h" style="margin: 0; font-size: 60px; line-height: 72px; letter-spacing: -0.015em;">이 상품,<br>사입해도 될까?</h1>
+        <p style="margin: 0; font-size: 20px; line-height: 32px; color: var(--fg-2); max-width: 620px;">상세페이지를 붙여넣으세요.<br>KC 인증 · 리콜 · 유해물질 기준을 정부 원문으로 확인합니다.</p>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 16px;">
+        <button style="height: 60px; padding: 0 32px; border-radius: 14px; border: 0; background: var(--brand); color: #FFFFFF; font-size: 19px; font-weight: 700; font-family: inherit; cursor: pointer;">내 상품 검사하기</button>
+        <span style="font-size: 16px; line-height: 24px; color: var(--fg-2);">붙여넣기 한 번이면 됩니다</span>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        <div style="font-size: 15px; line-height: 20px; font-weight: 700; color: var(--fg-2);">예시로 먼저 보기</div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; align-items: stretch;">
+          <button class="demo" style="background: var(--bg-canvas); border: 1.5px solid var(--border-default); color: var(--fg-1);">
+            <span class="chip" style="background: var(--signal-green-tint); color: var(--signal-green-text); align-self: flex-start;"><span class="dot" style="background: #1F8A4C;"></span>정상</span>
+            <span class="t">인증 조회됨 · 리콜 없음</span>
+          </button>
+          <button class="demo" style="background: var(--bg-canvas); border: 1.5px solid var(--signal-amber-border); color: var(--fg-1);">
+            <span class="chip" style="background: var(--signal-amber-tint); color: var(--signal-amber-text); align-self: flex-start;"><span class="dot" style="background: #D97B00;"></span>주의</span>
+            <span class="t">같은 상품에 재질 한 줄 추가</span>
+          </button>
+          <button class="demo" style="background: var(--bg-canvas); border: 1.5px solid var(--border-default); color: var(--fg-1);">
+            <span class="chip" style="background: var(--signal-red-tint); color: var(--signal-red-text); align-self: flex-start;"><span class="dot" style="background: #D63B3B;"></span>위험</span>
+            <span class="t">인증은 적합인데 리콜된 상품</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 오른쪽: 두 번째 예시(주의)를 눌렀을 때 나오는 결과 카드 그대로. 문구는 전부 서버 것. -->
+    <div style="position: relative; height: 620px;">
+      <div style="position: absolute; right: -8px; top: 24px; width: 360px; height: 360px; border-radius: 50%; background: var(--illust-blob);"></div>
+      <div style="position: absolute; left: -12px; bottom: 30px; width: 200px; height: 200px; border-radius: 50%; background: var(--brand-tint);"></div>
+
+      <div style="position: absolute; left: 0; right: 0; top: 60px; background: var(--bg-canvas); border: 1.5px solid var(--border-default); border-radius: 20px; overflow: hidden; display: flex; flex-direction: column;">
+        <div style="display: flex; align-items: center; gap: 20px; padding: 24px 28px; background: var(--signal-amber-tint); border-bottom: 1px solid var(--border-default);">
+          <svg viewBox="0 0 120 120" width="88" height="88" style="flex-shrink: 0;" aria-hidden="true"><use href="#bodyA"></use><use href="#faceAlert" transform="translate(0 58)"></use></svg>
+          <div style="display: flex; flex-direction: column; gap: 8px; flex: 1; min-width: 0;">
+            <div style="display: flex; align-items: center; gap: 12px;"><span class="chip" style="background: #D97B00; color: #FFFFFF; font-size: 16px;"><span class="dot" style="background: #FFFFFF;"></span>주의</span><span style="font-size: 15px; line-height: 20px; font-weight: 700; color: var(--signal-amber-text);">확인 필요</span><span style="margin-left: auto; font-size: 14px; line-height: 20px; font-weight: 700; color: var(--fg-2);">예시 결과</span></div>
+            <div class="h" style="font-size: 26px; line-height: 34px;">확인 후 소싱</div>
+            <div style="font-size: 16px; line-height: 24px; color: var(--fg-2);">공급처에 아래 항목을 확인한 뒤 판단하세요.</div>
+          </div>
+        </div>
+
+        <div style="padding: 14px 28px; font-size: 15px; line-height: 22px; color: var(--fg-2); border-bottom: 1px solid var(--border-default);">완구 매직액체 슬라임 장난감 · <b style="color: var(--fg-1);">품목 등급 완구(안전확인)</b></div>
+
+        <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-bottom: 1px solid var(--border-default);">
+          <div style="display: flex; flex-direction: column; gap: 4px; padding: 16px 20px; border-right: 1px solid var(--border-default);"><span style="font-size: 14px; line-height: 20px; font-weight: 700; color: var(--fg-2);">인증 조회</span><span style="font-size: 18px; line-height: 26px; font-weight: 700;">조회함</span></div>
+          <div style="display: flex; flex-direction: column; gap: 4px; padding: 16px 20px; border-right: 1px solid var(--border-default);"><span style="font-size: 14px; line-height: 20px; font-weight: 700; color: var(--fg-2);">리콜 대조</span><span style="font-size: 18px; line-height: 26px; font-weight: 700;">대조함</span><span style="font-size: 14px; line-height: 20px; color: var(--fg-2);">2026-09-08 공표분까지</span></div>
+          <div style="display: flex; flex-direction: column; gap: 4px; padding: 16px 20px;"><span style="font-size: 14px; line-height: 20px; font-weight: 700; color: var(--fg-2);">유해물질</span><span style="font-size: 18px; line-height: 26px; font-weight: 700;">수록됨</span></div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; padding: 4px 28px 0;">
+          <div style="display: flex; gap: 14px; padding: 16px 0; border-bottom: 1px solid var(--border-default);">
+            <span class="dot" style="background: #D97B00; margin-top: 8px;"></span>
+            <div style="display: flex; flex-direction: column; gap: 6px; flex: 1;">
+              <span style="font-size: 16px; line-height: 26px;">상세페이지 본문에 규제 물질 <b>'프탈레이트계 가소제'</b> 관련 표기가 감지되었습니다.</span>
+              <a class="src" href="#" style="color: var(--brand); margin-top: 0;">어린이제품 공통안전기준 3.1.3 · law.go.kr ↗</a>
+            </div>
+          </div>
+          <div style="display: flex; gap: 14px; padding: 16px 0; border-bottom: 1px solid var(--border-default);">
+            <span class="dot" style="background: #1F8A4C; margin-top: 8px;"></span>
+            <div style="display: flex; flex-direction: column; gap: 6px; flex: 1;">
+              <span style="font-size: 16px; line-height: 26px;">인증번호 'CB061R2170-3018'이 조회되었습니다(인증상태: 적합).</span>
+              <a class="src" href="#" style="color: var(--brand); margin-top: 0;">국가기술표준원 안전인증정보 조회 · safetykorea.kr ↗</a>
+            </div>
+          </div>
+          <div style="display: flex; align-items: center; justify-content: space-between; padding: 16px 0 18px;">
+            <span style="font-size: 16px; line-height: 24px; font-weight: 700; color: var(--brand);">근거 전체 보기 ↓</span>
+            <span style="font-size: 14px; line-height: 20px; color: var(--fg-2);">모든 줄에 원문 링크가 붙습니다</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="fold"><span>첫 화면 끝 · 1440×900 — 여기까지 스크롤 없이</span></div>
+
+  <!-- 세 가지만 봅니다 -->
+  <section style="display: flex; flex-direction: column; gap: 32px; padding: 96px 64px 40px;">
+    <h2 class="h" style="margin: 0; font-size: 40px; line-height: 52px;">셀러가 걸리는 세 가지만 봅니다</h2>
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px;">
+      <div class="tile" style="background: var(--bg-canvas); border: 1.5px solid var(--border-default);">
+        <div class="k h">KC 인증번호</div>
+        <div class="b" style="color: var(--fg-2);">상세페이지에 적힌 번호가 정부 DB에 실제로 있는 번호인지, 지금 유효한지 봅니다.</div>
+        <a class="src" href="#" style="color: var(--brand);">원문 · 안전인증정보 safetykorea.kr ↗</a>
+      </div>
+      <div class="tile" style="background: var(--bg-canvas); border: 1.5px solid var(--border-default);">
+        <div class="k h">리콜</div>
+        <div class="b" style="color: var(--fg-2);">이미 리콜 공표된 <b style="color: var(--fg-1);">37,350건</b>과 모델명·인증번호를 대조합니다. 2026-09-08 공표분까지.</div>
+        <a class="src" href="#" style="color: var(--brand);">원문 · 제품안전정보센터 ↗</a>
+      </div>
+      <div class="tile" style="background: var(--bg-canvas); border: 1.5px solid var(--border-default);">
+        <div class="k h">유해물질 기준</div>
+        <div class="b" style="color: var(--fg-2);">재질 한 줄로 어느 기준이 걸리는지 알려 줍니다. 사람이 원문에서 검수한 규칙만 씁니다.</div>
+        <a class="src" href="#" style="color: var(--brand);">원문 · 국가법령정보센터 law.go.kr ↗</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- 숫자 하나 -->
+  <section style="padding: 56px 64px 40px;">
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: center; padding: 56px 60px; background: var(--bg-subtle); border-radius: 28px;">
+      <div style="display: flex; flex-direction: column; gap: 14px;">
+        <div style="font-size: 15px; line-height: 20px; font-weight: 700; color: var(--fg-2);">국가기술표준원 안전성조사 · 2026-05-14</div>
+        <div class="h" style="font-size: 96px; line-height: 104px; letter-spacing: -0.02em;">5개 중 1개</div>
+        <div style="font-size: 18px; line-height: 28px; color: var(--fg-2);">온라인 구매대행 제품 420개를 사서 시험했더니 85개가 안전기준 부적합.</div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 20px;">
+        <div class="h" style="font-size: 30px; line-height: 42px;">부적합이면 판매 중지 통보, 제품안전정보센터 공개, 고발·과태료로 이어집니다.</div>
+        <div style="font-size: 22px; line-height: 32px; font-weight: 700;">사입한 뒤에 알면 늦습니다.</div>
+        <a class="src" href="#" style="color: var(--brand); margin-top: 0;">보도자료 원문 · kats.go.kr ↗</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- 판정은 하지 않습니다 · AI 는 읽기만 -->
+  <section style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; padding: 40px 64px 56px;">
+    <div style="display: flex; flex-direction: column; gap: 20px; padding: 40px; background: var(--bg-canvas); border: 1.5px solid var(--border-default); border-radius: 24px;">
+      <h2 class="h" style="margin: 0; font-size: 32px; line-height: 42px;">판정은 하지 않습니다.</h2>
+      <p style="margin: 0; font-size: 18px; line-height: 30px; color: var(--fg-2);">초록불은 보증이 아닙니다. 상세페이지에 적힌 것만 봅니다. 실물은 시험성적서가, 최종 판단은 셀러가 합니다.</p>
+      <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 4px;">
+        <div style="font-size: 15px; line-height: 20px; font-weight: 700; color: var(--fg-2);">여기서 확인하지 않는 것</div>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+          <span class="chip" style="background: var(--bg-subtle); color: var(--fg-1); font-weight: 500;">인증번호 도용</span>
+          <span class="chip" style="background: var(--bg-subtle); color: var(--fg-1); font-weight: 500;">실제 함유량</span>
+          <span class="chip" style="background: var(--bg-subtle); color: var(--fg-1); font-weight: 500;">앞으로의 리콜</span>
+          <span class="chip" style="background: var(--bg-subtle); color: var(--fg-1); font-weight: 500;">상표권 · 원산지</span>
+          <span class="chip" style="background: var(--bg-subtle); color: var(--fg-1); font-weight: 500;">식약처 소관 품목</span>
+        </div>
+      </div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 20px; padding: 40px; background: var(--bg-canvas); border: 1.5px solid var(--border-default); border-radius: 24px;">
+      <h2 class="h" style="margin: 0; font-size: 32px; line-height: 42px;">AI는 읽기만 합니다.<br>판정은 규칙이 합니다.</h2>
+      <p style="margin: 0; font-size: 18px; line-height: 30px; color: var(--fg-2);">AI는 상세페이지에서 품목·재질·인증번호를 읽어냅니다. 정상·주의·위험은 정부 데이터와 사람이 검수한 규칙이 정합니다.</p>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 4px;">
+        <div style="display: flex; flex-direction: column; gap: 4px; padding: 18px 20px; background: var(--bg-subtle); border-radius: 16px;"><span style="font-size: 40px; line-height: 48px; font-weight: 700; font-variant-numeric: tabular-nums;">70.4<span style="font-size: 22px; color: var(--fg-2);">%</span></span><span style="font-size: 15px; line-height: 22px; color: var(--fg-2);">품목을 맞힌 비율 · 사람이 검수한 135건</span></div>
+        <div style="display: flex; flex-direction: column; gap: 4px; padding: 18px 20px; background: var(--bg-subtle); border-radius: 16px;"><span style="font-size: 40px; line-height: 48px; font-weight: 700; font-variant-numeric: tabular-nums;">0<span style="font-size: 22px; color: var(--fg-2);">건</span></span><span style="font-size: 15px; line-height: 22px; color: var(--fg-2);">대상이 아닌 상품에 등급을 붙인 수</span></div>
+      </div>
+      <a class="src" href="#" style="color: var(--brand); margin-top: 0;">숫자 이력 전체 · 기획서 ↗</a>
+    </div>
+  </section>
+
+  <!-- 마지막 부름 -->
+  <section style="display: flex; flex-direction: column; align-items: center; gap: 24px; padding: 24px 64px 88px; text-align: center;">
+    <h2 class="h" style="margin: 0; font-size: 40px; line-height: 52px;">지금 검토 중인 상품이 있나요?</h2>
+    <div style="display: flex; align-items: center; gap: 20px;">
+      <button style="height: 60px; padding: 0 36px; border-radius: 14px; border: 0; background: var(--brand); color: #FFFFFF; font-size: 19px; font-weight: 700; font-family: inherit; cursor: pointer;">내 상품 검사하기</button>
+      <span style="font-size: 17px; line-height: 24px; font-weight: 700; color: var(--brand);">한 번에 여러 개 검사하기 →</span>
+    </div>
+  </section>
+
+  <!-- 푸터 -->
+  <footer style="display: flex; flex-direction: column; gap: 14px; padding: 40px 64px 56px; border-top: 1px solid var(--border-default); font-size: 16px; line-height: 26px; color: var(--fg-2);">
+    <div>본 결과는 공개된 정부 데이터에 기반한 참고 정보이며, 법적 판단이나 안전 인증을 대체하지 않습니다.</div>
+    <div style="display: flex; justify-content: space-between; gap: 24px; font-size: 15px; line-height: 22px;"><span>데이터 · 국가기술표준원 · 제품안전정보센터 · 국가법령정보센터</span><span>안심 소싱 돋보기</span></div>
+  </footer>
+
+  <!-- ── 여기부터는 화면이 아니라 구현 메모 (보드 전용) ── -->
+  <section class="memo" style="margin: 32px 64px 48px; padding: 24px 28px; border: 1.5px dashed var(--brand); border-radius: 16px; color: var(--fg-2); display: grid; grid-template-columns: 1fr 1fr; gap: 12px 32px;">
+    <div style="grid-column: 1 / -1; color: var(--brand); font-weight: 700;">구현 메모 — 화면에 그리지 않는다</div>
+    <div>숫자는 넷만: 리콜 건수(/healthz sync.recalls 국내+국외 합, 공표분 날짜 포함) · 5개 중 1개(static/data 안전성조사_보도자료.json 2026-05-14 420/85) · 70.4%(audit_tally BASELINE ①/분모) · 0건(BASELINE ④). 전부 그 자리에서 그린다. 하드코딩 금지.</div>
+    <div>예시 셋의 문구는 /api/v1/demos 의 title 만 쓴다. note 는 랜딩에서 그리지 않는다(/scan 에서만). 결과 카드 문구는 전부 서버 것: _HEADLINE[AMBER] 를 " — " 에서 두 줄로 나눠 그린다. axes name·label 그대로. 축에는 신호 색을 칠하지 않는다(ResultAxis 주석).</div>
+    <div>글자 최소 15px(카드 안 한정어 14px). ink3(#8A7F78)는 본문에 쓰지 않는다 — 대비 3.7:1. 초록 칩 글자색은 #166B3A(5.8:1). 버튼 60px · 칩 15px/점 10px · 카드 테두리 1.5px.</div>
+    <div>§9 단정 금지 검사 그대로. 없어진 문구: "⓪①②④" 번호, "조사 결과가 먼저 말합니다", "안 한 것과 없는 것은 다르다", 94개 · 88/83/80/70% · 71/24/20.0% · 83.7% · 규칙 수 · 두 번째 보도자료. 기획서 이력은 링크로만.</div>
+  </section>
+
+</div>
+
+
+</body>
+</html>

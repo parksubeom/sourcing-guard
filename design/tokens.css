@@ -1,4 +1,4 @@
-/* 안심 소싱 돋보기 — 디자인 토큰 v0.1
+/* 안심 소싱 돋보기 — 디자인 토큰 v0.2 (v2 눈금 · 2026-09-13 저녁)
  * (2026-09-13 · 총괄 초안 · **확정 2026-09-13 시피님** — 오키드 #8B4CCB ·
  *  마스코트 A 뭉치 · 로딩 A안. 색을 바꾸는 커밋은 [디자인] 표지 + 총괄 확인)
  *
@@ -30,13 +30,15 @@
 
   /* ── 신호등: 화면이 유일하게 "판단" 을 색으로 말하는 자리 ── */
   --success:#1F8A4C; --warning:#D97B00; --danger:#D63B3B; --info:var(--primary-60);
-  --signal-green:#1F8A4C;   --signal-green-tint:#E6F5EC;   --signal-green-text:#1F8A4C;
+  --signal-green:#1F8A4C;   --signal-green-tint:#E6F5EC;   --signal-green-text:#166B3A;   /* v2: 옅은 초록 위 5.8:1 (본색 #1F8A4C 는 3.9:1 로 AA 미달) */
   --signal-amber:#D97B00;   --signal-amber-tint:#FFF1DE;   --signal-amber-text:#9A5600;
   --signal-red:#D63B3B;     --signal-red-tint:#FDE8E8;     --signal-red-text:#B02A2A;
   --signal-unknown:#8A7F78; --signal-unknown-tint:#F1ECE8; --signal-unknown-text:#5C524C;
 
   /* ── 캐릭터 전용. UI 의미 없음 ── */
   --illust-body:#FFC29B; --illust-body-2:#F29B6B; --illust-ink:#3B2A5E;
+  --illust-blob:#FBEBDD;        /* 히어로 뒤 살구 원. 캐릭터 색의 옅은 판 — UI 의미 없음 */
+  --signal-amber-border:#EFC28A; /* 오른쪽에 결과가 그려진 예시 카드의 테두리 (랜딩 v2) */
 
   /* ── 글 · 바탕 · 선 ── */
   --fg-1:var(--gray-100); --fg-2:var(--gray-80); --fg-3:var(--gray-60); --fg-4:var(--gray-50);
@@ -78,6 +80,7 @@
   --signal-red-tint:rgba(214,59,59,.22);     --signal-red-text:#F09595;
   --signal-unknown-tint:rgba(138,127,120,.22); --signal-unknown-text:#C9BDB4;
   --bg-page:#1D1917; --bg-canvas:#27221F;
+  --illust-blob:rgba(255,194,155,.10); --signal-amber-border:rgba(217,123,0,.45);
   --shadow-2:0 6px 20px rgba(0,0,0,.35);
   color-scheme: dark;
 }
@@ -92,31 +95,35 @@
     --signal-red-tint:rgba(214,59,59,.22);     --signal-red-text:#F09595;
     --signal-unknown-tint:rgba(138,127,120,.22); --signal-unknown-text:#C9BDB4;
     --bg-page:#1D1917; --bg-canvas:#27221F;
+    --illust-blob:rgba(255,194,155,.10); --signal-amber-border:rgba(217,123,0,.45);
     --shadow-2:0 6px 20px rgba(0,0,0,.35);
     color-scheme: dark;
   }
 }
 
 /* ── 타이포 눈금 (design/README.md §3). 클래스는 새 화면에서만 쓴다 ── */
-.t-display{font-family:var(--font-display); font-weight:400; font-size:48px; line-height:60px; letter-spacing:-.01em}
-.t-h1{font-family:var(--font-display); font-weight:400; font-size:28px; line-height:36px}
-.t-h2{font-family:var(--font-body); font-weight:700; font-size:20px; line-height:28px}
-.t-body{font-family:var(--font-body); font-weight:400; font-size:15px; line-height:24px}
-.t-label{font-family:var(--font-body); font-weight:500; font-size:13px; line-height:20px; color:var(--fg-2)}
-.t-num{font-family:var(--font-body); font-weight:700; font-size:44px; line-height:48px; font-variant-numeric:tabular-nums}
-@media (max-width:640px){ .t-display{font-size:34px; line-height:42px} .t-h1{font-size:24px; line-height:32px} .t-num{font-size:36px; line-height:40px} }
+/* v2 (2026-09-13 저녁) — 한 단계씩 키웠다. 화면 글자는 15px 아래로 내려가지 않는다(카드 안 한정어만 14px).
+ * --fg-4(#8A7F78)는 18px 미만 글자에 쓰지 않는다 — 바탕 위 3.7:1 로 AA 미달. 작은 글자의 보조색은 --fg-2 다. */
+.t-display{font-family:var(--font-display); font-weight:400; font-size:60px; line-height:72px; letter-spacing:-.015em}
+.t-h1{font-family:var(--font-display); font-weight:400; font-size:40px; line-height:52px}
+.t-h2{font-family:var(--font-display); font-weight:400; font-size:26px; line-height:34px}
+.t-lead{font-family:var(--font-body); font-weight:400; font-size:20px; line-height:32px; color:var(--fg-2)}
+.t-body{font-family:var(--font-body); font-weight:400; font-size:17px; line-height:28px}
+.t-label{font-family:var(--font-body); font-weight:700; font-size:15px; line-height:20px; color:var(--fg-2)}
+.t-num{font-family:var(--font-body); font-weight:700; font-size:40px; line-height:48px; font-variant-numeric:tabular-nums}
+@media (max-width:640px){ .t-display{font-size:40px; line-height:48px} .t-h1{font-size:30px; line-height:38px} .t-h2{font-size:22px; line-height:30px} .t-lead{font-size:18px; line-height:28px} .t-num{font-size:34px; line-height:40px} }
 
 /* ── 신호 칩: 색은 신호등 넷에서만. 문구는 SIGNAL_LABEL / SIGNAL_SHORT (index.html) 그대로 ── */
-.chip{display:inline-flex; align-items:center; gap:6px; padding:6px 12px; border-radius:var(--r-pill); font-size:13px; font-weight:700; line-height:16px}
-.chip .dot{width:8px; height:8px; border-radius:50%; flex:none; margin:0}
+.chip{display:inline-flex; align-items:center; gap:8px; padding:8px 14px; border-radius:var(--r-pill); font-size:15px; font-weight:700; line-height:20px; white-space:nowrap}   /* v2: 13→15px · 점 8→10px */
+.chip .dot{width:10px; height:10px; border-radius:50%; flex:none; margin:0}
 .chip.GREEN{background:var(--signal-green-tint); color:var(--signal-green-text)}   .chip.GREEN .dot{background:var(--signal-green)}
 .chip.AMBER{background:var(--signal-amber-tint); color:var(--signal-amber-text)}   .chip.AMBER .dot{background:var(--signal-amber)}
 .chip.RED{background:var(--signal-red-tint); color:var(--signal-red-text)}         .chip.RED .dot{background:var(--signal-red)}
 .chip.UNKNOWN{background:var(--signal-unknown-tint); color:var(--signal-unknown-text)} .chip.UNKNOWN .dot{background:var(--signal-unknown)}
 
 /* ── 버튼: 브랜드색 하나. 신호등 색 버튼은 만들지 않는다 ── */
-.btn-primary{display:inline-flex; align-items:center; justify-content:center; padding:16px 28px; border:0; border-radius:var(--r-m); background:var(--brand); color:#fff; font:inherit; font-size:17px; font-weight:700; cursor:pointer}
+.btn-primary{display:inline-flex; align-items:center; justify-content:center; height:60px; padding:0 32px; border:0; border-radius:var(--r-l); background:var(--brand); color:#fff; font:inherit; font-size:19px; font-weight:700; cursor:pointer}   /* v2: 높이 60 · 글자 19 */
 .btn-primary:hover{background:var(--brand-strong)}
-.btn-ghost{display:inline-flex; align-items:center; padding:16px 20px; border:1px solid var(--border-default); border-radius:var(--r-m); background:transparent; color:var(--fg-2); font:inherit; font-size:15px; font-weight:500; cursor:pointer}
+.btn-ghost{display:inline-flex; align-items:center; height:60px; padding:0 24px; border:1.5px solid var(--border-default); border-radius:var(--r-l); background:transparent; color:var(--fg-2); font:inherit; font-size:17px; font-weight:500; cursor:pointer}
 .btn-ghost:hover{border-color:var(--fg-3)}
 .btn-primary:focus-visible,.btn-ghost:focus-visible{outline:2px solid var(--border-focus); outline-offset:2px}

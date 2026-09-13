@@ -50,13 +50,15 @@
 
   /* ── 신호등: 화면이 유일하게 "판단" 을 색으로 말하는 자리 ── */
   --success:#1F8A4C; --warning:#D97B00; --danger:#D63B3B; --info:var(--primary-60);
-  --signal-green:#1F8A4C;   --signal-green-tint:#E6F5EC;   --signal-green-text:#1F8A4C;
+  --signal-green:#1F8A4C;   --signal-green-tint:#E6F5EC;   --signal-green-text:#166B3A;   /* v2: 옅은 초록 위 5.8:1 */
   --signal-amber:#D97B00;   --signal-amber-tint:#FFF1DE;   --signal-amber-text:#9A5600;
   --signal-red:#D63B3B;     --signal-red-tint:#FDE8E8;     --signal-red-text:#B02A2A;
   --signal-unknown:#8A7F78; --signal-unknown-tint:#F1ECE8; --signal-unknown-text:#5C524C;
 
   /* ── 캐릭터 전용. UI 의미 없음 ── */
   --illust-body:#FFC29B; --illust-body-2:#F29B6B; --illust-ink:#3B2A5E;
+  --illust-blob:#FBEBDD;
+  --signal-amber-border:#EFC28A;
 
   /* ── 글 · 바탕 · 선 ── */
   --fg-1:var(--gray-100); --fg-2:var(--gray-80); --fg-3:var(--gray-60); --fg-4:var(--gray-50);
@@ -98,6 +100,7 @@
   --signal-red-tint:rgba(214,59,59,.22);     --signal-red-text:#F09595;
   --signal-unknown-tint:rgba(138,127,120,.22); --signal-unknown-text:#C9BDB4;
   --bg-page:#1D1917; --bg-canvas:#27221F;
+  --illust-blob:rgba(255,194,155,.10); --signal-amber-border:rgba(217,123,0,.45);
   --shadow-2:0 6px 20px rgba(0,0,0,.35);
   color-scheme: dark;
 }
@@ -112,6 +115,7 @@
     --signal-red-tint:rgba(214,59,59,.22);     --signal-red-text:#F09595;
     --signal-unknown-tint:rgba(138,127,120,.22); --signal-unknown-text:#C9BDB4;
     --bg-page:#1D1917; --bg-canvas:#27221F;
+    --illust-blob:rgba(255,194,155,.10); --signal-amber-border:rgba(217,123,0,.45);
     --shadow-2:0 6px 20px rgba(0,0,0,.35);
     color-scheme: dark;
   }
