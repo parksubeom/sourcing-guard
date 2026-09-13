@@ -787,3 +787,107 @@ nav.pages a[aria-current="page"]{
   .hero{padding-top:32px; padding-bottom:40px}
   .hero h1{font-size:32px; line-height:42px}
 }
+
+/* == 도구 화면 (/scan · /batch · /watch) — 디자인 v0.1 =================
+ * 정본: design/loading.html(A안) · design/result-card.html.
+ * 값을 여기서 고치지 말고 그쪽을 고친 뒤 옮긴다 (CLAUDE.md 6절).
+ */
+body{background:var(--bg-page)}
+
+/* 로딩 A안 — "지금 무엇을 보고 있는지". 스피너·진행바를 쓰지 않는다.
+   주의: /api/v1/scan 은 한 번에 답하므로 프론트는 어느 단계인지 모른다.
+     네 줄을 전부 같은 상태로 두고 **시간을 재서 '끝' 으로 넘기지 않는다.**
+     단계 모드는 서버 진행 이벤트가 붙은 뒤 총괄이 연다 (README 확정). */
+@keyframes sg-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+@keyframes sg-look{0%,30%{transform:translateX(0)}40%,65%{transform:translateX(-9px)}75%,100%{transform:translateX(0)}}
+@keyframes sg-ell{0%,20%{opacity:.15}40%,100%{opacity:1}}
+@keyframes sg-flow{0%{transform:translateX(-100%)}100%{transform:translateX(300%)}}
+@keyframes sg-pulse{0%,100%{box-shadow:0 0 0 0 rgba(139,76,203,.45)}60%{box-shadow:0 0 0 8px rgba(139,76,203,0)}}
+@keyframes sg-shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+.m-bob{animation:sg-bob 2.6s ease-in-out infinite}
+.m-eyes{animation:sg-look 3.4s ease-in-out infinite}
+.loading{background:var(--bg-canvas); border:1px solid var(--border-default);
+  border-radius:var(--r-xl); overflow:hidden}
+.loading .head{display:flex; align-items:center; gap:20px; padding:24px 28px;
+  border-bottom:1px solid var(--border-default)}
+.loading .head h3{margin:0; font-family:var(--font-display); font-weight:400; font-size:22px}
+.loading .sub{font-size:13px; color:var(--fg-2)}
+.ell span{display:inline-block; width:4px; height:4px; border-radius:50%;
+  background:currentColor; margin-left:3px; opacity:.15; animation:sg-ell 1.2s infinite}
+.ell span:nth-child(2){animation-delay:.2s}
+.ell span:nth-child(3){animation-delay:.4s}
+.track{position:relative; height:6px; border-radius:var(--r-pill); overflow:hidden;
+  background:var(--bg-subtle)}
+.track > i{position:absolute; top:0; left:0; width:33%; height:100%;
+  border-radius:var(--r-pill);
+  background:linear-gradient(90deg,transparent,var(--brand),transparent);
+  animation:sg-flow 1.6s ease-in-out infinite}
+.loading .steps{padding:8px 28px 12px}
+.loading .step{display:flex; gap:14px; padding:14px 0; align-items:flex-start;
+  border-bottom:1px solid var(--border-default)}
+.loading .step:last-child{border-bottom:0}
+.loading .step .d{width:8px; height:8px; border-radius:50%; margin-top:7px; flex:none;
+  background:var(--brand); animation:sg-pulse 1.4s ease-out infinite}
+.loading .step .t{font-weight:500; color:var(--brand)}
+.loading .step .s{font-size:12px; color:var(--fg-4)}
+.loading .step .st{font-size:12px; color:var(--brand); font-weight:700}
+.loading .sk-axes{display:grid; grid-template-columns:repeat(4,minmax(0,1fr));
+  border-top:1px solid var(--border-default)}
+.loading .sk-axes > div{display:flex; flex-direction:column; gap:6px; padding:12px 16px;
+  border-right:1px solid var(--border-default)}
+.loading .sk-axes > div:last-child{border-right:0}
+.loading .sk-axes span{font-size:11px; color:var(--fg-4)}
+.sk{border-radius:var(--r-s);
+  background:linear-gradient(90deg,var(--gray-20) 25%,var(--gray-10) 50%,var(--gray-20) 75%);
+  background-size:200% 100%; animation:sg-shimmer 1.8s linear infinite}
+@media (max-width:800px){ .loading .sk-axes{grid-template-columns:1fr 1fr} }
+/* 주의: 움직임을 줄이라는 설정이면 전부 멈춘다. 접근성이다. */
+@media (prefers-reduced-motion: reduce){
+  .m-bob,.m-eyes,.ell span,.track > i,.sk,.loading .step .d{animation:none}
+  .ell span{opacity:1}
+}
+
+/* 결과 카드 — 헤더에 Signal ↔ 표정. 배경만 tint, 본문은 카드색. */
+.verdict{display:flex; align-items:center; gap:20px; padding:24px 28px;
+  border-bottom:1px solid var(--border-default); border-radius:0}
+.verdict .face{width:72px; height:72px; flex:none}
+.verdict .line{display:flex; flex-direction:column; gap:8px; flex:1; min-width:0}
+.verdict h3{margin:0; font-family:var(--font-display); font-weight:400; font-size:22px;
+  line-height:30px}
+.verdict.GREEN{background:var(--signal-green-tint)}
+.verdict.AMBER{background:var(--signal-amber-tint)}
+.verdict.RED{background:var(--signal-red-tint)}
+.verdict.UNKNOWN{background:var(--bg-subtle)}
+/* 주의: 옛 `.badge` 는 신호등 색 알약이었다. 칩으로 바꿨고 색은 --signal-* 가 준다. */
+.verdict .chip{align-self:flex-start; display:inline-flex}
+.verdict .chip .dot{display:inline-block; margin:0}
+
+/* finding 줄의 원문 링크 — 오키드 12px */
+.f-src{font-size:12px; color:var(--brand)}
+/* 품목 오답 신고 (D-화면) */
+.miss{margin-left:auto; font-size:12px; padding:6px 12px}
+.miss-done{margin-left:auto; font-size:12px; color:var(--fg-2)}
+
+/* 메타 푸터 (B-화면) */
+.meta-foot{margin-top:var(--s4); padding-top:var(--s3);
+  border-top:1px solid var(--border-default);
+  display:flex; flex-wrap:wrap; gap:4px var(--s4);
+  font-size:12px; color:var(--fg-3)}
+.meta-foot b{font-weight:600; color:var(--fg-2)}
+
+/* 감시 목록 알림 (C-화면) — 신호등 색을 쓰지 않는다.
+   리콜 "일치" 는 판정이 아니라 **대조 결과**다 (R6). */
+.alerts{margin:var(--s3) 0 0; padding:var(--s3) 0 0;
+  border-top:1px solid var(--border-default); list-style:none}
+.alert{display:flex; flex-direction:column; gap:4px; padding:var(--s2) 0; font-size:13px}
+.alert .k{font-weight:600}
+.alert .m{color:var(--fg-2)}
+.alert a{font-size:12px; color:var(--brand)}
+
+/* 도구 화면 머리글 - **크림 바탕 위 투명**이다. 회색 띠를 두지 않는다.
+   랜딩에서 `.intro` 를 버렸고 /scan 등에는 남아 있었다. */
+.intro{background:transparent; padding:var(--s8) 0 var(--s6)}
+.intro h2{font-family:var(--font-display); font-weight:400}
+/* 로딩 스켈레톤 축이 셋이다 (서버 axes 와 같다). */
+.loading .sk-axes.sk-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media (max-width:800px){ .loading .sk-axes.sk-3{grid-template-columns:1fr} }

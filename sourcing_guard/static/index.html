@@ -18,11 +18,10 @@
 
 <header class="masthead">
   <div class="container">
-    <svg class="mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
-         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-      <circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/><path d="M7.8 10.6l1.9 1.9 3.5-3.6"/>
-    </svg>
-    <span class="wordmark">안심 소싱 돋보기</span>
+    <a class="brand" href="/">
+      <svg class="mark" viewBox="0 0 120 120" aria-hidden="true"><use href="/static/mascot.svg#mungchi-calm"/></svg>
+      <span class="wordmark">안심 소싱 돋보기</span>
+    </a>
     <nav class="pages" aria-label="주요 화면">
       <a href="/">소개</a>
       <a href="/scan" aria-current="page">상품 검사</a>
@@ -92,7 +91,36 @@
     <section aria-labelledby="res-h" id="res-sec" hidden>
       <h3 id="res-h">검사 결과</h3>
       <p class="hint" id="demo-note" hidden>이 결과는 서버가 준비한 예시 문구를 검사한 것입니다. 내 상품은 위 입력란에 붙여넣어 확인하세요.</p>
-      <div id="skel" class="skel" hidden aria-hidden="true"><div></div><div></div><div></div><div></div></div>
+      <!-- 로딩 A안 (design/loading.html) — 스피너 대신 "지금 무엇을 보고 있는지".
+           네 줄이 **전부 같은 상태**다. /api/v1/scan 은 한 번에 답하므로 프론트는
+           어느 단계인지 모른다 - 시간을 재서 "끝" 으로 넘기는 코드를 쓰지 않는다.
+           단계 모드는 서버 진행 이벤트가 붙은 뒤 총괄이 연다.
+           aria-busy·aria-live 를 유지한다. 마스코트는 aria-hidden 이다. -->
+      <div id="skel" class="loading" hidden aria-busy="true" aria-live="polite">
+        <div class="head">
+          <svg class="m-bob" viewBox="0 0 120 120" width="88" height="88" aria-hidden="true"
+               style="flex:none;overflow:visible"><use href="/static/mascot.svg#mungchi-look"/></svg>
+          <div style="display:flex;flex-direction:column;gap:8px;flex:1">
+            <h3>확인 중입니다<span class="ell"><span></span><span></span><span></span></span></h3>
+            <div class="sub">처음 보는 상품은 정부 DB 조회까지 시간이 걸립니다.</div>
+            <div class="track"><i></i></div>
+          </div>
+        </div>
+        <div class="steps">
+          <div class="step"><span class="d"></span><div style="flex:1"><div class="t">상세페이지 읽기</div><div class="s">상품명 · 재질 · 인증번호 표기 · 대상연령</div></div><span class="st">확인 중</span></div>
+          <div class="step"><span class="d"></span><div style="flex:1"><div class="t">인증번호 조회</div><div class="s">안전인증 DB 에서 번호가 실재하는지, 상태가 무엇인지</div></div><span class="st">확인 중</span></div>
+          <div class="step"><span class="d"></span><div style="flex:1"><div class="t">리콜 목록 대조</div><div class="s">국내·국외 리콜 목록과 모델명 · 제조사 · 인증번호를 대조</div></div><span class="st">확인 중</span></div>
+          <div class="step"><span class="d"></span><div style="flex:1"><div class="t">적용 기준 확인</div><div class="s">이 품목에 걸리는 유해물질 기준을 검수된 규칙에서</div></div><span class="st">확인 중</span></div>
+        </div>
+        <!-- 주의: 축은 **셋**이다 (인증 조회 · 리콜 대조 · 유해물질).
+             서버 `axes` 가 셋을 준다 - 여기 넷을 그리면 오지 않을 축을
+             예고하는 것이 된다. 넷째(품목)를 넣으려면 서버가 먼저다. -->
+        <div class="sk-axes sk-3" aria-hidden="true">
+          <div><span>인증 조회</span><div class="sk" style="height:14px"></div></div>
+          <div><span>리콜 대조</span><div class="sk" style="height:14px"></div></div>
+          <div><span>유해물질</span><div class="sk" style="height:14px"></div></div>
+        </div>
+      </div>
       <div id="res" role="status" aria-live="polite"></div>
     </section>
 
@@ -123,6 +151,12 @@
       pasteBox = $("paste"), shotList = $("shots");
 
   var esc = window.SG.esc;
+
+  // YYYYMMDD → YYYY-MM-DD. 메타 푸터가 쓴다.
+  function fmtDay(v) {
+    var t = String(v || "");
+    return (t.length === 8 && /^\d+$/.test(t)) ? t.slice(0,4)+"-"+t.slice(4,6)+"-"+t.slice(6) : t;
+  }
 
   function asOfLabel(v) {
     if (!v || !/^\d{8}$/.test(v)) return "리콜 대조 기준일을 확인하지 못했습니다";
@@ -240,8 +274,12 @@
         b.type = "button";
         b.className = "demo";
         b.innerHTML =
-          '<span class="dot ' + esc(d.tone) + '" aria-hidden="true"></span>' +
-          '<span><b>' + esc(d.title) + "</b><span>" + esc(d.note) + "</span></span>";
+          // 랜딩과 **같은 컴포넌트**다. 점+제목이 아니라 칩+제목+부제.
+          '<span class="chip ' + esc(String(d.tone || "").toUpperCase()) + '">' +
+            '<span class="dot"></span>' +
+            esc({ green: "정상", amber: "주의", red: "위험" }[d.tone] || "") + "</span>" +
+          '<span class="t">' + esc(d.title) + "</span>" +
+          '<span class="n">' + esc(d.note) + "</span>";
         function runDemo() {
           // 붙여둔 이미지를 먼저 비운다. 데모는 서버가 보낸 문구 그대로를
           // 검사해야 하고, 이미지가 섞이면 예시와 다른 결과가 나온다.
@@ -423,11 +461,25 @@
         '<button class="btn-t sm" type="button" data-part="main">' +
         "본체입니다 (되돌리기)</button></p>";
     }
+    // [D-화면] "이 품목이 아닙니다" — **품목 줄에만** 붙는다.
+    //
+    // 주의: 신고는 **판정을 바꾸지 않는다** (R1). 저장만 하고 사람이 검수해서
+    //   오답 파일로 옮긴다. 즉시 등급이 사라지면 셀러가 판정기가 되고, 없는
+    //   의무를 지우는 쪽으로도 쓰인다 - 서버 docstring 이 적어 둔 그대로다.
+    var miss = "";
+    if (isGrade) {
+      var items = ((f.detail || {}).candidates || []).map(function (c) { return c.item; });
+      if (items.length) {
+        miss = '<button class="btn-ghost miss" type="button" data-miss="' +
+               esc(items.join("|")) + '">이 품목이 아닙니다</button>';
+      }
+    }
+
     return '<li class="' + esc(f.kind) + aside + '">' +
            '<span class="tick ' + esc(f.signal) + '" aria-hidden="true"></span>' +
            '<div class="f-body"><p class="f-text">' + esc(f.statement_ko) + "</p>" +
            grades + confirm + rf +
-           '<p class="f-meta">' + basis + link + "</p></div></li>";
+           '<p class="f-meta">' + basis + link + miss + "</p></div></li>";
   }
 
   function ruleRow(f) {
@@ -448,6 +500,9 @@
   function clearHints() { sellerHints = {}; }
 
   var lastFacts = null;
+  // [D-화면] 오답 신고가 원문을 그대로 보낸다. 데모 경로는 입력란이 비어 있으므로
+  // **검사에 실제로 보낸 텍스트**를 따로 기억한다.
+  var lastText = "";
 
   function render(data) {
     lastFacts = data.facts || null;
@@ -468,10 +523,18 @@
     // 서버가 내려주는 문장을 그대로 쓴다 — 프론트가 다시 쓰면 §6.1 한계 문구가
     // 조용히 사라진다.
     var head = data.headline || SIGNAL_LABEL[sig] || sig;
+    // Signal ↔ 표정. **판정 기호(체크·X·엄지)는 쓰지 않는다** - 얼굴은 뜻을
+    // 나르지 않으므로 aria-hidden 이고, 뜻은 칩과 헤드라인이 나른다.
+    var FACE = { GREEN: "calm", AMBER: "alert", RED: "worried", UNKNOWN: "unsure" };
     html += '<div class="verdict ' + esc(sig) + '">' +
-              '<span class="badge">' + esc(SIGNAL_SHORT[sig] || sig) + "</span>" +
-              '<span class="meta"><strong>' + esc(head) + "</strong>" +
-              "<span>" + esc(asOfLabel(data.recall_data_as_of)) + "</span></span></div>";
+              '<svg class="face" viewBox="0 0 120 120" aria-hidden="true"><use href="/static/mascot.svg#mungchi-' +
+                esc(FACE[sig] || "unsure") + '"/></svg>' +
+              '<span class="line">' +
+                '<span class="chip ' + esc(sig) + '"><span class="dot"></span>' +
+                  esc(SIGNAL_SHORT[sig] || sig) + "</span>" +
+                "<h3>" + esc(head) + "</h3>" +
+                '<span class="f-src">' + esc(asOfLabel(data.recall_data_as_of)) + "</span>" +
+              "</span></div>";
 
     // 축 셋. 서버가 상태를 정해 내려준다 — 프론트가 다시 판정하면 §3.2 의
     // "우리가 한 행위이지 상품의 상태가 아니다" 가 조용히 무너진다.
@@ -546,12 +609,79 @@
     // UNKNOWN 은 위에서 이미 그렸다 - 두 번 그리면 버튼 id 가 겹친다.
     if (sig !== "UNKNOWN") html += ctaHtml;
 
+    // [B-화면] 메타 푸터 — **이 스캔이 어떻게 나왔는지**를 화면이 말한다.
+    //
+    // 주의: gov_lookup 의 세 값을 **그대로** 옮긴다. 실패를 ok 로 반올림하지
+    //   않는다 - "조회 실패" 와 "조회했고 없었다" 는 다르다 (R3 · 4-r).
+    var meta = data.meta || {};
+    var LOOKUP = { ok: "ok", failed: "조회 실패", not_attempted: "시도 안 함" };
+    var bits = [];
+    if (meta.extraction_path === "heuristic") {
+      bits.push("추출: <b>휴리스틱(LLM 응답 없음)</b>");
+    } else if (meta.extracted_by) {
+      bits.push("추출: <b>" + esc(meta.extracted_by) + "</b>");
+    } else if (meta.extractor_vendor) {
+      bits.push("추출: <b>" + esc(meta.extractor_vendor) +
+                (meta.extractor_model ? " · " + esc(meta.extractor_model) : "") + "</b>");
+    }
+    if (data.recall_data_as_of) {
+      bits.push("리콜 데이터 최신 공표일 <b>" + esc(fmtDay(data.recall_data_as_of)) + "</b>");
+    }
+    var gl = meta.gov_lookup;
+    if (gl) {
+      bits.push("정부 조회 인증 <b>" + esc(LOOKUP[gl.cert] || gl.cert) +
+                "</b> · 리콜 <b>" + esc(LOOKUP[gl.recall] || gl.recall) +
+                "</b> · 전파 <b>" + esc(LOOKUP[gl.rf] || gl.rf) + "</b>");
+    }
+    if (bits.length) {
+      html += '<div class="meta-foot">' +
+              bits.map(function (b) { return "<span>" + b + "</span>"; }).join("") +
+              "</div>";
+    }
+
     if (data.disclaimer) html += '<p class="disclaimer">' + esc(data.disclaimer) + "</p>";
     html += "</div>";
     res.innerHTML = html;
 
     var wb = document.getElementById("watch");
     if (wb) wb.addEventListener("click", registerWatch);
+
+    // [D-화면] 오답 신고. **결과당 한 번** - 누르면 그 자리가 문장으로 바뀐다.
+    Array.prototype.forEach.call(res.querySelectorAll("[data-miss]"), function (btn) {
+      btn.addEventListener("click", function () {
+        var items = btn.getAttribute("data-miss").split("|").filter(Boolean);
+        btn.disabled = true;
+        var m = data.meta || {};
+        fetch("/api/v1/report-miss", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            page_text: lastText || pt.value || "",
+            matched_items: items.slice(0, 10),
+            // 서버가 다시 추출하지 않게 **화면이 meta 를 그대로 넘긴다.**
+            extraction_path: m.extraction_path || "unknown",
+            extractor_vendor: m.extractor_vendor || null,
+            extractor_model: m.extractor_model || null
+          })
+        }).then(function (r) {
+          var note = document.createElement("span");
+          note.className = "miss-done";
+          if (r.status === 201) {
+            note.textContent =
+              "저장됐습니다 — 판정은 바뀌지 않습니다. 사람이 검수해 옮깁니다";
+          } else if (r.status === 429) {
+            note.textContent = "잠시 뒤 다시 눌러 주세요";
+            btn.disabled = false;
+          } else {
+            note.textContent = "저장하지 못했습니다";
+            btn.disabled = false;
+          }
+          btn.parentNode.replaceChild(note, btn);
+        }).catch(function () {
+          btn.disabled = false;
+        });
+      });
+    });
 
     // 이미지에서 읽은 번호를 입력란에 넣고 다시 검사한다. 번호는 텍스트 경로로
     // 들어가므로 그때부터는 다른 인증번호와 똑같이 자동 조회된다.
@@ -697,6 +827,10 @@
       errP.textContent = "상세페이지 내용을 붙여넣거나 캡처 이미지를 추가해 주세요.";
       err.hidden = false; pt.focus(); return;
     }
+
+    // [D-화면] 오답 신고가 원문을 그대로 보낸다. 데모 경로는 입력란을 채운 뒤
+    // scan() 을 부르므로 여기서 한 번 기억하면 두 경로가 다 덮인다.
+    lastText = text;
 
     go.disabled = true;
     resSec.hidden = false;

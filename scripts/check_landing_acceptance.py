@@ -19,6 +19,10 @@ import sys
 
 WIDTHS = (1440, 390)
 
+#: 랜딩 말고도 같은 규약을 지켜야 하는 화면들. 랜딩 전용 항목(히어로·⓪)은
+#: 여기서 빼고, **공통 규약**(밑줄·파랑·좌측선·폰트·파비콘)만 본다.
+TOOL_PAGES = ("/scan", "/batch", "/watch")
+
 
 def main() -> int:
     ap = argparse.ArgumentParser()
@@ -194,6 +198,61 @@ def main() -> int:
 
                 print(f"  [{tag}] 검사 완료")
                 page.close()
+        finally:
+            browser.close()
+
+    # ── 도구 화면 셋 — 공통 규약만 (2026-09-13 [제출-2 2/3]) ──────────
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch(channel="chrome")
+        try:
+            for path in TOOL_PAGES:
+                for width in WIDTHS:
+                    page = browser.new_page(viewport={"width": width, "height": 900})
+                    page.goto(args.base + path, wait_until="networkidle", timeout=60_000)
+                    page.evaluate("() => document.fonts.ready")
+                    page.wait_for_timeout(300)
+                    tag = f"{path} {width}px"
+
+                    # 밑줄 있는 버튼 0
+                    u = page.eval_on_selector_all(
+                        ".btn-primary, .btn-ghost, .btn, .btn-t",
+                        "els => els.filter(e => getComputedStyle(e).textDecorationLine"
+                        ".includes('underline')).map(e => e.className)")
+                    if u:
+                        bad.append(f"[{tag}] 밑줄 있는 버튼: {u}")
+
+                    # 파랑 0 (랜딩과 같은 식)
+                    blues = page.evaluate("""() => {
+                        const out = [];
+                        for (const el of document.querySelectorAll('*')) {
+                            const cs = getComputedStyle(el);
+                            for (const prop of ['color','backgroundColor','borderTopColor']) {
+                                const m = cs[prop].match(/rgba?\\((\\d+), (\\d+), (\\d+)/);
+                                if (!m) continue;
+                                if (cs[prop].startsWith('rgba') && cs[prop].endsWith(', 0)')) continue;
+                                const [r,g,b] = [+m[1],+m[2],+m[3]];
+                                if (b > r + 40 && b > g + 40 && r < 100)
+                                    out.push(el.tagName+'.'+el.className+' '+prop+'='+cs[prop]);
+                            }
+                        }
+                        return out.slice(0, 5);
+                    }""")
+                    if blues:
+                        bad.append(f"[{tag}] 파란색: {blues}")
+
+                    # 헤더 마크가 마스코트인가 · 폰트 · 파비콘
+                    mark = page.eval_on_selector(
+                        ".masthead .mark use", "e => e.getAttribute('href')")
+                    if not mark or "mascot.svg#" not in mark:
+                        bad.append(f"[{tag}] 헤더 마크가 마스코트가 아니다: {mark}")
+                    if not page.evaluate("() => document.fonts.check('16px \"Gowun Dodum\"')"):
+                        bad.append(f"[{tag}] Gowun Dodum 이 로드되지 않았다")
+                    icon = page.eval_on_selector("link[rel=icon]", "e => e.href")
+                    if not icon or not icon.endswith("favicon.svg"):
+                        bad.append(f"[{tag}] 파비콘이 없다")
+
+                    print(f"  [{tag}] 검사 완료")
+                    page.close()
         finally:
             browser.close()
 

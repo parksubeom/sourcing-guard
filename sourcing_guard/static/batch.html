@@ -19,11 +19,10 @@
 
 <header class="masthead">
   <div class="container">
-    <svg class="mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
-         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-      <circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/><path d="M7.8 10.6l1.9 1.9 3.5-3.6"/>
-    </svg>
-    <span class="wordmark">안심 소싱 돋보기</span>
+    <a class="brand" href="/">
+      <svg class="mark" viewBox="0 0 120 120" aria-hidden="true"><use href="/static/mascot.svg#mungchi-calm"/></svg>
+      <span class="wordmark">안심 소싱 돋보기</span>
+    </a>
     <nav class="pages" aria-label="주요 화면">
       <a href="/">소개</a>
       <a href="/scan">상품 검사</a>
@@ -229,7 +228,22 @@
     if (!text) { bt.focus(); return; }
     go.disabled = true;
     out.hidden = false;
-    out.innerHTML = '<div class="card"><p class="scope">검사하고 있습니다…</p></div>';
+    // 로딩 A안 — **흐르는 띠**다. 채워지는 진행바를 쓰지 않는다.
+    //
+    // 주의: 서버가 진행 건수를 주지 않으므로 "n/N 처리" 를 화면이 지어내면
+    //   거짓이 된다. 건수 진행은 서버가 실제로 주는 값이 생기면 숫자로만 쓴다.
+    out.innerHTML =
+      '<div class="loading" aria-busy="true" aria-live="polite">' +
+        '<div class="head">' +
+          '<svg class="m-bob" viewBox="0 0 120 120" width="72" height="72" aria-hidden="true"' +
+          ' style="flex:none;overflow:visible"><use href="/static/mascot.svg#mungchi-look"/></svg>' +
+          '<div style="display:flex;flex-direction:column;gap:8px;flex:1">' +
+            '<h3>확인 중입니다<span class="ell"><span></span><span></span><span></span></span></h3>' +
+            '<div class="sub">줄 수가 많으면 시간이 걸립니다. 끝나면 판정별로 묶어 보여 드립니다.</div>' +
+            '<div class="track"><i></i></div>' +
+          "</div>" +
+        "</div>" +
+      "</div>";
     fetch("/api/v1/batch", {
       method: "POST",
       headers: { "Content-Type": "application/json" },

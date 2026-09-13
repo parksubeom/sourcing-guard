@@ -21,7 +21,15 @@ import sys
 from pathlib import Path
 
 WIDTHS = {"1440": 1440, "390": 390}
-PAGES = {"landing": "/", "scan": "/scan", "batch": "/batch", "watch": "/watch"}
+PAGES = {"landing": "/", "scan": "/scan", "batch": "/batch", "watch": "/watch",
+         # 데모 셋을 눌러 **결과 카드**를 찍는다. 신호 넷을 다 보려면 결과가
+         # 그려진 뒤여야 한다 - 빈 화면만 찍으면 카드를 한 번도 못 본다.
+         "scan-green": "/scan?demo=green",
+         "scan-amber": "/scan?demo=amber",
+         "scan-red": "/scan?demo=red"}
+
+#: 결과가 그려질 때까지 기다릴 선택자. 없으면 빈 화면을 찍는다.
+WAIT_FOR = {"scan-green": ".verdict", "scan-amber": ".verdict", "scan-red": ".verdict"}
 
 
 def main() -> None:
@@ -50,6 +58,10 @@ def main() -> None:
                     page = browser.new_page(viewport={"width": width, "height": 900},
                                             device_scale_factor=2)
                     page.goto(args.base + path, wait_until="networkidle", timeout=60_000)
+                    sel = WAIT_FOR.get(name)
+                    if sel:
+                        # ⚠ 데모는 LLM 을 타므로 느리다. 목 모드라도 기다린다.
+                        page.wait_for_selector(sel, timeout=90_000)
                     # ⚠ 웹폰트가 실제로 그려진 뒤에 찍는다.
                     page.evaluate("() => document.fonts.ready")
                     page.wait_for_timeout(600)
