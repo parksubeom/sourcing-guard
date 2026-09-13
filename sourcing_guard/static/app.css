@@ -131,13 +131,15 @@
 .t-h1{font-family:var(--font-display); font-weight:400; font-size:28px; line-height:36px}
 .t-h2{font-family:var(--font-body); font-weight:700; font-size:20px; line-height:28px}
 .t-body{background:var(--bg-page);font-family:var(--font-body);font-family:var(--font-body); font-weight:400; font-size:15px; line-height:24px}
-.t-label{font-family:var(--font-body); font-weight:500; font-size:13px; line-height:20px; color:var(--fg-2)}
+.t-label{font-family:var(--font-body); font-weight:700; font-size:15px; line-height:20px; color:var(--fg-2)}
 .t-num{font-family:var(--font-body); font-weight:700; font-size:44px; line-height:48px; font-variant-numeric:tabular-nums}
 @media (max-width:640px){ .t-display{font-size:34px; line-height:42px} .t-h1{font-size:24px; line-height:32px} .t-num{font-size:36px; line-height:40px} }
 
 /* ── 신호 칩: 색은 신호등 넷에서만. 문구는 SIGNAL_LABEL / SIGNAL_SHORT (index.html) 그대로 ── */
-.chip{display:inline-flex; align-items:center; gap:6px; padding:6px 12px; border-radius:var(--r-pill); font-size:13px; font-weight:700; line-height:16px}
-.chip .dot{width:8px; height:8px; border-radius:50%; flex:none; margin:0}
+/* 주의: `white-space:nowrap` 이 없으면 좁은 칸에서 '정상' 이 '정/상' 으로
+   접힌다 - 칩이 커진 v2 에서 데모 버튼이 실제로 그렇게 나왔다. */
+.chip{display:inline-flex; align-items:center; gap:8px; padding:8px 14px; border-radius:var(--r-pill); font-size:15px; font-weight:700; line-height:20px; white-space:nowrap}
+.chip .dot{width:10px; height:10px; border-radius:50%; flex:none; margin:0}
 .chip.GREEN{background:var(--signal-green-tint); color:var(--signal-green-text)}   .chip.GREEN .dot{background:var(--signal-green)}
 .chip.AMBER{background:var(--signal-amber-tint); color:var(--signal-amber-text)}   .chip.AMBER .dot{background:var(--signal-amber)}
 .chip.RED{background:var(--signal-red-tint); color:var(--signal-red-text)}         .chip.RED .dot{background:var(--signal-red)}
@@ -175,8 +177,6 @@ header.masthead{border-bottom:1px solid var(--border-default); background:var(--
 .masthead .container{display:flex; align-items:center; gap:var(--s3); min-height:64px; flex-wrap:wrap}
 .mark{width:32px; height:32px; flex:none; color:var(--primary-70)}
 .wordmark{font-size:19px; font-weight:700; letter-spacing:-.01em}
-.tagline{font-size:13px; color:var(--fg-3); padding-left:var(--s3); border-left:1px solid var(--border-default)}
-@media (max-width:640px){ .tagline{border-left:0; padding-left:0; flex-basis:100%} }
 
 /* ── hero / intro ─────────────────────────────────────── */
 .intro{background:var(--bg-muted); padding:var(--s10) 0}
@@ -206,7 +206,7 @@ h3{font-size:19px; line-height:1.3; margin:0 0 var(--s3)}
 /* 주의: 전에는 `.demo span{display:block}` 이었다. 랜딩 데모가 칩을 span 으로
    쓰면서 **칩과 점이 block 으로 눕었다**(0,1,1 이 .chip 의 0,1,0 을 이긴다).
    이 규칙이 노리는 것은 `/scan` 데모 버튼의 **부제 한 줄**이므로 거기로 좁힌다. */
-.demo > span:not([class]){display:block; font-size:13px; color:var(--fg-3); margin-top:2px}
+.demo > span:not([class]){display:block; font-size:15px; color:var(--fg-2); margin-top:2px}
 
 /* ── input ────────────────────────────────────────────── */
 textarea{
@@ -232,7 +232,7 @@ textarea:focus{border-color:var(--primary-50); outline:2px solid var(--border-fo
   background:var(--bg-canvas); color:var(--fg-1); font:inherit; font-size:17px; cursor:pointer;
 }
 .btn-t:hover{border-color:var(--fg-3)}
-.counter{font-size:13px; color:var(--fg-3); font-variant-numeric:tabular-nums}
+.counter{font-size:15px; color:var(--fg-2); font-variant-numeric:tabular-nums}
 
 /* ── 이미지 붙여넣기 ──────────────────────────────────────
  *
@@ -249,7 +249,7 @@ textarea:focus{border-color:var(--primary-50); outline:2px solid var(--border-fo
 .paste:hover{border-color:var(--primary-50); background:var(--primary-10)}
 .paste.armed{border-color:var(--primary-50); border-style:solid; background:var(--primary-10)}
 .paste b{display:block; font-size:15px; font-weight:700}
-.paste span{display:block; font-size:13px; color:var(--fg-3); margin-top:var(--s1)}
+.paste span{display:block; font-size:15px; color:var(--fg-2); margin-top:var(--s1)}
 .paste svg{width:24px; height:24px; color:var(--fg-4)}
 .paste:hover svg,.paste.armed svg{color:var(--primary-60)}
 
@@ -258,7 +258,7 @@ textarea:focus{border-color:var(--primary-50); outline:2px solid var(--border-fo
   margin-top:var(--s3); padding:10px var(--s3);
   border:1px solid var(--gray-20); border-left:3px solid var(--info);
   border-radius:var(--r-xs); background:var(--gray-5);
-  font-size:13px; color:var(--fg-2);
+  font-size:15px; color:var(--fg-2);
 }
 .kc-note svg{width:18px; height:18px; flex:none; color:var(--info); margin-top:1px}
 
@@ -268,7 +268,7 @@ textarea:focus{border-color:var(--primary-50); outline:2px solid var(--border-fo
   border-radius:var(--r-s); overflow:hidden; background:var(--bg-canvas);
 }
 .shot img{display:block; width:100%; height:88px; object-fit:cover; background:var(--gray-10)}
-.shot .meta{display:block; padding:var(--s1) var(--s2); font-size:12px; color:var(--fg-3);
+.shot .meta{display:block; padding:var(--s1) var(--s2); font-size:15px; color:var(--fg-2);
   font-variant-numeric:tabular-nums; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
 .shot .drop{
   position:absolute; top:var(--s1); right:var(--s1); width:28px; height:28px;
@@ -285,7 +285,7 @@ textarea:focus{border-color:var(--primary-50); outline:2px solid var(--border-fo
 .alert{display:flex; gap:var(--s3); padding:14px var(--s4); border-radius:var(--r-m); border:1px solid; margin-top:var(--s4)}
 .alert.danger{border-color:var(--danger); background:#FCECEC}
 .alert h4{margin:0 0 2px; font-size:15px}
-.alert p{margin:0; font-size:13px; color:var(--fg-2)}
+.alert p{margin:0; font-size:15px; color:var(--fg-2)}
 .alert svg{flex:none; color:var(--danger)}
 
 /* ── skeleton ─────────────────────────────────────────── */
@@ -298,39 +298,6 @@ textarea:focus{border-color:var(--primary-50); outline:2px solid var(--border-fo
   @keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
 }
 
-/* ── result ───────────────────────────────────────────── */
-.result{border:1px solid var(--border-default); border-radius:var(--r-xl); overflow:hidden}
-.verdict{display:flex; align-items:center; gap:var(--s4); padding:var(--s6); border-bottom:1px solid var(--border-default)}
-.verdict .badge{
-  display:flex; align-items:center; justify-content:center; gap:var(--s2);
-  min-width:132px; height:56px; padding:0 var(--s5); border-radius:var(--r-m);
-  color:#fff; font-size:24px; font-weight:700; line-height:1;
-}
-.verdict.GREEN .badge{background:var(--success)}
-.verdict.AMBER .badge{background:var(--warning)}
-.verdict.RED    .badge{background:var(--danger)}
-.verdict.UNKNOWN .badge{background:var(--gray-60)}
-.verdict .meta{min-width:0}
-.verdict .meta strong{display:block; font-size:19px; line-height:1.4;
-  font-weight:700; overflow-wrap:anywhere}
-.verdict .meta span{display:block; font-size:13px; color:var(--fg-3); margin-top:var(--s1); font-variant-numeric:tabular-nums}
-@media (max-width:640px){
-  .verdict{flex-direction:column; align-items:flex-start; gap:var(--s3); padding:var(--s5)}
-  .verdict .badge{width:100%}
-}
-/* 축 셋. 종합 배지 하나로는 "무엇을 했고 무엇을 못 했는지" 가 안 보인다.
-   주의: done 을 초록 체크로 크게 그리지 않는다 - 셀러가 "안전" 으로 읽는다.
-      점 하나와 글자만 쓴다. 축 이름은 우리가 한 행위이지 상품 상태가 아니다. */
-.axes{display:flex; flex-wrap:wrap; gap:var(--s3) var(--s6);
-  padding:var(--s4) var(--s6); border-bottom:1px solid var(--border-default);
-  background:var(--bg-subtle)}
-.axes .ax{display:flex; align-items:baseline; gap:var(--s2); font-size:14px; min-width:0}
-.axes .ax .n{color:var(--fg-3)}
-.axes .ax .v{color:var(--fg-2); font-weight:600}
-.axes .ax .v::before{content:"·"; margin-right:var(--s2); color:var(--gray-60)}
-.axes .ax.done .v::before{color:var(--fg-2)}
-.axes .ax .note{color:var(--fg-3); font-size:12px; font-variant-numeric:tabular-nums}
-@media (max-width:520px){ .axes{flex-direction:column; gap:var(--s2)} }
 
 .scope{margin:0; padding:var(--s4) var(--s6); background:var(--bg-subtle); border-bottom:1px solid var(--border-default); font-size:15px; color:var(--fg-2)}
 
@@ -344,21 +311,6 @@ textarea:focus{border-color:var(--primary-50); outline:2px solid var(--border-fo
 }
 @media (max-width:640px){ .input-note{padding:var(--s4) var(--s5)} }
 
-/* ── "우리가 이렇게 읽었습니다" ─────────────────────────────
- *
- * 판정보다 위에 둔다. 셀러가 추출 결과를 눈으로 확인하면 두 가지가 된다 -
- * "제대로 읽었구나" 라는 신뢰, 그리고 잘못 읽었을 때 바로 잡아낼 기회.
- */
-.read{padding:var(--s5) var(--s6); border-bottom:1px solid var(--border-default); background:var(--gray-5)}
-.read h4{margin:0 0 var(--s3); font-size:15px; color:var(--fg-2); font-weight:700}
-.read dl{margin:0; display:grid; grid-template-columns:auto 1fr; gap:var(--s2) var(--s4); align-items:baseline}
-.read dt{font-size:13px; color:var(--fg-3); white-space:nowrap}
-.read dd{margin:0; font-size:15px; color:var(--fg-1); overflow-wrap:anywhere}
-@media (max-width:640px){
-  .read{padding:var(--s4) var(--s5)}
-  .read dl{grid-template-columns:1fr; gap:0}
-  .read dt{margin-top:var(--s3)}
-}
 
 /* 정부 조회로 나가는 링크. 모양은 버튼이지만 요소는 a 로 둔다 - 실제로
  * 페이지를 이동하므로, button 으로 쓰면 스크린리더가 동작을 잘못 알린다. */
@@ -367,35 +319,13 @@ textarea:focus{border-color:var(--primary-50); outline:2px solid var(--border-fo
   height:34px; padding:0 var(--s3); margin-left:var(--s2);
   border:1px solid var(--primary-50); border-radius:var(--r-xs);
   background:var(--bg-canvas); color:var(--primary-60);
-  font-size:13px; font-weight:700; text-decoration:none; white-space:nowrap;
+  font-size:15px; font-weight:700; text-decoration:none; white-space:nowrap;
   vertical-align:middle;
 }
 .golink:hover{background:var(--primary-10); color:var(--primary-70); border-color:var(--primary-60)}
 .golink svg{width:14px; height:14px; flex:none}
 .f-meta .golink{margin:var(--s1) 0 0}
 
-.findings{list-style:none; margin:0; padding:0}
-.findings>li{padding:var(--s5) var(--s6); border-bottom:1px solid var(--gray-20); display:flex; gap:var(--s3)}
-.findings>li:last-child{border-bottom:0}
-@media (max-width:640px){ .findings>li{padding:var(--s4) var(--s5)} }
-/* 공급처 참고 정보. 이 상품의 판정이 아니라는 것이 눈에 보여야 한다 -
- * 리콜 일치와 같은 모양으로 그리면 셀러가 '이 상품이 리콜됐다' 로 읽는다. */
-/* ── 셀러 관점 구획 ───────────────────────────────────────
- *
- * 소싱하려면 확인할 것 / 확인된 문제 / 참고. 순서와 제목은 서버가 준다.
- * 확정 일치와 유사 일치가 같은 목록에 섞이면 셀러가 구분하지 못한다 -
- * "펜을 검사했는데 왜 블라인드가 뜨나" 가 실제로 나온 질문이다.
- */
-.fgroup{border-bottom:1px solid var(--border-default)}
-.fgroup:last-of-type{border-bottom:0}
-.fgroup>h4{
-  margin:0; padding:var(--s3) var(--s6) var(--s1);
-  font-size:13px; font-weight:700; letter-spacing:.01em; color:var(--fg-3);
-}
-.fgroup.action>h4{color:var(--primary-70)}
-.fgroup.finding>h4{color:var(--danger)}
-.fgroup.context{background:var(--gray-5)}
-@media (max-width:640px){ .fgroup>h4{padding:var(--s3) var(--s5) var(--s1)} }
 
 .findings>li.aside{background:var(--gray-5)}
 .findings>li.aside .f-text{color:var(--fg-2)}
@@ -408,45 +338,16 @@ textarea:focus{border-color:var(--primary-50); outline:2px solid var(--border-fo
 /* 이미지에서 읽은 인증번호 확인. 자동 조회하지 않는 이유는 문장에 있고,
  * 여기서는 확인·수정 후 조회로 넘어가는 버튼만 준다. */
 .confirm{margin:var(--s3) 0 0; display:flex; flex-wrap:wrap; gap:var(--s2); align-items:center}
-.confirm .sub{font-size:13px; color:var(--fg-3)}
+.confirm .sub{font-size:15px; color:var(--fg-2)}
 .btn-t.sm{height:38px; padding:0 var(--s3); font-size:15px; font-weight:700;
   border-color:var(--primary-50); color:var(--primary-60)}
 .btn-t.sm:hover{background:var(--primary-10); border-color:var(--primary-60)}
 
 
-.tick{width:8px; border-radius:999px; flex:none; margin:6px 0 auto; align-self:stretch; min-height:8px; max-height:8px}
-.tick.GREEN{background:var(--success)} .tick.AMBER{background:var(--warning)}
-.tick.RED{background:var(--danger)} .tick.UNKNOWN{background:var(--gray-50)}
-.f-body{min-width:0; flex:1}
-.f-text{margin:0; font-size:17px}
-.f-meta{margin:var(--s2) 0 0; font-size:13px; color:var(--fg-3)}
-.f-meta a{color:var(--primary-60); text-decoration:underline; text-underline-offset:2px}
-.f-meta a:hover{color:var(--primary-70)}
-.tag{
-  display:inline-block; padding:1px 6px; border-radius:var(--r-xs);
-  font-size:13px; font-weight:700; border:1px solid var(--primary-50); color:var(--primary-60);
-  margin-right:var(--s2);
-}
 
-/* ── accordion ────────────────────────────────────────── */
-details.rules{border-top:1px solid var(--gray-20)}
-details.rules summary{
-  list-style:none; cursor:pointer; padding:var(--s5) var(--s6);
-  font-size:17px; font-weight:700; display:flex; align-items:center; gap:var(--s2);
-}
-details.rules summary::-webkit-details-marker{display:none}
-details.rules summary:hover{color:var(--primary-60)}
-.chev{transition:transform 160ms ease-out; flex:none}
-details.rules[open] .chev{transform:rotate(180deg)}
-details.rules ul{list-style:none; margin:0; padding:0 var(--s6) var(--s5)}
-details.rules li{padding:var(--s3) 0; border-top:1px solid var(--gray-20); font-size:15px; color:var(--fg-2)}
-details.rules li a{color:var(--primary-60); font-size:13px; text-decoration:underline; text-underline-offset:2px}
-@media (max-width:640px){ details.rules summary{padding:var(--s4) var(--s5)} details.rules ul{padding:0 var(--s5) var(--s4)} }
-
-.disclaimer{margin:0; padding:var(--s4) var(--s6); background:var(--bg-subtle); font-size:13px; color:var(--fg-2)}
 
 footer{border-top:1px solid var(--border-default); margin-top:var(--s16); padding:var(--s8) 0; background:var(--bg-subtle)}
-footer p{margin:0 0 var(--s2); font-size:13px; color:var(--fg-3)}
+footer p{margin:0 0 var(--s2); font-size:15px; color:var(--fg-2)}
 footer p:last-child{margin-bottom:0}
 [hidden]{display:none !important}
 
@@ -470,7 +371,7 @@ nav.pages a[aria-current="page"]{color:var(--primary-60); background:var(--prima
 .promise svg{flex:none; color:var(--primary-50)}
 .promise h4{margin:0 0 var(--s1); font-size:17px}
 .promise p{margin:0; font-size:15px; color:var(--fg-2)}
-.promise p+p{margin-top:var(--s2); font-size:13px; color:var(--fg-3)}
+.promise p+p{margin-top:var(--s2); font-size:15px; color:var(--fg-2)}
 
 .watchbar{display:flex; align-items:center; gap:var(--s3); margin-bottom:var(--s5); flex-wrap:wrap}
 .watchbar .counter{margin-left:auto}
@@ -494,7 +395,7 @@ nav.pages a[aria-current="page"]{color:var(--primary-60); background:var(--prima
 .item .alerts{list-style:none; margin:var(--s4) 0 0; padding:var(--s4) 0 0; border-top:1px solid var(--gray-20)}
 .item .alerts li{font-size:15px; margin-bottom:var(--s2)}
 .item .alerts li:last-child{margin-bottom:0}
-.item .alerts a{color:var(--primary-60); font-size:13px; text-decoration:underline; text-underline-offset:2px}
+.item .alerts a{color:var(--primary-60); font-size:15px; text-decoration:underline; text-underline-offset:2px}
 @media (max-width:640px){
   .item-top{flex-direction:column; gap:var(--s3)}
   .item-top .badge{width:100%}
@@ -544,10 +445,10 @@ nav.pages a[aria-current="page"]{color:var(--primary-60); background:var(--prima
 }
 .grades b { font-weight: 600; }
 .grades .g {
-  font-size: 12px; padding: 1px 7px; border-radius: 999px;
+  font-size: 15px; padding: 2px 10px; border-radius: 999px;
   border: 1px solid var(--gray-20);
 }
-.grades .sub { flex-basis: 100%; font-size: 12px; }
+.grades .sub { flex-basis: 100%; font-size: 15px; color: var(--fg-2); }
 .confirm.part { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .confirm.part .sub { flex-basis: 100%; }
 
@@ -563,13 +464,13 @@ nav.pages a[aria-current="page"]{color:var(--primary-60); background:var(--prima
 .b-group[open] > summary::before { content: "▾ "; }
 .b-group > .scope { margin: 4px 14px 8px; }
 .b-group > .scope { margin: 2px 14px 8px; }
-.b-n { font-weight: 400; font-size: 13px; }
+.b-n { font-weight: 400; font-size: 15px; }
 .b-list { list-style: none; margin: 0; padding: 0 14px 12px; }
 .b-row {
   display: flex; gap: 10px; align-items: baseline;
   padding: 7px 0; border-top: 1px solid var(--gray-20);
 }
-.b-line { min-width: 34px; text-align: right; font-size: 12px; opacity: .6; }
+.b-line { min-width: 40px; text-align: right; font-size: 15px; color: var(--fg-2); }
 .b-body { flex: 1; min-width: 0; }
 .b-name { margin: 0 0 2px; word-break: break-all; }
 .b-item { font-weight: 600; margin-right: 8px; }
@@ -578,7 +479,7 @@ nav.pages a[aria-current="page"]{color:var(--primary-60); background:var(--prima
 .b-cands { list-style: none; margin: 2px 0; padding: 0; }
 .b-cands li {
   display: inline-block; margin: 2px 6px 2px 0; padding: 1px 8px;
-  border: 1px solid var(--gray-20); border-radius: 999px; font-size: 12px;
+  border: 1px solid var(--gray-20); border-radius: 999px; font-size: 15px;
 }
 .b-more { display: contents; }
 
@@ -620,7 +521,7 @@ h1, h2, .wordmark, .intro h2{
 .brand{display:flex; align-items:center; gap:10px; text-decoration:none; color:inherit}
 .brand .mark{width:32px; height:32px; flex:none}
 .wordmark{font-family:var(--font-display); font-weight:400; font-size:20px}
-nav.pages{display:flex; gap:28px; font-size:14px; font-weight:500; color:var(--fg-2)}
+nav.pages{display:flex; gap:28px; font-size:15px; font-weight:500; color:var(--fg-2)}
 /* 390px 에서 '상품 / 검사' 로 단어 안이 아니라 **구 사이가** 접혔다.
    메뉴 이름은 한 덩어리다 - 끊으면 항목이 몇 개인지 안 보인다. */
 nav.pages a{color:inherit; text-decoration:none; white-space:nowrap}
@@ -795,9 +696,10 @@ body.lv2{word-break:keep-all; overflow-wrap:break-word}
 .lv2-sec .end h2{margin:0}
 
 .lv2-foot{border-top:1px solid var(--gray-20); padding-block:36px 48px; font-size:16px; line-height:26px; color:var(--fg-2)}
-/* 주의: 공용 `footer p{font-size:13px}` 가 여기까지 온다. 그 줄은 §9 고정
-   문구이고 **화면에서 가장 중요한 한 줄**인데 13px 이면 읽지 않는다.
-   측정이 잡았다 - 눈으로는 "작은 안내" 로 보여서 넘어간다. */
+/* 주의: 공용 `footer p` 가 여기까지 온다. 그 줄은 §9 고정 문구이고 **화면에서
+   가장 중요한 한 줄**인데 작으면 읽지 않는다. 2026-09-13 에 공용 값이 13px
+   이어서 측정이 잡았고(눈으로는 "작은 안내" 로 보여서 넘어간다), 지금은 공용도
+   15px 이지만 랜딩은 16px 로 따로 든다. */
 .lv2-foot p{margin:0 0 12px; font-size:16px; line-height:26px; color:var(--fg-2)}
 .lv2-foot .row{display:flex; justify-content:space-between; gap:24px; font-size:15px; line-height:22px}
 
@@ -843,7 +745,7 @@ body{background:var(--bg-page)}
 .loading .head{display:flex; align-items:center; gap:20px; padding:24px 28px;
   border-bottom:1px solid var(--border-default)}
 .loading .head h3{margin:0; font-family:var(--font-display); font-weight:400; font-size:22px}
-.loading .sub{font-size:13px; color:var(--fg-2)}
+.loading .sub{font-size:15px; color:var(--fg-2)}
 .ell span{display:inline-block; width:4px; height:4px; border-radius:50%;
   background:currentColor; margin-left:3px; opacity:.15; animation:sg-ell 1.2s infinite}
 .ell span:nth-child(2){animation-delay:.2s}
@@ -861,14 +763,14 @@ body{background:var(--bg-page)}
 .loading .step .d{width:8px; height:8px; border-radius:50%; margin-top:7px; flex:none;
   background:var(--brand); animation:sg-pulse 1.4s ease-out infinite}
 .loading .step .t{font-weight:500; color:var(--brand)}
-.loading .step .s{font-size:12px; color:var(--fg-4)}
-.loading .step .st{font-size:12px; color:var(--brand); font-weight:700}
+.loading .step .s{font-size:15px; color:var(--fg-2)}
+.loading .step .st{font-size:15px; color:var(--brand); font-weight:700}
 .loading .sk-axes{display:grid; grid-template-columns:repeat(4,minmax(0,1fr));
   border-top:1px solid var(--border-default)}
 .loading .sk-axes > div{display:flex; flex-direction:column; gap:6px; padding:12px 16px;
   border-right:1px solid var(--border-default)}
 .loading .sk-axes > div:last-child{border-right:0}
-.loading .sk-axes span{font-size:11px; color:var(--fg-4)}
+.loading .sk-axes span{font-size:15px; color:var(--fg-2)}
 .sk{border-radius:var(--r-s);
   background:linear-gradient(90deg,var(--gray-20) 25%,var(--gray-10) 50%,var(--gray-20) 75%);
   background-size:200% 100%; animation:sg-shimmer 1.8s linear infinite}
@@ -879,45 +781,19 @@ body{background:var(--bg-page)}
   .ell span{opacity:1}
 }
 
-/* 결과 카드 — 헤더에 Signal ↔ 표정. 배경만 tint, 본문은 카드색. */
-.verdict{display:flex; align-items:center; gap:20px; padding:24px 28px;
-  border-bottom:1px solid var(--border-default); border-radius:0}
-.verdict .face{width:72px; height:72px; flex:none}
-.verdict .line{display:flex; flex-direction:column; gap:8px; flex:1; min-width:0}
-.verdict h3{margin:0; font-family:var(--font-display); font-weight:400; font-size:22px;
-  line-height:30px}
-.verdict.GREEN{background:var(--signal-green-tint)}
-.verdict.AMBER{background:var(--signal-amber-tint)}
-.verdict.RED{background:var(--signal-red-tint)}
-.verdict.UNKNOWN{background:var(--bg-subtle)}
-/* 주의: 옛 `.badge` 는 신호등 색 알약이었다. 칩으로 바꿨고 색은 --signal-* 가 준다. */
-.verdict .chip{align-self:flex-start; display:inline-flex}
-.verdict .chip .dot{display:inline-block; margin:0}
 
-/* finding 줄의 원문 링크 — 오키드 12px */
-.f-src{font-size:12px; color:var(--brand)}
-/* 품목 오답 신고 (D-화면)
-   주의: `.f-meta` 는 flex 가 아니다. `margin-left:auto` 를 주면 아무 일도 안
-     일어나고 **근거 링크 바로 뒤에 붙어 한 줄로 흐른다** - 2026-09-13 실물
-     확인에서 그렇게 나왔다. 블록으로 떨어뜨린다. */
-.miss{display:block; margin:var(--s2) 0 0; font-size:12px; padding:6px 12px}
-.miss-done{display:block; margin:var(--s2) 0 0; font-size:12px; color:var(--fg-2)}
-
-/* 메타 푸터 (B-화면) */
-.meta-foot{margin-top:var(--s4); padding-top:var(--s3);
-  border-top:1px solid var(--border-default);
-  display:flex; flex-wrap:wrap; gap:4px var(--s4);
-  font-size:12px; color:var(--fg-3)}
-.meta-foot b{font-weight:600; color:var(--fg-2)}
+/* /watch 항목 머리의 대조 결과 표시. 결과 카드 v2 로 옮기면서 `.f-*` 는 전부
+   `.rv-*` 가 됐지만 이 한 자리는 감시 목록이 쓴다 - 이름을 남겨 둔다. */
+.f-src{font-size:15px; line-height:22px; color:var(--brand)}
 
 /* 감시 목록 알림 (C-화면) — 신호등 색을 쓰지 않는다.
    리콜 "일치" 는 판정이 아니라 **대조 결과**다 (R6). */
 .alerts{margin:var(--s3) 0 0; padding:var(--s3) 0 0;
   border-top:1px solid var(--border-default); list-style:none}
-.alert{display:flex; flex-direction:column; gap:4px; padding:var(--s2) 0; font-size:13px}
+.alert{display:flex; flex-direction:column; gap:4px; padding:var(--s2) 0; font-size:15px}
 .alert .k{font-weight:600}
 .alert .m{color:var(--fg-2)}
-.alert a{font-size:12px; color:var(--brand)}
+.alert a{font-size:15px; color:var(--brand)}
 
 /* 도구 화면 머리글 - **크림 바탕 위 투명**이다. 회색 띠를 두지 않는다.
    랜딩에서 `.intro` 를 버렸고 /scan 등에는 남아 있었다. */
@@ -926,3 +802,152 @@ body{background:var(--bg-page)}
 /* 로딩 스켈레톤 축이 셋이다 (서버 axes 와 같다). */
 .loading .sk-axes.sk-3{grid-template-columns:repeat(3,minmax(0,1fr))}
 @media (max-width:800px){ .loading .sk-axes.sk-3{grid-template-columns:1fr} }
+
+/* == 결과 카드 v2 (정본: design/result-card-v2.html · README §10-4·10-5) ====
+ *
+ * 값을 여기서 고치지 말고 정본을 고친 뒤 옮긴다 (CLAUDE.md §6).
+ *
+ * 눈금 - 글자는 15px 아래로 내려가지 않는다. 14px 은 **카드 안 한정어**뿐이고
+ * 그 목록이 scripts/check_landing_acceptance.py 의 SMALL_OK 다:
+ *     .rv-read-h  읽은 값 머리말        .rv-gh    그룹 머리말
+ *     .rv-ax .n   축 이름               .rv-ax .m 축 주석
+ *     .rv-chip    접힌 유해물질 알약     .rv-foot span  메타 푸터
+ *
+ * 주의(중요): **머리만 신호색**이다. 본문까지 물들이면 "주의" 가 카드 전체의
+ *   판정처럼 읽히고, 참고 정보 줄까지 노란 바탕에 얹힌다.
+ *
+ * 주의: 축에는 신호 색·체크를 칠하지 않는다. `done` 은 "그 축을 했다" 지
+ *   "문제 없음" 이 아니다 (ResultAxis 주석).
+ */
+.rv{background:var(--bg-canvas); border:1.5px solid var(--border-default);
+    border-radius:var(--r-2xl); overflow:hidden}
+
+/* ── 머리 ── */
+.rv-head{display:flex; align-items:center; gap:20px; padding:24px 28px;
+         border-bottom:1px solid var(--border-default); background:var(--bg-subtle)}
+.rv-head.GREEN{background:var(--signal-green-tint)}
+.rv-head.AMBER{background:var(--signal-amber-tint)}
+.rv-head.RED{background:var(--signal-red-tint)}
+.rv-head.UNKNOWN{background:var(--signal-unknown-tint)}
+.rv-face{width:88px; height:88px; flex:none; overflow:visible}
+.rv-say{display:flex; flex-direction:column; gap:8px; flex:1; min-width:0}
+.rv-sig{display:flex; align-items:center; gap:12px; flex-wrap:wrap}
+/* 진한 바탕 흰 글자. 옅은 칩은 목록에서 쓰고 머리에서는 꽉 채운다. */
+.chip.solid{font-size:16px; color:#fff}
+.chip.solid .dot{background:#fff}
+.chip.solid.GREEN{background:var(--signal-green)}
+.chip.solid.AMBER{background:var(--signal-amber)}
+.chip.solid.RED{background:var(--signal-red)}
+.chip.solid.UNKNOWN{background:var(--signal-unknown)}
+.rv-lab{font-size:15px; line-height:20px; font-weight:700}
+.rv-head.GREEN .rv-lab{color:var(--signal-green-text)}
+.rv-head.AMBER .rv-lab{color:var(--signal-amber-text)}
+.rv-head.RED .rv-lab{color:var(--signal-red-text)}
+.rv-head.UNKNOWN .rv-lab{color:var(--signal-unknown-text)}
+.rv-h{margin:0; font-family:var(--font-display); font-weight:400;
+      font-size:26px; line-height:34px; color:var(--fg-1); overflow-wrap:anywhere}
+.rv-sub{margin:0; font-size:16px; line-height:24px; color:var(--fg-2)}
+/* 주의: 좁은 폭에서도 헤드라인을 줄이지 않는다. 정본이 26/34 이고, 시피님
+   비평이 "UI 가 큼지막해야 한다" 였다 - 390px 에서 '확인 후 소싱' 은 26px
+   로도 한 줄에 들어간다(실측). 줄이면 인수 검사가 잡는다. */
+@media (max-width:640px){
+  .rv-head{flex-direction:column; align-items:flex-start; gap:14px; padding:20px}
+}
+
+/* ── 이 페이지에서 이렇게 읽었습니다 ──
+ * 판정보다 위에 둔다. 잘못 읽었으면 셀러가 여기서 바로 알아챈다. */
+.rv-read{display:flex; flex-direction:column; gap:10px; padding:18px 28px;
+         border-bottom:1px solid var(--border-default)}
+.rv-read-h{font-size:14px; line-height:20px; font-weight:700; color:var(--fg-2)}
+.rv-pills{display:flex; flex-wrap:wrap; gap:8px}
+.rv-pill{display:inline-flex; align-items:center; gap:6px; padding:6px 12px;
+         border-radius:var(--r-pill); background:var(--bg-subtle);
+         font-size:15px; line-height:20px; max-width:100%; overflow-wrap:anywhere}
+/* 주의: 라벨은 줄바꿈하지 않는다. 390px 에서 '제품명' 이 '제/품/명' 으로
+   세로로 접혔다 (실측 · 다크 390). 값만 접힌다. */
+.rv-pill .k{color:var(--fg-2); white-space:nowrap; flex:none}
+.rv-pill.grade{background:var(--brand-tint); color:var(--primary-60)}
+.rv-pill.grade b{color:var(--primary-60)}
+@media (max-width:640px){ .rv-read{padding:16px 20px} }
+
+/* ── 축 셋 ── */
+.rv-axes{display:grid; grid-template-columns:repeat(3,minmax(0,1fr));
+         border-bottom:1px solid var(--border-default)}
+.rv-ax{display:flex; flex-direction:column; gap:4px; padding:16px 20px;
+       border-right:1px solid var(--border-default); min-width:0}
+.rv-ax:last-child{border-right:0}
+.rv-ax .n{font-size:14px; line-height:20px; font-weight:700; color:var(--fg-2)}
+.rv-ax .v{font-size:18px; line-height:26px; font-weight:700; color:var(--fg-1)}
+.rv-ax .m{font-size:14px; line-height:20px; color:var(--fg-2)}
+@media (max-width:640px){
+  .rv-axes{grid-template-columns:1fr}
+  .rv-ax{border-right:0; border-bottom:1px solid var(--border-default)}
+  .rv-ax:last-child{border-bottom:0}
+}
+
+/* ── 그룹과 근거 줄 ── */
+.rv-groups{padding:0 28px 8px}
+.rv-gh{font-size:14px; line-height:20px; font-weight:700; letter-spacing:.02em;
+       padding:18px 0 4px; color:var(--fg-2)}
+.rv-gh.action{color:var(--primary-60)}
+.rv-gh.finding{color:var(--signal-red-text)}
+.rv-rows{list-style:none; margin:0; padding:0}
+.rv-row{display:flex; gap:14px; padding:16px 0;
+        border-bottom:1px solid var(--border-default)}
+.rv-rows>.rv-row:last-child{border-bottom:0}
+.rv-dot{width:10px; height:10px; border-radius:50%; flex:none; margin-top:8px}
+.rv-dot.GREEN{background:var(--signal-green)}
+.rv-dot.AMBER{background:var(--signal-amber)}
+.rv-dot.RED{background:var(--signal-red)}
+.rv-dot.UNKNOWN{background:var(--signal-unknown)}
+.rv-b{display:flex; flex-direction:column; gap:6px; flex:1; min-width:0}
+.rv-t{font-size:16px; line-height:26px; color:var(--fg-1); overflow-wrap:anywhere}
+.rv-src{font-size:15px; line-height:22px; font-weight:500; color:var(--brand);
+        text-decoration:underline; text-underline-offset:3px; align-self:flex-start}
+.rv-src:hover{color:var(--brand-strong)}
+/* 공급처 참고 정보·약한 일치는 이 상품의 판정이 아니다. 같은 모양으로 그리면
+   셀러가 "이 상품이 리콜됐다" 로 읽는다. */
+.rv-row.aside .rv-t{color:var(--fg-2)}
+.rv-line{display:flex; align-items:flex-start; justify-content:space-between; gap:12px}
+@media (max-width:640px){
+  .rv-groups{padding:0 20px 8px}
+  /* 좁은 폭에서는 문장이 폭을 다 쓰고 버튼이 아래로 내려간다 - 나란히 두면
+     문장이 서너 글자씩 끊긴다 (실측 · 390). */
+  .rv-line{flex-wrap:wrap}
+  .rv-line>.rv-t{flex:1 1 100%}
+}
+
+/* "이 품목이 아닙니다" — 등급 줄에만. 누르면 저장만 되고 판정은 안 바뀐다. */
+.rv-miss{flex:none; padding:8px 14px; border:1.5px solid var(--border-default);
+         border-radius:var(--r-pill); background:transparent; color:var(--fg-2);
+         font:inherit; font-size:15px; font-weight:500; line-height:20px; cursor:pointer}
+.rv-miss:hover{border-color:var(--fg-3)}
+.rv-miss[disabled]{opacity:.5; cursor:progress}
+.rv-missed{font-size:15px; line-height:22px; color:var(--fg-2)}
+
+/* ── 같은 종류 근거 접기 (README §10-5) ──
+ * 슬라임 하나에 같은 문장이 열네 줄 반복되던 자리다. 접을 때도 **몇 건인지와
+ * 물질·기준치**는 보인다 - 숫자는 서버 detail 에서 읽는다 (R5). */
+.rv-chips{display:flex; flex-wrap:wrap; gap:6px}
+.rv-chip{display:inline-flex; align-items:center; padding:4px 10px;
+         border-radius:var(--r-pill); background:var(--bg-subtle);
+         color:var(--fg-2); font-size:14px; line-height:20px}
+.rv-more{flex:none; padding:0; border:0; background:none; color:var(--brand);
+         font:inherit; font-size:15px; font-weight:700; line-height:22px; cursor:pointer;
+         display:inline-flex; align-items:center; gap:4px}
+.rv-more:hover{color:var(--brand-strong)}
+.rv-more .chev{width:18px; height:18px}
+.rv-more[aria-expanded="true"] .chev{transform:rotate(180deg)}
+.rv-fold{list-style:none; margin:6px 0 0; padding:0}
+.rv-fold li{padding:10px 0; border-top:1px solid var(--border-default);
+            font-size:16px; line-height:26px; color:var(--fg-2)}
+.rv-fold li a{color:var(--brand); font-size:15px; text-decoration:underline;
+              text-underline-offset:3px}
+
+/* ── 메타 푸터 + §9 고정 문구 ── */
+.rv-foot{display:flex; align-items:center; justify-content:space-between; gap:16px;
+         flex-wrap:wrap; padding:14px 28px; background:var(--bg-subtle);
+         border-top:1px solid var(--border-default)}
+.rv-foot span{font-size:14px; line-height:20px; color:var(--fg-2)}
+.rv-foot b{font-weight:700; color:var(--fg-1)}
+@media (max-width:640px){ .rv-foot{padding:14px 20px} }

@@ -10,6 +10,7 @@ from datetime import date
 from pathlib import Path
 
 import logging
+import re
 import yaml
 from typing import TYPE_CHECKING
 
@@ -1170,7 +1171,9 @@ def verify(
                     signal=Signal.UNKNOWN,
                     statement_ko=_statement,
                     source_label=_catch["source"],
-                    source_url="https://www.law.go.kr/법령/어린이제품안전특별법시행규칙",
+                    # 주소를 여기 적지 않는다 - 표의 행과 같은 표에서 읽는다.
+                    source_url=(grade_law_url(_catch["source"])
+                                or _GRADE_SOURCE[1]),
                     legal_basis=_catch["source"],
                     detail={
                         "grade": _catch["grade"],
@@ -1745,7 +1748,16 @@ def verify(
                     source_label=rule.legal_basis,
                     source_url=rule.source_url,
                     legal_basis=rule.legal_basis,
-                    detail={"rule_id": rule.id},
+                    # ⚠ 화면이 **문장을 잘라 쓰지 않게** 물질·기준치를 따로
+                    #   준다. 같은 종류가 열넷이면 접어서 알약으로 보여야
+                    #   하는데(design/README §10-5), 문장에서 정규식으로
+                    #   뽑으면 그 순간 화면이 값을 지어내는 자리가 된다 (R5).
+                    detail={
+                        "rule_id": rule.id,
+                        "substance": rule.substance,
+                        "limit_value": rule.limit_value,
+                        "unit": rule.unit,
+                    },
                     checked_at=today,
                 )
             )
@@ -1947,10 +1959,83 @@ _GRADE_MEANING: dict[str, str] = {
     ),
 }
 
+#: 등급 근거의 **법령별 원문 주소.** 표의 행이 든 `source` 에서 법령 이름을
+#: 떼어 여기서 찾는다.
+#:
+#: ⚠⚠ **2026-09-14 결함 수정.** 전에는 `_GRADE_SOURCE` 하나를 고정 인용해서
+#:   어린이제품 표의 행(시행규칙 별표 1~3)에도 "운용요령 별표 1~7" 을 붙였다
+#:   (95ea7b5 에 어린이 표를 붙일 때부터). 셀러가 그 링크를 열면 **자기 품목이
+#:   없는 고시**를 본다 - R2 가 요구하는 것은 근거이지 근거처럼 보이는 줄이
+#:   아니다.
+#:
+#: ⚠ **별표 단위 주소는 없다.** law.go.kr 한글주소에 `/별표2` 를 붙이면
+#:   **200 을 주면서 오류 페이지**를 돌려준다(2026-09-14 실측 ·
+#:   "해당 한글주소명을 찾을 수 없습니다"). 상태 코드로 확인하면 없는 주소를
+#:   근거로 붙이게 된다 - CLAUDE.md §6 "오류가 아니면 성공" 자리다. 그래서
+#:   법령 뿌리에 걸고 별표 번호는 **라벨이** 말한다. 운용요령 쪽이 원래
+#:   하던 방식과 같다.
+#:
+#: ⚠ 이 표에 없는 법령이 표에 들어오면 `tests/test_item_grades.py` 가 막는다.
+#:   실행 중에 조용히 다른 법으로 떨어지면 그게 잘못된 근거다.
+_GRADE_LAW_URLS: dict[str, str] = {
+    "전기용품 및 생활용품 안전관리 운용요령":
+        "https://www.law.go.kr/행정규칙/전기용품및생활용품안전관리운용요령",
+    "어린이제품 안전 특별법 시행규칙":
+        "https://www.law.go.kr/법령/어린이제품안전특별법시행규칙",
+}
+
+#: 후보가 하나도 없을 때의 근거. 표를 못 찾았다는 말 자체가 "이 표를 봤다" 는
+#: 뜻이므로 표가 사는 고시를 가리킨다.
 _GRADE_SOURCE = (
     "전기용품 및 생활용품 안전관리 운용요령 별표 1~7 (세부품목)",
-    "https://www.law.go.kr/행정규칙/전기용품및생활용품안전관리운용요령",
+    _GRADE_LAW_URLS["전기용품 및 생활용품 안전관리 운용요령"],
 )
+
+_BYLAW_RE = re.compile(r"^(?P<law>.+?)\s*별표\s*(?P<byl>.+)$")
+
+
+def split_grade_source(source: str) -> tuple[str, str]:
+    """행의 `source` 를 (법령, 별표) 로 가른다. 별표가 없으면 둘째가 빈 문자열."""
+    m = _BYLAW_RE.match(source.strip())
+    return (m.group("law").strip(), m.group("byl").strip()) if m else (source.strip(), "")
+
+
+def grade_law_url(source: str) -> str | None:
+    """행의 `source` 가 가리키는 법령의 원문 주소. 모르는 법령이면 None."""
+    return _GRADE_LAW_URLS.get(split_grade_source(source)[0])
+
+
+def _grade_source(rows) -> tuple[str, str]:
+    """등급 근거 = **표의 행이 든 법령.** 고정 인용하지 않는다.
+
+    후보가 여럿이면 별표를 묶어 적고, 법령까지 갈리면 **둘 다 적는다.**
+
+    실측 둘을 같이 적어 둔다 - 한쪽만 보면 묶는 경로가 죽은 코드처럼 보인다:
+
+        표본 제목 474줄(도매꾹239 + 새표본235)
+            매칭된 줄 284 · 후보 2개 이상 80
+            등급 합의인데 source 둘 이상   0
+            등급 갈림이면서 source 둘 이상 39   ← 묶어 적는다
+        품목명을 직접 넣으면
+            '어린이용 물놀이기구' → 시행규칙 별표 1 + 운용요령 별표 4
+            (등급은 둘 다 안전인증이라 **합의인데 법령이 갈린다**)
+
+    즉 "합의면 근거도 하나" 는 표본에서만 참이고 일반적으로는 거짓이다.
+    """
+    srcs = list(dict.fromkeys(r.source for r in rows if getattr(r, "source", "")))
+    if not srcs:
+        return _GRADE_SOURCE
+    parts = [split_grade_source(s) for s in srcs]
+    laws = list(dict.fromkeys(law for law, _ in parts))
+    if len(laws) == 1:
+        byls = [b for b in dict.fromkeys(b for _, b in parts) if b]
+        label = f"{laws[0]} 별표 {'·'.join(byls)}" if byls else laws[0]
+    else:
+        # 법령이 섞였다. 실측 0건이지만 섞이면 **둘 다 적는다** - 하나만 적으면
+        # 나머지 후보의 근거가 거짓이 된다.
+        label = " · ".join(srcs)
+    url = next((u for u in (_GRADE_LAW_URLS.get(law) for law in laws) if u), None)
+    return label, url or _GRADE_SOURCE[1]
 
 
 # 전원 방식이 가리키는 품목. 원문이 갈라 둔 것만 적는다.
@@ -2132,12 +2217,14 @@ def _item_grade_findings(
         # 생활용품·어린이제품 기준은 전원과 무관하게 적용될 수 있다.
         return []
 
-    label, url = _GRADE_SOURCE
-
     # 셀러가 전원 방식을 답했으면 후보를 좁힌다. 부속품 판정보다 뒤다 -
     # 부속품이면 등급 자체를 적용하지 않으므로 좁힐 이유가 없다.
     if hints:
         found = _narrow_by_power(found, hints)
+
+    # ⚠ 근거는 **좁힌 뒤에** 뽑는다. 먼저 뽑으면 버린 후보의 별표가 라벨에
+    #   남는다 - 좁히기는 후보를 줄이는 일이므로 근거도 같이 줄어야 한다.
+    label, url = _grade_source(found)
 
     # 셀러가 부속품이라고 답했으면 본체 품목의 등급을 적용하지 않는다.
     #
@@ -2150,6 +2237,8 @@ def _item_grade_findings(
     #   문구이고 서버로 올린 뒤에도 잃지 않는다.
     if hints and hints.says_accessory():
         head = found[0]
+        # 문장이 머리 후보 하나만 말하므로 근거도 그 행이다.
+        label, url = _grade_source([head])
         return [
             Finding(
                 kind=FindingKind.ITEM_GRADE_NOT_APPLIED,
@@ -2177,7 +2266,12 @@ def _item_grade_findings(
     # 끌어올리면 셀러가 "번호 없어도 되는구나" 로 읽는다.
     names = [
         {"item": g.item, "grade": g.grade,
-         "scope_note": g.scope_note, "matched_by": g.matched_by}
+         "scope_note": g.scope_note, "matched_by": g.matched_by,
+         # 행마다 근거가 다를 수 있다(운용요령 / 어린이제품 시행규칙).
+         # 라벨 하나로 뭉개지 않고 후보별로 남긴다 - 화면이 후보 옆에 별표를
+         # 적고, 법령이 갈리면 후보별로 원문 링크를 건다 (R2).
+         "source": g.source,
+         "source_url": grade_law_url(g.source)}
         for g in found
     ]
     agreed = ItemGradeBook.grades_agree(found)
@@ -2189,7 +2283,10 @@ def _item_grade_findings(
         which = (
             f"'{head.item}'{topic_particle(head.item)}"
             if len(found) == 1
-            else "여러 품목으로 보이나 등급은 모두 같습니다"
+            # ⚠ "…같습니다 안전인증 대상으로 조회됩니다" 는 두 문장이 붙은
+            #   모양이라 읽히지 않았다. 뒤 절에 이어지는 연결어미로 바꾼다
+            #   (2026-09-13 총괄 실측).
+            else "여러 품목으로 보이나 등급은 모두 같아"
         )
         scope = f" (범위 한정: {head.scope_note})" if head.scope_note else ""
         return [

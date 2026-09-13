@@ -145,10 +145,20 @@ def test_no_verdict_language_in_ui_copy(html):
 
 
 def test_hazard_rules_are_collapsed(html):
-    """적용 기준 14종을 그대로 펼치면 셀러가 읽을 화면이 아니게 된다."""
+    """적용 기준 14종을 그대로 펼치면 셀러가 읽을 화면이 아니게 된다.
+
+    v2 에서 자리가 바뀌었다 - 카드 맨 아래 아코디언이 아니라 **참고 정보 줄
+    안에서** 한 줄로 접는다(design/README §10-5). 접어도 세 가지는 남는다:
+    몇 건인지 · 어떤 물질이 얼마인지 · 원문 링크.
+    """
     assert "hazard_rule_applies" in html
-    assert "<details" in html
-    assert "적용되는 유해물질 기준" in html
+    assert "유해물질 공통안전기준" in html
+    assert "FOLD_AT = 4" in html, "접기 문턱이 4건이어야 한다 (총괄 명령)"
+    # 알약 값은 **서버 detail** 에서 읽는다. 문장에서 뽑으면 화면이 값을 짓는다.
+    fold = html[html.index("function hazardChip("):]
+    fold = fold[: fold.index("\n  }")]
+    assert "d.substance" in fold and "d.limit_value" in fold
+    assert "statement_ko" not in fold, "알약을 문장에서 뽑고 있다 (R5)"
 
 
 def test_source_links_open_in_a_new_tab_safely(html):
@@ -248,7 +258,9 @@ def test_scan_page_shows_the_server_headline(pages):
     """
     index = pages["index.html"]
     assert "data.headline" in index
-    assert "esc(head)" in index
+    # v2: 서버 문장을 " — " 에서 **자르기만** 한다. 문장은 안 바꾼다.
+    assert 'String(head).split(" — ")' in index
+    assert "esc(cut[0])" in index and 'esc(cut.slice(1).join(" — "))' in index
 
 
 def test_demo_texts_come_from_the_server(pages):
@@ -378,7 +390,8 @@ def test_findings_are_rendered_in_server_groups(pages):
     """
     index = pages["index.html"]
     assert "grouped_findings" in index
-    assert 'class="fgroup ' in index
+    assert 'class="rv-gh ' in index
+    assert "esc(g.header)" in index, "그룹 머리말을 서버에서 그려야 한다"
     # 약한 일치는 리콜 일치와 같은 모양으로 그리지 않는다
     assert 'f.kind === "recall_weak_match"' in index
 
@@ -414,18 +427,25 @@ def test_demo_buttons_clear_pasted_images(pages):
 # ---------------------------------------------------------------------------
 
 
-def test_extracted_is_rendered_above_the_verdict(pages):
-    """판정보다 위에 둔다.
+def test_extracted_is_rendered_above_every_finding(pages):
+    """읽은 값은 **근거 줄 전부보다** 위에 둔다.
 
-    우리가 잘못 읽었으면 셀러가 여기서 바로 알아채야 하고, 제대로 읽었으면
-    아래 판정을 믿는다. 순서가 뒤집히면 이미 판정을 본 뒤에 근거를 보게 된다.
+    우리가 잘못 읽었으면 셀러가 여기서 바로 알아채야 한다. 아래 줄들은 전부
+    이 값을 입력으로 삼은 결과이므로, 입력을 보기 전에 결과부터 읽으면 잘못된
+    입력 위의 결론을 믿게 된다.
+
+    ⚠ **v2 에서 신호 머리가 위로 갔다.** 전에는 "읽은 값 → 판정" 이었고 이
+      검사도 그렇게 적혀 있었다. 정본(design/result-card-v2.html)이
+      "머리 → 읽은 값 → 축 → 근거" 로 정한다 - 머리는 신호 칩과 헤드라인
+      둘뿐이고 근거는 전부 아래다. 그래서 기준을 "판정보다 위" 가 아니라
+      **"근거 줄보다 위"** 로 옮겼다.
     """
     index = pages["index.html"]
     assert "이 페이지에서 이렇게 읽었습니다" in index
     body = index[index.index("function render(data)"):]
-    read_at = body.index("readBlock(data.extracted)")
-    verdict_at = body.index('<div class="verdict ')
-    assert read_at < verdict_at, "읽은 값이 신호등보다 아래에 그려집니다"
+    read_at = body.index("readPills(data.extracted")
+    assert read_at < body.index("rowsHtml(g.findings"), "읽은 값이 근거 줄보다 아래다"
+    assert read_at < body.index('class="rv-axes"'), "읽은 값이 축보다 아래다"
 
 
 def test_government_lookup_links_are_buttons_but_stay_anchors(pages):
@@ -446,7 +466,7 @@ def test_government_lookup_links_are_buttons_but_stay_anchors(pages):
 def test_cert_number_carries_its_lookup_link(pages):
     """화면의 인증번호에 정부 조회를 붙인다. 셀러가 그 번호가 맞는지 직접 확인한다."""
     index = pages["index.html"]
-    read = index[index.index("function readBlock("):]
+    read = index[index.index("function readPills("):]
     read = read[: read.index("\n  }")]
     assert "f.link" in read and "goLink(" in read
 
@@ -489,7 +509,7 @@ def test_no_watch_button_when_the_server_says_it_cannot_be_watched(pages):
     assert "ws.can_watch" in index
     assert "canWatch" in index
     block = index[index.index("var ws = data.watch_suggestion"):]
-    block = block[: block.index('if (data.disclaimer)')]
+    block = block[: block.index("var meta = data.meta")]
     assert 'id="watch"' in block and "canWatch" in block
 
 
@@ -516,7 +536,7 @@ def test_empty_extraction_is_explained_as_an_input_problem(pages):
     assert "data.input_note" in index
     assert 'class="input-note"' in index
     # "이렇게 읽었습니다" 블록이 비는 자리를 대신한다 — 그 앞에 와야 한다
-    assert index.index("data.input_note") < index.index("readBlock(data.extracted)")
+    assert index.index("data.input_note") < index.index("readPills(data.extracted")
 
 
 def test_axes_are_rendered_from_the_server_not_recomputed():
@@ -545,20 +565,24 @@ def test_unknown_badge_agrees_with_the_subtitle():
     assert 'UNKNOWN:"모름"' not in html
 
 
-def test_watch_cta_is_raised_on_unknown_screens():
-    """"모름" 화면에서 감시 버튼이 확인 항목 바로 뒤에 온다.
+def test_watch_cta_sits_right_after_the_findings():
+    """감시 버튼이 확인 항목 바로 뒤에 온다.
 
-    그 화면에서 셀러에게 줄 수 있는 확정적 가치가 감시 하나뿐이다 (기획서 §3.3).
-    유해물질 접기 아래 맨 끝에 두면 스크롤 밖으로 밀려 없는 것과 같아진다.
+    "모름" 화면에서 셀러에게 줄 수 있는 확정적 가치가 감시 하나뿐이다
+    (기획서 §3.3). 맨 끝으로 밀리면 스크롤 밖으로 나가 없는 것과 같아진다.
 
-    ⚠ 두 번 그리면 button id 가 겹쳐 이벤트가 한쪽에만 붙는다. 조건을 나눠
-      한 번만 그리는지 함께 잠근다.
+    ⚠ **v2 에서 조건 분기가 없어졌다.** 전에는 유해물질 아코디언이 카드 맨
+      아래에 있어서 "UNKNOWN 이면 그 위로 올린다" 로 피했고, 그래서 같은
+      HTML 을 두 자리에서 그렸다(그리는 곳이 둘이면 id 가 겹칠 수 있다).
+      접기가 근거 줄 안으로 들어가면서 아코디언이 사라졌으므로 **한 자리에서
+      한 번** 그리면 된다.
     """
     html = (Path(__file__).resolve().parents[1] / "sourcing_guard" / "static"
             / "index.html").read_text(encoding="utf-8")
-    assert 'if (sig === "UNKNOWN") html += ctaHtml;' in html
-    assert 'if (sig !== "UNKNOWN") html += ctaHtml;' in html
+    body = html[html.index("function render(data)"):]
     assert html.count('id="cta"') == 1
     assert html.count('id="watch"') == 1
+    assert body.index('class="watch-cta') > body.index("rowsHtml(g.findings")
+    assert body.index('class="watch-cta') < body.index('class="rv-foot"')
     # UNKNOWN 도 GREEN 처럼 강조한다.
     assert 'sig === "GREEN" || sig === "UNKNOWN"' in html

@@ -32,11 +32,51 @@ SCHEMES = ("light", "dark")
 #: **공통 규약**(밑줄·파랑·좌측선·글꼴·파비콘)만 본다.
 TOOL_PAGES = ("/scan", "/batch", "/watch")
 
-#: 14px 을 허용하는 자리. design/README §10-4 가 "카드 안 한정어" 라 부른 것들 -
-#: 예시 결과 카드의 축 이름 · 공표분 주석 · "예시 결과" 표 · 근거 줄 아래 안내.
+#: 14px 을 허용하는 자리. design/README §10-4 가 "카드 안 한정어" 라 부른 것들.
 #: ⚠ 목록을 늘릴 때는 **왜 한정어인지** 한 줄로 적는다. 늘리기만 하면 기준이
 #:   사라진다.
-SMALL_OK = (".rc-ax .n", ".rc-ax .m", ".rc-tag", ".rc-foot .hint")
+SMALL_OK = (
+    # 랜딩의 예시 결과 카드
+    ".rc-ax .n",      # 축 이름 - 값(18px)의 이름표다
+    ".rc-ax .m",      # 공표분 주석 - 값에 붙는 단서
+    ".rc-tag",        # "예시 결과" 표 - 카드가 실물이 아니라는 표시
+    ".rc-foot .hint", # 근거 줄 아래 안내
+    # /scan 결과 카드 v2 (design/result-card-v2.html)
+    ".rv-read-h",     # "이 페이지에서 이렇게 읽었습니다" - 알약(15px)의 이름표
+    ".rv-gh",         # 그룹 머리말 - 아래 문장들(16px)의 이름표
+    ".rv-ax .n",      # 축 이름
+    ".rv-ax .m",      # 축 주석
+    ".rv-chip",       # 접힌 유해물질 알약 - 물질·기준치 한정어
+    ".rv-foot span",  # 메타 푸터 - 이 스캔이 어떻게 나왔는지
+)
+
+#: /scan 카드를 그리려면 실제로 검사를 한 번 돌려야 한다. **빈 화면을 보고
+#: 통과하는 검사**를 이 저장소에서 여러 번 겪었다 - 접기가 나오게 유해물질이
+#: 많이 걸리는 상품을 쓴다(슬라임 · 목 모드 실측 14건).
+SCAN_TEXT = ("완구 매직액체 슬라임 장난감 KC 인증번호 CB061R2170-3018 "
+             "대상연령 3세 이상 재질 PVC")
+
+#: /batch 도 빈 화면이면 아무것도 재지 않는다. 목 모드에서 LLM 없이 도는
+#: 경로라 그대로 눌러도 된다.
+BATCH_TEXT = "전기주전자 1.7L\n완구 블록 세트\n유아용 섬유제품 배냇저고리"
+
+#: /watch 는 목록이 비어 있는 것이 기본 상태라, 항목이 그려진 화면을 따로
+#: 만든다. 응답을 갈아끼우는 편이 DB 를 건드리는 것보다 되돌리기 쉽다.
+WATCH_STUB = {
+    "items": [{
+        "id": "acc-1", "owner_id": "acc", "product_name": "완구 매직액체 슬라임 장난감",
+        "model_name": "SL-100", "maker": "예시상사", "kc_numbers": ["CB061R2170-3018"],
+        "registered_at": "2026-09-10T09:00:00+09:00",
+        "last_swept_at": "2026-09-13T09:00:00+09:00",
+        "seen_recall_fingerprints": [], "status": "active",
+    }],
+    "sweep": {"last_swept_at": "2026-09-13", "alerts_stored": 1,
+              "last_full_sweep_at": "2026-09-13T09:00:00+09:00"},
+    "alerts": [{"item_id": "acc-1", "matched_on": "model_name",
+                "strength": "weak", "recall_title": "예시 리콜 공표 제목",
+                "published_on": "20260723",
+                "source_url": "https://www.safetykorea.kr/"}],
+}
 
 _FIXTURE = Path("sourcing_guard/data/demo_amber_result.json")
 
@@ -69,6 +109,120 @@ def _js_small_text(small_ok: list[str]) -> str:
       }
       return out.slice(0, 8);
     }"""
+
+
+#: `--fg-4`(대비 3.7:1)로 그린 작은 글자. 랜딩과 도구 화면이 **같은 판단**을
+#: 하므로 한 곳에 둔다 - 두 곳에 적으면 한쪽만 고쳐도 나머지가 거짓말을 계속한다.
+_JS_FAINT = """(minPx) => {
+  const root = getComputedStyle(document.documentElement);
+  const fg4 = root.getPropertyValue('--fg-4').trim();
+  if (!fg4) return ['--fg-4 토큰이 없다'];
+  const probe = document.createElement('span');
+  probe.style.color = fg4;
+  document.body.appendChild(probe);
+  const want = getComputedStyle(probe).color;
+  probe.remove();
+  const out = [];
+  for (const el of document.querySelectorAll('body *')) {
+    let own = '';
+    for (const n of el.childNodes) if (n.nodeType === 3) own += n.textContent;
+    if (!own.trim()) continue;
+    const r = el.getBoundingClientRect();
+    if (r.width === 0 || r.height === 0) continue;
+    const cs = getComputedStyle(el);
+    if (cs.color === want && parseFloat(cs.fontSize) < minPx)
+      out.push(el.tagName + '.' + (el.className||'') + ' '
+               + cs.fontSize + ' "' + own.trim().slice(0,18) + '"');
+  }
+  return out.slice(0, 6);
+}"""
+
+
+def _scan_card(page, tag: str) -> list[str]:
+    """/scan 결과 카드 v2 의 자리와 동작을 잰다 (design/README §10-4·10-5)."""
+    bad: list[str] = []
+    card = page.evaluate("""() => {
+      const q = (s) => document.querySelector(s);
+      const head = q('.rv-head');
+      const chip = q('.rv-head .chip.solid');
+      const h = q('.rv-h');
+      const px = (el) => el ? parseFloat(getComputedStyle(el).fontSize) : null;
+      const face = q('.rv-face');
+      const axes = [...document.querySelectorAll('.rv-ax')].map(
+          a => [a.querySelector('.n').textContent.trim(),
+                a.querySelector('.v').textContent.trim()]);
+      const more = q('.rv-more');
+      return {
+        headSig: head ? [...head.classList].filter(c => c === c.toUpperCase()) : null,
+        chipPx: px(chip),
+        chipWhite: chip ? getComputedStyle(chip).color : null,
+        hPx: px(h),
+        hLine: h ? getComputedStyle(h).lineHeight : null,
+        subPx: px(q('.rv-sub')),
+        facePx: face ? Math.round(face.getBoundingClientRect().width) : null,
+        axes,
+        axDots: document.querySelectorAll('.rv-ax .rv-dot, .rv-ax .dot').length,
+        pills: document.querySelectorAll('.rv-pill').length,
+        miss: [...document.querySelectorAll('.rv-miss')].map(
+            b => b.closest('.rv-row').className),
+        hazRows: document.querySelectorAll('.rv-row.hazard_rule_applies').length,
+        chips: document.querySelectorAll('.rv-chip').length,
+        moreText: more ? more.textContent.trim() : null,
+        foldHidden: q('.rv-fold') ? q('.rv-fold').hidden : null,
+        rowsWithoutLink: [...document.querySelectorAll('.rv-row')].filter(
+            r => !r.querySelector('a') && !r.querySelector('.rv-src')).length,
+      };
+    }""")
+    if card["facePx"] != 88:
+        bad.append(f"[{tag}] 얼굴이 {card['facePx']}px 다 (88)")
+    if card["chipPx"] != 16:
+        bad.append(f"[{tag}] 머리 칩이 {card['chipPx']}px 다 (16)")
+    if card["chipWhite"] != "rgb(255, 255, 255)":
+        bad.append(f"[{tag}] 머리 칩 글자가 흰색이 아니다: {card['chipWhite']}")
+    if (card["hPx"], card["hLine"]) != (26.0, "34px"):
+        bad.append(f"[{tag}] 헤드라인이 {card['hPx']}/{card['hLine']} 다 (26/34)")
+    if card["subPx"] != 16:
+        bad.append(f"[{tag}] 부제가 {card['subPx']}px 다 (16)")
+    # 축 셋 · 이름은 서버 것 · 신호 점 없음
+    if len(card["axes"]) != 3:
+        bad.append(f"[{tag}] 축이 {len(card['axes'])}개다 (셋)")
+    if [a[0] for a in card["axes"]] != ["인증 조회", "리콜 대조", "유해물질"]:
+        bad.append(f"[{tag}] 축 이름이 서버와 다르다: {card['axes']}")
+    if card["axDots"]:
+        bad.append(f"[{tag}] 축에 신호 점을 칠했다")
+    if not card["pills"]:
+        bad.append(f"[{tag}] 읽은 값 알약이 없다")
+    # "이 품목이 아닙니다" 는 등급 줄에만
+    for cls in card["miss"]:
+        if "item_grade" not in cls:
+            bad.append(f"[{tag}] 신고 버튼이 등급 줄이 아닌 곳에 있다: {cls}")
+    # 같은 종류 4건 이상이면 접힌다 - 펼치기 전에는 낱줄이 없어야 한다
+    if card["hazRows"]:
+        bad.append(f"[{tag}] 유해물질 낱줄이 {card['hazRows']}개 그려졌다 (접어야 한다)")
+    if not card["moreText"] or "펼치기" not in card["moreText"]:
+        bad.append(f"[{tag}] 펼치기 버튼이 없다: {card['moreText']!r}")
+    if card["chips"] != 5:
+        bad.append(f"[{tag}] 접힌 알약이 {card['chips']}개다 (물질 4 + '+N' 1)")
+    if card["foldHidden"] is not True:
+        bad.append(f"[{tag}] 접힌 목록이 처음부터 펼쳐져 있다")
+    if card["rowsWithoutLink"]:
+        bad.append(f"[{tag}] 근거 줄 {card['rowsWithoutLink']}개에 원문 링크가 없다 (R2)")
+
+    # 실제로 눌러서 펼쳐지는지 - 모양만 보면 동작을 안 잰다
+    page.click(".rv-more")
+    opened = page.evaluate(
+        "() => { const f = document.querySelector('.rv-fold');"
+        " return [f.hidden, f.children.length,"
+        " document.querySelector('.rv-more').getAttribute('aria-expanded'),"
+        " document.querySelector('.rv-more').textContent.trim()]; }")
+    if opened[0] is not False or opened[1] < 4:
+        bad.append(f"[{tag}] 눌러도 안 펼쳐진다: {opened}")
+    if opened[2] != "true" or opened[3] != "접기":
+        bad.append(f"[{tag}] 펼친 뒤 버튼이 안 바뀐다: {opened[2:]}")
+    page.click(".rv-more")
+    if page.evaluate("() => document.querySelector('.rv-fold').hidden") is not True:
+        bad.append(f"[{tag}] 다시 눌러도 안 접힌다")
+    return bad
 
 
 def main() -> int:
@@ -168,29 +322,7 @@ def main() -> int:
                         bad.append(f"[{tag}] 15px 미만 글자: {small}")
 
                     # ⑦ --fg-4 는 18px 미만 글자에 쓰지 않는다 (대비 3.7:1)
-                    faint = page.evaluate("""(minPx) => {
-                      const root = getComputedStyle(document.documentElement);
-                      const fg4 = root.getPropertyValue('--fg-4').trim();
-                      if (!fg4) return ['--fg-4 토큰이 없다'];
-                      const probe = document.createElement('span');
-                      probe.style.color = fg4;
-                      document.body.appendChild(probe);
-                      const want = getComputedStyle(probe).color;
-                      probe.remove();
-                      const out = [];
-                      for (const el of document.querySelectorAll('body *')) {
-                        let own = '';
-                        for (const n of el.childNodes) if (n.nodeType === 3) own += n.textContent;
-                        if (!own.trim()) continue;
-                        const r = el.getBoundingClientRect();
-                        if (r.width === 0 || r.height === 0) continue;
-                        const cs = getComputedStyle(el);
-                        if (cs.color === want && parseFloat(cs.fontSize) < minPx)
-                          out.push(el.tagName + '.' + (el.className||'') + ' '
-                                   + cs.fontSize + ' "' + own.trim().slice(0,18) + '"');
-                      }
-                      return out.slice(0, 6);
-                    }""", 18)
+                    faint = page.evaluate(_JS_FAINT, 18)
                     if faint:
                         bad.append(f"[{tag}] --fg-4 로 그린 18px 미만 글자: {faint}")
 
@@ -292,43 +424,86 @@ def main() -> int:
                     print(f"  [{tag}] 검사 완료")
                     page.close()
 
-            # ── 도구 화면: 공통 규약만 ───────────────────────────────
+            # ── 도구 화면: 같은 눈금으로 잰다 ─────────────────────
+            #
+            # ⚠ 전에는 공통 규약(글꼴·파비콘·파랑)만 봤다. v2 부터 **15px 과
+            #   --fg-4 도 여기서 잰다** - 배포본 app.css 의 15px 미만 선언
+            #   대부분이 이 세 화면 것이었다 (총괄 실측 2026-09-13).
             for path in TOOL_PAGES:
-                for width in WIDTHS:
-                    page = browser.new_page(viewport={"width": width, "height": 900})
-                    page.goto(args.base + path, wait_until="networkidle", timeout=60_000)
-                    page.evaluate("() => document.fonts.ready")
-                    page.wait_for_timeout(300)
-                    tag = f"{path} {width}px"
+                for scheme in SCHEMES:
+                    for width in WIDTHS:
+                        page = browser.new_page(viewport={"width": width, "height": 900},
+                                                color_scheme=scheme)
+                        if path == "/watch":
+                            page.route("**/api/v1/watch?*", lambda route: route.fulfill(
+                                status=200, content_type="application/json",
+                                body=json.dumps(WATCH_STUB, ensure_ascii=False)))
+                        page.goto(args.base + path, wait_until="networkidle",
+                                  timeout=60_000)
+                        page.evaluate("() => document.fonts.ready")
+                        page.wait_for_timeout(300)
+                        tag = f"{path} {scheme} {width}px"
 
-                    fam = page.evaluate(
-                        "() => getComputedStyle(document.body).fontFamily")
-                    if fam.split(",")[0].strip().strip('"') != "Noto Sans KR":
-                        bad.append(f"[{tag}] 본문 첫 글꼴이 {fam.split(',')[0]} 다")
-                    if not page.evaluate(
-                            "() => document.fonts.check('16px \"Gowun Dodum\"')"):
-                        bad.append(f"[{tag}] Gowun Dodum 이 로드되지 않았다")
-                    icon = page.eval_on_selector("link[rel=icon]", "e => e.href")
-                    if not icon or "favicon.svg" not in icon:
-                        bad.append(f"[{tag}] 파비콘 링크가 없다")
-                    blues = page.evaluate("""() => {
-                        const out = [];
-                        for (const el of document.querySelectorAll('*')) {
-                            const cs = getComputedStyle(el);
-                            for (const prop of ['color','backgroundColor']) {
-                                const m = cs[prop].match(/rgba?\\((\\d+), (\\d+), (\\d+)/);
-                                if (!m) continue;
-                                const [r,g,b] = [+m[1],+m[2],+m[3]];
-                                if (cs[prop].startsWith('rgba') && cs[prop].endsWith(', 0)')) continue;
-                                if (b > r + 40 && b > g + 40 && r < 100) out.push(el.tagName+'.'+el.className);
+                        # ⚠ **빈 화면을 재지 않는다.** 세 화면 다 기본 상태가
+                        #   비어 있어서, 그대로 재면 "통과" 가 아무 뜻이 없다.
+                        proof = {"/scan": ".rv-head", "/batch": ".b-group",
+                                 "/watch": ".items li.item"}[path]
+                        if path == "/scan":
+                            page.fill("#pt", SCAN_TEXT)
+                            page.click("#go")
+                        elif path == "/batch":
+                            page.fill("#bt", BATCH_TEXT)
+                            page.click("#go")
+                        try:
+                            page.wait_for_selector(proof, timeout=60_000)
+                        except Exception:
+                            bad.append(f"[{tag}] 내용이 안 그려졌다({proof}) - "
+                                       "이 화면은 아무것도 재지 않았다")
+                            page.close()
+                            continue
+                        page.wait_for_timeout(500)
+                        if path == "/scan":
+                            bad += _scan_card(page, tag)
+
+                        fam = page.evaluate(
+                            "() => getComputedStyle(document.body).fontFamily")
+                        if fam.split(",")[0].strip().strip('"') != "Noto Sans KR":
+                            bad.append(f"[{tag}] 본문 첫 글꼴이 {fam.split(',')[0]} 다")
+                        if not page.evaluate(
+                                "() => document.fonts.check('16px \"Gowun Dodum\"')"):
+                            bad.append(f"[{tag}] Gowun Dodum 이 로드되지 않았다")
+                        icon = page.eval_on_selector("link[rel=icon]", "e => e.href")
+                        if not icon or "favicon.svg" not in icon:
+                            bad.append(f"[{tag}] 파비콘 링크가 없다")
+
+                        small = page.evaluate(
+                            _js_small_text(list(SMALL_OK)),
+                            {"okSel": list(SMALL_OK), "minPx": 15})
+                        if small:
+                            bad.append(f"[{tag}] 15px 미만 글자: {small}")
+
+                        faint = page.evaluate(_JS_FAINT, 18)
+                        if faint:
+                            bad.append(f"[{tag}] --fg-4 로 그린 18px 미만 글자: {faint}")
+
+                        blues = page.evaluate("""() => {
+                            const out = [];
+                            for (const el of document.querySelectorAll('*')) {
+                                const cs = getComputedStyle(el);
+                                for (const prop of ['color','backgroundColor']) {
+                                    const m = cs[prop].match(/rgba?\\((\\d+), (\\d+), (\\d+)/);
+                                    if (!m) continue;
+                                    const [r,g,b] = [+m[1],+m[2],+m[3]];
+                                    if (cs[prop].startsWith('rgba') && cs[prop].endsWith(', 0)')) continue;
+                                    if (b > r + 40 && b > g + 40 && r < 100) out.push(el.tagName+'.'+el.className);
+                                }
                             }
-                        }
-                        return out.slice(0, 4);
-                    }""")
-                    if blues:
-                        bad.append(f"[{tag}] 파란색: {blues}")
-                    print(f"  [{tag}] 검사 완료")
-                    page.close()
+                            return out.slice(0, 4);
+                        }""")
+                        if blues:
+                            bad.append(f"[{tag}] 파란색: {blues}")
+                        print(f"  [{tag}] 검사 완료")
+                        page.close()
         finally:
             browser.close()
 

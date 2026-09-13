@@ -101,8 +101,8 @@ _WATCH_THIN = {
 #: 마지막 값은 **그려졌다는 증거**다. 없으면 이 검사는 빈 화면을 보고 통과한다 -
 #: 이 저장소에서 "비어 있어서 통과하는 검사" 를 여러 번 겪었다.
 ACT_CASES = {
-    "스캔 결과가 비었다": ("/scan?demo=amber", {"**/api/v1/scan": _SCAN_BARE}, ".verdict"),
-    "스캔 결과의 필드가 얇다": ("/scan?demo=amber", {"**/api/v1/scan": _SCAN_THIN_FINDING}, ".verdict"),
+    "스캔 결과가 비었다": ("/scan?demo=amber", {"**/api/v1/scan": _SCAN_BARE}, ".rv-head"),
+    "스캔 결과의 필드가 얇다": ("/scan?demo=amber", {"**/api/v1/scan": _SCAN_THIN_FINDING}, ".rv-head"),
     "감시 항목에 단서가 없다": ("/watch", {"**/api/v1/watch?*": _WATCH_THIN}, ".items li.item"),
 }
 

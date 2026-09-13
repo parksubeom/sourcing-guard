@@ -719,7 +719,7 @@ def test_the_fallback_condition_is_zero_candidates_not_weak_ones():
 
 
 # ---------------------------------------------------------------------------
-# 어린이제품 등급표 - 자료만 넣고 판정에는 아직 연결하지 않았다
+# 어린이제품 등급표 - 같은 색인에 들어가 판정까지 간다
 # ---------------------------------------------------------------------------
 
 
@@ -1507,3 +1507,131 @@ def test_a_power_prefix_is_not_added_without_evidence_in_the_text():
     assert "단독 'DC' 출현은 0건" in src
     assert has_power_marker("BLDC 써큘레이터")
     assert not has_power_marker("무쇠 프라이팬 궁중팬")
+
+
+# ---------------------------------------------------------------------------
+# [등급 근거] 근거는 **표의 행이 든 법령**이다 (2026-09-14 결함 수정)
+# ---------------------------------------------------------------------------
+
+
+def _grade_finding(name: str, **kw):
+    from datetime import date
+
+    from sourcing_guard.verifier import _item_grade_findings
+
+    out = _item_grade_findings(name, date(2026, 9, 14), **kw)
+    assert out, f"{name!r} 에 등급 finding 이 없다"
+    return out[0]
+
+
+def test_child_rows_cite_the_child_rule_not_the_electrical_notice():
+    """완구·어린이 품목의 근거가 **어린이제품 시행규칙**이어야 한다.
+
+    ⚠ 이 검사가 잡는 결함: 전에는 `_GRADE_SOURCE` 하나를 고정 인용해서
+      어린이제품 행에도 "전기용품 및 생활용품 안전관리 운용요령 별표 1~7" 을
+      붙였다. 셀러가 그 링크를 열면 자기 품목이 **없는** 고시를 본다.
+    """
+    f = _grade_finding("완구")
+    assert "시행규칙 별표 2" in f.source_label, f.source_label
+    assert "운용요령" not in f.source_label
+    assert f.source_url == "https://www.law.go.kr/법령/어린이제품안전특별법시행규칙"
+
+    f = _grade_finding("유아용 섬유제품")
+    assert "시행규칙 별표 2" in f.source_label, f.source_label
+
+
+def test_electrical_rows_still_cite_the_notice():
+    """전기용품 쪽은 그대로다 - 고치면서 반대쪽을 깨지 않았는지 함께 잰다."""
+    f = _grade_finding("전기주전자")
+    assert "운용요령" in f.source_label, f.source_label
+    assert "별표 1" in f.source_label
+    assert f.source_url.endswith("전기용품및생활용품안전관리운용요령")
+
+
+def test_two_laws_in_one_answer_are_both_named():
+    """법령이 갈리면 **둘 다 적는다.** 하나만 적으면 나머지 후보가 거짓 근거다.
+
+    '어린이용 물놀이기구' 는 등급이 합의(둘 다 안전인증)인데 **법령이 갈린다** -
+    시행규칙 별표 1 과 운용요령 별표 4. "합의면 근거도 하나" 가 거짓인 자리다.
+    """
+    f = _grade_finding("어린이용 물놀이기구")
+    assert "어린이제품 안전 특별법 시행규칙 별표 1" in f.source_label
+    assert "전기용품 및 생활용품 안전관리 운용요령 별표 4" in f.source_label
+    # 후보마다 자기 근거를 들고 간다 - 화면이 후보별로 링크를 건다 (R2).
+    cands = f.detail["candidates"]
+    assert len(cands) == 2
+    assert {c["source_url"] for c in cands} == {
+        "https://www.law.go.kr/법령/어린이제품안전특별법시행규칙",
+        "https://www.law.go.kr/행정규칙/전기용품및생활용품안전관리운용요령",
+    }
+
+
+def test_split_answer_folds_appendix_numbers_of_one_law():
+    """같은 법령 안에서 갈리면 별표만 묶는다 - 법령 이름을 두 번 적지 않는다."""
+    f = _grade_finding("태양광정원등 센서등 LED정원등")
+    assert f.kind.value == "item_grade_split"
+    assert f.source_label == "전기용품 및 생활용품 안전관리 운용요령 별표 1·2"
+
+
+def test_every_source_in_both_tables_has_a_known_law_url():
+    """표에 있는 **모든** 법령이 주소를 갖는다.
+
+    ⚠ 이 검사가 없으면 새 법령을 표에 넣었을 때 실행 중에 **조용히 다른 법**
+      으로 떨어진다. 잘못된 근거는 근거 없음보다 비싸다 (R2).
+    """
+    import yaml
+
+    from sourcing_guard.verifier import grade_law_url, split_grade_source
+
+    seen: set[str] = set()
+    for path in ("sourcing_guard/data/item_grades.yaml",
+                 "sourcing_guard/data/child_item_grades.yaml"):
+        raw = yaml.safe_load(Path(path).read_text(encoding="utf-8"))
+        rows = list(raw["items"])
+        if "catch_all" in raw:
+            rows.append(raw["catch_all"])
+        for row in rows:
+            seen.add(row["source"])
+    assert seen, "표에서 source 를 하나도 못 읽었다"
+    for src in sorted(seen):
+        assert grade_law_url(src), f"주소가 없는 법령: {src!r}"
+        law, byl = split_grade_source(src)
+        assert law and byl, (law, byl)
+
+
+def test_no_sentence_glues_two_endings_together():
+    """"…모두 같습니다 안전인증 대상으로 조회됩니다" 는 두 문장이 붙은 모양이다.
+
+    ⚠ **두 가지를 세지 않는다.**
+
+      얼린 실측 기록  `tests/fixtures/` 는 그날 서버가 실제로 낸 문장이다.
+                      고치면 기록이 거짓이 된다 (작업로그 해시와 같은 이유).
+      주석            무엇을 고쳤는지 적으려면 옛 문장을 인용해야 한다.
+                      이 가드가 **자기 감사 기록에 걸리는** 자리다 - 리포에서
+                      열두 번 넘게 난 모양이라 처음부터 주석을 뺀다.
+    """
+    import re as _re
+
+    hits: list[str] = []
+    roots = [Path("sourcing_guard"), Path("scripts"), Path("docs")]
+    for root in roots:
+        for f in root.rglob("*"):
+            if not f.is_file() or f.suffix not in {".py", ".html", ".js", ".css",
+                                                   ".yaml", ".md"}:
+                continue
+            for i, line in enumerate(f.read_text(encoding="utf-8").splitlines(), 1):
+                code = _re.sub(r"#.*$", "", line) if f.suffix in {".py", ".yaml"} else line
+                code = _re.sub(r"<!--.*?-->", "", code)
+                if "같습니다 안전" in code:
+                    hits.append(f"{f}:{i}")
+    assert hits == [], hits
+
+    f = _grade_finding("어린이용 물놀이기구")
+    assert "모두 같아 안전인증 대상으로 조회됩니다" in f.statement_ko
+
+
+def test_catch_all_reads_its_url_from_the_same_table():
+    """어린이 catch-all 도 주소를 자기 손으로 적지 않는다 (§6 소유자 하나)."""
+    src = Path("sourcing_guard/verifier.py").read_text(encoding="utf-8")
+    # 주소 문자열은 `_GRADE_LAW_URLS` 안에만 있다.
+    assert src.count("https://www.law.go.kr/법령/어린이제품안전특별법시행규칙") == 1
