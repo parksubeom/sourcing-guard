@@ -30,7 +30,7 @@
     .track>i{position:absolute;top:0;left:0;width:33%;height:100%;border-radius:999px;background:linear-gradient(90deg,transparent,var(--brand),transparent);animation:flow 1.6s ease-in-out infinite}
     @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(139,76,203,.45)}60%{box-shadow:0 0 0 8px rgba(139,76,203,0)}}
     .live{animation:pulse 1.4s ease-out infinite}
-    /* ── 스켈레톤: 네 축의 자리만 미리 보인다 ── */
+    /* ── 스켈레톤: 축 셋의 자리만 미리 보인다 ── */
     @keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
     .sk{border-radius:8px;background:linear-gradient(90deg,var(--gray-20) 25%,var(--gray-10) 50%,var(--gray-20) 75%);background-size:200% 100%;animation:shimmer 1.8s linear infinite}
     @media (prefers-reduced-motion: reduce){.m-bob,.m-eyes,.m-lids,.live,.ell span,.track>i,.sk{animation:none} .ell span{opacity:1}}
@@ -43,7 +43,7 @@
     .step .d.wait{background:transparent;border:2px solid var(--fg-4);box-sizing:border-box}
     .step .t{font-weight:500} .step .s{font-size:12px;color:var(--fg-4)} .step .st{font-size:12px;color:var(--fg-4);margin-top:3px}
     .step.now .t,.step.now .st{color:var(--brand);font-weight:700} .step.wait{opacity:.55}
-    .axes{display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}
+    .axes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
     .axes>div{display:flex;flex-direction:column;gap:6px;padding:12px 16px;border-right:1px solid var(--border-default)}
     .axes>div:last-child{border-right:0} .axes span{font-size:11px;color:var(--fg-4)}
     .two{display:grid;grid-template-columns:1.15fr 1fr;gap:20px;align-items:start}
@@ -79,7 +79,7 @@
 <button class="btn-ghost toggle" type="button" onclick="var r=document.documentElement;r.dataset.theme=(r.dataset.theme==='dark'?'light':'dark')">라이트/다크</button>
 <div class="wrap">
   <h1 class="t-h1" style="margin:0">로딩 — 스피너 대신 "지금 무엇을 보고 있는지"</h1>
-  <p class="t-body" style="margin:0;color:var(--fg-2)">index.html 의 <code>#skel</code>(4칸) 자리에 넣는다. 신호등 색은 결과가 오기 전까지 화면에 한 점도 나오지 않는다. 문구는 §9 검사를 통과하는 것만.</p>
+  <p class="t-body" style="margin:0;color:var(--fg-2)">index.html 의 <code>#skel</code>(3칸) 자리에 넣는다. 신호등 색은 결과가 오기 전까지 화면에 한 점도 나오지 않는다. 문구는 §9 검사를 통과하는 것만.</p>
 
   <!-- ══ A. 지금 쓰는 모양 — "확인 중" 단일 상태 ══
        /api/v1/scan 은 한 번에 답하므로 프론트는 어느 단계인지 모른다.
@@ -116,17 +116,16 @@
           <div style="display:flex;flex-direction:column;gap:8px;flex:1"><div class="sk" style="width:72px;height:24px;border-radius:999px"></div><div class="sk" style="width:88%;height:18px"></div></div>
         </div>
         <div class="axes">
-          <div><span>품목 등급</span><div class="sk" style="height:14px;width:80%"></div></div>
-          <div><span>인증번호</span><div class="sk" style="height:14px;width:70%"></div></div>
-          <div><span>유해물질 기준</span><div class="sk" style="height:14px;width:85%"></div></div>
+          <div><span>인증 조회</span><div class="sk" style="height:14px;width:70%"></div></div>
           <div><span>리콜 대조</span><div class="sk" style="height:14px;width:60%"></div></div>
+          <div><span>유해물질</span><div class="sk" style="height:14px;width:85%"></div></div>
         </div>
         <div style="display:flex;flex-direction:column;gap:14px;padding:18px 24px">
           <div style="display:flex;gap:12px"><div class="sk" style="width:8px;height:8px;border-radius:50%;margin-top:5px"></div><div class="sk" style="height:16px;flex:1"></div></div>
           <div style="display:flex;gap:12px"><div class="sk" style="width:8px;height:8px;border-radius:50%;margin-top:5px"></div><div class="sk" style="height:16px;width:76%"></div></div>
         </div>
       </section>
-      <div class="note">결과 자리 스켈레톤. 축 넷의 이름만 미리 보인다 — 어떤 답이 올지는 한 글자도 미리 말하지 않는다.</div>
+      <div class="note">결과 자리 스켈레톤. 축 셋(인증 조회 · 리콜 대조 · 유해물질)의 자리만 미리 보인다 — 어떤 답이 올지는 한 글자도 미리 말하지 않는다. 넷을 그리면 오지 않을 축의 빈칸이 남고, 셀러는 그것을 "조회 실패" 로 읽는다.</div>
     </div>
   </div>
 

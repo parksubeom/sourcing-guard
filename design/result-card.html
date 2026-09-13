@@ -21,7 +21,7 @@
     .v-head.AMBER{background:var(--signal-amber-tint)} .v-head.GREEN{background:var(--signal-green-tint)}
     .v-head.RED{background:var(--signal-red-tint)} .v-head.UNKNOWN{background:var(--signal-unknown-tint)}
     .v-head h2{margin:0;font-family:var(--font-display);font-weight:400;font-size:22px;line-height:1.35}
-    .axes{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-bottom:1px solid var(--border-default)}
+    .axes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-bottom:1px solid var(--border-default)}
     .axes>div{display:flex;flex-direction:column;gap:4px;padding:14px 20px;border-right:1px solid var(--border-default)}
     .axes>div:last-child{border-right:0}
     .axes .k{font-size:12px;color:var(--fg-4)} .axes .v{display:flex;align-items:center;gap:6px;font-size:14px;font-weight:500}
@@ -65,7 +65,7 @@
 
 <button class="btn-ghost toggle" type="button" onclick="var r=document.documentElement;r.dataset.theme=(r.dataset.theme==='dark'?'light':'dark')">라이트/다크</button>
 <div class="wrap">
-  <h1 class="t-h1" style="margin:0">결과 카드 — 신호등 하나, 축 넷, 근거는 전부 원문 링크</h1>
+  <h1 class="t-h1" style="margin:0">결과 카드 — 신호등 하나, 축 셋, 근거는 전부 원문 링크</h1>
   <p class="t-body" style="margin:0;color:var(--fg-2)">문구는 전부 지금 코드의 것(SIGNAL_LABEL · SIGNAL_SHORT · scorer 헤드라인 · finding 문장). 새 판정 문구를 여기서 짓지 않는다. 캐릭터는 상태 표정만 짓고 말은 하지 않는다.</p>
 
   <!-- 신호 넷 — 칩 클래스는 Signal 값(GREEN/AMBER/RED/UNKNOWN) 그대로 -->
@@ -87,13 +87,13 @@
       </div>
     </header>
     <div class="axes">
-      <div><span class="k">품목 등급</span><span class="v"><span class="dot8" style="background:var(--signal-green)"></span>완구 · 안전확인</span></div>
-      <div><span class="k">인증번호</span><span class="v"><span class="dot8" style="background:var(--signal-amber)"></span>표기 없음 · 확인 필요</span></div>
-      <div><span class="k">유해물질 기준</span><span class="v"><span class="dot8" style="background:var(--signal-amber)"></span>적용 기준 있음</span></div>
+      <div><span class="k">인증 조회</span><span class="v"><span class="dot8" style="background:var(--signal-amber)"></span>번호 없음</span></div>
       <div><span class="k">리콜 대조</span><span class="v"><span class="dot8" style="background:var(--signal-unknown)"></span>대조 못 함</span></div>
+      <div><span class="k">유해물질</span><span class="v"><span class="dot8" style="background:var(--signal-amber)"></span>수록됨</span></div>
     </div>
     <div class="findings">
       <div class="f"><span class="dot8" style="background:var(--signal-green)"></span><div style="flex:1;display:flex;flex-direction:column;gap:6px"><div class="row"><span><b>완구</b>로 봅니다 — 어린이제품 <b>안전확인</b> 대상입니다.</span><button class="ghost" type="button">이 품목이 아닙니다</button></div><a class="src" href="#">어린이제품 안전 특별법 시행규칙 별표 2 · law.go.kr</a></div></div>
+      <div class="f"><span class="dot8" style="background:var(--signal-green)"></span><div style="flex:1;display:flex;flex-direction:column;gap:6px"><span>세부품목 등급표에서 <b>완구 · 안전확인</b> 대상으로 조회됩니다.</span><a class="src" href="#">전기용품 및 생활용품 안전관리 운용요령 별표 1~7 (세부품목)</a></div></div>
       <div class="f"><span class="dot8" style="background:var(--signal-amber)"></span><div style="flex:1;display:flex;flex-direction:column;gap:6px"><span>안전확인 대상 품목인데 페이지에 <b>인증번호 표기가 없습니다.</b> 공급처에 안전확인 신고번호를 요청하세요.</span><a class="src" href="#">안전확인 신고 제도 안내 · safetykorea.kr</a></div></div>
       <div class="f"><span class="dot8" style="background:var(--signal-amber)"></span><div style="flex:1;display:flex;flex-direction:column;gap:6px"><span>재질에 <b>PVC</b>가 적혀 있습니다. 완구 공통안전기준의 <b>프탈레이트계 가소제 총합 0.1% 이하</b> 기준이 적용됩니다.</span><a class="src" href="#">어린이제품 공통안전기준 부속서 · law.go.kr</a></div></div>
       <div class="f"><span class="dot8" style="background:var(--signal-unknown)"></span><div style="flex:1"><span style="color:var(--fg-2)">리콜 목록과 대조하려면 <b>모델명·제조사·인증번호 중 하나</b>가 필요합니다. 상세페이지의 그 부분을 함께 붙여 넣으면 대조합니다.</span></div></div>
@@ -106,7 +106,7 @@
 
   <div class="rules">
     <div><b>헤더만 색을 가진다</b><br>주의 카드는 헤더만 주의색 옅음. 본문은 카드 그대로 — 색이 페이지를 덮으면 신호가 아니라 분위기가 된다.</div>
-    <div><b>축 넷은 항상 넷</b><br>품목 · 인증 · 유해물질 · 리콜. 못 한 축도 "대조 못 함" 으로 자리를 지킨다. 빈 축은 숨기지 않는다 — 안 한 것과 없는 것은 다르다(R3).</div>
+    <div><b>축 셋은 항상 셋</b><br>인증 조회 · 리콜 대조 · 유해물질. 서버 <code>axes</code> 가 주는 것이 셋이다 — 품목 등급은 축이 아니라 <b>첫 finding</b> 이다. 못 한 축도 "대조 못 함" 으로 자리를 지킨다. 빈 축은 숨기지 않는다 — 안 한 것과 없는 것은 다르다(R3).</div>
     <div><b>신고 버튼은 품목 줄에만</b><br>"이 품목이 아닙니다" 는 등급 줄 옆 유령 버튼. 누르면 저장만 되고 판정은 안 바뀐다 — 그 사실을 눌렀을 때 한 줄로 말한다([D-화면]).</div>
   </div>
   <div class="note">마스코트 표정 ↔ Signal: GREEN→calm · AMBER→alert · RED→worried · UNKNOWN→unsure · 로딩→look. 표정은 감정이지 판정이 아니다 — 말풍선에 결론 문구를 넣지 않는다.</div>
