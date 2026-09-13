@@ -282,7 +282,15 @@ def test_image_types_match_the_server_allowlist(pages):
     index = pages["index.html"]
     for mt in ("image/jpeg", "image/png", "image/webp", "image/gif"):
         assert mt in index, mt
-    assert "image/svg" not in index
+
+    # ⚠⚠ **업로드 자리만 본다.** 2026-09-13 에 파비콘
+    #   `<link type="image/svg+xml">` 이 붙으면서 문서 전체 검색이 깨졌다 -
+    #   파비콘은 우리가 서버로 보내는 것이 아니라 브라우저가 그리는 것이라
+    #   업로드 허용 목록과 무관하다. **검사가 재려던 것은 업로드다.**
+    upload = re.sub(r"<link\b[^>]*>", "", index)
+    assert "image/svg" not in upload, (
+        "업로드 자리에 SVG 가 허용돼 있다 - 서버가 거절해 사용자가 422 를 본다"
+    )
 
     # 서버 상한과 갈라지면 4장을 붙인 뒤 검사에서 거절당한다.
     from sourcing_guard.main import ScanRequest

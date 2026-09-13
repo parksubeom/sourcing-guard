@@ -170,11 +170,24 @@ def test_the_landing_says_what_it_does_not_do():
 
 
 # ── 디자인 무관 (G-1 조건) ────────────────────────────────────────
-def test_landing_has_no_logo_color_or_favicon_and_an_empty_mark():
+def test_landing_keeps_its_styles_in_app_css_and_its_mark_empty():
+    """인라인 스타일·인라인 색을 두지 않는다. 마크 자리는 아직 빈 span 이다.
+
+    ⚠⚠ **2026-09-13 에 이름과 전제가 바뀌었다.** 전에는
+      `test_landing_has_no_logo_color_or_favicon_and_an_empty_mark` 였고
+      `rel="icon"` 과 `favicon.svg` 를 **금지**했다. 사유가
+      "디자인은 시피님이 새로 한다" 였는데 **디자인 시스템 v0.1 이 도착했고**
+      총괄이 적용을 지시했다 - 전제가 만료됐다.
+
+      금지가 아니라 **요구**가 된 것은 `tests/test_design_tokens.py` 가 맡는다
+      (네 화면이 같은 파비콘·폰트를 쓴다). 같은 단정을 두 곳에 적지 않는다.
+
+    ⚠ 마크는 아직 빈 span 이 맞다. `mark.svg` 로 채우는 것은 README §8-4 이고
+      **단계 4~5** 다. 그때 이 검사도 함께 뒤집는다.
+    """
     assert "<style" not in _LANDING
-    assert 'rel="icon"' not in _LANDING
-    for f in ("mark.svg", "logo.svg", "favicon.svg"):
-        assert f not in _LANDING, f"{f} 를 참조한다 - 디자인은 시피님이 새로 한다"
+    for f in ("mark.svg", "logo.svg"):
+        assert f not in _LANDING, f"{f} 는 단계 4~5 에서 붙인다"
     assert re.search(r'<span class="mark" aria-hidden="true"></span>', _LANDING), "마크 자리는 빈 span 이어야 한다"
     assert '<svg class="mark"' not in _LANDING
     # 인라인 색상 지정이 없다 - app.css 토큰만.
