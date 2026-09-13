@@ -71,3 +71,40 @@ def test_the_doc_is_marked_as_investigation_only():
     assert "조사만 했다" in doc
     assert "제출(9/20) 전에는 하지 않는다" in doc
     assert "착수 조건" in doc
+
+
+def test_the_led_figures_come_from_the_press_release_source():
+    """[I 정정 4 · 2026-09-13] LED 수치가 **원자료와 같고 URL 이 붙어 있어야** 한다.
+
+    ⚠⚠ 이 문서가 `국표원 해외직구 안전성조사(2025-06)` 이라 적고 있었다.
+      **수치(22/10)는 맞았고 날짜와 출처가 틀렸다.** 22/10 은 2026-08-06
+      산업통상부 건이고, 2025-06 건은 [G-2] 가 원문을 못 찾아 **수록하지
+      않기로** 한 것이다.
+
+      `hazard_rules.yaml` 은 `143b48c` 에서 이미 고쳐졌는데 이 문서만 낡아
+      있었다 - 같은 사실이 두 곳에 있었고 한쪽만 고쳐졌다 (§6).
+
+    ⚠ 숫자가 맞으면 출처를 안 보게 된다. 그래서 **수치와 URL 을 함께** 잠근다.
+    """
+    press = json.loads(
+        (_ROOT / "sourcing_guard/static/data/안전성조사_보도자료.json").read_text(
+            encoding="utf-8"))
+    doc = _DOC.read_text(encoding="utf-8")
+
+    led_rows = []
+    for survey in press["조사"]:
+        for item in survey.get("품목별") or []:
+            if "LED" in item.get("품목", "") and item.get("조사_수"):
+                led_rows.append((survey, item))
+    assert led_rows, "원자료에 LED 조사 수치가 없다"
+
+    for survey, item in led_rows:
+        pair = f"{item['조사_수']}개 중 {item['부적합_수']}개"
+        assert pair in doc, f"{survey['게시일']} 의 LED {pair} 가 문서에 없다"
+        assert survey["게시일"] in doc, f"{survey['게시일']} 이 문서에 없다"
+        assert survey["url"] in doc, f"{survey['게시일']} 의 원문 URL 이 문서에 없다"
+
+    # ⚠ 수록하지 않기로 한 출처가 근거로 되살아나면 안 된다.
+    assert "2025-06" not in doc.split("정정 (2026-09-13)")[0], (
+        "본문에 미수록 출처 2025-06 이 다시 근거로 쓰였다"
+    )
