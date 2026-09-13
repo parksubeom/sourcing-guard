@@ -11,7 +11,7 @@ from pathlib import Path
 
 _ROOT = Path(__file__).resolve().parents[1]
 _DOC = _ROOT / "docs/I_전기용품안전기준_조사.md"
-_RAW = _ROOT / "tests/fixtures/전기용품_안전기준_고시_2026-09-12.json"
+_RAW = _ROOT / "tests/fixtures/전기용품_안전기준_고시_2026-09-13.json"
 
 
 def test_the_notice_count_matches_the_fixture():
@@ -35,12 +35,88 @@ def test_the_doc_keeps_the_numbers_it_could_not_reproduce():
 
 
 def test_the_doc_says_the_clause_cannot_be_cited():
-    """[I] 의 결론 - 조문을 인용할 수 없어서 룰을 못 넣는다."""
+    """[I] 의 결론 - **지금 경로로는** 조문을 인용할 수 없어서 룰을 못 넣는다.
+
+    ⚠ 표현이 "구조적으로 못 한다" 가 아니다 (총괄 정정 · 2026-09-13). 재본
+      것은 "DRF 조문 JSON 에 조문이 있나" 이고, PDF 를 파싱하는 길은 아직 안
+      막혔다 - 다만 §3 의 둘째 벽(시험 절차라 대조할 값이 없다)이 남는다.
+    """
     doc = _DOC.read_text(encoding="utf-8")
-    assert "조문을 인용할 수 없다" in doc
-    # 대조 증거가 수치로 있어야 한다 (빈 조문내용 · 별표 없음).
+    assert "지금 경로(law.go.kr DRF 조문 JSON)로는" in doc
+    assert "구조적으로 못 한다" not in doc, (
+        "실측한 것은 '이 경로로는 안 된다' 이지 '구조적으로 불가능' 이 아니다"
+    )
+    # 둘째 벽을 함께 말해야 첫째만 넘으면 되는 것처럼 읽히지 않는다.
+    assert "둘째 벽" in doc
+    # 대조 증거가 수치로 있어야 한다.
     assert "2,233" in doc and "1,569,120" in doc
-    assert "`''` (빈 문자열)" in doc
+
+
+def test_the_survey_numbers_match_the_fixture():
+    """[정정 2] **1건으로 74건을 말하지 않는다.** 전수 결과를 문서가 그대로 쓴다."""
+    raw = json.loads(_RAW.read_text(encoding="utf-8"))
+    doc = _DOC.read_text(encoding="utf-8")
+    sv = raw["전수조사"]
+    n = sv["분모"]
+    assert n == len(raw["고시"]) == raw["전기용품_안전기준_건수"]
+    # (a) 빈 문자열 · (d) 인용할 조문
+    assert f"**{sv['조문내용_빈_건수']} / {n}**" in doc, "빈 문자열 건수가 문서에 없다"
+    assert f"**{sv['인용할_조문이_있는_건수']} / {n}**" in doc, "인용할 조문 건수가 없다"
+    # ⚠⚠ 이 둘이 다르다는 것을 문서가 말해야 한다 - 안 그러면 3건이 예외로 읽힌다.
+    assert sv["조문내용_빈_건수"] != sv["인용할_조문이_있는_건수"]
+    assert "안내문" in doc, "빈값 아닌 3건이 안내문이라는 설명이 없다"
+    # 전수 결과가 실제로 전수인지 - 고시 줄마다 판정이 있어야 한다.
+    for row in raw["고시"]:
+        for key in ("조문_있음", "조문내용_빔", "별표_있음", "첨부"):
+            assert key in row, f"{row['이름']} 에 {key} 가 없다"
+    assert sum(1 for r in raw["고시"] if r["조문_있음"]) == sv["인용할_조문이_있는_건수"]
+
+
+def test_the_controls_are_the_notices_our_rules_actually_came_from():
+    """[정정 1] 대조군이 **우리 룰이 실제로 나온 고시**여야 한다.
+
+    ⚠⚠ 전에 대조군을 「안전확인대상생활용품의 안전기준」 하나로 적고 "우리 룰
+      21건이 이 고시에서 나왔다" 고 썼는데 **그 고시에서 나온 것은 2건**이다.
+      대조군을 잘못 가리키면 "저쪽은 되는데 이쪽은 안 된다" 의 '저쪽' 이 틀린다.
+    """
+    import collections
+
+    import yaml
+
+    data = yaml.safe_load((_ROOT / "sourcing_guard/data/hazard_rules.yaml").read_text(
+        encoding="utf-8"))
+    rules = data["rules"] if isinstance(data, dict) and "rules" in data else data
+    by_src = collections.Counter(r.get("source_url", "") for r in rules
+                                 if r.get("status") == "verified")
+    doc = _DOC.read_text(encoding="utf-8")
+    assert sum(by_src.values()) == 21
+
+    want = {
+        "어린이제품공통안전기준": "17건",
+        "공급자적합성확인대상생활용품의안전기준": "2건",
+        "안전확인대상생활용품의안전기준": "2건",
+    }
+    for slug, label in want.items():
+        n = next(v for k, v in by_src.items() if slug in k)
+        assert f"{n}건" == label, f"{slug} 이 {n}건인데 문서는 {label} 이라 적혀 있다"
+        assert f"**{label}**" in doc, f"{slug} 의 {label} 이 문서 표에 없다"
+
+
+def test_the_coverage_gap_number_carries_its_label():
+    """[정정 3] 옛 106건을 사실처럼 쓰지 않는다 - **라벨을 붙여 남긴다.**"""
+    doc = _DOC.read_text(encoding="utf-8")
+    assert "91 / 135 (67%)" in doc, "지금 기준선의 회색불 수가 없다"
+    assert "106건 (78%)" in doc, "옛 수를 지웠다 - 라벨을 붙여 남긴다"
+    for label in ("도매꾹 표본", "Claude", "새표본235", "GPT"):
+        assert label in doc, f"라벨 '{label}' 이 없다"
+    assert "두 수를 나란히 비교하면 안 된다" in doc
+
+
+def test_the_doc_says_where_the_pdf_text_was_read():
+    """[표현 ②] 조문 JSON 이 비었는데 "본문을 읽었다" 만 적으면 모순으로 읽힌다."""
+    doc = _DOC.read_text(encoding="utf-8")
+    assert "어디서 읽었나" in doc
+    assert "KC 60335-2-29.pdf" in doc
 
 
 def test_the_doc_matches_the_rule_db():
