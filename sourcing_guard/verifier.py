@@ -29,6 +29,8 @@ from .scoping import (
     CHILDREN_CATEGORIES,
     AgeScope,
     classify_age,
+    jurisdiction_for,
+    jurisdiction_line,
     missing_inputs,
     out_of_scope_reason,
 )
@@ -886,12 +888,19 @@ def verify(
                 statement_ko=(
                     "이 품목은 어린이제품 공통안전기준 적용 대상에서 제외됩니다"
                     + (f" ({scope_reason})" if scope_reason else "")
-                    + ". 해당 소관 부처의 별도 기준을 확인해 주세요."
+                    + "."
+                    # [L-1] 소관 안내 한 줄. 없으면 빈 문자열이라 옛 문장 그대로다.
+                    + (jurisdiction_line(scope_reason)
+                       or " 해당 소관 부처의 별도 기준을 확인해 주세요.")
                 ),
                 source_label="어린이제품 공통안전기준 1. 적용범위",
                 source_url="https://law.go.kr/행정규칙/어린이제품공통안전기준",
                 legal_basis="어린이제품 공통안전기준 1. 적용범위",
-                detail={"reason": scope_reason, "standalone": True},
+                detail={"reason": scope_reason, "standalone": True,
+                        # [L-1] 안내 축 - 기관·법령·조문·확인 절차·정부 URL.
+                        # **판정이 아니다.** 화면이 링크를 그릴 수 있게 구조로 준다.
+                        **({"jurisdiction": jurisdiction_for(scope_reason)}
+                           if jurisdiction_for(scope_reason) else {})},
                 checked_at=today,
             )
         )
@@ -1773,6 +1782,9 @@ def verify(
                     "그 부분은 이 도구의 범위 밖입니다. 위 결과는 상품 자체에 대한 "
                     "것이며, 해당 언급이 이 상품을 가리킨다면 그 소관 기준으로 "
                     "확인해 주세요."
+                    # [L-1] 여기서도 같은 한 줄을 붙인다 - 같은 안내를 두 문구로
+                    # 적지 않는다 (§6). 소유자는 `scoping.jurisdiction_line` 이다.
+                    + jurisdiction_line(scope_reason)
                 ),
                 source_label="어린이제품 공통안전기준 1. 적용범위",
                 source_url="https://law.go.kr/행정규칙/어린이제품공통안전기준",

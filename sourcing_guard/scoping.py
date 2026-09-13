@@ -24,6 +24,10 @@ from dataclasses import dataclass
 import re
 import unicodedata
 from enum import Enum
+from functools import lru_cache
+from pathlib import Path
+
+import yaml
 
 from .models import ItemCategory
 
@@ -58,6 +62,53 @@ OUT_OF_SCOPE_HINTS: dict[str, tuple[str, ...]] = {
         "식품용기", "밀폐용기", "도시락통", "젖병",
     ),
 }
+
+#: 소관 안내 매핑 — [L-1] · `data/jurisdiction_map.yaml` 이 정본이다.
+#:
+#: ⚠⚠ **안내 축이다. 판정이 아니다.** 신호등·등급·다섯 숫자를 건드리지 않는다.
+#:
+#: ⚠ 표지어(`OUT_OF_SCOPE_HINTS`)는 여기 두고 **소관 정보(기관·조문·URL·확인
+#:   절차)는 yaml** 에 둔다. 둘을 한 곳에 합치지 않는 이유: 표지어는 매칭을
+#:   넓히는 것이라 실측으로 정하고, 소관 정보는 법령 원문으로 정한다 - 근거가
+#:   다르면 검수 주기도 다르다.
+#:
+#: ⚠ yaml 이 없거나 키가 없으면 **조용히 빈 dict 다.** 안내가 없을 뿐 검증은
+#:   그대로 돈다 - 안내 축이 검증을 막으면 안 된다 (R3).
+_JURISDICTION_PATH = Path(__file__).with_name("data") / "jurisdiction_map.yaml"
+
+
+@lru_cache(maxsize=1)
+def _jurisdiction_map() -> dict[str, dict]:
+    try:
+        raw = yaml.safe_load(_JURISDICTION_PATH.read_text(encoding="utf-8")) or {}
+    except (OSError, yaml.YAMLError):  # pragma: no cover - 파일이 깨져도 검증은 돈다
+        return {}
+    return {row["key"]: row for row in (raw.get("소관") or []) if row.get("key")}
+
+
+def jurisdiction_for(reason: str | None) -> dict:
+    """소관 사유 문자열 → 안내 정보. 없으면 빈 dict.
+
+    ⚠ `OUT_OF_SCOPE_HINTS` 의 키를 그대로 쓴다. 키가 갈리면 안내가 조용히
+      사라지므로 `tests/test_jurisdiction_map.py` 가 두 목록을 대조한다.
+    """
+    return _jurisdiction_map().get(reason or "", {})
+
+
+def jurisdiction_line(reason: str | None) -> str:
+    """화면에 붙는 **한 줄**. 없으면 빈 문자열.
+
+    ⚠⚠ §9 단정 금지. "○○ 소관으로 보입니다 — 확인 필요" 까지다.
+      "판매 불가"·"허가 필요" 는 우리가 판정하는 것이 된다.
+    """
+    j = jurisdiction_for(reason)
+    if not j:
+        return ""
+    return (
+        f" {j['기관']} 소관(「{j['법령']}」)으로 보입니다 — "
+        f"{j['확인절차']}"
+    )
+
 
 # 공통안전기준 적용 상한. 만 13세 이하.
 CHILD_AGE_MAX = 13
