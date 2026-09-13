@@ -88,7 +88,7 @@
         </div>
         <div class="tile">
           <div class="k">리콜</div>
-          <p class="b">이미 리콜 공표된 <b data-h="recalls">-</b>과 모델명·인증번호를 대조합니다. <span data-h="as_of">-</span> 공표분까지.</p>
+          <p class="b">이미 리콜 공표된 <b data-h="recalls">목록</b>과 모델명·인증번호를 대조합니다.<span data-when="as_of"> <span data-h="as_of"></span> 공표분까지.</span></p>
           <a class="src" href="https://www.safetykorea.kr/recall/recallBoard" target="_blank" rel="noopener">원문 · 제품안전정보센터</a>
         </div>
         <div class="tile">
@@ -137,12 +137,12 @@
         <h2 class="pane-h">AI는 읽기만 합니다.<br>판정은 규칙이 합니다.</h2>
         <p class="pane-b">AI는 상세페이지에서 품목·재질·인증번호를 읽어냅니다. 정상·주의·위험은 정부 데이터와 사람이 검수한 규칙이 정합니다.</p>
         <div class="figs">
-          <div class="fig">
-            <span class="v" data-h="ok_rate">-</span>
-            <span class="k">품목을 맞힌 비율 · 사람이 검수한 <span data-h="denominator">-</span>건</span>
+          <div class="fig" data-when="ok_rate">
+            <span class="v" data-h="ok_rate"></span>
+            <span class="k">품목을 맞힌 비율 · 사람이 검수한 <span data-h="denominator"></span>건</span>
           </div>
-          <div class="fig">
-            <span class="v" data-h="off_target">-</span>
+          <div class="fig" data-when="off_target">
+            <span class="v" data-h="off_target"></span>
             <span class="k">대상이 아닌 상품에 등급을 붙인 수</span>
           </div>
         </div>
@@ -181,14 +181,30 @@
     if (text !== undefined && text !== null) n.textContent = String(text);
     return n;
   }
+  // 값이 없으면 **숨긴다.** 문장 가운데에 "-" 를 넣으면 쓰레기가 된다 -
+  // 실측: "이미 리콜 공표된 0건과 … - 공표분까지." · "사람이 검수한 -건".
+  // 배포본은 부팅 직후 초기 적재 전 몇 초와 정부 API 장애 때 이 화면이 뜬다.
+  //
+  // 규칙 둘:
+  //   [data-h="키"]     값이 오면 채우고, 없으면 **HTML 에 적힌 기본말**을 둔다
+  //                     (리콜 칸의 "목록" 처럼 숫자 없이도 말이 되는 낱말).
+  //   [data-when="키"]  그 값이 있을 때만 보이는 **딸린 절**. 없으면 통째로 숨긴다.
   function set(key, val) {
+    var has = !(val === null || val === undefined || val === "");
     var a = document.querySelectorAll('[data-h="' + key + '"]');
     for (var i = 0; i < a.length; i++) {
-      a[i].textContent = (val === null || val === undefined) ? "-" : String(val);
+      if (a[i].dataset.fallback === undefined) a[i].dataset.fallback = a[i].textContent;
+      a[i].textContent = has ? String(val) : a[i].dataset.fallback;
     }
+    var w = document.querySelectorAll('[data-when="' + key + '"]');
+    for (var j = 0; j < w.length; j++) w[j].hidden = !has;
   }
+  // 주의: 둘 다 값이 없으면 **null 을 돌려준다.** "-" 를 돌려주면 문장 가운데에
+  //   그대로 박힌다("- 공표분까지"). 모양을 만드는 함수가 없는 값을 지어내지
+  //   않는 것이 옳다 (R5 와 같은 태도).
   function fmtDate(s) { // YYYYMMDD → YYYY-MM-DD
-    return (s && s.length === 8) ? s.slice(0, 4) + "-" + s.slice(4, 6) + "-" + s.slice(6) : (s || "-");
+    return (typeof s === "string" && /^\d{8}$/.test(s))
+      ? s.slice(0, 4) + "-" + s.slice(4, 6) + "-" + s.slice(6) : null;
   }
   function num(n) { return (typeof n === "number") ? n.toLocaleString("ko-KR") : null; }
 
@@ -315,8 +331,13 @@
       }
       put("band-k", document.createTextNode(a.기관 + " 안전성조사 · " + a.게시일));
       put("band-big", document.createTextNode(oneIn + "개 중 1개"));
+      // 주의: 모집단 명사를 **리터럴로 적지 않는다.** "온라인 구매대행 제품"
+      //   이라고 적어 뒀는데 원자료는 "해외 구매대행 제품 (…)" 이다 - **해외가
+      //   빠져** 국내 온라인 유통 전체를 잰 것처럼 읽혔다. 괄호 앞을 읽는다.
+      var who = String(a.조사_대상 || "").split("(")[0].trim();
+      if (!who) return;
       put("band-b", document.createTextNode(
-        "온라인 구매대행 제품 " + a.조사_수 + "개를 사서 시험했더니 "
+        who + " " + a.조사_수 + "개를 사서 시험했더니 "
         + a.부적합_수 + "개가 안전기준 부적합."));
       var src = document.querySelector('[data-p="band-src"]');
       if (src) {
@@ -332,13 +353,17 @@
     .then(function (h) {
       if (!h) return;
       var rec = (h.sync && h.sync.recalls) || {};
-      var total = num((rec.domestic || 0) + (rec.overseas || 0));
-      set("recalls", total ? total + "건" : null);
+      // 주의: `num(0)` 은 문자열 "0" 이라 **참**이다. 전에 여기서 그 실수를 했고
+      //   "이미 리콜 공표된 0건과 … 대조합니다" 가 나왔다. 수로 먼저 가른다.
+      //   0 도 숨긴다 - 대조할 목록이 없는데 "대조합니다" 는 거짓이다 (R3).
+      var total = (typeof rec.domestic === "number" && typeof rec.overseas === "number")
+        ? rec.domestic + rec.overseas : null;
+      set("recalls", total ? num(total) + "건" : null);
       set("as_of", fmtDate(h.sync && h.sync.latest_published_on));
       var b = h.baseline || {};
-      set("ok_rate", (b.ok_rate === undefined || b.ok_rate === null) ? null : b.ok_rate + "%");
+      set("ok_rate", typeof b.ok_rate === "number" ? b.ok_rate + "%" : null);
       set("denominator", num(b.denominator));
-      set("off_target", (b.off_target === undefined || b.off_target === null) ? null : b.off_target + "건");
+      set("off_target", typeof b.off_target === "number" ? b.off_target + "건" : null);
     })
     .catch(function () { /* 값이 없으면 - 로 남는다. 지어내지 않는다 */ });
 })();
