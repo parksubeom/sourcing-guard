@@ -71,7 +71,26 @@ _ROW = re.compile(r"\|\s*(\d{4}-\d{2}-\d{2})\s*\|\s*`([0-9a-f]{9})`\s*\|\s*`([0-
 
 
 def _rows() -> list[tuple[str, str, str]]:
-    return _ROW.findall(_TABLE.read_text(encoding="utf-8"))
+    """09-09 rewrite 표 168행. **09-13 스크럽 표는 여기 안 들어간다.**"""
+    text = _TABLE.read_text(encoding="utf-8")
+    head = text.split("# 2026-09-13 · IP 스크럽")[0]
+    return _ROW.findall(head)
+
+
+def _scrub_rows() -> list[tuple[str, str]]:
+    """2026-09-13 IP 스크럽 표. `| 옛 | 새 | 제목 |` 넷.
+
+    ⚠⚠ **09-09 와 다른 사건이라 표를 따로 읽는다.** 저쪽은 author 이메일만
+      바꾼 rewrite 168개이고 이쪽은 파일 내용에서 공인 IP 를 지운 스크럽 4개다.
+      한 표로 합치면 `test_the_mapping_document_survives` 의 168 이 깨지고,
+      더 나쁘게는 **두 사건의 백업 위치가 다르다는 것**(원격 영구 보존 / 로컬
+      전용)이 흐려진다.
+    """
+    text = _TABLE.read_text(encoding="utf-8")
+    if "# 2026-09-13 · IP 스크럽" not in text:
+        return []
+    tail = text.split("# 2026-09-13 · IP 스크럽", 1)[1]
+    return re.findall(r"\|\s*`([0-9a-f]{7,10})`\s*\|\s*`([0-9a-f]{7,10})`\s*\|", tail)
 
 
 def _live_files() -> list[Path]:
@@ -318,3 +337,59 @@ def test_the_network_block_lives_in_conftest_not_in_each_file():
     assert "SG_LIVE_NET" in src
     # 왜 막는지가 함께 있어야 한다 - 이유 없는 금지는 지워진다.
     assert "§7" in src and "18개" in src
+
+
+# ── 2026-09-13 IP 스크럽 (커밋 넷) ────────────────────────────────
+def test_the_scrub_mapping_is_recorded():
+    """스크럽 해시 넷이 대응표에 있고, **백업이 어디 있는지**를 말한다.
+
+    ⚠⚠ 09-09 백업은 **원격 영구 보존**이고 09-13 백업은 **로컬 전용**이다.
+      목적이 달라서다 - 저쪽은 해시 참조를 붙들고, 이쪽은 공개 리포에서 값을
+      지우는 것이라 원격에 두면 스크럽 자체가 무의미해진다.
+    """
+    rows = _scrub_rows()
+    assert len(rows) == 4, f"스크럽 대응표가 4행이 아닙니다: {len(rows)}"
+    text = _TABLE.read_text(encoding="utf-8")
+    assert "backup/pre-ip-scrub-2026-09-13" in text
+    assert "로컬 전용" in text, "백업이 로컬 전용이라는 것이 안 적혀 있다"
+    assert "80fcfbebe" in text, "옛 HEAD 가 없으면 되돌릴 좌표를 잃는다"
+    # 최종 트리가 안 바뀌었다는 것 - 이것이 "내용은 그대로" 의 증거다.
+    assert "e34a06ca898dc0256865fc3d1db121f1ba3aa426" in text
+
+
+def test_no_pre_scrub_hash_remains_in_live_references():
+    """살아 있는 참조가 스크럽 **전** 해시를 가리키지 않는다.
+
+    ⚠ 깨지면 참조를 지우지 말고 대응표로 새 해시를 찾아 옮길 것.
+
+    ⚠ `작업로그_`·`해시_대응표_` 는 면제다 - 그 날의 기록이라 옛 해시가 남는
+      것이 정상이다 (`_EXEMPT`).
+    """
+    old_by_prefix: dict[str, str] = {}
+    for old, new in _scrub_rows():
+        for length in range(7, 10):
+            old_by_prefix.setdefault(old[:length], new[:length])
+    if not old_by_prefix:
+        pytest.skip("스크럽 대응표가 없다")
+
+    stale: list[str] = []
+    for p in _live_files():
+        # ⚠⚠ **이 검사 파일 자신은 면제다.** 옛 해시를 단정에 쓰기 때문이다
+        #   (`assert "80fcfbebe" in text` — 되돌릴 좌표를 잃지 않게 하는 검사).
+        #   자기 주석·단정에 걸리는 함정에 이 저장소에서 일곱 번째다
+        #   (`tests/srccheck.py` 머리 주석).
+        if _nfc(p.name) == "test_commit_refs.py":
+            continue
+        text = p.read_text(encoding="utf-8", errors="ignore")
+        for lineno, line in enumerate(text.splitlines(), 1):
+            # ⚠ "옛 → 새" 를 설명하는 줄은 옛 해시를 **일부러** 담는다.
+            if "→" in line and any(n in line for n in old_by_prefix.values()):
+                continue
+            for tok in sorted(set(_HEX.findall(line))):
+                if tok in old_by_prefix:
+                    stale.append(
+                        f"{p.relative_to(_ROOT)}:{lineno}  {tok} → {old_by_prefix[tok]}")
+    assert not stale, (
+        "스크럽 전 해시가 살아 있는 참조에 남아 있습니다 - 대응표로 옮기세요:\n  "
+        + "\n  ".join(stale)
+    )
