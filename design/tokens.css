@@ -1,0 +1,120 @@
+/* 안심 소싱 돋보기 — 디자인 토큰 v0.1 (2026-09-13 · 총괄 초안 · 시피님 확정 전)
+ *
+ * 쓰는 법: app.css 의 `:root{ … }` 블록을 이 파일의 :root 블록으로 **통째로** 바꾼다.
+ * 변수 이름은 기존 app.css 와 같게 두었으므로(--gray-*, --primary-*, --fg-*, --bg-*, --r-*, --s*)
+ * 값만 바뀌고 나머지 CSS 는 손대지 않아도 화면 전체가 새 팔레트로 넘어간다.
+ * 새로 생긴 이름(--brand-*, --signal-*, --illust-*, --font-*, --bg-page, --bg-card)은
+ * 새 컴포넌트(마스코트·로딩·⓪ 절)에서 쓴다.
+ *
+ * 원칙 (design/README.md §1)
+ *   1. 브랜드색은 오키드 하나. 신호등(정상·주의·위험·일부 확인)과 색상환에서 멀다.
+ *      오렌지·노랑은 '주의' 와, 민트는 '정상' 과 한 색으로 읽혀서 뺐다.
+ *   2. 신호등 색은 판정을 말하는 자리에만 쓴다. 버튼·링크·장식에 초록·주황·빨강을 쓰지 않는다.
+ *   3. 캐릭터 색(살구·자두 잉크)은 UI 의미가 없다. 다크 모드에서도 바뀌지 않는다.
+ *   4. 그림자는 거의 안 쓴다. 카드는 선 하나(--border-default)로 구분한다.
+ *
+ * 정부 식별 요소(KC 마크·정부 로고·공공 디자인 시스템 폰트)는 가져오지 않는다 — app.css 머리주석 그대로.
+ */
+
+:root{
+  /* ── 따뜻한 중성색 (기존 --gray-* 이름 유지, 값만 갈색 계열로) ── */
+  --gray-5:#FFFCF8;  --gray-10:#FBF1E6; --gray-20:#F1E7DC; --gray-30:#EADFD4;
+  --gray-50:#8A7F78; --gray-60:#6F645D; --gray-80:#5C524C; --gray-100:#2A2320;
+
+  /* ── 브랜드: 오키드 (기존 --primary-* 이름 유지) ── */
+  --primary-10:#F3EBFB; --primary-50:#8B4CCB; --primary-60:#6E37AB; --primary-70:#3B2A5E;
+  --secondary-10:#FBF1E6;
+  --brand:var(--primary-50); --brand-strong:var(--primary-60); --brand-tint:var(--primary-10);
+
+  /* ── 신호등: 화면이 유일하게 "판단" 을 색으로 말하는 자리 ── */
+  --success:#1F8A4C; --warning:#D97B00; --danger:#D63B3B; --info:var(--primary-60);
+  --signal-green:#1F8A4C;   --signal-green-tint:#E6F5EC;   --signal-green-text:#1F8A4C;
+  --signal-amber:#D97B00;   --signal-amber-tint:#FFF1DE;   --signal-amber-text:#9A5600;
+  --signal-red:#D63B3B;     --signal-red-tint:#FDE8E8;     --signal-red-text:#B02A2A;
+  --signal-unknown:#8A7F78; --signal-unknown-tint:#F1ECE8; --signal-unknown-text:#5C524C;
+
+  /* ── 캐릭터 전용. UI 의미 없음 ── */
+  --illust-body:#FFC29B; --illust-body-2:#F29B6B; --illust-ink:#3B2A5E;
+
+  /* ── 글 · 바탕 · 선 ── */
+  --fg-1:var(--gray-100); --fg-2:var(--gray-80); --fg-3:var(--gray-60); --fg-4:var(--gray-50);
+  --bg-page:#FFF8F0;            /* 페이지 바탕 — body 에 쓴다 (새 이름) */
+  --bg-canvas:#FFFFFF;          /* 카드·입력 바탕 — 기존 컴포넌트가 이미 이 이름을 쓴다 */
+  --bg-card:var(--bg-canvas);
+  --bg-subtle:var(--gray-10); --bg-muted:var(--secondary-10);
+  --border-default:var(--gray-30); --border-focus:var(--primary-50);
+
+  /* ── 모서리: 기존보다 한 단계 둥글게 — 캐릭터와 같은 곡률 ── */
+  --r-xs:6px; --r-s:8px; --r-m:12px; --r-l:14px; --r-xl:16px; --r-pill:999px;
+
+  /* ── 간격: 기존 그대로 ── */
+  --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:20px; --s6:24px; --s8:32px; --s10:40px; --s12:48px; --s16:64px;
+
+  /* ── 그림자: 떠 있어야 하는 것(툴팁·메뉴)만 ── */
+  --shadow-1:none;
+  --shadow-2:0 6px 20px rgba(42,35,32,.10);
+
+  /* ── 글꼴 ── */
+  --font-display:"Gowun Dodum","Apple SD Gothic Neo","Malgun Gothic",sans-serif;   /* 제목 · 워드마크 */
+  --font-body:"Noto Sans KR",-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  --font-mono:ui-monospace,Menlo,Consolas,monospace;
+
+  color-scheme: light;
+}
+
+/* ── 다크 모드 — 토큰만 준비. 토글 UI 는 예정(미구현). ──
+ * 시스템이 다크면 따라가고(data-theme 없음), 사용자가 고르면 data-theme 이 이긴다.
+ * 캐릭터 색(--illust-*)과 신호등 본색은 그대로. 옅은 배경(tint)만 투명도로 바꾼다.
+ */
+[data-theme="dark"]{
+  --gray-5:#221D1A;  --gray-10:#2F2925; --gray-20:#352E2A; --gray-30:#3C342F;
+  --gray-50:#948880; --gray-60:#A89C93; --gray-80:#C9BDB4; --gray-100:#F5EDE6;
+  --primary-10:rgba(176,139,234,.18); --primary-50:#B08BEA; --primary-60:#C9ACF3; --primary-70:#D9C6F5;
+  --secondary-10:#2F2925;
+  --signal-green-tint:rgba(31,138,76,.22);   --signal-green-text:#7FD3A0;
+  --signal-amber-tint:rgba(217,123,0,.22);   --signal-amber-text:#F2B36B;
+  --signal-red-tint:rgba(214,59,59,.22);     --signal-red-text:#F09595;
+  --signal-unknown-tint:rgba(138,127,120,.22); --signal-unknown-text:#C9BDB4;
+  --bg-page:#1D1917; --bg-canvas:#27221F;
+  --shadow-2:0 6px 20px rgba(0,0,0,.35);
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --gray-5:#221D1A;  --gray-10:#2F2925; --gray-20:#352E2A; --gray-30:#3C342F;
+    --gray-50:#948880; --gray-60:#A89C93; --gray-80:#C9BDB4; --gray-100:#F5EDE6;
+    --primary-10:rgba(176,139,234,.18); --primary-50:#B08BEA; --primary-60:#C9ACF3; --primary-70:#D9C6F5;
+    --secondary-10:#2F2925;
+    --signal-green-tint:rgba(31,138,76,.22);   --signal-green-text:#7FD3A0;
+    --signal-amber-tint:rgba(217,123,0,.22);   --signal-amber-text:#F2B36B;
+    --signal-red-tint:rgba(214,59,59,.22);     --signal-red-text:#F09595;
+    --signal-unknown-tint:rgba(138,127,120,.22); --signal-unknown-text:#C9BDB4;
+    --bg-page:#1D1917; --bg-canvas:#27221F;
+    --shadow-2:0 6px 20px rgba(0,0,0,.35);
+    color-scheme: dark;
+  }
+}
+
+/* ── 타이포 눈금 (design/README.md §3). 클래스는 새 화면에서만 쓴다 ── */
+.t-display{font-family:var(--font-display); font-weight:400; font-size:48px; line-height:60px; letter-spacing:-.01em}
+.t-h1{font-family:var(--font-display); font-weight:400; font-size:28px; line-height:36px}
+.t-h2{font-family:var(--font-body); font-weight:700; font-size:20px; line-height:28px}
+.t-body{font-family:var(--font-body); font-weight:400; font-size:15px; line-height:24px}
+.t-label{font-family:var(--font-body); font-weight:500; font-size:13px; line-height:20px; color:var(--fg-2)}
+.t-num{font-family:var(--font-body); font-weight:700; font-size:44px; line-height:48px; font-variant-numeric:tabular-nums}
+@media (max-width:640px){ .t-display{font-size:34px; line-height:42px} .t-h1{font-size:24px; line-height:32px} .t-num{font-size:36px; line-height:40px} }
+
+/* ── 신호 칩: 색은 신호등 넷에서만. 문구는 SIGNAL_LABEL / SIGNAL_SHORT (index.html) 그대로 ── */
+.chip{display:inline-flex; align-items:center; gap:6px; padding:6px 12px; border-radius:var(--r-pill); font-size:13px; font-weight:700; line-height:16px}
+.chip .dot{width:8px; height:8px; border-radius:50%; flex:none; margin:0}
+.chip.GREEN{background:var(--signal-green-tint); color:var(--signal-green-text)}   .chip.GREEN .dot{background:var(--signal-green)}
+.chip.AMBER{background:var(--signal-amber-tint); color:var(--signal-amber-text)}   .chip.AMBER .dot{background:var(--signal-amber)}
+.chip.RED{background:var(--signal-red-tint); color:var(--signal-red-text)}         .chip.RED .dot{background:var(--signal-red)}
+.chip.UNKNOWN{background:var(--signal-unknown-tint); color:var(--signal-unknown-text)} .chip.UNKNOWN .dot{background:var(--signal-unknown)}
+
+/* ── 버튼: 브랜드색 하나. 신호등 색 버튼은 만들지 않는다 ── */
+.btn-primary{display:inline-flex; align-items:center; justify-content:center; padding:16px 28px; border:0; border-radius:var(--r-m); background:var(--brand); color:#fff; font:inherit; font-size:17px; font-weight:700; cursor:pointer}
+.btn-primary:hover{background:var(--brand-strong)}
+.btn-ghost{display:inline-flex; align-items:center; padding:16px 20px; border:1px solid var(--border-default); border-radius:var(--r-m); background:transparent; color:var(--fg-2); font:inherit; font-size:15px; font-weight:500; cursor:pointer}
+.btn-ghost:hover{border-color:var(--fg-3)}
+.btn-primary:focus-visible,.btn-ghost:focus-visible{outline:2px solid var(--border-focus); outline-offset:2px}

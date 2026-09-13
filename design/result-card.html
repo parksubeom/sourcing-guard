@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>결과 카드 — 참조 마크업 (design v0.1)</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="tokens.css">
+<style>
+    body{margin:0;background:var(--bg-page);color:var(--fg-1);font-family:var(--font-body);font-size:15px;line-height:1.55}
+    .wrap{max-width:1040px;margin:0 auto;padding:40px 24px;display:flex;flex-direction:column;gap:24px}
+    .card{background:var(--bg-canvas);border:1px solid var(--border-default);border-radius:20px;overflow:hidden}
+    .note{font-family:var(--font-mono);font-size:11px;line-height:1.5;color:var(--fg-4)}
+    .toggle{position:fixed;right:16px;top:16px;z-index:9}
+    a{color:var(--brand)} a:hover{color:var(--brand-strong)}
+
+    .signals{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+    .signals .card{display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:16px}
+    .signals small{font-size:12px;color:var(--fg-2)}
+    .v-head{display:flex;align-items:center;gap:20px;padding:24px 28px;border-bottom:1px solid var(--border-default)}
+    .v-head.AMBER{background:var(--signal-amber-tint)} .v-head.GREEN{background:var(--signal-green-tint)}
+    .v-head.RED{background:var(--signal-red-tint)} .v-head.UNKNOWN{background:var(--signal-unknown-tint)}
+    .v-head h2{margin:0;font-family:var(--font-display);font-weight:400;font-size:22px;line-height:1.35}
+    .axes{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-bottom:1px solid var(--border-default)}
+    .axes>div{display:flex;flex-direction:column;gap:4px;padding:14px 20px;border-right:1px solid var(--border-default)}
+    .axes>div:last-child{border-right:0}
+    .axes .k{font-size:12px;color:var(--fg-4)} .axes .v{display:flex;align-items:center;gap:6px;font-size:14px;font-weight:500}
+    .dot8{width:8px;height:8px;border-radius:50%;display:inline-block;flex:none}
+    .findings{padding:8px 28px}
+    .f{display:flex;gap:14px;padding:16px 0;border-bottom:1px solid var(--border-default)} .f:last-child{border-bottom:0}
+    .f .dot8{margin-top:7px}
+    .f .src{font-size:12px;text-decoration:underline;text-underline-offset:2px;color:var(--brand)}
+    .f .row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .ghost{padding:6px 12px;border:1px solid var(--border-default);border-radius:999px;background:transparent;color:var(--fg-2);font:inherit;font-size:12px;cursor:pointer}
+    .meta{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 28px;background:var(--bg-subtle);border-top:1px solid var(--border-default);font-size:12px;color:var(--fg-4)}
+    .rules{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;font-size:13px;line-height:20px;color:var(--fg-2)}
+    .rules>div{padding:16px 20px;background:var(--bg-subtle);border-radius:16px} .rules b{color:var(--fg-1)}
+    @media (max-width:800px){.signals,.axes,.rules{grid-template-columns:1fr 1fr} .meta{flex-direction:column;align-items:flex-start}}
+</style>
+</head>
+<body>
+<svg xmlns="http://www.w3.org/2000/svg" width="0" height="0" style="position:absolute" aria-hidden="true">
+<!-- 안심 소싱 돋보기 마스코트 v0.1 · 총괄 초안 2026-09-13 · 몸통 살구 #FFC29B · 눈입 자두 잉크 #3B2A5E · 신호등 색을 몸에 쓰지 않는다 · 체크·X·엄지 같은 판정 기호 없음 -->
+<!-- id = {mungchi|kkureomi|kongi}-{calm|alert|worried|unsure|look}  (뭉치·꾸러미·콩이 × 정상·주의·위험·일부 확인·확인 중)
+     쓰는 법 1) 인라인: 이 파일 전체를 body 첫 줄에 넣고  <svg width="32" height="32" aria-hidden="true"><use href="#mungchi-calm"/></svg>
+     쓰는 법 2) 외부:   <svg width="32" height="32"><use href="/static/mascot.svg#mungchi-calm"/></svg>  — 같은 출처에서만 된다
+     <img src> 로 쓰려면 mascot/<이름>-<상태>.svg 단독 파일을 쓴다 -->
+<defs><clipPath id="clip-b"><rect x="14" y="16" width="92" height="92" rx="26"/></clipPath></defs>
+  <symbol id="mungchi-calm" viewBox="0 0 120 120"><path d="M62 12 C88 10 108 30 106 58 C104 88 84 108 58 108 C30 108 12 88 14 60 C16 32 36 14 62 12 Z" fill="#FFC29B"/><g transform="translate(0 58)" fill="#3B2A5E" stroke="#3B2A5E" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="34" cy="10" rx="7" ry="4" fill="#F29B6B" opacity="0.55"/><ellipse cx="86" cy="10" rx="7" ry="4" fill="#F29B6B" opacity="0.55"/><circle cx="44" cy="0" r="5" stroke="none"/><circle cx="76" cy="0" r="5" stroke="none"/><path d="M50 14 Q60 23 70 14" fill="none"/></g></symbol>
+  <symbol id="mungchi-alert" viewBox="0 0 120 120"><path d="M62 12 C88 10 108 30 106 58 C104 88 84 108 58 108 C30 108 12 88 14 60 C16 32 36 14 62 12 Z" fill="#FFC29B"/><g transform="translate(0 58)" fill="#3B2A5E" stroke="#3B2A5E" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="34" cy="10" rx="7" ry="4" fill="#F29B6B" opacity="0.55"/><ellipse cx="86" cy="10" rx="7" ry="4" fill="#F29B6B" opacity="0.55"/><circle cx="44" cy="0" r="5" stroke="none"/><circle cx="76" cy="0" r="5" stroke="none"/><path d="M36 -11 L49 -14" fill="none"/><path d="M71 -12 L84 -12" fill="none"/><path d="M52 16 L68 16" fill="none"/></g></symbol>
+  <symbol id="mungchi-worried" viewBox="0 0 120 120"><path d="M62 12 C88 10 108 30 106 58 C104 88 84 108 58 108 C30 108 12 88 14 60 C16 32 36 14 62 12 Z" fill="#FFC29B"/><g transform="translate(0 58)" fill="#3B2A5E" stroke="#3B2A5E" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="34" cy="10" rx="7" ry="4" fill="#F29B6B" opacity="0.55"/><ellipse cx="86" cy="10" rx="7" ry="4" fill="#F29B6B" opacity="0.55"/><circle cx="44" cy="0" r="6" stroke="none"/><circle cx="76" cy="0" r="6" stroke="none"/><path d="M36 -14 L49 -10" fill="none"/><path d="M71 -10 L84 -14" fill="none"/><circle cx="60" cy="17" r="4.5" fill="none"/><path d="M95 -30 C99 -22 101 -18 97 -15 C93 -18 91 -22 95 -30 Z" fill="#FFFFFF" stroke-width="2.2"/></g></symbol>
+  <symbol id="mungchi-unsure" viewBox="0 0 120 120"><path d="M62 12 C88 10 108 30 106 58 C104 88 84 108 58 108 C30 108 12 88 14 60 C16 32 36 14 62 12 Z" fill="#FFC29B"/><g transform="translate(0 58)" fill="#3B2A5E" stroke="#3B2A5E" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="34" cy="10" rx="7" ry="4" fill="#F29B6B" opacity="0.55"/><ellipse cx="86" cy="10" rx="7" ry="4" fill="#F29B6B" opacity="0.55"/><path d="M38 0 A6 6 0 0 0 50 0 Z" stroke="none"/><path d="M70 0 A6 6 0 0 0 82 0 Z" stroke="none"/><path d="M53 16 L67 16" fill="none"/><circle cx="96" cy="-24" r="2.2" stroke="none"/><circle cx="103" cy="-30" r="2.8" stroke="none"/><circle cx="111" cy="-37" r="3.4" stroke="none"/></g></symbol>
+  <symbol id="mungchi-look" viewBox="0 0 120 120"><path d="M62 12 C88 10 108 30 106 58 C104 88 84 108 58 108 C30 108 12 88 14 60 C16 32 36 14 62 12 Z" fill="#FFC29B"/><g transform="translate(0 58)" fill="#3B2A5E" stroke="#3B2A5E" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="34" cy="10" rx="7" ry="4" fill="#F29B6B" opacity="0.55"/><ellipse cx="86" cy="10" rx="7" ry="4" fill="#F29B6B" opacity="0.55"/><circle cx="48" cy="-1" r="5" stroke="none"/><circle cx="80" cy="-1" r="5" stroke="none"/><path d="M53 14 Q61 20 69 14" fill="none"/></g></symbol>
+  <symbol id="kkureomi-calm" viewBox="0 0 120 120"><rect x="14" y="16" width="92" height="92" rx="26" fill="#FFC29B"/><path d="M14 30 H106 V43 H14 Z" fill="#F29B6B" clip-path="url(#clip-b)"/><g transform="translate(0 68)" fill="#3B2A5E" stroke="#3B2A5E" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="34" cy="10" rx="7" ry="4" fill="#F29B6B" opacity="0.55"/><ellipse cx="86" cy="10" rx="7" ry="4" fill="#F29B6B" opacity="0.55"/><circle cx="44" cy="0" r="5" stroke="none"/><circle cx="76" cy="0" r="5" stroke="none"/><path d="M50 14 Q60 23 70 14" fill="none"/></g></symbol>
+  <symbol id="kkureomi-alert" viewBox="0 0 120 120"><rect x="14" y="16" width="92" height="92" rx="26" fill="#FFC29B"/><path d="M14 30 H106 V43 H14 Z" fill="#F29B6B" clip-path="url(#clip-b)"/><g transform="translate(0 68)" fill="#3B2A5E" stroke="#3B2A5E" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="34" cy="10" rx="7" ry="4" fill="#F29B6B" opacity="0.55"/><ellipse cx="86" cy="10" rx="7" ry="4" fill="#F29B6B" opacity="0.55"/><circle cx="44" cy="0" r="5" stroke="none"/><circle cx="76" cy="0" r="5" stroke="none"/><path d="M36 -11 L49 -14" fill="none"/><path d="M71 -12 L84 -12" fill="none"/><path d="M52 16 L68 16" fill="none"/></g></symbol>
+  <symbol id="kkureomi-worried" viewBox="0 0 120 120"><rect x="14" y="16" width="92" height="92" rx="26" fill="#FFC29B"/><path d="M14 30 H106 V43 H14 Z" fill="#F29B6B" clip-path="url(#clip-b)"/><g transform="translate(0 68)" fill="#3B2A5E" stroke="#3B2A5E" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="34" cy="10" rx="7" ry="4" fill="#F29B6B" opacity="0.55"/><ellipse cx="86" cy="10" rx="7" ry="4" fill="#F29B6B" opacity="0.55"/><circle cx="44" cy="0" r="6" stroke="none"/><circle cx="76" cy="0" r="6" stroke="none"/><path d="M36 -14 L49 -10" fill="none"/><path d="M71 -10 L84 -14" fill="none"/><circle cx="60" cy="17" r="4.5" fill="none"/><path d="M95 -30 C99 -22 101 -18 97 -15 C93 -18 91 -22 95 -30 Z" fill="#FFFFFF" stroke-width="2.2"/></g></symbol>
+  <symbol id="kkureomi-unsure" viewBox="0 0 120 120"><rect x="14" y="16" width="92" height="92" rx="26" fill="#FFC29B"/><path d="M14 30 H106 V43 H14 Z" fill="#F29B6B" clip-path="url(#clip-b)"/><g transform="translate(0 68)" fill="#3B2A5E" stroke="#3B2A5E" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="34" cy="10" rx="7" ry="4" fill="#F29B6B" opacity="0.55"/><ellipse cx="86" cy="10" rx="7" ry="4" fill="#F29B6B" opacity="0.55"/><path d="M38 0 A6 6 0 0 0 50 0 Z" stroke="none"/><path d="M70 0 A6 6 0 0 0 82 0 Z" stroke="none"/><path d="M53 16 L67 16" fill="none"/><circle cx="96" cy="-24" r="2.2" stroke="none"/><circle cx="103" cy="-30" r="2.8" stroke="none"/><circle cx="111" cy="-37" r="3.4" stroke="none"/></g></symbol>
+  <symbol id="kkureomi-look" viewBox="0 0 120 120"><rect x="14" y="16" width="92" height="92" rx="26" fill="#FFC29B"/><path d="M14 30 H106 V43 H14 Z" fill="#F29B6B" clip-path="url(#clip-b)"/><g transform="translate(0 68)" fill="#3B2A5E" stroke="#3B2A5E" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="34" cy="10" rx="7" ry="4" fill="#F29B6B" opacity="0.55"/><ellipse cx="86" cy="10" rx="7" ry="4" fill="#F29B6B" opacity="0.55"/><circle cx="48" cy="-1" r="5" stroke="none"/><circle cx="80" cy="-1" r="5" stroke="none"/><path d="M53 14 Q61 20 69 14" fill="none"/></g></symbol>
+  <symbol id="kongi-calm" viewBox="0 0 120 120"><ellipse cx="60" cy="66" rx="38" ry="44" transform="rotate(-8 60 66)" fill="#FFC29B"/><path d="M61 25 L60 15" stroke="#6E37AB" stroke-width="3" stroke-linecap="round" fill="none"/><path d="M60 15 C60 5 70 1 78 5 C76 13 68 17 60 15 Z" fill="#8B4CCB"/><path d="M60 15 C60 7 52 3 44 6 C46 13 54 17 60 15 Z" fill="#B08BEA"/><g transform="translate(0 62)" fill="#3B2A5E" stroke="#3B2A5E" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="34" cy="10" rx="7" ry="4" fill="#F29B6B" opacity="0.55"/><ellipse cx="86" cy="10" rx="7" ry="4" fill="#F29B6B" opacity="0.55"/><circle cx="44" cy="0" r="5" stroke="none"/><circle cx="76" cy="0" r="5" stroke="none"/><path d="M50 14 Q60 23 70 14" fill="none"/></g></symbol>
+  <symbol id="kongi-alert" viewBox="0 0 120 120"><ellipse cx="60" cy="66" rx="38" ry="44" transform="rotate(-8 60 66)" fill="#FFC29B"/><path d="M61 25 L60 15" stroke="#6E37AB" stroke-width="3" stroke-linecap="round" fill="none"/><path d="M60 15 C60 5 70 1 78 5 C76 13 68 17 60 15 Z" fill="#8B4CCB"/><path d="M60 15 C60 7 52 3 44 6 C46 13 54 17 60 15 Z" fill="#B08BEA"/><g transform="translate(0 62)" fill="#3B2A5E" stroke="#3B2A5E" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="34" cy="10" rx="7" ry="4" fill="#F29B6B" opacity="0.55"/><ellipse cx="86" cy="10" rx="7" ry="4" fill="#F29B6B" opacity="0.55"/><circle cx="44" cy="0" r="5" stroke="none"/><circle cx="76" cy="0" r="5" stroke="none"/><path d="M36 -11 L49 -14" fill="none"/><path d="M71 -12 L84 -12" fill="none"/><path d="M52 16 L68 16" fill="none"/></g></symbol>
+  <symbol id="kongi-worried" viewBox="0 0 120 120"><ellipse cx="60" cy="66" rx="38" ry="44" transform="rotate(-8 60 66)" fill="#FFC29B"/><path d="M61 25 L60 15" stroke="#6E37AB" stroke-width="3" stroke-linecap="round" fill="none"/><path d="M60 15 C60 5 70 1 78 5 C76 13 68 17 60 15 Z" fill="#8B4CCB"/><path d="M60 15 C60 7 52 3 44 6 C46 13 54 17 60 15 Z" fill="#B08BEA"/><g transform="translate(0 62)" fill="#3B2A5E" stroke="#3B2A5E" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="34" cy="10" rx="7" ry="4" fill="#F29B6B" opacity="0.55"/><ellipse cx="86" cy="10" rx="7" ry="4" fill="#F29B6B" opacity="0.55"/><circle cx="44" cy="0" r="6" stroke="none"/><circle cx="76" cy="0" r="6" stroke="none"/><path d="M36 -14 L49 -10" fill="none"/><path d="M71 -10 L84 -14" fill="none"/><circle cx="60" cy="17" r="4.5" fill="none"/><path d="M95 -30 C99 -22 101 -18 97 -15 C93 -18 91 -22 95 -30 Z" fill="#FFFFFF" stroke-width="2.2"/></g></symbol>
+  <symbol id="kongi-unsure" viewBox="0 0 120 120"><ellipse cx="60" cy="66" rx="38" ry="44" transform="rotate(-8 60 66)" fill="#FFC29B"/><path d="M61 25 L60 15" stroke="#6E37AB" stroke-width="3" stroke-linecap="round" fill="none"/><path d="M60 15 C60 5 70 1 78 5 C76 13 68 17 60 15 Z" fill="#8B4CCB"/><path d="M60 15 C60 7 52 3 44 6 C46 13 54 17 60 15 Z" fill="#B08BEA"/><g transform="translate(0 62)" fill="#3B2A5E" stroke="#3B2A5E" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="34" cy="10" rx="7" ry="4" fill="#F29B6B" opacity="0.55"/><ellipse cx="86" cy="10" rx="7" ry="4" fill="#F29B6B" opacity="0.55"/><path d="M38 0 A6 6 0 0 0 50 0 Z" stroke="none"/><path d="M70 0 A6 6 0 0 0 82 0 Z" stroke="none"/><path d="M53 16 L67 16" fill="none"/><circle cx="96" cy="-24" r="2.2" stroke="none"/><circle cx="103" cy="-30" r="2.8" stroke="none"/><circle cx="111" cy="-37" r="3.4" stroke="none"/></g></symbol>
+  <symbol id="kongi-look" viewBox="0 0 120 120"><ellipse cx="60" cy="66" rx="38" ry="44" transform="rotate(-8 60 66)" fill="#FFC29B"/><path d="M61 25 L60 15" stroke="#6E37AB" stroke-width="3" stroke-linecap="round" fill="none"/><path d="M60 15 C60 5 70 1 78 5 C76 13 68 17 60 15 Z" fill="#8B4CCB"/><path d="M60 15 C60 7 52 3 44 6 C46 13 54 17 60 15 Z" fill="#B08BEA"/><g transform="translate(0 62)" fill="#3B2A5E" stroke="#3B2A5E" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="34" cy="10" rx="7" ry="4" fill="#F29B6B" opacity="0.55"/><ellipse cx="86" cy="10" rx="7" ry="4" fill="#F29B6B" opacity="0.55"/><circle cx="48" cy="-1" r="5" stroke="none"/><circle cx="80" cy="-1" r="5" stroke="none"/><path d="M53 14 Q61 20 69 14" fill="none"/></g></symbol>
+</svg>
+
+<button class="btn-ghost toggle" type="button" onclick="var r=document.documentElement;r.dataset.theme=(r.dataset.theme==='dark'?'light':'dark')">라이트/다크</button>
+<div class="wrap">
+  <h1 class="t-h1" style="margin:0">결과 카드 — 신호등 하나, 축 넷, 근거는 전부 원문 링크</h1>
+  <p class="t-body" style="margin:0;color:var(--fg-2)">문구는 전부 지금 코드의 것(SIGNAL_LABEL · SIGNAL_SHORT · scorer 헤드라인 · finding 문장). 새 판정 문구를 여기서 짓지 않는다. 캐릭터는 상태 표정만 짓고 말은 하지 않는다.</p>
+
+  <!-- 신호 넷 — 칩 클래스는 Signal 값(GREEN/AMBER/RED/UNKNOWN) 그대로 -->
+  <div class="signals">
+    <div class="card"><svg viewBox="0 0 120 120" width="44" height="44" aria-hidden="true" style="flex:none"><use href="#mungchi-calm"/></svg><div style="display:flex;flex-direction:column;gap:4px"><span class="chip GREEN" style="align-self:flex-start"><span class="dot"></span>정상</span><small>확인된 문제 없음</small></div></div>
+    <div class="card"><svg viewBox="0 0 120 120" width="44" height="44" aria-hidden="true" style="flex:none"><use href="#mungchi-alert"/></svg><div style="display:flex;flex-direction:column;gap:4px"><span class="chip AMBER" style="align-self:flex-start"><span class="dot"></span>주의</span><small>확인 필요</small></div></div>
+    <div class="card"><svg viewBox="0 0 120 120" width="44" height="44" aria-hidden="true" style="flex:none"><use href="#mungchi-worried"/></svg><div style="display:flex;flex-direction:column;gap:4px"><span class="chip RED" style="align-self:flex-start"><span class="dot"></span>위험</span><small>확인 필요 (중대)</small></div></div>
+    <div class="card"><svg viewBox="0 0 120 120" width="44" height="44" aria-hidden="true" style="flex:none"><use href="#mungchi-unsure"/></svg><div style="display:flex;flex-direction:column;gap:4px"><span class="chip UNKNOWN" style="align-self:flex-start"><span class="dot"></span>일부 확인</span><small>판단 근거 부족</small></div></div>
+  </div>
+
+  <!-- 상세 카드 (AMBER 예) — .verdict.AMBER 에 대응. 헤더만 색을 가진다 -->
+  <article class="card verdict AMBER">
+    <header class="v-head AMBER">
+      <svg viewBox="0 0 120 120" width="72" height="72" aria-hidden="true" style="flex:none"><use href="#mungchi-alert"/></svg>
+      <div style="display:flex;flex-direction:column;gap:8px;flex:1">
+        <div style="display:flex;align-items:center;gap:10px"><span class="chip AMBER"><span class="dot"></span>주의</span><span style="font-size:13px;font-weight:700;color:var(--signal-amber-text)">확인 필요</span></div>
+        <h2>확인 후 소싱 — 공급처에 아래 항목을 확인한 뒤 판단하세요.</h2>
+        <div style="font-size:13px;color:var(--fg-2)">모형완구 기차놀이 제우스 · 재질 ABS, PVC · 대상연령 3세 이상</div>
+      </div>
+    </header>
+    <div class="axes">
+      <div><span class="k">품목 등급</span><span class="v"><span class="dot8" style="background:var(--signal-green)"></span>완구 · 안전확인</span></div>
+      <div><span class="k">인증번호</span><span class="v"><span class="dot8" style="background:var(--signal-amber)"></span>표기 없음 · 확인 필요</span></div>
+      <div><span class="k">유해물질 기준</span><span class="v"><span class="dot8" style="background:var(--signal-amber)"></span>적용 기준 있음</span></div>
+      <div><span class="k">리콜 대조</span><span class="v"><span class="dot8" style="background:var(--signal-unknown)"></span>대조 못 함</span></div>
+    </div>
+    <div class="findings">
+      <div class="f"><span class="dot8" style="background:var(--signal-green)"></span><div style="flex:1;display:flex;flex-direction:column;gap:6px"><div class="row"><span><b>완구</b>로 봅니다 — 어린이제품 <b>안전확인</b> 대상입니다.</span><button class="ghost" type="button">이 품목이 아닙니다</button></div><a class="src" href="#">어린이제품 안전 특별법 시행규칙 별표 2 · law.go.kr</a></div></div>
+      <div class="f"><span class="dot8" style="background:var(--signal-amber)"></span><div style="flex:1;display:flex;flex-direction:column;gap:6px"><span>안전확인 대상 품목인데 페이지에 <b>인증번호 표기가 없습니다.</b> 공급처에 안전확인 신고번호를 요청하세요.</span><a class="src" href="#">안전확인 신고 제도 안내 · safetykorea.kr</a></div></div>
+      <div class="f"><span class="dot8" style="background:var(--signal-amber)"></span><div style="flex:1;display:flex;flex-direction:column;gap:6px"><span>재질에 <b>PVC</b>가 적혀 있습니다. 완구 공통안전기준의 <b>프탈레이트계 가소제 총합 0.1% 이하</b> 기준이 적용됩니다.</span><a class="src" href="#">어린이제품 공통안전기준 부속서 · law.go.kr</a></div></div>
+      <div class="f"><span class="dot8" style="background:var(--signal-unknown)"></span><div style="flex:1"><span style="color:var(--fg-2)">리콜 목록과 대조하려면 <b>모델명·제조사·인증번호 중 하나</b>가 필요합니다. 상세페이지의 그 부분을 함께 붙여 넣으면 대조합니다.</span></div></div>
+    </div>
+    <footer class="meta">
+      <span>추출: LLM(GPT · gpt-5.4-mini) · 리콜 데이터 최신 공표일 2026-09-08 · 정부 조회 인증 — · 리콜 대조 못 함</span>
+      <span>본 결과는 공개된 정부 데이터에 기반한 참고 정보이며, 법적 판단이나 안전 인증을 대체하지 않습니다.</span>
+    </footer>
+  </article>
+
+  <div class="rules">
+    <div><b>헤더만 색을 가진다</b><br>주의 카드는 헤더만 주의색 옅음. 본문은 카드 그대로 — 색이 페이지를 덮으면 신호가 아니라 분위기가 된다.</div>
+    <div><b>축 넷은 항상 넷</b><br>품목 · 인증 · 유해물질 · 리콜. 못 한 축도 "대조 못 함" 으로 자리를 지킨다. 빈 축은 숨기지 않는다 — 안 한 것과 없는 것은 다르다(R3).</div>
+    <div><b>신고 버튼은 품목 줄에만</b><br>"이 품목이 아닙니다" 는 등급 줄 옆 유령 버튼. 누르면 저장만 되고 판정은 안 바뀐다 — 그 사실을 눌렀을 때 한 줄로 말한다([D-화면]).</div>
+  </div>
+  <div class="note">마스코트 표정 ↔ Signal: GREEN→calm · AMBER→alert · RED→worried · UNKNOWN→unsure · 로딩→look. 표정은 감정이지 판정이 아니다 — 말풍선에 결론 문구를 넣지 않는다.</div>
+</div>
+</body>
+</html>

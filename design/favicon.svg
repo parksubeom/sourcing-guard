@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
+<!-- 안심 소싱 돋보기 마스코트 v0.1 · 총괄 초안 2026-09-13 · 몸통 살구 #FFC29B · 눈입 자두 잉크 #3B2A5E · 신호등 색을 몸에 쓰지 않는다 · 체크·X·엄지 같은 판정 기호 없음 -->
+<!-- 파비콘 16~32px 용: 홍조 없음 · 눈·입 굵게 -->
+<path d="M62 12 C88 10 108 30 106 58 C104 88 84 108 58 108 C30 108 12 88 14 60 C16 32 36 14 62 12 Z" fill="#FFC29B"/>
+<g transform="translate(0 58)" fill="#3B2A5E" stroke="#3B2A5E" stroke-width="5" stroke-linecap="round"><circle cx="44" cy="0" r="7" stroke="none"/><circle cx="76" cy="0" r="7" stroke="none"/><path d="M48 15 Q60 26 72 15" fill="none"/></g>
+</svg>

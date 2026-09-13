@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="마스코트 뭉치 · 확인 중">
+<!-- 안심 소싱 돋보기 마스코트 v0.1 · 총괄 초안 2026-09-13 · 몸통 살구 #FFC29B · 눈입 자두 잉크 #3B2A5E · 신호등 색을 몸에 쓰지 않는다 · 체크·X·엄지 같은 판정 기호 없음 -->
+<defs><clipPath id="clip-b"><rect x="14" y="16" width="92" height="92" rx="26"/></clipPath></defs>
+<path d="M62 12 C88 10 108 30 106 58 C104 88 84 108 58 108 C30 108 12 88 14 60 C16 32 36 14 62 12 Z" fill="#FFC29B"/>
+<g transform="translate(0 58)" fill="#3B2A5E" stroke="#3B2A5E" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="34" cy="10" rx="7" ry="4" fill="#F29B6B" opacity="0.55"/><ellipse cx="86" cy="10" rx="7" ry="4" fill="#F29B6B" opacity="0.55"/><circle cx="48" cy="-1" r="5" stroke="none"/><circle cx="80" cy="-1" r="5" stroke="none"/><path d="M53 14 Q61 20 69 14" fill="none"/></g>
+</svg>

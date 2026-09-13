@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="마스코트 콩이 · 위험">
+<!-- 안심 소싱 돋보기 마스코트 v0.1 · 총괄 초안 2026-09-13 · 몸통 살구 #FFC29B · 눈입 자두 잉크 #3B2A5E · 신호등 색을 몸에 쓰지 않는다 · 체크·X·엄지 같은 판정 기호 없음 -->
+<defs><clipPath id="clip-b"><rect x="14" y="16" width="92" height="92" rx="26"/></clipPath></defs>
+<ellipse cx="60" cy="66" rx="38" ry="44" transform="rotate(-8 60 66)" fill="#FFC29B"/><path d="M61 25 L60 15" stroke="#6E37AB" stroke-width="3" stroke-linecap="round" fill="none"/><path d="M60 15 C60 5 70 1 78 5 C76 13 68 17 60 15 Z" fill="#8B4CCB"/><path d="M60 15 C60 7 52 3 44 6 C46 13 54 17 60 15 Z" fill="#B08BEA"/>
+<g transform="translate(0 62)" fill="#3B2A5E" stroke="#3B2A5E" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="34" cy="10" rx="7" ry="4" fill="#F29B6B" opacity="0.55"/><ellipse cx="86" cy="10" rx="7" ry="4" fill="#F29B6B" opacity="0.55"/><circle cx="44" cy="0" r="6" stroke="none"/><circle cx="76" cy="0" r="6" stroke="none"/><path d="M36 -14 L49 -10" fill="none"/><path d="M71 -10 L84 -14" fill="none"/><circle cx="60" cy="17" r="4.5" fill="none"/><path d="M95 -30 C99 -22 101 -18 97 -15 C93 -18 91 -22 95 -30 Z" fill="#FFFFFF" stroke-width="2.2"/></g>
+</svg>

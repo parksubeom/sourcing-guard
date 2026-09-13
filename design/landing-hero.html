@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>랜딩 첫 화면 + ⓪ 절 — 참조 마크업 (design v0.1)</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="tokens.css">
+<style>
+    body{margin:0;background:var(--bg-page);color:var(--fg-1);font-family:var(--font-body);font-size:15px;line-height:1.55}
+    .container{max-width:1312px;margin:0 auto;padding:0 64px}
+    @media (max-width:800px){.container{padding:0 20px}}
+    a{color:var(--brand)} a:hover{color:var(--brand-strong)}
+    .note{font-family:var(--font-mono);font-size:11px;line-height:1.5;color:var(--fg-4)}
+    /* 헤더 */
+    header.masthead{border-bottom:1px solid var(--border-default)}
+    .masthead .container{display:flex;align-items:center;justify-content:space-between;min-height:64px;gap:16px}
+    .brand{display:flex;align-items:center;gap:10px}
+    .wordmark{font-family:var(--font-display);font-size:20px;letter-spacing:-.01em}
+    nav.pages{display:flex;gap:28px;font-size:14px;font-weight:500;color:var(--fg-2)}
+    nav.pages a{color:inherit;text-decoration:none}
+    nav.pages a[aria-current="page"]{color:var(--fg-1);font-weight:700;border-bottom:2px solid var(--brand);padding-bottom:2px}
+    /* 히어로 */
+    .hero{display:grid;grid-template-columns:640px minmax(0,1fr);gap:56px;align-items:center;padding:88px 0 72px;min-height:836px;box-sizing:border-box}
+    @media (max-width:1100px){.hero{grid-template-columns:1fr;min-height:0;padding:48px 0} .hero-art{display:none}}
+    .hero h1{margin:0} .hero .lead{margin:0;font-size:17px;line-height:28px;color:var(--fg-2);max-width:560px}
+    .demos{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+    @media (max-width:800px){.demos{grid-template-columns:1fr}}
+    .demo{display:flex;flex-direction:column;gap:8px;padding:16px 18px;border-radius:16px;text-align:left;font:inherit;color:inherit;cursor:pointer;background:var(--bg-canvas);border:1px solid var(--border-default);position:relative;text-decoration:none}
+    .demo:hover{transform:translateY(-2px)} .demo .t{font-size:15px;font-weight:700;line-height:1.4} .demo .n{font-size:12px;line-height:1.5;color:var(--fg-2)}
+    .demo .plus{position:absolute;right:-19px;top:50%;transform:translateY(-50%);width:26px;height:26px;border-radius:50%;background:var(--brand);color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;z-index:1}
+    .hero-art{position:relative;height:520px}
+    .blob1{position:absolute;right:40px;top:20px;width:380px;height:380px;border-radius:50%;background:var(--gray-20)}
+    .blob2{position:absolute;left:20px;bottom:40px;width:220px;height:220px;border-radius:50%;background:var(--brand-tint)}
+    .paste{position:absolute;left:40px;top:190px;width:440px;background:var(--bg-canvas);border:1px solid var(--border-default);border-radius:20px;padding:24px 26px;box-sizing:border-box;display:flex;flex-direction:column;gap:14px}
+    .paste .k{font-size:12px;font-weight:700;color:var(--fg-4)} .paste .lines{display:flex;flex-direction:column;gap:10px;font-size:15px;line-height:24px}
+    .paste .hl{align-self:flex-start;padding:2px 8px;margin-left:-8px;border-radius:8px;background:var(--brand-tint);color:var(--brand-strong);font-weight:700}
+    .mascot-hero{position:absolute;right:24px;top:10px;width:232px;height:232px}
+    /* ⓪ 절 */
+    .why{display:flex;flex-direction:column;gap:24px;padding:88px 0 40px}
+    .why h2,.sec h2{margin:0;font-family:var(--font-display);font-weight:400;font-size:28px}
+    .why .lead{margin:0;font-size:15px;line-height:24px;color:var(--fg-2);max-width:880px}
+    .cards3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+    @media (max-width:900px){.cards3{grid-template-columns:1fr}}
+    .why .card{display:flex;flex-direction:column;gap:10px;padding:24px;background:var(--bg-canvas);border:1px solid var(--border-default);border-radius:20px}
+    .why .card.soft{background:var(--bg-subtle)}
+    .why .num{display:flex;align-items:baseline;gap:10px} .why .num small{font-size:13px;color:var(--fg-2)}
+    .why .body{font-size:14px;line-height:22px;color:var(--fg-2)} .why .body b{color:var(--fg-1)}
+    .why .src{font-size:12px;color:var(--brand);margin-top:auto;text-decoration:none}
+    .numlbl{color:var(--fg-4)}
+</style>
+</head>
+<body>
+<svg xmlns="http://www.w3.org/2000/svg" width="0" height="0" style="position:absolute" aria-hidden="true">
+<!-- 안심 소싱 돋보기 마스코트 v0.1 · 총괄 초안 2026-09-13 · 몸통 살구 #FFC29B · 눈입 자두 잉크 #3B2A5E · 신호등 색을 몸에 쓰지 않는다 · 체크·X·엄지 같은 판정 기호 없음 -->
+<!-- id = {mungchi|kkureomi|kongi}-{calm|alert|worried|unsure|look}  (뭉치·꾸러미·콩이 × 정상·주의·위험·일부 확인·확인 중)
+     쓰는 법 1) 인라인: 이 파일 전체를 body 첫 줄에 넣고  <svg width="32" height="32" aria-hidden="true"><use href="#mungchi-calm"/></svg>
+     쓰는 법 2) 외부:   <svg width="32" height="32"><use href="/static/mascot.svg#mungchi-calm"/></svg>  — 같은 출처에서만 된다
+     <img src> 로 쓰려면 mascot/<이름>-<상태>.svg 단독 파일을 쓴다 -->
+<defs><clipPath id="clip-b"><rect x="14" y="16" width="92" height="92" rx="26"/></clipPath></defs>
+  <symbol id="mungchi-calm" viewBox="0 0 120 120"><path d="M62 12 C88 10 108 30 106 58 C104 88 84 108 58 108 C30 108 12 88 14 60 C16 32 36 14 62 12 Z" fill="#FFC29B"/><g transform="translate(0 58)" fill="#3B2A5E" stroke="#3B2A5E" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="34" cy="10" rx="7" ry="4" fill="#F29B6B" opacity="0.55"/><ellipse cx="86" cy="10" rx="7" ry="4" fill="#F29B6B" opacity="0.55"/><circle cx="44" cy="0" r="5" stroke="none"/><circle cx="76" cy="0" r="5" stroke="none"/><path d="M50 14 Q60 23 70 14" fill="none"/></g></symbol>
+  <symbol id="mungchi-alert" viewBox="0 0 120 120"><path d="M62 12 C88 10 108 30 106 58 C104 88 84 108 58 108 C30 108 12 88 14 60 C16 32 36 14 62 12 Z" fill="#FFC29B"/><g transform="translate(0 58)" fill="#3B2A5E" stroke="#3B2A5E" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="34" cy="10" rx="7" ry="4" fill="#F29B6B" opacity="0.55"/><ellipse cx="86" cy="10" rx="7" ry="4" fill="#F29B6B" opacity="0.55"/><circle cx="44" cy="0" r="5" stroke="none"/><circle cx="76" cy="0" r="5" stroke="none"/><path d="M36 -11 L49 -14" fill="none"/><path d="M71 -12 L84 -12" fill="none"/><path d="M52 16 L68 16" fill="none"/></g></symbol>
+  <symbol id="mungchi-worried" viewBox="0 0 120 120"><path d="M62 12 C88 10 108 30 106 58 C104 88 84 108 58 108 C30 108 12 88 14 60 C16 32 36 14 62 12 Z" fill="#FFC29B"/><g transform="translate(0 58)" fill="#3B2A5E" stroke="#3B2A5E" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="34" cy="10" rx="7" ry="4" fill="#F29B6B" opacity="0.55"/><ellipse cx="86" cy="10" rx="7" ry="4" fill="#F29B6B" opacity="0.55"/><circle cx="44" cy="0" r="6" stroke="none"/><circle cx="76" cy="0" r="6" stroke="none"/><path d="M36 -14 L49 -10" fill="none"/><path d="M71 -10 L84 -14" fill="none"/><circle cx="60" cy="17" r="4.5" fill="none"/><path d="M95 -30 C99 -22 101 -18 97 -15 C93 -18 91 -22 95 -30 Z" fill="#FFFFFF" stroke-width="2.2"/></g></symbol>
+  <symbol id="mungchi-unsure" viewBox="0 0 120 120"><path d="M62 12 C88 10 108 30 106 58 C104 88 84 108 58 108 C30 108 12 88 14 60 C16 32 36 14 62 12 Z" fill="#FFC29B"/><g transform="translate(0 58)" fill="#3B2A5E" stroke="#3B2A5E" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="34" cy="10" rx="7" ry="4" fill="#F29B6B" opacity="0.55"/><ellipse cx="86" cy="10" rx="7" ry="4" fill="#F29B6B" opacity="0.55"/><path d="M38 0 A6 6 0 0 0 50 0 Z" stroke="none"/><path d="M70 0 A6 6 0 0 0 82 0 Z" stroke="none"/><path d="M53 16 L67 16" fill="none"/><circle cx="96" cy="-24" r="2.2" stroke="none"/><circle cx="103" cy="-30" r="2.8" stroke="none"/><circle cx="111" cy="-37" r="3.4" stroke="none"/></g></symbol>
+  <symbol id="mungchi-look" viewBox="0 0 120 120"><path d="M62 12 C88 10 108 30 106 58 C104 88 84 108 58 108 C30 108 12 88 14 60 C16 32 36 14 62 12 Z" fill="#FFC29B"/><g transform="translate(0 58)" fill="#3B2A5E" stroke="#3B2A5E" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="34" cy="10" rx="7" ry="4" fill="#F29B6B" opacity="0.55"/><ellipse cx="86" cy="10" rx="7" ry="4" fill="#F29B6B" opacity="0.55"/><circle cx="48" cy="-1" r="5" stroke="none"/><circle cx="80" cy="-1" r="5" stroke="none"/><path d="M53 14 Q61 20 69 14" fill="none"/></g></symbol>
+  <symbol id="kkureomi-calm" viewBox="0 0 120 120"><rect x="14" y="16" width="92" height="92" rx="26" fill="#FFC29B"/><path d="M14 30 H106 V43 H14 Z" fill="#F29B6B" clip-path="url(#clip-b)"/><g transform="translate(0 68)" fill="#3B2A5E" stroke="#3B2A5E" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="34" cy="10" rx="7" ry="4" fill="#F29B6B" opacity="0.55"/><ellipse cx="86" cy="10" rx="7" ry="4" fill="#F29B6B" opacity="0.55"/><circle cx="44" cy="0" r="5" stroke="none"/><circle cx="76" cy="0" r="5" stroke="none"/><path d="M50 14 Q60 23 70 14" fill="none"/></g></symbol>
+  <symbol id="kkureomi-alert" viewBox="0 0 120 120"><rect x="14" y="16" width="92" height="92" rx="26" fill="#FFC29B"/><path d="M14 30 H106 V43 H14 Z" fill="#F29B6B" clip-path="url(#clip-b)"/><g transform="translate(0 68)" fill="#3B2A5E" stroke="#3B2A5E" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="34" cy="10" rx="7" ry="4" fill="#F29B6B" opacity="0.55"/><ellipse cx="86" cy="10" rx="7" ry="4" fill="#F29B6B" opacity="0.55"/><circle cx="44" cy="0" r="5" stroke="none"/><circle cx="76" cy="0" r="5" stroke="none"/><path d="M36 -11 L49 -14" fill="none"/><path d="M71 -12 L84 -12" fill="none"/><path d="M52 16 L68 16" fill="none"/></g></symbol>
+  <symbol id="kkureomi-worried" viewBox="0 0 120 120"><rect x="14" y="16" width="92" height="92" rx="26" fill="#FFC29B"/><path d="M14 30 H106 V43 H14 Z" fill="#F29B6B" clip-path="url(#clip-b)"/><g transform="translate(0 68)" fill="#3B2A5E" stroke="#3B2A5E" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="34" cy="10" rx="7" ry="4" fill="#F29B6B" opacity="0.55"/><ellipse cx="86" cy="10" rx="7" ry="4" fill="#F29B6B" opacity="0.55"/><circle cx="44" cy="0" r="6" stroke="none"/><circle cx="76" cy="0" r="6" stroke="none"/><path d="M36 -14 L49 -10" fill="none"/><path d="M71 -10 L84 -14" fill="none"/><circle cx="60" cy="17" r="4.5" fill="none"/><path d="M95 -30 C99 -22 101 -18 97 -15 C93 -18 91 -22 95 -30 Z" fill="#FFFFFF" stroke-width="2.2"/></g></symbol>
+  <symbol id="kkureomi-unsure" viewBox="0 0 120 120"><rect x="14" y="16" width="92" height="92" rx="26" fill="#FFC29B"/><path d="M14 30 H106 V43 H14 Z" fill="#F29B6B" clip-path="url(#clip-b)"/><g transform="translate(0 68)" fill="#3B2A5E" stroke="#3B2A5E" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="34" cy="10" rx="7" ry="4" fill="#F29B6B" opacity="0.55"/><ellipse cx="86" cy="10" rx="7" ry="4" fill="#F29B6B" opacity="0.55"/><path d="M38 0 A6 6 0 0 0 50 0 Z" stroke="none"/><path d="M70 0 A6 6 0 0 0 82 0 Z" stroke="none"/><path d="M53 16 L67 16" fill="none"/><circle cx="96" cy="-24" r="2.2" stroke="none"/><circle cx="103" cy="-30" r="2.8" stroke="none"/><circle cx="111" cy="-37" r="3.4" stroke="none"/></g></symbol>
+  <symbol id="kkureomi-look" viewBox="0 0 120 120"><rect x="14" y="16" width="92" height="92" rx="26" fill="#FFC29B"/><path d="M14 30 H106 V43 H14 Z" fill="#F29B6B" clip-path="url(#clip-b)"/><g transform="translate(0 68)" fill="#3B2A5E" stroke="#3B2A5E" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="34" cy="10" rx="7" ry="4" fill="#F29B6B" opacity="0.55"/><ellipse cx="86" cy="10" rx="7" ry="4" fill="#F29B6B" opacity="0.55"/><circle cx="48" cy="-1" r="5" stroke="none"/><circle cx="80" cy="-1" r="5" stroke="none"/><path d="M53 14 Q61 20 69 14" fill="none"/></g></symbol>
+  <symbol id="kongi-calm" viewBox="0 0 120 120"><ellipse cx="60" cy="66" rx="38" ry="44" transform="rotate(-8 60 66)" fill="#FFC29B"/><path d="M61 25 L60 15" stroke="#6E37AB" stroke-width="3" stroke-linecap="round" fill="none"/><path d="M60 15 C60 5 70 1 78 5 C76 13 68 17 60 15 Z" fill="#8B4CCB"/><path d="M60 15 C60 7 52 3 44 6 C46 13 54 17 60 15 Z" fill="#B08BEA"/><g transform="translate(0 62)" fill="#3B2A5E" stroke="#3B2A5E" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="34" cy="10" rx="7" ry="4" fill="#F29B6B" opacity="0.55"/><ellipse cx="86" cy="10" rx="7" ry="4" fill="#F29B6B" opacity="0.55"/><circle cx="44" cy="0" r="5" stroke="none"/><circle cx="76" cy="0" r="5" stroke="none"/><path d="M50 14 Q60 23 70 14" fill="none"/></g></symbol>
+  <symbol id="kongi-alert" viewBox="0 0 120 120"><ellipse cx="60" cy="66" rx="38" ry="44" transform="rotate(-8 60 66)" fill="#FFC29B"/><path d="M61 25 L60 15" stroke="#6E37AB" stroke-width="3" stroke-linecap="round" fill="none"/><path d="M60 15 C60 5 70 1 78 5 C76 13 68 17 60 15 Z" fill="#8B4CCB"/><path d="M60 15 C60 7 52 3 44 6 C46 13 54 17 60 15 Z" fill="#B08BEA"/><g transform="translate(0 62)" fill="#3B2A5E" stroke="#3B2A5E" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="34" cy="10" rx="7" ry="4" fill="#F29B6B" opacity="0.55"/><ellipse cx="86" cy="10" rx="7" ry="4" fill="#F29B6B" opacity="0.55"/><circle cx="44" cy="0" r="5" stroke="none"/><circle cx="76" cy="0" r="5" stroke="none"/><path d="M36 -11 L49 -14" fill="none"/><path d="M71 -12 L84 -12" fill="none"/><path d="M52 16 L68 16" fill="none"/></g></symbol>
+  <symbol id="kongi-worried" viewBox="0 0 120 120"><ellipse cx="60" cy="66" rx="38" ry="44" transform="rotate(-8 60 66)" fill="#FFC29B"/><path d="M61 25 L60 15" stroke="#6E37AB" stroke-width="3" stroke-linecap="round" fill="none"/><path d="M60 15 C60 5 70 1 78 5 C76 13 68 17 60 15 Z" fill="#8B4CCB"/><path d="M60 15 C60 7 52 3 44 6 C46 13 54 17 60 15 Z" fill="#B08BEA"/><g transform="translate(0 62)" fill="#3B2A5E" stroke="#3B2A5E" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="34" cy="10" rx="7" ry="4" fill="#F29B6B" opacity="0.55"/><ellipse cx="86" cy="10" rx="7" ry="4" fill="#F29B6B" opacity="0.55"/><circle cx="44" cy="0" r="6" stroke="none"/><circle cx="76" cy="0" r="6" stroke="none"/><path d="M36 -14 L49 -10" fill="none"/><path d="M71 -10 L84 -14" fill="none"/><circle cx="60" cy="17" r="4.5" fill="none"/><path d="M95 -30 C99 -22 101 -18 97 -15 C93 -18 91 -22 95 -30 Z" fill="#FFFFFF" stroke-width="2.2"/></g></symbol>
+  <symbol id="kongi-unsure" viewBox="0 0 120 120"><ellipse cx="60" cy="66" rx="38" ry="44" transform="rotate(-8 60 66)" fill="#FFC29B"/><path d="M61 25 L60 15" stroke="#6E37AB" stroke-width="3" stroke-linecap="round" fill="none"/><path d="M60 15 C60 5 70 1 78 5 C76 13 68 17 60 15 Z" fill="#8B4CCB"/><path d="M60 15 C60 7 52 3 44 6 C46 13 54 17 60 15 Z" fill="#B08BEA"/><g transform="translate(0 62)" fill="#3B2A5E" stroke="#3B2A5E" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="34" cy="10" rx="7" ry="4" fill="#F29B6B" opacity="0.55"/><ellipse cx="86" cy="10" rx="7" ry="4" fill="#F29B6B" opacity="0.55"/><path d="M38 0 A6 6 0 0 0 50 0 Z" stroke="none"/><path d="M70 0 A6 6 0 0 0 82 0 Z" stroke="none"/><path d="M53 16 L67 16" fill="none"/><circle cx="96" cy="-24" r="2.2" stroke="none"/><circle cx="103" cy="-30" r="2.8" stroke="none"/><circle cx="111" cy="-37" r="3.4" stroke="none"/></g></symbol>
+  <symbol id="kongi-look" viewBox="0 0 120 120"><ellipse cx="60" cy="66" rx="38" ry="44" transform="rotate(-8 60 66)" fill="#FFC29B"/><path d="M61 25 L60 15" stroke="#6E37AB" stroke-width="3" stroke-linecap="round" fill="none"/><path d="M60 15 C60 5 70 1 78 5 C76 13 68 17 60 15 Z" fill="#8B4CCB"/><path d="M60 15 C60 7 52 3 44 6 C46 13 54 17 60 15 Z" fill="#B08BEA"/><g transform="translate(0 62)" fill="#3B2A5E" stroke="#3B2A5E" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="34" cy="10" rx="7" ry="4" fill="#F29B6B" opacity="0.55"/><ellipse cx="86" cy="10" rx="7" ry="4" fill="#F29B6B" opacity="0.55"/><circle cx="48" cy="-1" r="5" stroke="none"/><circle cx="80" cy="-1" r="5" stroke="none"/><path d="M53 14 Q61 20 69 14" fill="none"/></g></symbol>
+</svg>
+
+<button class="btn-ghost" type="button" style="position:fixed;right:16px;top:80px;z-index:9" onclick="var r=document.documentElement;r.dataset.theme=(r.dataset.theme==='dark'?'light':'dark')">라이트/다크</button>
+<header class="masthead"><div class="container">
+  <a class="brand" href="/" style="text-decoration:none;color:inherit">
+    <!-- 헤더 마크 32px: mark.svg 를 인라인하거나 스프라이트 참조. 렌즈+체크 마크는 지운다 -->
+    <svg viewBox="0 0 120 120" width="32" height="32" aria-hidden="true"><use href="#mungchi-calm"/></svg>
+    <span class="wordmark">안심 소싱 돋보기</span>
+  </a>
+  <nav class="pages" aria-label="주요 화면"><a href="/" aria-current="page">소개</a><a href="/scan">상품 검사</a><a href="/batch">대량 검사</a><a href="/watch">감시 목록</a></nav>
+</div></header>
+
+<main>
+  <section class="container hero">
+    <div style="display:flex;flex-direction:column;gap:28px">
+      <div style="display:flex;flex-direction:column;gap:18px">
+        <h1 class="t-display">이 상품, 팔아도 되는지<br>확인합니다</h1>
+        <p class="lead">상세페이지를 붙여넣으면 KC 인증번호가 조회되는지, 이미 리콜된 모델인지, 어떤 유해물질 기준이 걸리는지를 정부 데이터로 확인합니다. 모든 결과에 원문 링크가 붙습니다.</p>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="font-size:12px;font-weight:700;color:var(--fg-4);letter-spacing:.04em">예시로 바로 보기</div>
+        <!-- 문구·순서·개수는 /api/v1/demos 가 단일 출처. 아래는 demos.py 의 현재 값을 옮긴 자리표시 — landing.html 은 fetch 로 그린다.
+             tone 이 green → 정상 · amber → 주의 · red → 위험 (SIGNAL_SHORT). 앞의 둘은 같은 슬라임이라 "+" 로 이어 그린다(설계 §2). -->
+        <div class="demos" id="demos" data-src="/api/v1/demos" aria-label="예시로 바로 보기">
+          <a class="demo" href="/scan?demo=green"><span class="chip GREEN" style="align-self:flex-start"><span class="dot"></span>정상</span><span class="t">인증 조회됨 · 리콜 없음</span><span class="n">도매꾹 슬라임 (CB061R2170-3018)</span><span class="plus" aria-hidden="true">+</span></a>
+          <a class="demo" href="/scan?demo=amber"><span class="chip AMBER" style="align-self:flex-start"><span class="dot"></span>주의</span><span class="t">같은 상품에 재질 한 줄 추가</span><span class="n">"PVC 재질" 표기가 더해지면 신호가 바뀝니다</span></a>
+          <a class="demo" href="/scan?demo=red"><span class="chip RED" style="align-self:flex-start"><span class="dot"></span>위험</span><span class="t">인증은 적합인데 리콜된 상품</span><span class="n">모형완구 기차놀이 (CB067R317-5002)</span></a>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+        <a class="btn-primary" href="/scan" style="text-decoration:none">내 상품으로 해보기</a>
+        <a class="btn-ghost" href="#why-not" style="text-decoration:none">무엇을 안 하는지 먼저 보기 ↓</a>
+      </div>
+    </div>
+    <div class="hero-art" aria-hidden="true">
+      <div class="blob1"></div><div class="blob2"></div>
+      <!-- 마스코트는 카드 뒤에서 내려다본다 (DOM 순서: 마스코트 → 카드) -->
+      <svg class="mascot-hero" viewBox="0 0 120 120"><use href="#mungchi-look"/></svg>
+      <div class="paste">
+        <div style="display:flex;align-items:center;justify-content:space-between"><span class="k">붙여넣은 상세페이지</span><span style="font-size:11px;color:var(--fg-4)">4줄</span></div>
+        <div class="lines"><span>완구 매직액체 슬라임 장난감</span><span>KC 인증번호 <b>CB061R2170-3018</b></span><span>대상연령 3세 이상</span><span class="hl">재질 PVC</span></div>
+        <div style="height:1px;background:var(--border-default)"></div>
+        <div style="font-size:12px;color:var(--fg-4);line-height:1.5">이 한 줄이 초록을 주의로 바꿉니다. 왜 그런지는 결과에 원문 링크로 붙습니다.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ⓪ 왜 만들었나 — 숫자·문구·조치는 static/data/안전성조사_보도자료.json 에서 그린다. 아래 숫자는 자리표시(2026-09-13 원문 확인값). HTML 에 하드코딩하지 않는다 -->
+  <section class="container why" id="why" data-src="/static/data/안전성조사_보도자료.json">
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div style="display:flex;align-items:baseline;gap:16px"><span style="font-family:var(--font-display);font-size:14px;color:var(--brand)">⓪</span><h2>왜 만들었나 — 조사 결과가 먼저 말합니다</h2></div>
+      <p class="lead">국가기술표준원은 온라인에서 팔리는 제품을 사서 국내 안전기준으로 시험합니다. 부적합으로 공표되면 판매 중지 통보와 공개, 고발·과태료가 그 상품을 올린 사람의 몫으로 이어집니다. 소싱 단계에서 확인할 수 있는 것부터 확인해 보자고 만들었습니다.</p>
+    </div>
+    <div class="cards3">
+      <div class="card"><div class="num"><span class="t-num">20<span class="numlbl" style="font-size:22px">%</span></span><small>국내 유통 평균 5% 의 4배</small></div><div class="body">국내 온라인 플랫폼의 해외 구매대행 제품 <b>420개 중 85개</b>가 안전기준 부적합. 사업자에게 구매대행 중지를 통보하고 제품안전정보센터에 공개, 고발·과태료 예정.</div><a class="src" href="https://www.kats.go.kr/content.do?cmsid=240&amp;mode=view&amp;page=&amp;cid=26289">국가기술표준원 보도자료 · 2026-05-14 → kats.go.kr</a></div>
+      <div class="card"><div class="num"><span class="t-num">94<span class="numlbl" style="font-size:22px">개</span></span><small>해외직구 484개 조사</small></div><div class="body">LED 등기구 <b>22개 중 10개</b>, 공기주입 물놀이기구 <b>18개 전부</b> 부적합. 제품안전정보포탈·소비자24 등록, 관세청에 통관 차단 요청.</div><a class="src" href="https://www.motir.go.kr/kor/article/ATCL3f49a5a8c/172089/view">산업통상부 보도자료 · 2026-08-06 → motir.go.kr</a></div>
+      <div class="card soft"><div class="num"><span class="t-num" style="font-size:30px;line-height:40px">88 · 83 · 80 · 70<span class="numlbl" style="font-size:18px">%</span></span></div><div class="body">속눈썹 열 성형기 · LED 등기구 · 유아용 삼륜차/휴대용 레이저용품 · 승차용 안전모의 부적합률(같은 조사). 이 가운데 <b>안전모 · 레이저용품 · 속눈썹 성형기</b>는 우리 규칙 DB 에 검수된 기준이 있고, LED 등기구는 아직 없습니다.</div><span class="src" style="color:var(--fg-4)">있는 것과 없는 것을 같은 칸에 적습니다</span></div>
+    </div>
+    <div class="note">이 다음이 ① 무엇을 하나 → ② 무엇을 안 하나(id="why-not") → ③ 어떻게 → ④ 정직한 숫자 → ⑤ 데이터 → ⑥ 푸터. 순서는 docs/랜딩페이지_설계.md §3. 단정 표현 금지(§9) · 랜딩과 /scan 의 24자 중복 검사 주의.</div>
+  </section>
+</main>
+</body>
+</html>
