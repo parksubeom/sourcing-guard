@@ -125,3 +125,18 @@ def test_the_body_font_token_actually_leads_with_the_webfont_we_download():
     for name in ("landing.html", "index.html", "batch.html", "watch.html"):
         html = (_STATIC_DIR / name).read_text(encoding="utf-8")
         assert "family=Noto+Sans+KR" in html, f"{name} 이 그 글꼴을 받지 않는다"
+
+
+def test_the_pages_answer_HEAD_not_405():
+    """⚠ FastAPI 는 `@app.get` 에 HEAD 를 자동으로 붙이지 않는다.
+
+    2026-09-13 배포본에서 `/`·`/scan`·`/batch`·`/watch`·`/healthz` 가 전부
+    **HEAD 에 405** 였다. 제출 링크의 루트가 그러면 가동 감시·링크 미리보기가
+    실패로 읽는다. 아무도 HEAD 를 쳐 보지 않아서 몰랐던 것이고, 그래서 검사로
+    박아 둔다.
+    """
+    client = TestClient(app)
+    for page in (*_PAGES, "/healthz"):
+        r = client.head(page)
+        assert r.status_code == 200, (page, r.status_code)
+        assert r.headers.get("cache-control") == "no-cache", page

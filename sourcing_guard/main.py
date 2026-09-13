@@ -213,6 +213,13 @@ async def _cache_headers(request: Request, call_next):
         response.headers["Cache-Control"] = (
             _IMMUTABLE if request.query_params.get("v") else "no-cache"
         )
+    elif "cache-control" not in response.headers:
+        # ⚠ **이 앱에서 캐시해도 되는 응답은 버전 붙은 정적 자산뿐이다.**
+        #   나머지는 전부 그 순간의 상태다 - 스캔 결과 · 감시 목록 · `/healthz`.
+        #   특히 `/healthz` 가 캐시되면 **배포 확인이 옛 커밋을 읽는다**. 지금
+        #   고치고 있는 결함이 정확히 그것이라 여기서 같은 구멍을 열어 두지
+        #   않는다.
+        response.headers["Cache-Control"] = "no-cache"
     return response
 
 
@@ -242,7 +249,18 @@ def _page(name: str) -> HTMLResponse:
     )
 
 
-@app.get("/", response_class=HTMLResponse, include_in_schema=False)
+#: 화면 라우트는 GET 과 **HEAD** 를 함께 받는다.
+#:
+#: ⚠ FastAPI 는 `@app.get` 에 HEAD 를 자동으로 붙이지 않는다(Starlette 의 맨
+#:   `Route` 와 다르다). 그래서 `/`·`/scan`·`/batch`·`/watch`·`/healthz` 가
+#:   전부 **HEAD 에 405** 였다 - 2026-09-13 배포본에서 실측했다. 제출 링크의
+#:   루트가 그러면 가동 감시·링크 미리보기가 본문을 받지 않고 실패로 읽는다.
+#:   우리가 만든 것이 아니라 처음부터 그랬고, 아무도 HEAD 를 쳐 보지 않아서
+#:   몰랐다.
+_PAGE_METHODS = ["GET", "HEAD"]
+
+
+@app.api_route("/", methods=_PAGE_METHODS, response_class=HTMLResponse, include_in_schema=False)
 def landing() -> HTMLResponse:
     """랜딩 (G-1 · 2026-09-12). 심사위원용 서사 + 투표자용 데모 버튼.
 
@@ -255,7 +273,7 @@ def landing() -> HTMLResponse:
     return _page("landing.html")
 
 
-@app.get("/scan", response_class=HTMLResponse, include_in_schema=False)
+@app.api_route("/scan", methods=_PAGE_METHODS, response_class=HTMLResponse, include_in_schema=False)
 def index() -> HTMLResponse:
     """단일 페이지 프론트엔드 (도구). 2026-09-12 에 `/` 에서 `/scan` 으로 옮겼다.
 
@@ -267,7 +285,7 @@ def index() -> HTMLResponse:
     return _page("index.html")
 
 
-@app.get("/batch", response_class=HTMLResponse, include_in_schema=False)
+@app.api_route("/batch", methods=_PAGE_METHODS, response_class=HTMLResponse, include_in_schema=False)
 def batch_page() -> HTMLResponse:
     """대량 검사 화면.
 
@@ -277,7 +295,7 @@ def batch_page() -> HTMLResponse:
     return _page("batch.html")
 
 
-@app.get("/watch", response_class=HTMLResponse, include_in_schema=False)
+@app.api_route("/watch", methods=_PAGE_METHODS, response_class=HTMLResponse, include_in_schema=False)
 def watch_page() -> HTMLResponse:
     """감시 목록 화면.
 
@@ -288,7 +306,7 @@ def watch_page() -> HTMLResponse:
     return _page("watch.html")
 
 
-@app.get("/healthz")
+@app.api_route("/healthz", methods=_PAGE_METHODS)
 def healthz() -> dict:
     """우리 프로세스 상태 + 정부 API 상태.
 
