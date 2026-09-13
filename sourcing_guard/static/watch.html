@@ -100,7 +100,13 @@
 
   function fmtDate(v) {
     if (!v) return "기록 없음";
-    var d = String(v).slice(0, 10);
+    // 주의: 공표일(`announced_on`)은 **YYYYMMDD** 다. 전에는 이 함수가
+    //   `YYYY-MM-DD` 만 알아서 화면에 "공표일 20260723" 이 그대로 떴다 -
+    //   같은 카드의 알림 문장 안에는 "2026-07-23" 이 들어 있어서, 한 화면이
+    //   같은 날짜를 두 모양으로 말했다. `index.html` 의 fmtDay 와 같은 모양.
+    var t = String(v);
+    if (/^\d{8}$/.test(t)) return t.slice(0, 4) + "-" + t.slice(4, 6) + "-" + t.slice(6);
+    var d = t.slice(0, 10);
     return /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : esc(v);
   }
 
@@ -176,18 +182,20 @@
 
   function render(items, sweep) {
     if (!items.length) { renderEmpty(); return; }
-    var hits = items.filter(function (it) {
-      return (it.seen_recall_fingerprints || []).length > 0 || (freshAlerts[it.id] || []).length > 0;
-    }).length;
     // [C-화면] 머리에 **언제까지 확인했나**. 이것이 이 화면의 약속이다 -
     //   "마지막 대조" 가 없으면 셀러는 감시가 도는지 알 수 없다 (기획서 3.3).
+    //
+    // 주의: 전에는 `last_full_sweep_at` · `last_full_sweep_new` 를 읽었다.
+    //   둘 다 **전체 배치**의 기록이라 이 셀러의 것이 아니다. 실물 확인에서
+    //   잰 것 (2026-09-13):
+    //     - 저장된 알림이 0건인 소유자에게 "새 알림 1" 이 떴다 - 남의 것이다
+    //     - "지금 대조하기" 를 눌러도 날짜가 안 움직였다 - 버튼은 배치가 아니다
+    //   소유자별 값만 읽는다. 서버가 `last_swept_at`·`alerts_stored` 로 준다.
     var bits = ["감시 " + items.length + "건"];
-    var when = sweep && (sweep.last_full_sweep_at || sweep.last_sweep_at);
-    if (when) bits.push("마지막 대조 " + fmtDate(when));
-    var fresh = sweep && (sweep.last_full_sweep_new != null
-      ? Number(sweep.last_full_sweep_new) : null);
-    if (fresh != null) bits.push("새 알림 " + fresh);
-    else if (hits) bits.push("리콜 일치 " + hits + "건");
+    var when = sweep && sweep.last_swept_at;
+    bits.push("마지막 대조 " + (when ? fmtDate(when) : "아직 없음"));
+    var stored = sweep && sweep.alerts_stored;
+    if (stored != null) bits.push("알림 " + Number(stored) + "건");
     meta.textContent = bits.join(" · ");
     list.innerHTML = '<ul class="items">' + items.map(itemRow).join("") + "</ul>";
   }
@@ -213,6 +221,14 @@
         var items = (data && data.items) || data || [];
         // [C-화면] **저장된 알림**을 항목에 붙인다. 전에는 버튼을 눌러 방금
         //   스윕한 것만 화면에 있었고, 화면을 안 열어 본 사이의 알림은 사라졌다.
+        //
+        // 주의: **여기가 유일한 소유자다.** 전에는 버튼 핸들러가 스윕 응답으로
+        //   freshAlerts 를 채우고 여기서 저장본을 **더** 얹었다. 스윕이 방금
+        //   저장한 알림이 양쪽에 다 있으므로 같은 알림이 두 줄로 그려졌다 -
+        //   실물 확인에서 리콜 1건이 2줄이었다. 셀러는 "두 건" 으로 읽는다.
+        //   비우고 저장본으로만 채운다. 스윕 응답 ⊆ 저장본이므로 잃는 것은
+        //   없다 (run_sweep 이 save_alerts 를 부른 뒤에 응답한다).
+        freshAlerts = {};
         (((data && data.alerts) || [])).forEach(function (a) {
           var id = a.watch_item_id;
           if (!id) return;
@@ -232,11 +248,9 @@
         if (!r.ok) throw new Error("서버가 " + r.status + " 로 응답했습니다");
         return r.json();
       })
-      .then(function (alerts) {
-        freshAlerts = {};
-        (alerts || []).forEach(function (a) {
-          (freshAlerts[a.watch_item_id] = freshAlerts[a.watch_item_id] || []).push(a);
-        });
+      .then(function () {
+        // 표시는 `load()` 가 **저장본으로** 다시 그린다. 여기서 채우면 같은
+        //   알림이 두 번 들어간다 (위 load 주석).
         return load();
       })
       .catch(fail)

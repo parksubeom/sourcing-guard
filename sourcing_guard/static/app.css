@@ -864,9 +864,12 @@ body{background:var(--bg-page)}
 
 /* finding 줄의 원문 링크 — 오키드 12px */
 .f-src{font-size:12px; color:var(--brand)}
-/* 품목 오답 신고 (D-화면) */
-.miss{margin-left:auto; font-size:12px; padding:6px 12px}
-.miss-done{margin-left:auto; font-size:12px; color:var(--fg-2)}
+/* 품목 오답 신고 (D-화면)
+   주의: `.f-meta` 는 flex 가 아니다. `margin-left:auto` 를 주면 아무 일도 안
+     일어나고 **근거 링크 바로 뒤에 붙어 한 줄로 흐른다** - 2026-09-13 실물
+     확인에서 그렇게 나왔다. 블록으로 떨어뜨린다. */
+.miss{display:block; margin:var(--s2) 0 0; font-size:12px; padding:6px 12px}
+.miss-done{display:block; margin:var(--s2) 0 0; font-size:12px; color:var(--fg-2)}
 
 /* 메타 푸터 (B-화면) */
 .meta-foot{margin-top:var(--s4); padding-top:var(--s3);

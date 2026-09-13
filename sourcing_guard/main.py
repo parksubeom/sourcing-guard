@@ -625,8 +625,40 @@ def _as_int(raw: str | None) -> int | None:
 
 
 def _sweep_snapshot(owner_id: str | None = None) -> dict:
-    """"마지막 sweep 시각 · 새 알림 N". 화면 상단이 읽는 값 (주말 배선)."""
+    """"마지막 대조 · 알림 N". 화면 상단과 `/healthz` 가 읽는 값.
+
+    ⚠⚠ **화면이 읽어야 하는 값과 운영이 읽는 값이 다르다**
+      ([C-화면] 실물 확인 · 2026-09-13).
+
+      `last_full_sweep_*` 는 **전체 배치**의 기록이다 - 모든 소유자를 한 번에
+      돌고 결과를 전역 한 줄에 적는다. 그것을 셀러 화면 머리말에 그대로 쓰면
+      두 가지가 거짓이 된다. 둘 다 잰 것이다:
+
+        ① "새 알림 N" 이 **남의 알림 수**다. 사본 DB 에 소유자 둘을 넣고
+           전체 스윕 1회를 돌렸더니, 저장된 알림이 **0건**인 owner-B 의
+           머리말이 "새 알림 1" 을 그렸다 - 그 1건은 owner-A 것이다.
+           **없는데 있다고 하는 쪽**이라 더 비싸다 (§6).
+        ② 버튼(`run_sweep`)은 이 값을 **갱신하지 않는다.** 누르기 전/후
+           `last_full_sweep_at` 이 동일했다(항목의 `last_swept_at` 만 움직인다).
+           셀러가 "지금 대조하기" 를 눌러도 "마지막 대조" 가 그대로다 -
+           이 화면이 약속하는 것이 "언제까지 확인했나" 인데 그것이 틀린다.
+
+      그래서 소유자가 주어지면 **소유자별 값**(`last_swept_at`)을 함께 낸다.
+      화면은 소유자별 값만 읽는다. `last_full_sweep_*` 는 지우지 않는다 -
+      `/healthz` 가 "배치가 도는가" 를 보는 운영 지표이고, 그것은 전역이
+      맞다.
+
+    ⚠ 소유자 없이 부르면(`/healthz`) `last_swept_at` 은 None 이다. 0 이나
+      오늘 날짜로 채우지 않는다 - "안 물었다" 와 "없다" 는 다르다 (R3).
+    """
+    last_swept: str | None = None
+    if owner_id is not None:
+        days = [i.last_swept_at for i in _store.for_owner(owner_id) if i.last_swept_at]
+        last_swept = max(days).isoformat() if days else None
     return {
+        # 소유자별 - **화면이 읽는 값이다.**
+        "last_swept_at": last_swept,
+        # 전역 - 운영 지표. 화면에 그대로 쓰면 위 ①②가 된다.
         "last_full_sweep_at": _store.get_sync_state("last_full_sweep_at"),
         # ⚠ **숫자는 int 로 낸다.** `sync_state` 는 TEXT 저장소라 문자열이
         #   나오는데, 그대로 내보내면 화면이 `"5"` 를 받아 비교·합산에서

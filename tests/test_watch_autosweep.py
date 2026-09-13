@@ -238,7 +238,9 @@ def test_the_watch_response_schema_is_pinned():
     # sweep 은 "마지막 스윕 시각 · 워치 수 · 새 알림 N · 쌓인 알림" 을 말해야 한다.
     # ⚠ 키 이름을 여기 적어 두는 이유는 화면이 이 이름으로 읽기 때문이다.
     #   처음에 `items`/`new_alerts` 로 적었다가 틀렸다 - 실제는 아래다.
-    for key in ("last_full_sweep_at", "last_full_sweep_items",
+    #   `last_swept_at` 은 **소유자별**이고 머리말이 읽는 값이다 - 전역
+    #   `last_full_sweep_*` 를 화면이 읽으면 남의 알림 수가 뜬다 ([C-화면]).
+    for key in ("last_swept_at", "last_full_sweep_at", "last_full_sweep_items",
                 "last_full_sweep_new", "alerts_stored"):
         assert key in body["sweep"], f"{key} 가 없다: {sorted(body['sweep'])}"
 
@@ -251,9 +253,10 @@ def test_the_watch_response_schema_is_pinned():
             f"{key} 가 {type(sweep[key]).__name__} 이다 - int 여야 한다: {sweep[key]!r}"
         )
     # 시각은 문자열(ISO)이고 값이 없으면 None 이다.
-    assert sweep["last_full_sweep_at"] is None or isinstance(
-        sweep["last_full_sweep_at"], str
-    )
+    for key in ("last_full_sweep_at", "last_swept_at"):
+        assert sweep[key] is None or isinstance(sweep[key], str), (
+            f"{key} 가 {type(sweep[key]).__name__} 이다"
+        )
 
 
 def test_the_readme_describes_the_automatic_sweep():
@@ -267,3 +270,100 @@ def test_the_readme_describes_the_automatic_sweep():
     assert row, "README 에서 main.py 행을 못 찾았다"
     assert "자동" in row and "스윕" in row, row
     assert "{items, sweep, alerts}" in row, "GET 응답 모양이 적혀 있지 않다"
+
+
+# ── [C-화면] 실물 확인에서 잰 결함 넷 (2026-09-13) ──────────────────
+#
+# RED 데모 상품(모형완구 기차놀이 · CB067R317-5002)을 /watch 에 등록하고
+# "지금 대조하기" 를 눌렀다. `alerts[]` 는 실제로 생겼다. 그런데 **화면이
+# 그것을 잘못 말했다** - 아래 넷이 그 실측이다.
+def test_the_header_numbers_belong_to_this_owner_not_to_everyone(
+    app_with_tmp_store,
+):
+    """⚠⚠ **남의 알림 수가 내 화면에 뜨던 것.**
+
+    `last_full_sweep_new` 는 전체 배치가 전 소유자를 돌고 적은 **전역** 수다.
+    화면 머리말은 "감시 N건 · … · 새 알림 N" 이라 셀러는 그것을 자기 것으로
+    읽는다. 실측: 저장된 알림이 0건인 owner-2 의 머리말이 "새 알림 1" 을
+    그렸고, 그 1건은 owner-1 것이었다.
+
+    **없는데 있다고 하는 쪽**이라 반대 방향보다 비싸다 (§6).
+    """
+    m, store, recalls, _kats = app_with_tmp_store
+    _item(store, id="w-a", owner_id="owner-1")                       # 리콜에 걸린다
+    _item(store, id="w-b", owner_id="owner-2", model_name="NO-HIT-0001")
+    recalls.all_records.return_value = [_recall()]
+    m._full_sweep(on=date(2026, 9, 9))
+
+    a = m._sweep_snapshot("owner-1")
+    b = m._sweep_snapshot("owner-2")
+
+    # 전역 값은 둘 다 같다 - 그래서 화면이 그것을 읽으면 안 된다.
+    assert a["last_full_sweep_new"] == b["last_full_sweep_new"] == 1
+    # 소유자별 값은 갈린다. 화면은 이것을 읽는다.
+    assert a["alerts_stored"] == 1
+    assert b["alerts_stored"] == 0
+
+
+def test_pressing_the_button_moves_the_date_the_screen_shows(app_with_tmp_store):
+    """⚠ 셀러가 "지금 대조하기" 를 눌렀는데 "마지막 대조" 가 안 움직이던 것.
+
+    버튼(`run_sweep`)은 항목의 `last_swept_at` 만 갱신하고 전역
+    `last_full_sweep_at` 은 건드리지 않는다(전체 배치가 아니므로 그게 맞다).
+    화면이 전역 값을 읽고 있어서, 이 화면이 하는 유일한 약속 - "언제까지
+    확인했나" - 가 틀렸다.
+    """
+    m, store, recalls, _kats = app_with_tmp_store
+    _item(store, id="w-a", owner_id="owner-1")
+    recalls.all_records.return_value = []
+
+    assert m._sweep_snapshot("owner-1")["last_swept_at"] is None  # 아직 안 돌았다
+    m.run_sweep("owner-1")
+
+    snap = m._sweep_snapshot("owner-1")
+    assert snap["last_swept_at"] == date.today().isoformat()
+    # 전역 값은 여전히 비어 있다 - 버튼은 전체 배치가 아니다. 그게 맞다.
+    assert snap["last_full_sweep_at"] is None
+
+
+def test_the_sweep_response_is_always_a_subset_of_the_stored_alerts(
+    app_with_tmp_store,
+):
+    """화면이 **저장본만** 그리게 바꿨다. 그 전제를 여기서 잠근다.
+
+    버튼 응답을 화면에서 버리는 것이 안전한 이유는 `run_sweep` 이
+    `save_alerts` 를 부른 **뒤에** 응답하기 때문이다. 순서가 바뀌면 방금 잡힌
+    알림이 화면에서 사라진다 - 놓친 알림이고 R6 이 막으려던 바로 그것이다.
+    """
+    m, store, recalls, _kats = app_with_tmp_store
+    _item(store, id="w-a", owner_id="owner-1")
+    recalls.all_records.return_value = [_recall()]
+
+    returned = m.run_sweep("owner-1")
+    stored = {a.recall_fingerprint for a in store.alerts_for_owner("owner-1")}
+
+    assert returned, "리콜에 걸리는 입력인데 스윕이 빈 목록을 줬다"
+    assert {a.recall_fingerprint for a in returned} <= stored
+
+
+def test_the_watch_screen_reads_owner_scoped_values_and_draws_each_alert_once():
+    """화면 원본이 전역 값을 다시 읽지 않는지, 알림을 두 곳에서 채우지 않는지."""
+    html = Path("sourcing_guard/static/watch.html").read_text(encoding="utf-8")
+    body = re.sub(r"//[^\n]*", "", html)  # 주석은 근거 기록이라 검사 대상이 아니다
+
+    # 머리말은 소유자별 값만 읽는다.
+    assert "sweep.last_swept_at" in body
+    assert "sweep.alerts_stored" in body
+    assert "last_full_sweep_at" not in body, "화면이 전역 시각을 다시 읽는다"
+    assert "last_full_sweep_new" not in body, "화면이 남의 알림 수를 다시 읽는다"
+
+    # 알림 목록의 소유자는 load() 하나다. 스윕 응답으로 또 채우면 두 줄이 된다.
+    #
+    # ⚠ **쓰는 자리만 센다.** 처음에 `freshAlerts[` 를 통째로 셌다가 걸렸다 -
+    #   itemRow 의 **읽기**(`freshAlerts[it.id] || []`)까지 세어 3 이 나왔다.
+    #   읽기는 몇 곳이든 상관없다. 문제는 채우는 곳이 둘인 것이다.
+    writes = re.findall(r"freshAlerts\[[^\]]+\]\s*=", body)
+    assert len(writes) == 1, f"freshAlerts 를 {len(writes)} 곳에서 채운다"
+
+    # 공표일(YYYYMMDD)을 사람이 읽는 모양으로 낸다.
+    assert 'if (/^\\d{8}$/.test(t))' in body
