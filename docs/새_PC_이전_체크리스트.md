@@ -336,3 +336,28 @@ git status --short                            # 미추적 파일
 PYTHONUTF8=1 pytest -q | tail -1              # 검사 수
 python -c "import pathlib;ks=[l.split('=',1)[0] for l in pathlib.Path('.env.example').read_text(encoding='utf-8').splitlines() if l.strip() and not l.startswith('#') and '=' in l];s=[k for k in ks if any(x in k.upper() for x in ('KEY','TOKEN','SECRET'))];print(f'키 {len(ks)}개 · 비밀 {len(s)}개 -> {s}')"
 ```
+
+
+---
+
+## ⚠⚠ 2026-09-13 이전에 클론한 PC 는 `git pull` 로 안 된다
+
+IP 스크럽으로 **커밋 넷의 해시가 바뀌었다** (`80fcfbe → 37ef4a7` ·
+`docs/해시_대응표_rewrite_2026-09-09.md` 의 09-13 절). 히스토리가 갈려서
+`git pull` 은 머지를 시도하거나 거절한다.
+
+**윈도우 클론은 다음에 켤 때 이렇게 맞춘다** (§0-B):
+
+```
+git fetch origin
+git status --porcelain          # 비어 있어야 한다. 아니면 먼저 챙긴다
+git reset --hard origin/main
+git log --oneline -4            # 37ef4a7 … 1a46fd2 가 보이면 맞다
+```
+
+⚠ `reset --hard` 는 **로컬 변경을 버린다.** 위 `git status` 가 비었는지 먼저
+  본다. 윈도우 세션은 마지막에 "전부 푸시됐고 작업 트리는 깨끗하다(untracked 0)"
+  고 적어 뒀으므로 그대로면 잃을 것이 없다.
+
+⚠ 최종 파일 내용은 **한 글자도 안 바뀌었다** (트리 `e34a06ca…` 동일). 해시만
+  바뀐 것이라 코드·문서를 다시 볼 필요는 없다.
