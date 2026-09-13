@@ -623,9 +623,15 @@ def test_the_submission_draft_uses_only_the_audited_rate():
     assert ok_pct in body, f"검수 완료 비율 {ok_pct} 가 제출문에 없습니다"
     assert upper_pct in body, f"상한 비율 {upper_pct} 가 제출문에 없습니다"
     assert f"{base['ok']}건" in body and f"{base['ok_upper']}건" in body
-    # ⚠ 낡은 값이 돌아오면 막는다.
-    for stale in ("71.1%", "40.9%", "96건"):
-        assert stale not in body, f"9/7 시절 숫자가 돌아왔습니다: {stale}"
+
+    # ⚠⚠ **은퇴한 값 목록은 여기 없다.** `tests/test_submission_numbers.py` 가
+    #   소유자다 - 기준선에서 **살아 있는 값을 빼고** 나머지를 막는다 (§6).
+    #
+    #   여기 `("71.1%", "40.9%", "96건")` 이 하드코딩돼 있었고, 2026-09-13 에
+    #   그 셋 중 둘이 **살아났다** - 배치 경로의 검수된 정답이 96건(71.1%) 이다.
+    #   가드가 맞는 값을 막고 있었다. §6 "검사가 기대값을 현재 출력에 맞춰 쓰면
+    #   버그를 고정한다" 의 거울상이다 - 한때 틀렸던 값을 영원히 틀린 것으로
+    #   적어 두면, 그 값이 옳아졌을 때 가드가 문서를 거짓말하게 만든다.
 
     for item in ("## 1. 해결하려는 문제", "## 2. AI 활용 방식", "## 3. 사용한 AI 도구"):
         assert item in draft, item

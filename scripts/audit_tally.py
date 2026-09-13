@@ -239,6 +239,56 @@ BASELINE: dict[str, dict[str, int]] = {
     },
 }
 
+#: **배치(대량 검사) 경로**의 같은 다섯 숫자. LLM 없이 `lookup_all` 로만 돈다.
+#:
+#: ⚠⚠ **2026-09-13 에 이 표를 만든 이유: 제출문이 배치를 상한 하나로만 적고
+#:   있었다.** "대량 검사 경로는 82.2% 입니다" 라고 썼는데 82.2% 는 `ok_upper`
+#:   (111/135)이고 검수된 정답은 **96(71.1%)** 이다. 바로 앞 문장이 "검수 전
+#:   숫자를 검수된 숫자처럼 쓰지 않는다" 인데 그 다음 문장이 그걸 어겼다.
+#:
+#:   숫자가 `test_item_grades` 에 하드코딩된 111 과 제출문의 82.2% 두 곳에
+#:   따로 있었고, 둘을 잇는 것이 없었다 (§6 "같은 판단을 두 곳에 적지 마라").
+#:   이제 여기가 한 곳이다.
+#:
+#: ⚠ 단건과 다른 값인 것이 정상이다. 배치는 상품명만 보고 LLM 추출을 안 탄다 -
+#:   `product_name` 정리가 없으니 원제목 그대로 매칭한다.
+#:
+#: 재생 (LLM 0회):
+#:     PYTHONPATH=. python -c "
+#:     import sys; sys.path.insert(0,'scripts')
+#:     from audit_tally import batch_tally; print(batch_tally())"
+BASELINE_BATCH: dict[str, int] = {
+    "denominator": 135,
+    "ok": 96,            # 검수된 쌍만 (71.1%)
+    "ok_upper": 111,     # 미검수 포함 상한 (82.2%)
+    "unreviewed": 15,
+    "vague": 2,
+    "wrong": 1,
+    "missed": 21,
+    "off_target": 0,     # ⚠ 0 이 아니면 발표에 쓸 수 없다
+    "on_vague": 2,
+}
+
+
+def batch_tally(reviewed_src: str = "tests/fixtures/단건경로_claude_235.json") -> dict[str, int]:
+    """배치 경로를 재생해 다섯 숫자를 낸다. **LLM·네트워크 0회.**
+
+    ⚠ 단건 재생(`replay_single_path.py`)과 **같은 `tally` 를 쓴다.** 집계를
+      다시 적으면 두 경로가 갈린다 - 2026-09-08 에 같은 일을 하는 구현이 셋이라
+      기획서에 77.8% 를 적었는데 실제는 77.0% 였다.
+    """
+    from pathlib import Path
+
+    from sourcing_guard.item_grades import ItemGradeBook
+
+    book = ItemGradeBook()
+    rows = [ln.strip() for ln
+            in Path("tests/fixtures/새표본235.txt").read_text(encoding="utf-8").splitlines()
+            if ln.strip()]
+    results = {r: sorted({g.item for g in book.lookup_all(r)}) for r in rows}
+    return tally(results, reviewed=load_reviewed_pairs(reviewed_src))
+
+
 #: 다섯 기준의 **③** — 표본별 매칭 건수. `lookup_all` 기준이고 LLM 이 없다.
 #:
 #: ⚠ 2026-09-09 에 살렸다. `scripts/measure_matcher.py` 가 자기검사에서 멈춰
