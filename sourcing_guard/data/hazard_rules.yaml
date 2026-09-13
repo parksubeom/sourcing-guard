@@ -1303,7 +1303,8 @@ rules:
     test_method: null
     failure_rate:
       sample: "18개 중 18개"
-      source: "국가기술표준원 해외직구 안전성조사 2026-06"
+      source: "국가기술표준원 해외직구 안전성조사(2026-08-06)"
+      source_url: "https://www.motir.go.kr/kor/article/ATCL3f49a5a8c/172089/view"
       note: "조사한 전부가 부적합. 다만 여름철 표적 조사라 전체 평균은 아니다."
     legal_basis: "전기용품 및 생활용품 안전관리법 (안전인증대상생활용품)"
     source_url: "https://www.law.go.kr/행정규칙/안전인증대상생활용품의안전기준"
@@ -1330,7 +1331,8 @@ rules:
     test_method: "부속서 52 6.2 성능"
     failure_rate:
       sample: "10개 중 7개"
-      source: "국가기술표준원 해외직구 안전성조사 2026-04"
+      source: "국가기술표준원 해외 구매대행 안전성조사(2026-05-14)"
+      source_url: "https://www.kats.go.kr/content.do?cmsid=240&mode=view&page=&cid=26289"
     legal_basis: "안전확인 안전기준 부속서 52(승차용 안전모)"
     source_url: "https://www.law.go.kr/행정규칙/안전확인대상생활용품의안전기준"
     status: verified
@@ -1361,7 +1363,8 @@ rules:
     test_method: "부속서 46 5. 시험방법 (등급은 KS C IEC 60825-1)"
     failure_rate:
       sample: "10개 중 8개"
-      source: "국가기술표준원 해외직구 안전성조사 2026-04"
+      source: "국가기술표준원 해외 구매대행 안전성조사(2026-05-14)"
+      source_url: "https://www.kats.go.kr/content.do?cmsid=240&mode=view&page=&cid=26289"
     legal_basis: "안전확인 안전기준 부속서 46(휴대용 레이저용품)"
     source_url: "https://www.law.go.kr/행정규칙/안전확인대상생활용품의안전기준"
     status: verified
@@ -1404,7 +1407,8 @@ rules:
     test_method: null
     failure_rate:
       sample: "22개 중 10개"
-      source: "국가기술표준원 해외직구 안전성조사 2025-06"
+      source: "국가기술표준원 해외직구 안전성조사(2026-08-06)"
+      source_url: "https://www.motir.go.kr/kor/article/ATCL3f49a5a8c/172089/view"
     legal_basis: "전기용품 및 생활용품 안전관리법 (전기용품 안전기준)"
     source_url: "https://www.law.go.kr/행정규칙/안전확인대상전기용품의안전기준"
     status: draft
@@ -1430,7 +1434,8 @@ rules:
     test_method: "부속서 9 6. 시험방법"
     failure_rate:
       sample: "8개 중 7개"
-      source: "국가기술표준원 해외직구 안전성조사 2026-04"
+      source: "국가기술표준원 해외 구매대행 안전성조사(2026-05-14)"
+      source_url: "https://www.kats.go.kr/content.do?cmsid=240&mode=view&page=&cid=26289"
     legal_basis: "공급자적합성확인 기준 부속서 9(속눈썹 열 성형기)"
     source_url: "https://www.law.go.kr/행정규칙/공급자적합성확인대상생활용품의안전기준"
     status: verified
@@ -1456,7 +1461,8 @@ rules:
     test_method: "부속서 9 6.3 (열화상카메라, 주위온도 20±5도)"
     failure_rate:
       sample: "8개 중 7개"
-      source: "국가기술표준원 해외직구 안전성조사 2026-04"
+      source: "국가기술표준원 해외 구매대행 안전성조사(2026-05-14)"
+      source_url: "https://www.kats.go.kr/content.do?cmsid=240&mode=view&page=&cid=26289"
     legal_basis: "공급자적합성확인 기준 부속서 9(속눈썹 열 성형기)"
     source_url: "https://www.law.go.kr/행정규칙/공급자적합성확인대상생활용품의안전기준"
     status: verified

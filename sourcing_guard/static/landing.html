@@ -42,6 +42,23 @@
 <main id="main">
   <div class="container">
 
+    <section aria-labelledby="why-h">
+      <h3 id="why-h">0. 왜 만들었나</h3>
+      <p class="hint">아래 숫자는 정부 보도자료 원문에서 옮긴 것입니다. 표적 조사라 무작위
+         표본이 아니고, 국내 평균은 조사 설계가 달라 직접 비교할 수 없습니다.</p>
+      <dl class="axes" id="why-figures">
+        <dt data-p="card1-dt">-</dt>
+        <dd data-p="card1-dd">-</dd>
+        <dt data-p="card2-dt">-</dt>
+        <dd data-p="card2-dd">-</dd>
+        <dt data-p="card3-dt">-</dt>
+        <dd data-p="card3-dd">-</dd>
+      </dl>
+      <p class="promise">부적합으로 공표되면 판매 중지 통보와 공개, 고발·과태료가 그 상품을
+         올린 사람의 몫으로 이어집니다. 소싱 단계에서 확인할 수 있는 것부터 확인해
+         보자고 만들었습니다.</p>
+    </section>
+
     <section aria-labelledby="does-h">
       <h3 id="does-h">1. 무엇을 확인하나</h3>
       <dl class="axes">
@@ -156,6 +173,73 @@
       });
     })
     .catch(function () { /* 데모가 없어도 소개는 읽힌다 */ });
+
+  // ⓪ 절 숫자 - 정부 보도자료 원자료에서 그린다. **HTML 에 적지 않는다.**
+  //   검사가 이 절의 마크업에 숫자가 있으면 실패시킨다 (tests/test_landing_why.py).
+  //   ④ 가 기획서를 잠그는 것과 같은 방식이다 - 숫자의 출처를 하나로 둔다.
+  function setP(key, node) {
+    var els = document.querySelectorAll('[data-p="' + key + '"]');
+    for (var i = 0; i < els.length; i++) {
+      els[i].textContent = "";
+      els[i].appendChild(node.cloneNode(true));
+    }
+  }
+  function txt(t) { return document.createTextNode(t); }
+  function frag(parts) {
+    var f = document.createDocumentFragment();
+    parts.forEach(function (x) { f.appendChild(typeof x === "string" ? txt(x) : x); });
+    return f;
+  }
+  function bold(t) { var b = document.createElement("b"); b.textContent = t; return b; }
+  function link(href, t) {
+    var a = document.createElement("a"); a.href = href; a.textContent = t;
+    a.rel = "noopener"; a.target = "_blank"; return a;
+  }
+  function ratio(it) { return it.부적합_수 + "/" + it.조사_수 + "(" + it.부적합률 + "%)"; }
+
+  fetch("/static/data/안전성조사_보도자료.json")
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (d) {
+      // 주의: 순서로 고르지 않는다. 제목이 거의 같은 보도자료가 둘이고(85개 해외직구 /
+      //   85개 해외 구매대행) 부적합 수까지 우연히 같아 섞이기 쉽다. id 로 고른다.
+      function pick(id) {
+        return (d.조사 || []).filter(function (x) { return x.id === id; })[0];
+      }
+      var a = pick("2026-05-14-구매대행");
+      var b = pick("2026-08-06-해외직구");
+      if (!a || !b) return;
+
+      setP("card1-dt", frag(["해외 구매대행 제품 ", bold(a.부적합률 + "%"), "가 국내 안전기준에 부적합했습니다"]));
+      setP("card1-dd", frag([
+        a.조사_수 + "개를 조사해 " + a.부적합_수 + "개가 부적합. 같은 자료가 적은 국내 유통제품 평균은 "
+          + a.국내_유통_평균_부적합률 + "% 입니다. ",
+        a.기관 + " " + a.게시일 + " ", link(a.url, "원문")
+      ]));
+
+      setP("card2-dt", frag([bold(b.부적합_수 + "개"), " 제품이 통관·판매에서 차단됐습니다"]));
+      setP("card2-dd", frag([
+        b.조사_수 + "개 중 " + b.부적합_수 + "개(" + b.부적합률 + "%). " + (b.조치[0] || "") + ", " + (b.조치[1] || "") + ". ",
+        b.기관 + " " + b.게시일 + " ", link(b.url, "원문")
+      ]));
+
+      // 셋째 칸 - 품목별로 크게 갈린다. 있는 것과 없는 것을 **같은 칸에** 적는다.
+      var picked = ["속눈썹 열 성형기", "LED등기구", "휴대용 레이저용품", "승차용 안전모"];
+      var items = picked.map(function (name) {
+        var hit = a.품목별.filter(function (x) { return x.품목 === name; })[0];
+        return hit ? name + " " + ratio(hit) : null;
+      }).filter(Boolean);
+      var top = a.품목별.reduce(function (m, x) { return Math.max(m, x.부적합률); }, 0);
+
+      setP("card3-dt", frag(["품목에 따라 ", bold(top + "%"), " 까지 올라갑니다"]));
+      setP("card3-dd", frag([
+        items.join(" · ") + ". ",
+        "이 중 승차용 안전모·휴대용 레이저용품·속눈썹 열 성형기는 규칙 DB 에 검수된 기준이 있어, "
+          + "해당 품목으로 확인되면 어떤 시험을 통과해야 하는지까지 함께 보여줍니다. "
+          + "LED등기구는 없습니다 - 전기용품 안전기준은 고시 본문이 비어 있고 규격 전문이 "
+          + "첨부 PDF 에만 있어 조항을 인용할 수 없습니다. 무엇을 못 하는지도 그대로 적습니다."
+      ]));
+    })
+    .catch(function () { /* 원자료가 없으면 - 로 남는다. 지어내지 않는다 */ });
 
   // 5절 숫자 - /healthz 에서 그린다. 문서와 코드가 갈리는 일을 여러 번 겪었다.
   fetch("/healthz")
