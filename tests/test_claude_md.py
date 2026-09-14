@@ -59,3 +59,51 @@ def test_r5b_keeps_the_three_branches():
     for mark in ("①", "②", "③"):
         assert mark in body, f"R5-b 의 {mark} 갈래가 없다"
     assert "R3" in body, "R5-b 의 ② 갈래가 R3(모름)를 가리키지 않는다"
+
+
+# ── 기준선 표가 코드와 갈리지 않게 ──────────────────────────────
+def _flat(s: str) -> str:
+    return re.sub(r"\s+", " ", s).strip()
+
+
+def test_the_baseline_table_matches_the_code():
+    """⚠⚠ **R7 의 기준선 표는 `baseline.py` 를 옮겨 적은 것이다.**
+
+    같은 판단이 두 곳에 있으므로 갈릴 수 있고, 실제로 갈렸다 - 2026-09-14
+    ⑦-c 검수로 다섯 숫자가 움직였는데(95→104 · 18→0 · 113→104) **CLAUDE.md 만
+    옛 값을 들고 있었고, 그것을 상시 지침으로 읽으며 반나절을 일했다.**
+
+    §6: "같은 판단을 두 곳에 적지 마라. 갈릴 수 있는 판단은 소유자를 하나
+    정하고 나머지는 그것을 부른다." 여기서 소유자는 `baseline.py` 이고,
+    CLAUDE.md 는 사람이 읽는 사본이라 부를 수 없다 - 그래서 검사로 묶는다.
+    """
+    from sourcing_guard.baseline import BASELINE, BASELINE_EXTRACTOR
+
+    b = BASELINE[BASELINE_EXTRACTOR]
+    body = _flat(_section("R7."))
+
+    def pct(n: int) -> str:
+        return f"{n / b['denominator'] * 100:.1f}%"
+
+    wanted = (
+        f"분모 {b['denominator']}",
+        f"① 검수된 정답 {b['ok']} ({pct(b['ok'])})",
+        f"② 미검수 {b['unreviewed']}",
+        f"③ 상한 {b['ok_upper']} ({pct(b['ok_upper'])})",
+        f"애매 {b['vague']} · 오답 {b['wrong']} · 미매칭 {b['missed']}",
+        f"④ 비대상 부착 {b['off_target']}",
+        f"⑤ 애매 부착 {b['on_vague']}",
+    )
+    missing = [w for w in wanted if w not in body]
+    assert not missing, (
+        "CLAUDE.md 의 기준선 표가 baseline.py 와 다르다. 표를 고쳐라 - "
+        f"없는 줄: {missing}"
+    )
+
+
+def test_the_baseline_table_names_the_reference_extractor():
+    """어느 추출기 기준인지 표에 적혀 있어야 한다 (R7)."""
+    from sourcing_guard.baseline import BASELINE_EXTRACTOR
+
+    body = _section("R7.")
+    assert BASELINE_EXTRACTOR.upper() in body or BASELINE_EXTRACTOR in body
