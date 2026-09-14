@@ -158,7 +158,7 @@ def test_a_new_finding_kind_forces_a_review_of_every_table():
     ⚠ 이 숫자만 고치고 넘어가지 말 것. 아래 목록을 하나씩 보고 "이 kind 가
       여기 들어가야 하나" 를 판단한 뒤 고치는 것이 이 검사의 목적이다.
     """
-    assert len(_ALL) == 31, (
+    assert len(_ALL) == 34, (
         f"FindingKind 가 {len(_ALL)} 개가 됐습니다. 아래를 **하나씩** 검토하세요:\n"
         "  [완전해야 함] scorer._PENALTY          - 빠지면 스캔이 500 이 된다\n"
         "  [완전해야 함] models.SPECIFIC/NON      - 빠지면 유효 결과율에서 사라진다\n"

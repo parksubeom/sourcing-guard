@@ -40,12 +40,38 @@ def _kats():
 
 # ── 매핑 자체 ──────────────────────────────────────────────────────
 def test_every_key_matches_a_real_out_of_scope_reason(rows):
-    """⚠ 키가 갈리면 안내가 **조용히 사라진다.** 두 목록을 대조한다."""
-    keys = {r["key"] for r in rows}
+    """⚠ 키가 갈리면 안내가 **조용히 사라진다.** 두 목록을 대조한다.
+
+    ⚠ 2026-09-14 부터 줄이 두 갈래다. `mode: notice` 줄은 검증을 끄지 않으므로
+      `OUT_OF_SCOPE_HINTS` 에 키가 없고, 대신 자기 `표지어_안내` 를 든다 -
+      **어느 쪽이든 표지어가 하나도 없으면 죽은 줄**이라는 점은 같다.
+    """
+    keys = {r["key"] for r in rows if r.get("mode", "out_of_scope") == "out_of_scope"}
     missing = sorted(set(OUT_OF_SCOPE_HINTS) - keys)
     extra = sorted(keys - set(OUT_OF_SCOPE_HINTS))
     assert not missing, f"표지어는 있는데 소관 안내가 없다: {missing}"
     assert not extra, f"소관 안내는 있는데 표지어가 없다 - 죽은 줄이다: {extra}"
+
+    dead = [r["key"] for r in rows
+            if r["key"] not in OUT_OF_SCOPE_HINTS and not r.get("표지어_안내")]
+    assert not dead, f"표지어가 아예 없는 줄이다: {dead}"
+
+
+def test_notice_rows_never_switch_off_verification(rows):
+    """`mode: notice` 의 표지어는 **검증을 끄면 안 된다.**
+
+    ⚠ 이 검사가 잡는 것: 안내용으로 넣은 낱말을 나중에 `OUT_OF_SCOPE_HINTS`
+      에도 넣으면, 안내만 하려던 낱말이 리콜 대조를 통째로 끈다. 카시트가
+      그러면 자동차용품 리콜을 놓친다 (R6).
+    """
+    from sourcing_guard.scoping import out_of_scope_reason
+
+    for r in rows:
+        for word in r.get("표지어_안내") or ():
+            got = out_of_scope_reason(f"테스트 상품 {word}")
+            assert got != r["key"], (
+                f"{word!r} 가 안내용인데 {r['key']} 로 단락된다"
+            )
 
 
 def test_every_row_carries_its_evidence(rows):

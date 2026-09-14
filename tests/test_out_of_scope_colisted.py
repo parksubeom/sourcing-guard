@@ -51,8 +51,16 @@ def test_a_seller_banner_mentioning_cosmetics_no_longer_silences_the_scan():
     kinds = _kinds(findings)
 
     assert "item_grade_matched" in kinds, "등급이 사라졌다 - 그 결함 그대로다"
-    assert "out_of_scope" in kinds, "소관 안내는 남아 있어야 한다"
-    assert kinds != ["out_of_scope"]
+    # ⚠ **2026-09-14 에 안내가 다른 kind 로 옮겨 갔다.**
+    #
+    #   낱말 '화장품' 은 도매꾹 18,938 에서 163건 중 53건(32.5%)이 화장품을
+    #   **넣는** 용기(파우치·필통·케이스)였다. 그 낱말로 검증을 끄면 합성수지
+    #   파우치의 리콜 대조가 사라지므로 `mode: notice` 로 옮겼다.
+    #
+    #   **지켜야 할 것은 그대로다** - 덮지 않고 병기한다. 안내가 사라지면 안
+    #   되고, 이제 `jurisdiction_notice` 가 그 자리를 든다.
+    assert "jurisdiction_notice" in kinds, "소관 안내는 남아 있어야 한다"
+    assert kinds != ["jurisdiction_notice"]
     # 등급 후보에 전기오븐이 있다.
     items = [c["item"] for f in findings for c in (f.detail or {}).get("candidates", [])]
     assert "전기오븐기기" in items, items
@@ -66,12 +74,20 @@ def test_the_co_listed_line_says_the_page_mentions_it_not_that_the_product_is_it
         category=ItemCategory.ELECTRICAL,
     )
     findings, _ = _run(facts)
-    line = next(f for f in findings if f.kind is FindingKind.OUT_OF_SCOPE)
-    assert line.detail["standalone"] is False
-    assert "이 페이지에 다른 소관" in line.statement_ko
-    assert "범위 밖입니다" in line.statement_ko
+    line = next(f for f in findings if f.kind is FindingKind.JURISDICTION_NOTICE)
+    # 상품이 타 소관이라고 말하지 않는다. "표기가 있습니다 — …일 수 있습니다" 다.
+    assert "표기가 있습니다" in line.statement_ko, line.statement_ko
+    assert "일 수 있습니다" in line.statement_ko, line.statement_ko
+    for banned in ("입니다.", "판매 불가", "허가 필요", "대상입니다"):
+        assert banned not in line.statement_ko.replace("있습니다.", ""), line.statement_ko
+    # 검증을 끄지 않았다는 사실을 문장이 스스로 말한다.
+    assert "인증·리콜 대조는 그대로 수행했습니다" in line.statement_ko
     # 상품 자체를 제외 대상으로 단정하는 단독 문구가 아니다.
     assert "이 품목은 어린이제품 공통안전기준 적용 대상에서 제외됩니다" not in line.statement_ko
+    # ⚠ 전에는 "이 페이지에 다른 소관 … 범위 밖입니다" 를 요구했다. 그 문구는
+    #   `out_of_scope` 병기 줄의 것이고, 안내 kind 는 **범위 밖이라고 말하지
+    #   않는다** - 우리는 검증을 그대로 했다. 지켜야 할 것(단정 금지)은
+    #   위 세 줄이 그대로 잠근다.
 
 
 def test_co_listed_out_of_scope_does_not_take_over_signal_or_headline():

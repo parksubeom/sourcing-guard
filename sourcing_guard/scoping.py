@@ -47,8 +47,13 @@ OUT_OF_SCOPE_HINTS: dict[str, tuple[str, ...]] = {
         "향신료", "원두커피", "인스턴트커피", "통후추",
         "arabica", "食品",
     ),
+    # ⚠⚠ **낱말 '화장품' 은 여기 없다 (2026-09-14).** 도매꾹 18,938 에서
+    #   163건 중 53건(32.5%)이 화장품을 **넣는** 용기·도구였다 - 파우치·필통·
+    #   케이스·세면백. 그 낱말로 검증을 끄면 합성수지 파우치의 리콜 대조가
+    #   사라진다. `jurisdiction_map.yaml` 의 `표지어_안내` 로 옮겨 안내만 한다.
+    #   여기 남은 것은 **흔들리지 않는 하드 신호**뿐이다.
     "화장품 (화장품법 / 식약처 소관)": (
-        "화장품", "마스크팩", "클렌징폼", "클렌징오일", "립스틱", "선크림",
+        "마스크팩", "클렌징폼", "클렌징오일", "립스틱", "선크림",
         "ewg", "화장품책임판매업자", "화장품제조업자", "기능성화장품",
         "cosmetic", "化妆品",
     ),
@@ -93,6 +98,29 @@ def jurisdiction_for(reason: str | None) -> dict:
       사라지므로 `tests/test_jurisdiction_map.py` 가 두 목록을 대조한다.
     """
     return _jurisdiction_map().get(reason or "", {})
+
+
+def notice_jurisdictions(*parts: str | None) -> list[dict]:
+    """검증을 **끄지 않고** 안내만 붙이는 소관들. `mode: notice` 또는
+    `표지어_안내` 를 가진 행에서 찾는다.
+
+    ⚠⚠ `out_of_scope_reason` 과 **하는 일이 반대다.** 저쪽은 "여기서 끝낸다"
+      를 정하고, 이쪽은 "계속하되 한 줄 더 말한다" 를 정한다. 그래서
+      `IN_SCOPE_MARKERS` 가드도 두지 않는다 - 카시트는 어린이제품이면서
+      동시에 자동차부품이고, 둘 다 말해야 한다.
+
+    ⚠ 이미 `out_of_scope` 로 단락된 줄에는 부르지 않는다. 부르는 쪽이 정한다.
+    """
+    haystack = " ".join(p for p in parts if p).lower()
+    if not haystack:
+        return []
+    out: list[dict] = []
+    for row in _jurisdiction_map().values():
+        hints = row.get("표지어_안내") or ()
+        hit = next((h for h in hints if h.lower() in haystack), None)
+        if hit:
+            out.append({**row, "표기": hit})
+    return out
 
 
 def jurisdiction_line(reason: str | None) -> str:

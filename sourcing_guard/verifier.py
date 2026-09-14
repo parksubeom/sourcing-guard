@@ -16,6 +16,7 @@ from typing import TYPE_CHECKING
 
 from .kats_client import (
     recall_evidence_for,
+    CertRecord,
     CertState,
     KatsApiError,
     KatsClient,
@@ -26,12 +27,15 @@ from .kats_client import (
     normalize_kc,
     recall_evidence,
 )
+from .origin import normalize_country, page_origin
+from .ip_markers import ip_marker_in, ip_marker_sources
 from .scoping import (
     CHILDREN_CATEGORIES,
     AgeScope,
     classify_age,
     jurisdiction_for,
     jurisdiction_line,
+    notice_jurisdictions,
     missing_inputs,
     out_of_scope_reason,
 )
@@ -53,6 +57,7 @@ from .rra_client import (
 
 _NONCOMPLIANT_URL = "https://www.rra.go.kr/ko/license/A_d_list.do"
 from .models import (
+    direction_particle,
     object_particle,
     subject_particle,
     topic_particle,
@@ -1223,6 +1228,11 @@ def verify(
         n for n in facts.kc_numbers_from_image if normalize_kc(n) not in _text_kc
     ]
 
+    # 조회에 성공한 인증 레코드. [⑦-d] 원산지 대조가 이걸 쓴다 -
+    # **번호가 조회돼야 등록 제조국이 온다.** 조회 못 한 번호로는 대조할 것이
+    # 없으므로 여기에 담기지 않는다.
+    _verified_certs: list[CertRecord] = []
+
     if facts.kc_numbers:
         for num in facts.kc_numbers:
             try:
@@ -1254,6 +1264,7 @@ def verify(
                     )
                 )
             else:
+                _verified_certs.append(rec)
                 # 조회 성공 != 유효한 인증. certState 를 보고 갈라야 한다.
                 kind, signal, advice = _CERT_STATE_FINDING[rec.state]
                 if kind is FindingKind.KC_VERIFIED:
@@ -1819,7 +1830,133 @@ def verify(
             )
         )
 
+    # ── 안내 축 셋 (2026-09-14 · [L-2] · [L-1(다)] · [⑦-d]) ────────────
+    #
+    # ⚠⚠ **맨 끝에 붙인다. 위 판정을 하나도 바꾸지 않는다.** 신호는
+    #   `scorer` 가 `_PENALTY`(셋 다 0)와 신호 집합으로 정하고, 셋 중 어느
+    #   것도 그 집합에 없다. 여기서 `return` 하지도 않는다 - 안내가 검증을
+    #   끄면 `out_of_scope` 와 같아지고, 그것이 이 축을 따로 만든 이유다.
+    findings.extend(
+        _notice_findings(facts, raw_text, scope_reason, _verified_certs, today)
+    )
+
     return findings
+
+
+def _notice_findings(
+    facts: "ProductFacts",
+    raw_text: str | None,
+    scope_reason: str | None,
+    certs: "list[CertRecord]",
+    today: date,
+) -> list[Finding]:
+    """안내 축 셋. **판정이 아니다** - 신호·등급·다섯 숫자를 건드리지 않는다."""
+    out: list[Finding] = []
+    haystack = " ".join(
+        p for p in (facts.product_name, facts.model_name, raw_text) if p
+    )
+
+    # ① 지재권 표기어 [L-2]
+    #
+    # ⚠ **브랜드명 사전을 만들지 않는다 (R5).** 우리가 아는 것은 "이런 말이
+    #   적혀 있다" 뿐이고, 그 말이 누구의 권리를 건드리는지는 판단하지 않는다.
+    marker = ip_marker_in(haystack)
+    if marker:
+        law, kipris = ip_marker_sources()
+        out.append(
+            Finding(
+                kind=FindingKind.IP_MARKER_NOTICE,
+                signal=Signal.UNKNOWN,
+                statement_ko=(
+                    f"'{marker}' 표기가 있습니다. 상표·디자인권은 이 도구가 "
+                    "확인하지 않습니다 — 권리자·KIPRIS 확인 필요"
+                ),
+                source_label=law["label"],
+                source_url=law["url"],
+                legal_basis=law["label"],
+                detail={
+                    "marker": marker,
+                    # 화면이 KIPRIS 로 가는 링크를 그린다.
+                    #
+                    # ⚠ **검색어를 주소에 담지 않는다.** KIPRIS 검색 폼은
+                    #   POST 라 주소로 미리 채울 수 없다 - 반쯤 채워진 주소를
+                    #   쓰면 셀러가 "검색된 줄" 알고 빈 화면을 읽는다
+                    #   (실측 셋은 `data/ip_markers.yaml` 주석에).
+                    "kipris_url": kipris["url"],
+                    "kipris_label": kipris["label"],
+                    # 셀러가 복사해서 넣을 말. 우리가 검색해 주지 않는다.
+                    "search_term": facts.product_name or None,
+                },
+                checked_at=today,
+            )
+        )
+
+    # ② 소관 안내 [L-1(다)] — **검증을 끄지 않는다**
+    #
+    # ⚠ `out_of_scope_reason` 과 **같은 자리를 본다**(재질·언급 물질 포함).
+    #   셀러 공지 배너의 "3W CLINIC 화장품" 이 `substances_mentioned` 로
+    #   들어오는데, 거기를 안 보면 그 줄이 통째로 사라진다 - 4-d-1 에서
+    #   "덮지 않고 병기한다" 로 지킨 정보다.
+    for row in notice_jurisdictions(
+        facts.product_name, facts.model_name, raw_text,
+        *facts.materials, *facts.substances_mentioned,
+    ):
+        # 이미 `out_of_scope` 로 말한 소관이면 두 번 말하지 않는다.
+        if row["key"] == scope_reason:
+            continue
+        out.append(
+            Finding(
+                kind=FindingKind.JURISDICTION_NOTICE,
+                signal=Signal.UNKNOWN,
+                statement_ko=(
+                    f"'{row['표기']}' 표기가 있습니다 — {row['기관']} "
+                    f"소관(「{row['법령']}」)일 수 있습니다. {row['확인절차']} "
+                    "이 도구의 인증·리콜 대조는 그대로 수행했습니다."
+                ),
+                source_label=f"{row['법령']} {row['조문'].split(')')[0]})",
+                source_url=row["url"],
+                legal_basis=row["법령"],
+                detail={"key": row["key"], "표기": row["표기"],
+                        "기관": row["기관"], "확인url": row.get("확인url")},
+                checked_at=today,
+            )
+        )
+
+    # ③ 원산지 대조 [⑦-d]
+    #
+    # ⚠ **양쪽을 다 읽었을 때만** 말한다. 한쪽이 없으면 0줄이다 - 없는 것을
+    #   문제로 만들지 않는다.
+    page = page_origin(raw_text, facts.product_name)
+    for cert in certs:
+        registered = normalize_country(cert.maker_country)
+        if not page or not registered or page == registered:
+            continue
+        out.append(
+            Finding(
+                kind=FindingKind.ORIGIN_MISMATCH,
+                signal=Signal.UNKNOWN,
+                statement_ko=(
+                    f"인증번호 '{cert.cert_number}' 에 등록된 제조국은 "
+                    f"'{registered}' 인데 상세페이지에는 "
+                    f"'{page}'{direction_particle(page)} 적혀 있습니다 — "
+                    "확인이 필요합니다. 어느 쪽이 맞는지는 이 도구가 판단하지 "
+                    "않습니다."
+                ),
+                source_label="국가기술표준원 안전인증정보 조회",
+                source_url=cert.detail_url or cert_evidence_url(cert.cert_number),
+                detail={
+                    "cert_number": cert.cert_number,
+                    "registered_country": registered,
+                    "page_country": page,
+                    # 원문을 함께 남긴다 - 정규화가 틀렸을 때 되짚을 수 있게.
+                    "registered_raw": cert.maker_country,
+                    "import_div": cert.import_div,
+                    "importer": cert.importer,
+                },
+                checked_at=today,
+            )
+        )
+    return out
 
 
 # 약한 일치가 왜 약한지. 축마다 이유가 다르므로 문구도 달라야 한다.

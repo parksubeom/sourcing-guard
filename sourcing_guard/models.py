@@ -244,6 +244,23 @@ class FindingKind(str, Enum):
     RF_NONCOMPLIANT = "rf_noncompliant"
     HAZARD_RULE_APPLIES = "hazard_rule_applies"
     SUBSTANCE_MENTIONED = "substance_mentioned"
+    # ── 안내 축 셋 (2026-09-14 · [L-2] · [L-1(다)] · [⑦-d]) ────────────
+    #
+    # ⚠⚠ **셋 다 판정이 아니다.** 신호를 바꾸지 않고(_PENALTY 0) 등급을 붙이지
+    #   않으며 다섯 숫자를 움직이지 않는다. 화면에서는 CONTEXT 구획이다.
+    #   "확인해 보세요" 까지만 말한다 (§9).
+    #
+    # 상표·디자인권 표기어. **브랜드명 사전을 만들지 않는다** (R5) - 우리가
+    # 가진 것은 "호환·st 같은 말이 적혀 있다" 는 사실뿐이고, 그 말이 누구의
+    # 권리를 건드리는지는 우리가 판단할 수 있는 것이 아니다.
+    IP_MARKER_NOTICE = "ip_marker_notice"
+    # 다른 법의 소관으로 보이는 표기. `out_of_scope` 와 다르다 - 저쪽은
+    # 인증·리콜 검증을 **끄고**, 이쪽은 **켠 채로 안내만** 붙인다. 카시트는
+    # 자동차관리법 소관이면서 동시에 어린이제품일 수 있다.
+    JURISDICTION_NOTICE = "jurisdiction_notice"
+    # 정부 DB 에 등록된 제조국과 상세페이지 표기가 다르다. 어느 쪽이 맞는지는
+    # 우리가 정하지 않는다 - 다르다는 사실만 말한다.
+    ORIGIN_MISMATCH = "origin_mismatch"
     COVERAGE_GAP = "coverage_gap"
     # "조회했는데 없음" 과 "조회를 못 함" 은 셀러에게 완전히 다른 정보다.
     # 후자를 전자로 표시하면 확인하지 못한 것을 확인한 것처럼 말하게 된다.
@@ -301,6 +318,13 @@ _FINDING_GROUP: dict[str, FindingGroup] = {
     "out_of_scope": FindingGroup.CONTEXT,
     "age_out_of_child_range": FindingGroup.CONTEXT,
     "lookup_failed": FindingGroup.CONTEXT,
+    # 안내 축 셋. **ACTION 이 아니다** - 셀러가 소싱 전에 반드시 해야 하는 일이
+    # 아니라 "이런 표기가 보인다" 는 참고다. ACTION 에 넣으면 '확인할 것' 이
+    # 매 화면 서너 줄로 늘어나 진짜 확인 항목이 묻힌다 (info_request 가 228/235
+    # 행에 붙어 겪은 그대로다).
+    "ip_marker_notice": FindingGroup.CONTEXT,
+    "jurisdiction_notice": FindingGroup.CONTEXT,
+    "origin_mismatch": FindingGroup.CONTEXT,
 }
 
 
@@ -553,6 +577,23 @@ NON_SPECIFIC_FINDING_KINDS: frozenset["FindingKind"] = frozenset({
     #     놓친 알림이 더 비싸기 때문이다. 여기서 빼는 것은 **관측 지표**에서
     #     빼는 것이고, 알림을 끄는 것이 아니다.
     FindingKind.RECALL_WEAK_MATCH,
+    # ⚠ 안내 축 셋. **유효 결과율에 넣지 않는다.**
+    #
+    #   `ip_marker_notice` 는 "호환 이라는 말이 적혀 있다" 는 사실이고 우리가
+    #   조회한 것이 아니다. `jurisdiction_notice` 는 "다른 법 소관으로 보인다"
+    #   이고 그 법에 대해서는 아무것도 확인하지 않았다. 둘 다 SPECIFIC 에 넣으면
+    #   **아무것도 조회 못 한 줄이 "유효" 로 뒤집혀 지표가 부푼다** -
+    #   `recall_clear` · `scope_undetermined` 를 뺀 것과 정확히 같은 이유다.
+    #
+    #   ⚠ `origin_mismatch` 는 **경계다.** 이것은 정부 DB 값과 상세페이지를
+    #     실제로 대조한 결과라 구체적이다. 그러나 이 kind 가 붙는 줄에는
+    #     `kc_verified` 가 **반드시 함께** 붙는다(번호가 조회돼야 제조국이
+    #     오므로). 그 줄은 이미 SPECIFIC 이고, 여기 넣어도 지표는 안 움직인다.
+    #     움직이지 않는 자리라면 **안내 축은 안내 축 쪽에** 둔다 - 셋을 한
+    #     묶음으로 읽는 편이 다음 사람에게 덜 헷갈린다.
+    FindingKind.IP_MARKER_NOTICE,
+    FindingKind.JURISDICTION_NOTICE,
+    FindingKind.ORIGIN_MISMATCH,
     # ⚠⚠ `scope_undetermined` 는 **구체적이 아니다.** 이 finding 이 붙는 줄은
     #   등급도 인증도 아무것도 못 받은 줄이고, 우리가 말한 것은 "판단하지
     #   않았다" 다. SPECIFIC 에 넣으면 **아무것도 못 준 줄이 "유효" 로
@@ -730,6 +771,24 @@ def topic_particle(word: str) -> str:
 def object_particle(word: str) -> str:
     """받침에 맞는 목적격 조사(을/를)."""
     return "를" if subject_particle(word) == "가" else "을"
+
+
+def direction_particle(word: str) -> str:
+    """받침에 맞는 부사격 조사(으로/로).
+
+    ⚠ **다른 셋과 규칙이 하나 더 있다.** 받침이 없으면 '로', 있으면 '으로'
+    인데 **받침이 ㄹ 이면 '로'** 다. 그 예외를 빼면 '브라질으로' 가 된다.
+
+        중국 → 으로      인도 → 로      브라질 → 로      베트남 → 으로
+    """
+    if not word:
+        return "로"
+    last = word.strip()[-1]
+    if "가" <= last <= "힣":
+        jong = (ord(last) - 0xAC00) % 28
+        return "로" if jong in (0, 8) else "으로"   # 8 = ㄹ
+    # 숫자·영문은 받침 판단을 `subject_particle` 과 같은 기준으로 맞춘다.
+    return "로" if subject_particle(word) == "가" else "으로"
 
 
 def with_particle(word: str) -> str:

@@ -477,6 +477,26 @@
         ? goLink(f.source_url, f.source_label || "정부 사이트에서 직접 검색")
         : srcLink(f.source_url, f.source_label || "근거 원문");
     if (isGrade) link = gradeSourceLinks(f) || link;
+    // [L-2] 지재권 안내 — KIPRIS 로 가는 링크와 **복사할 상품명**.
+    //
+    // 주의(중요): 검색어를 주소에 담지 않는다. KIPRIS 검색 폼은 POST 라
+    //   주소로 미리 채울 수 없다(실측 셋은 data/ip_markers.yaml 주석에).
+    //   반쯤 채워진 주소를 쓰면 셀러가 "검색된 줄" 알고 빈 화면을 읽는다.
+    //   대신 상품명을 한 번에 복사할 수 있게 둔다.
+    var ip = "";
+    if (f.kind === "ip_marker_notice") {
+      var d = f.detail || {};
+      ip = '<p class="confirm">' +
+        (d.kipris_url
+          ? goLink(d.kipris_url, d.kipris_label || "KIPRIS 상표 검색")
+          : "") +
+        (d.search_term
+          ? '<button class="btn-t sm" type="button" data-copy="' + esc(d.search_term) +
+            '">상품명 복사</button>' +
+            '<span class="sub">KIPRIS 검색창에 붙여넣어 확인하세요.</span>'
+          : "") +
+        "</p>";
+    }
     var confirm = f.kind === "kc_image_candidate" ? confirmRow(f) : "";
     var rf = f.kind === "rf_wireless_unverified" ? rfLookupRow(f) : "";
     var grades = isGrade ? gradeRow(f) + powerRow(f) + partRow(f) : "";
@@ -507,7 +527,7 @@
 
     return '<li class="rv-row ' + esc(f.kind) + aside + '">' +
            '<span class="rv-dot ' + esc(f.signal) + '" aria-hidden="true"></span>' +
-           '<div class="rv-b">' + say + grades + confirm + rf + link + "</div></li>";
+           '<div class="rv-b">' + say + grades + ip + confirm + rf + link + "</div></li>";
   }
 
   // ── 같은 종류가 넷 이상이면 한 줄로 접는다 (design/README §10-5) ──
@@ -723,6 +743,22 @@
 
     var wb = document.getElementById("watch");
     if (wb) wb.addEventListener("click", registerWatch);
+
+    // [L-2] 상품명 복사. 클립보드가 막힌 브라우저에서도 셀러가 손으로 고를 수
+    // 있게 **선택 상태로 남긴다** - "복사했습니다" 만 띄우고 실제로 안 됐으면
+    // 셀러는 빈 클립보드로 KIPRIS 에 간다.
+    Array.prototype.forEach.call(res.querySelectorAll("[data-copy]"), function (b) {
+      b.addEventListener("click", function () {
+        var text = b.getAttribute("data-copy") || "";
+        function done(ok) { b.textContent = ok ? "복사됨" : "복사하지 못했습니다"; }
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(function () { done(true); },
+                                                   function () { done(false); });
+        } else {
+          done(false);
+        }
+      });
+    });
 
     // 접힌 유해물질 기준 펼치기. `hidden` 으로만 여닫는다 - display 를 직접
     // 만지면 CSS 의 `[hidden]{display:none!important}` 와 싸운다.

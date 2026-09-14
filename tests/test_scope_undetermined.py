@@ -143,11 +143,11 @@ def test_it_is_not_counted_as_a_specific_finding(kats, rules):
 
 
 def test_the_classification_is_still_complete_and_disjoint():
-    """합 = 전체 · 겹침 0 을 계속 지킨다 (종류가 31 로 늘었다)."""
+    """합 = 전체 · 겹침 0 을 계속 지킨다 (종류가 34 로 늘었다)."""
     everything = set(FindingKind)
     assert SPECIFIC_FINDING_KINDS | NON_SPECIFIC_FINDING_KINDS == everything
     assert not (SPECIFIC_FINDING_KINDS & NON_SPECIFIC_FINDING_KINDS)
-    assert len(everything) == 31
+    assert len(everything) == 34
 
 
 def test_the_signal_does_not_move(kats, rules):
