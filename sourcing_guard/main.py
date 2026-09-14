@@ -6,6 +6,7 @@ CLAUDE.md R4: the server never fetches commerce pages itself.
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import logging
 import re
 from contextlib import asynccontextmanager, suppress
@@ -14,7 +15,7 @@ from pathlib import Path
 from typing import Literal
 
 from fastapi import FastAPI, Header, HTTPException, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field, model_validator
 
@@ -395,6 +396,10 @@ class MissReport(BaseModel):
 
     page_text: str = Field(min_length=1, max_length=200_000)
     matched_items: list[str] = Field(min_length=1, max_length=10)
+    # ⚠ 브라우저가 만든 식별자다(owner.js). 같은 셀러가 같은 화면에서 두 번
+    #   누른 것을 가리는 데만 쓴다 - 로그인이 아니고 비밀도 아니다. 없으면
+    #   멱등 처리를 못 할 뿐 신고는 그대로 저장된다.
+    owner_id: str | None = Field(default=None, max_length=64)
     extraction_path: str = Field(max_length=32)
     extractor_vendor: str | None = Field(default=None, max_length=32)
     extractor_model: str | None = Field(default=None, max_length=64)
@@ -408,7 +413,7 @@ class MissReportAck(BaseModel):
 
 
 @app.post("/api/v1/report-miss", response_model=MissReportAck, status_code=201)
-def report_miss(req: MissReport, request: Request) -> MissReportAck:
+def report_miss(req: MissReport, request: Request, response: Response) -> MissReportAck:
     """오답 신고를 **저장만** 한다. LLM 0회 · 정부 API 0회.
 
     ⚠ 공개 엔드포인트다. 스캔과 **다른** 버킷으로 분당 10회 - 신고는 드물고,
@@ -421,15 +426,46 @@ def report_miss(req: MissReport, request: Request) -> MissReportAck:
             detail="신고가 너무 잦습니다. 잠시 후 다시 시도해 주세요.",
             headers={"Retry-After": str(_report_limiter.retry_after_seconds(client_ip))},
         )
-    report_id = uuid4().hex[:12]
-    reported_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
-    _store.save_miss_report(report_id, reported_at, req.model_dump_json())
-    _log.info("오답 신고 %s · 품목 %s · 경로 %s", report_id, req.matched_items, req.extraction_path)
+    # 같은 셀러 · 같은 입력 · 같은 품목이면 같은 신고다.
+    #
+    # ⚠ 원문을 그대로 키로 쓰지 않는다. 상세페이지 본문이 20만 자까지 오고,
+    #   색인에 그것을 통째로 넣을 이유가 없다. 해시로 줄인다.
+    # ⚠ 품목은 **정렬**해서 넣는다. 화면이 주는 순서는 서버 후보 순서라
+    #   같은 신고에서 바뀔 일이 없지만, 순서가 키를 가르면 "같은 신고" 를
+    #   두 번 저장하는 쪽으로 조용히 새 나간다.
+    dedupe_key = (
+        hashlib.sha256(
+            "\u0000".join(
+                [req.owner_id or "", text_fingerprint(req.page_text),
+                 *sorted(req.matched_items)]
+            ).encode("utf-8")
+        ).hexdigest()
+        if req.owner_id
+        else None
+    )
+    report_id, reported_at, created = _store.save_miss_report(
+        uuid4().hex[:12],
+        datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        req.model_dump_json(),
+        dedupe_key=dedupe_key,
+    )
+    if created:
+        _log.info("오답 신고 %s · 품목 %s · 경로 %s",
+                  report_id, req.matched_items, req.extraction_path)
+    else:
+        # 두 번째부터는 **저장하지 않았다는 사실**을 남긴다. 조용히 201 을
+        # 돌려주면 로그만 보고 "두 번 신고됐다" 로 읽는다.
+        _log.info("오답 신고 중복 %s · 품목 %s", report_id, req.matched_items)
+    response.status_code = 201 if created else 200
     return MissReportAck(
         id=report_id,
         reported_at=reported_at,
         # ⚠ 단정하지 않는다 (§9). "반영됐다" 가 아니라 "검수하겠다" 다.
-        message="신고가 접수되었습니다. 사람이 검수한 뒤 품목 표에 반영합니다 — 이 결과는 바뀌지 않습니다.",
+        message=(
+            "신고가 접수되었습니다. 사람이 검수한 뒤 품목 표에 반영합니다 — 이 결과는 바뀌지 않습니다."
+            if created
+            else "이미 접수된 신고입니다. 사람이 검수한 뒤 품목 표에 반영합니다 — 이 결과는 바뀌지 않습니다."
+        ),
     )
 
 
@@ -816,6 +852,24 @@ def register_watch(req: WatchRequest) -> WatchItem:
             "상세페이지에서 추출된 정보가 부족합니다.",
         )
     return _store.add(item)
+
+
+@app.delete("/api/v1/watch/{item_id}", status_code=204)
+def unwatch(item_id: str, owner_id: str) -> Response:
+    """감시 해제. **소유자가 맞을 때만** 지운다.
+
+    셀러가 넣은 것을 못 지우는 상태를 없앤다 - 잘못 등록한 항목이 목록에
+    영원히 남으면 진짜 알림이 그 사이에 묻힌다 (R6 의 반대 방향 비용이다).
+
+    ⚠ **없는 id 와 남의 id 를 구분하지 않는다.** 둘 다 404 다. 구분하면
+      "그 id 는 존재한다" 를 남에게 알려 주는 셈이다. `owner_id` 는 브라우저가
+      만든 식별자라 비밀이 아니지만, 그렇다고 목록을 열어 줄 이유도 없다.
+
+    ⚠ 그 항목의 알림도 같이 지운다 (`SqliteWatchStore.remove`).
+    """
+    if not _store.remove(item_id, owner_id):
+        raise HTTPException(404, "감시 목록에서 찾지 못했습니다.")
+    return Response(status_code=204)
 
 
 class WatchListResponse(BaseModel):

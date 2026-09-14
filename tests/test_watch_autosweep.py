@@ -378,3 +378,91 @@ def test_the_watch_screen_reads_owner_scoped_values_and_draws_each_alert_once():
 
     # 공표일(YYYYMMDD)을 사람이 읽는 모양으로 낸다.
     assert 'if (/^\\d{8}$/.test(t))' in body
+
+
+# ── ②-a 감시 해제 (2026-09-14) ──────────────────────────────────────
+#
+# 셀러가 넣은 것을 못 지우는 상태를 없앤다. 잘못 등록한 항목이 목록에 영원히
+# 남으면 진짜 알림이 그 사이에 묻힌다 - R6 이 막으려는 것의 반대 방향 비용이다.
+
+
+def _client_with_store(tmp_path, monkeypatch):
+    import sourcing_guard.main as m
+    from fastapi.testclient import TestClient
+
+    from sourcing_guard.kats_client import KatsClient
+    from sourcing_guard.recall_index import RecallIndex
+    from sourcing_guard.rra_client import RraClient
+    from sourcing_guard.storage import SqliteWatchStore
+
+    store = SqliteWatchStore(str(tmp_path / "w.db"))
+    monkeypatch.setattr(m, "_store", store)
+    monkeypatch.setattr(m, "_recalls", RecallIndex(store))
+    monkeypatch.setattr(m, "_kats", KatsClient(None, None, mock=True))
+    monkeypatch.setattr(m, "_rra", RraClient(mock=True))
+    return TestClient(m.app), store
+
+
+def _register(client, owner: str, **facts) -> str:
+    body = {"product_name": "감시 해제 시험 상품", "model_name": "DEL-1", **facts}
+    r = client.post("/api/v1/watch",
+                    json={"owner_id": owner, "facts_from_scan": body})
+    assert r.status_code == 200, r.text
+    return r.json()["id"]
+
+
+def test_unwatch_removes_only_my_own_item(tmp_path, monkeypatch):
+    """남의 id 와 없는 id 를 **구분하지 않는다** - 둘 다 404.
+
+    구분하면 "그 id 는 존재한다" 를 남에게 알려 주는 셈이다.
+    """
+    client, _ = _client_with_store(tmp_path, monkeypatch)
+    item_id = _register(client, "own-A")
+
+    assert client.delete(f"/api/v1/watch/{item_id}?owner_id=own-B").status_code == 404
+    assert client.delete("/api/v1/watch/nope?owner_id=own-A").status_code == 404
+    # 남의 시도로 사라지지 않았다
+    assert len(client.get("/api/v1/watch?owner_id=own-A").json()["items"]) == 1
+
+    assert client.delete(f"/api/v1/watch/{item_id}?owner_id=own-A").status_code == 204
+    assert client.get("/api/v1/watch?owner_id=own-A").json()["items"] == []
+
+
+def test_unwatch_takes_the_alerts_with_it(tmp_path, monkeypatch):
+    """알림을 남기면 주인 없는 행이 되어 `alert_count` 가 계속 센다."""
+    from datetime import date
+
+    from sourcing_guard.models import MatchStrength, RecallAlert
+
+    client, store = _client_with_store(tmp_path, monkeypatch)
+    item_id = _register(client, "own-A")
+    store.save_alerts([
+        RecallAlert(
+            watch_item_id=item_id, recall_fingerprint="fp-1",
+            strength=MatchStrength.WEAK, matched_on="model_name",
+            statement_ko="유사 일치하는 항목이 공표되었습니다. 원문 확인이 필요합니다.",
+            source_label="국가기술표준원", source_url="https://www.safetykorea.kr/",
+            detected_at=date(2026, 9, 13),
+        )
+    ])
+    assert store.alert_count() == 1
+    assert len(client.get("/api/v1/watch?owner_id=own-A").json()["alerts"]) == 1
+
+    assert client.delete(f"/api/v1/watch/{item_id}?owner_id=own-A").status_code == 204
+    assert store.alert_count() == 0, "주인 없는 알림 행이 남았다"
+
+
+def test_the_watch_screen_offers_the_button(pages=None):
+    """화면에 유령 버튼이 아니라 **실제로 부르는** 버튼이 있어야 한다."""
+    html = (Path(__file__).resolve().parents[1] / "sourcing_guard" / "static"
+            / "watch.html").read_text(encoding="utf-8")
+    assert "data-unwatch" in html and "감시 해제" in html
+    assert 'method: "DELETE"' in html
+    # 서버가 지웠는지 **확인한 뒤** 목록을 다시 그린다. 화면에서 먼저 지우면
+    # 실패했을 때 "사라진 줄 알았는데 있는" 상태가 된다.
+    body = html[html.index("function wireUnwatch("):]
+    body = body[: body.index("\n  }")]
+    assert "r.status !== 204" in body
+    assert "load()" in body
+    # 되돌릴 수 없으므로 한 번 묻는다.
+    assert "window.confirm" in body

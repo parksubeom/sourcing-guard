@@ -18,7 +18,14 @@ from typing import Iterable, Protocol
 
 from .kats_client import RecallRecord, is_cert_number, normalize_kc, recall_evidence
 from .placeholders import is_not_a_value
-from .models import MatchStrength, RecallAlert, WatchItem, WatchStatus, matched_on_label
+from .models import (
+    MatchStrength,
+    RecallAlert,
+    WatchItem,
+    WatchStatus,
+    matched_on_label,
+    with_particle,
+)
 
 # Model names shorter than this produce too many coincidental hits
 # ("A1", "100") to be worth alerting on.
@@ -447,7 +454,9 @@ def _statement(item: WatchItem, r: RecallRecord, m: Match) -> str:
     what = f" ({matched_on_label(m.matched_on)} 기준)"
     tail = f" 리콜된 제품은 '{recalled}' 입니다." if recalled else ""
     return (
-        f"'{subject}' 과(와) {m.strength.label_ko}하는 항목이 "
+        # 조사를 병기하지 않는다. 셀러가 읽는 알림 문장이고, "과(와)" 는
+        # 우리가 받침을 못 세는 것을 그대로 보여 준다 (models.with_particle).
+        f"'{subject}'{with_particle(subject)} {m.strength.label_ko}하는 항목이 "
         f"{where} 리콜 공표({when})에 등록되었습니다{what}.{tail} "
         "원문에서 확인해 주세요."
     )

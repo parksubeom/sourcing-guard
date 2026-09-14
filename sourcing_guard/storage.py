@@ -92,18 +92,45 @@ CREATE INDEX IF NOT EXISTS idx_alert_detected ON recall_alerts(detected_at);
 --   tests/fixtures/새표본235_오답.tsv 로 옮긴다. 이 표는 검수 대기열이다.
 -- ⚠ 워치리스트와 같은 볼륨이다 - 재배포마다 사라지면 신고가 헛것이 된다.
 -- ⚠ client_ip 는 저장하지 않는다. 레이트리밋에만 쓰고 버린다.
+-- ⚠ dedupe_key 는 (소유자 · 입력 텍스트 · 품목) 을 해시한 값이다. 같은 셀러가
+--   같은 화면에서 두 번 누르면 검수 대기열에 같은 줄이 두 개 생긴다 - 사람이
+--   두 번 읽게 되고 `miss_reports.total` 이 실제 신고 수보다 크게 뜬다.
+--   NULL 은 유니크 색인에서 서로 다른 값으로 취급되므로, 열이 없던 시절의
+--   행들은 그대로 남는다.
 CREATE TABLE IF NOT EXISTS miss_reports (
     id           TEXT PRIMARY KEY,
     reported_at  TEXT NOT NULL,   -- UTC ISO datetime
-    payload      TEXT NOT NULL    -- MissReport 전체 (Pydantic JSON)
+    payload      TEXT NOT NULL,   -- MissReport 전체 (Pydantic JSON)
+    dedupe_key   TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_miss_reported ON miss_reports(reported_at);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_miss_dedupe ON miss_reports(dedupe_key);
 
 CREATE TABLE IF NOT EXISTS sync_state (
     key   TEXT PRIMARY KEY,
     value TEXT NOT NULL
 );
 """
+
+
+#: 나중에 붙인 열. 배포본 DB 에는 없으므로 열 때마다 확인해서 채운다.
+#:
+#: ⚠ 값 채우기(backfill)를 하지 않는다. 옛 신고는 dedupe_key 가 NULL 이고,
+#:   SQLite 는 유니크 색인에서 NULL 을 서로 다른 값으로 본다 - 그대로 남는다.
+_LATE_COLUMNS: dict[str, list[tuple[str, str]]] = {
+    "miss_reports": [("dedupe_key", "TEXT")],
+}
+
+
+def _add_missing_columns(conn: sqlite3.Connection) -> None:
+    for table, columns in _LATE_COLUMNS.items():
+        rows = conn.execute(f"PRAGMA table_info({table})").fetchall()
+        if not rows:
+            continue          # 아직 없는 표다. 스키마가 곧 만든다.
+        have = {r[1] for r in rows}
+        for name, decl in columns:
+            if name not in have:
+                conn.execute(f"ALTER TABLE {table} ADD COLUMN {name} {decl}")
 
 
 class SqliteWatchStore:
@@ -217,6 +244,12 @@ class SqliteWatchStore:
         try:
             # 동시 읽기/쓰기에서 잠금 대기를 줄인다.
             conn.execute("PRAGMA journal_mode=WAL")
+            # ⚠ **열 추가가 스키마보다 먼저다.** 배포본 DB 는 `miss_reports` 를
+            #   이미 갖고 있어 `CREATE TABLE IF NOT EXISTS` 가 아무 일도 하지
+            #   않는다. 스키마의 유니크 색인이 없는 열을 가리키면 그 자리에서
+            #   던지고, 그 예외는 위 `__init__` 에서 **DB 손상으로 읽혀 격리**
+            #   된다 - 워치 항목이 통째로 사라진다.
+            _add_missing_columns(conn)
             conn.executescript(_SCHEMA)
             conn.commit()
         except BaseException:
@@ -242,6 +275,30 @@ class SqliteWatchStore:
                 "  payload=excluded.payload",
                 (item.id, item.owner_id, item.status.value, item.model_dump_json()),
             )
+
+    def remove(self, item_id: str, owner_id: str) -> bool:
+        """이 소유자의 항목 하나를 **알림까지 같이** 지운다.
+
+        돌려주는 값은 "지웠는가" 다. 없는 id 도, **남의 id** 도 False 다 -
+        부르는 쪽이 둘을 구분하면 남의 목록에 무엇이 있는지 알려 주는 셈이다.
+
+        ⚠ 알림을 남기면 다음 목록 조회에서 **주인 없는 알림**이 뜬다.
+          `alerts_for_owner` 가 watch_items 와 조인하므로 조용히 사라지긴 하지만,
+          행은 남아 `alert_count()` 와 `/healthz` 가 계속 센다. 한 트랜잭션에서
+          같이 지운다.
+        """
+        with self._lock:
+            with self._conn:
+                cur = self._conn.execute(
+                    "DELETE FROM watch_items WHERE id = ? AND owner_id = ?",
+                    (item_id, owner_id),
+                )
+                if not cur.rowcount:
+                    return False
+                self._conn.execute(
+                    "DELETE FROM recall_alerts WHERE watch_item_id = ?", (item_id,)
+                )
+                return True
 
     def mark_swept(self, item_id: str, on: date, new_fingerprints: list[str]) -> None:
         """스윕 결과를 기록한다.
@@ -518,13 +575,37 @@ class SqliteWatchStore:
             return after - before
 
     # ── [D-백] 오답 신고 ───────────────────────────────────────────
-    def save_miss_report(self, report_id: str, reported_at: str, payload_json: str) -> None:
+    def save_miss_report(
+        self,
+        report_id: str,
+        reported_at: str,
+        payload_json: str,
+        *,
+        dedupe_key: str | None = None,
+    ) -> tuple[str, str, bool]:
+        """신고를 남긴다. 같은 `dedupe_key` 가 이미 있으면 **그것을 돌려준다.**
+
+        돌려주는 것은 `(id, reported_at, 새로 저장했는가)` 다.
+
+        ⚠ 검수 대기열이므로 같은 줄이 두 개면 사람이 두 번 읽는다. 그리고
+          `/healthz` 의 `miss_reports.total` 이 실제 신고 수보다 크게 뜬다 -
+          그 수를 보고 "검수할 것이 쌓였다" 를 판단한다.
+        """
         with self._lock:
+            if dedupe_key:
+                row = self._conn.execute(
+                    "SELECT id, reported_at FROM miss_reports WHERE dedupe_key = ?",
+                    (dedupe_key,),
+                ).fetchone()
+                if row:
+                    return row["id"], row["reported_at"], False
             with self._conn:
                 self._conn.execute(
-                    "INSERT INTO miss_reports (id, reported_at, payload) VALUES (?, ?, ?)",
-                    (report_id, reported_at, payload_json),
+                    "INSERT INTO miss_reports (id, reported_at, payload, dedupe_key) "
+                    "VALUES (?, ?, ?, ?)",
+                    (report_id, reported_at, payload_json, dedupe_key),
                 )
+            return report_id, reported_at, True
 
     def miss_reports(self, *, since: str | None = None) -> list[tuple[str, str, str]]:
         """(id, reported_at, payload) 를 오래된 것부터. 내보내기 스크립트가 읽는다."""

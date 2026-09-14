@@ -129,7 +129,15 @@
       html += "<dt>인증번호</dt><dd>" + esc(it.kc_numbers.join(", ")) + "</dd>";
     html += "<dt>등록</dt><dd>" + fmtDate(it.registered_at) + "</dd>";
     html += "<dt>마지막 대조</dt><dd>" + fmtDate(it.last_swept_at) + "</dd>";
-    html += "</dl></div></div>";
+    html += "</dl></div>";
+    // [C-화면] 감시 해제. 셀러가 넣은 것을 못 지우면 잘못 등록한 항목이
+    // 목록에 영원히 남고, 진짜 알림이 그 사이에 묻힌다.
+    //
+    // 주의: 되돌릴 수 없으므로 한 번 묻는다. 그 항목의 알림도 같이 사라진다는
+    //   사실을 묻는 문장이 말한다 - 안 말하면 "목록에서만 빠지는 줄" 안다.
+    html += '<button class="btn-t sm" type="button" data-unwatch="' + esc(it.id) +
+            '" data-title="' + esc(title) + '">감시 해제</button>';
+    html += "</div>";
 
     if (fresh.length) {
       html += '<ul class="alerts">';
@@ -196,6 +204,39 @@
     if (stored != null) bits.push("알림 " + Number(stored) + "건");
     meta.textContent = bits.join(" · ");
     list.innerHTML = '<ul class="items">' + items.map(itemRow).join("") + "</ul>";
+    wireUnwatch();
+  }
+
+  // 감시 해제. 목록을 다시 그리기 전에 서버가 지웠는지부터 확인한다 -
+  // 화면에서 먼저 지우면 실패했을 때 "사라진 줄 알았는데 있는" 상태가 된다.
+  function wireUnwatch() {
+    Array.prototype.forEach.call(list.querySelectorAll("[data-unwatch]"), function (b) {
+      b.addEventListener("click", function () {
+        var id = b.getAttribute("data-unwatch");
+        var title = b.getAttribute("data-title") || "이 상품";
+        // 조사를 병기하지 않으려고 목적어를 앞으로 뺐다("'X' 감시를"). 화면에
+        // 나가는 문장에서 "을(를)" 은 우리가 받침을 못 센다는 표시다 (②-c).
+        if (!window.confirm(
+              "'" + title + "' 감시를 해제할까요?\n" +
+              "이 상품에 쌓인 알림도 같이 사라지고, 되돌릴 수 없습니다.")) return;
+        b.disabled = true;
+        b.textContent = "해제 중";
+        fetch("/api/v1/watch/" + encodeURIComponent(id) +
+              "?owner_id=" + encodeURIComponent(owner), { method: "DELETE" })
+          .then(function (r) {
+            if (r.status !== 204) throw new Error("서버가 " + r.status + " 로 응답했습니다");
+            // 그 항목의 방금-알림 기록도 버린다. 안 버리면 다음 렌더에서
+            // 없는 항목의 알림을 들고 있게 된다.
+            delete freshAlerts[id];
+            return load();
+          })
+          .catch(function (e) {
+            b.disabled = false;
+            b.textContent = "감시 해제";
+            fail(e);
+          });
+      });
+    });
   }
 
   function fail(e) {

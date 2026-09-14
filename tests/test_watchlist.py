@@ -471,3 +471,93 @@ def test_placeholder_filters_apply_to_both_sides_in_code():
     assert "is_model_placeholder(wm)" in body, "셀러 쪽 모델명 필터가 없습니다"
     assert "is_maker_placeholder(watched_maker)" in body
     assert "is_maker_placeholder(recall_maker)" in body
+
+
+# --- 조사를 병기하지 않는다 (②-c · 2026-09-14) ----------------------------
+#
+# "'{subject}' 과(와)" 는 우리가 받침을 못 센다는 것을 셀러에게 그대로 보여
+# 준다. 화면에 나가는 문자열에서 이 모양을 없애고 검사로 잠근다.
+
+_HEDGED = ("과(와)", "와(과)", "이(가)", "(이)가", "을(를)", "(을)를",
+           "은(는)", "(은)는", "으로(로)", "로(으로)")
+
+
+def _visible_strings(path):
+    """파이썬 파일에서 **화면에 나갈 수 있는 문자열**만 뽑는다.
+
+    ⚠ 주석과 독스트링은 뺀다. 무엇을 고쳤는지 적으려면 옛 모양을 인용해야
+      하고, 그러면 가드가 **자기 감사 기록에 걸린다** - 이 저장소에서 열두 번
+      넘게 난 모양이라 처음부터 AST 로 가른다.
+    """
+    import ast
+
+    tree = ast.parse(path.read_text(encoding="utf-8"))
+    docs = set()
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.Module, ast.ClassDef, ast.FunctionDef,
+                             ast.AsyncFunctionDef)):
+            d = ast.get_docstring(node, clean=False)
+            if d is not None:
+                docs.add(id(node.body[0].value))
+    out = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Constant) and isinstance(node.value, str):
+            if id(node) not in docs:
+                out.append((node.lineno, node.value))
+    return out
+
+
+def test_no_hedged_particles_in_user_facing_text():
+    """한글 조사를 "과(와)" 로 얼버무리지 않는다.
+
+    ⚠ 반대 방향도 재 둔다 - 이 가드는 **주석을 세지 않는다.** 주석까지 세면
+      가드를 설명하는 줄이 가드를 깨고, 그러면 설명을 못 쓰게 된다.
+    """
+    import re
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[1]
+    hits: list[str] = []
+
+    for py in (root / "sourcing_guard").rglob("*.py"):
+        for lineno, text in _visible_strings(py):
+            for bad in _HEDGED:
+                if bad in text:
+                    hits.append(f"{py.relative_to(root)}:{lineno} {bad!r}")
+
+    for page in (root / "sourcing_guard" / "static").rglob("*.html"):
+        body = page.read_text(encoding="utf-8")
+        body = re.sub(r"<!--.*?-->", "", body, flags=re.S)
+        body = re.sub(r"^\s*//.*$", "", body, flags=re.M)
+        for lineno, line in enumerate(body.splitlines(), 1):
+            for bad in _HEDGED:
+                if bad in line:
+                    hits.append(f"{page.relative_to(root)}:{lineno} {bad!r}")
+
+    assert hits == [], hits
+
+
+def test_with_particle_is_not_the_mirror_of_the_others():
+    """와/과 는 이/가·은/는·을/를 과 **반대**다.
+
+    받침이 없으면 '와', 있으면 '과'. `subject_particle` 결과를 그대로 뒤집어
+    쓰면 전부 틀린다 - 한 번 틀리면 모든 알림 문장이 틀린다.
+    """
+    from sourcing_guard.models import (
+        object_particle,
+        subject_particle,
+        topic_particle,
+        with_particle,
+    )
+
+    for word, want in (("원피스", "와"), ("가방", "과"), ("완구", "와"),
+                       ("전기주전자", "와"), ("SL-100", "과"),
+                       ("CB061R2170-3018", "과")):
+        assert with_particle(word) == want, word
+
+    # 받침 없는 말에서 나머지 셋은 **두 번째** 형태(가·는·를)를 쓰고
+    # 와/과 만 **첫 번째**(와)를 쓴다. 그 비대칭이 이 함수가 따로 있는 이유다.
+    assert (subject_particle("완구"), topic_particle("완구"),
+            object_particle("완구"), with_particle("완구")) == ("가", "는", "를", "와")
+    assert (subject_particle("가방"), topic_particle("가방"),
+            object_particle("가방"), with_particle("가방")) == ("이", "은", "을", "과")

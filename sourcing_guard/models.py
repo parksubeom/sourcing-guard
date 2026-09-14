@@ -732,6 +732,18 @@ def object_particle(word: str) -> str:
     return "를" if subject_particle(word) == "가" else "을"
 
 
+def with_particle(word: str) -> str:
+    """받침에 맞는 공동격 조사(와/과).
+
+    ⚠ 다른 셋과 **반대**다. 받침이 없으면 '와', 있으면 '과' 다 -
+    이/가·은/는·을/를 은 받침이 없을 때 두 번째 형태를 쓰는데 이것만 첫
+    번째다. 그래서 `subject_particle` 결과를 그대로 뒤집어 쓰면 틀린다.
+
+        원피스 → 와      가방 → 과
+    """
+    return "와" if subject_particle(word) == "가" else "과"
+
+
 class MatchStrength(str, Enum):
     EXACT = "exact"    # 정규화 모델명 완전 일치, 또는 인증번호 일치
     STRONG = "strong"  # 모델명 포함 관계

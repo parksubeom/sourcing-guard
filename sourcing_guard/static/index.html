@@ -746,6 +746,10 @@
           body: JSON.stringify({
             page_text: lastText || pt.value || "",
             matched_items: items.slice(0, 10),
+            // 같은 셀러가 같은 화면에서 두 번 누른 것을 서버가 가릴 수 있게
+            // 식별자를 넘긴다. 로그인이 아니고 비밀도 아니다 - 감시 목록을
+            // 묶는 것과 같은 값이다 (owner.js).
+            owner_id: window.SG.ownerId(),
             // 서버가 다시 추출하지 않게 **화면이 meta 를 그대로 넘긴다.**
             extraction_path: m.extraction_path || "unknown",
             extractor_vendor: m.extractor_vendor || null,
@@ -757,6 +761,11 @@
           if (r.status === 201) {
             note.textContent =
               "저장됐습니다 — 판정은 바뀌지 않습니다. 사람이 검수해 옮깁니다";
+          } else if (r.status === 200) {
+            // 이미 접수된 신고다. "저장하지 못했습니다" 로 보이면 셀러가
+            // 계속 누른다 - 접수됐다는 사실을 그대로 말한다.
+            note.textContent =
+              "이미 접수된 신고입니다 — 판정은 바뀌지 않습니다";
           } else if (r.status === 429) {
             note.textContent = "잠시 뒤 다시 눌러 주세요";
             btn.disabled = false;

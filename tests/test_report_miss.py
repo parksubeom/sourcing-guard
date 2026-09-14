@@ -187,3 +187,89 @@ def test_export_matches_the_audit_tsv_shape(client, store, tmp_path):
     audit = (_ROOT / "tests/fixtures/새표본235_오답.tsv").read_text(encoding="utf-8")
     audit_cols = {len(ln.split("\t")) for ln in audit.splitlines() if ln and not ln.startswith("#")}
     assert audit_cols == {4}, "오답표 형식이 바뀌었다 - 내보내기도 맞출 것"
+
+
+# ── ②-b 멱등: 두 번 눌러도 검수 대기열은 한 줄 ────────────────────
+#
+# ⚠ 검수 대기열이다. 같은 줄이 두 개면 사람이 두 번 읽고, `/healthz` 의
+#   `miss_reports.total` 이 실제 신고 수보다 크게 떠서 "쌓였다" 를 잘못 읽는다.
+
+
+def test_pressing_twice_stores_one_row(client):
+    """같은 (소유자 · 입력 텍스트 · 품목) 두 번째는 200 + 기존 id."""
+    first = _report(client, owner_id="own-A")
+    second = _report(client, owner_id="own-A")
+    assert first.status_code == 201
+    assert second.status_code == 200
+    assert first.json()["id"] == second.json()["id"]
+    assert first.json()["reported_at"] == second.json()["reported_at"]
+    assert client.get("/healthz").json()["miss_reports"]["total"] == 1
+
+
+@pytest.mark.parametrize("over", [
+    {"matched_items": ["커피메이커"]},      # 품목이 다르면 다른 신고
+    {"page_text": _TEXT + " 재질 ABS"},     # 입력이 다르면 다른 신고
+    {"owner_id": "own-B"},                  # 셀러가 다르면 다른 신고
+])
+def test_a_different_key_is_a_different_report(client, over):
+    assert _report(client, owner_id="own-A").status_code == 201
+    assert _report(client, **{"owner_id": "own-A", **over}).status_code == 201
+    assert client.get("/healthz").json()["miss_reports"]["total"] == 2
+
+
+def test_item_order_does_not_split_the_key(client):
+    """후보 순서가 키를 가르면 같은 신고가 두 줄이 된다."""
+    assert _report(client, owner_id="own-A",
+                   matched_items=["완구", "블록완구"]).status_code == 201
+    assert _report(client, owner_id="own-A",
+                   matched_items=["블록완구", "완구"]).status_code == 200
+    assert client.get("/healthz").json()["miss_reports"]["total"] == 1
+
+
+def test_without_an_owner_nothing_is_deduplicated(client):
+    """옛 화면(소유자를 안 보내는)도 그대로 저장된다 - 막지 않는다."""
+    assert _report(client).status_code == 201
+    assert _report(client).status_code == 201
+    assert client.get("/healthz").json()["miss_reports"]["total"] == 2
+
+
+def test_the_key_is_a_hash_not_the_page_text(client, store):
+    """20만 자 원문을 색인에 통째로 넣지 않는다."""
+    _report(client, owner_id="own-A")
+    key = store._conn.execute(
+        "SELECT dedupe_key FROM miss_reports"
+    ).fetchone()["dedupe_key"]
+    assert key and len(key) == 64 and _TEXT not in key
+
+
+def test_an_old_database_gains_the_column_without_being_quarantined(tmp_path):
+    """배포본 DB 에는 `dedupe_key` 가 없다. 열다가 격리되면 안 된다.
+
+    ⚠ **열 추가가 스키마보다 먼저다.** 유니크 색인이 없는 열을 가리키면 그
+      자리에서 `no such column` 으로 던지고(실측), 그 예외는 `__init__` 에서
+      **DB 손상으로 읽혀 격리**된다 - 워치 항목이 통째로 사라진다.
+    """
+    import sqlite3
+
+    db = tmp_path / "old.db"
+    conn = sqlite3.connect(db)
+    conn.executescript(
+        "CREATE TABLE miss_reports (id TEXT PRIMARY KEY, reported_at TEXT NOT NULL,"
+        " payload TEXT NOT NULL);"
+    )
+    conn.execute("INSERT INTO miss_reports VALUES ('old1','2026-09-10T00:00:00+00:00','{}')")
+    conn.execute("INSERT INTO miss_reports VALUES ('old2','2026-09-11T00:00:00+00:00','{}')")
+    conn.commit()
+    conn.close()
+
+    s = SqliteWatchStore(str(db))
+    assert s.quarantined_from is None, "옛 DB 를 손상으로 읽고 격리했다"
+    # 옛 신고는 그대로다. NULL 은 유니크 색인에서 서로 다른 값이라 둘 다 남는다.
+    assert len(s.miss_reports()) == 2
+    assert "dedupe_key" in {
+        r[1] for r in s._conn.execute("PRAGMA table_info(miss_reports)")
+    }
+    assert s.save_miss_report("n1", "2026-09-14T00:00:00+00:00", "{}",
+                              dedupe_key="k1")[2] is True
+    assert s.save_miss_report("n2", "2026-09-14T00:00:01+00:00", "{}",
+                              dedupe_key="k1") == ("n1", "2026-09-14T00:00:00+00:00", False)
