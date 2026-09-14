@@ -131,7 +131,8 @@ def test_an_address_inside_a_free_text_field_is_caught():
 def test_a_real_recall_reason_is_not_read_as_an_address(text: str):
     """⚠⚠ **실측 376건이 처음 그물을 반증했다.**
 
-    잔존 검사가 걸리면 수집 **전체가 멈춘다** - 오탐이 특히 비싸다.
+    ⚠ 멈추는 것은 **비용이 아니라 설계다** (§6 fail-closed). 놓치는 것이
+      멈추는 것보다 비싸다 - 그래서 그물을 성기게 하지 않고 **정확하게** 했다.
     """
     clean, _ = sanitize({"row": [_row(RTRVLPRVNS=text, PRDTNM=text)]})
     assert residual(clean) == [], text
@@ -170,7 +171,7 @@ def test_the_sidecar_records_what_was_removed(tmp_path: Path):
     counts = write_sanitized(out, {"row": [_row(), _row()]})
     assert out.exists()
     side = json.loads(
-        (tmp_path / "회수.json.정제.json").read_text(encoding="utf-8"))
+        (tmp_path / "회수_제거기록.json").read_text(encoding="utf-8"))
     assert side["건수"]["ADDR 제거"] == 2
     assert side["건수"]["TELNO 제거"] == 2
     assert side["잔존"] == []
@@ -225,7 +226,7 @@ def test_any_mfds_collector_saves_only_through_write_sanitized():
 
 
 # ── 커밋된 정제본에 대한 실제 보증 ──────────────────────────────
-_COLLECTED = Path(__file__).resolve().parents[1] / "tests/fixtures/식약처회수_2026-09-14.json"
+_COLLECTED = Path(__file__).resolve().parents[1] / "tests/fixtures/식약처회수_수집본_2026-09-14.json"
 
 
 def test_the_collected_fixture_has_no_third_party_contact_left():
@@ -265,7 +266,7 @@ def test_the_sidecar_records_the_unknown_fields_that_were_dropped():
     import json
 
     side = json.loads(
-        Path(str(_COLLECTED) + ".정제.json").read_text(encoding="utf-8"))
+        _COLLECTED.with_name(_COLLECTED.stem + "_제거기록" + _COLLECTED.suffix).read_text(encoding="utf-8"))
     c = side["건수"]
     assert c["행"] == 376
     for gone in DROPPED_ON_PURPOSE:
@@ -273,3 +274,28 @@ def test_the_sidecar_records_the_unknown_fields_that_were_dropped():
     # 376행 × 목록 밖 4필드
     assert c["목록 밖 필드 제거"] == 376 * 4, c
     assert side["잔존"] == []
+
+
+# ── 알려진 빈틈 ─────────────────────────────────────────────────
+#
+# ⚠⚠ **안 적은 반대 방향이 이 리포의 실제 결함 패턴이다** (CLAUDE.md §6 - 네 번
+#   났다). 그물을 정확하게 만들면서 **빠져나가는 형태 셋**을 총괄이 실측했다.
+#   376건 실측에서는 잔존 0 이라 지금 자료엔 문제가 없지만, 자료가 자라거나
+#   다른 서비스ID 를 부르면 새는 자리다.
+#
+#   ⚠ 이 검사는 **"지금 못 잡는다" 를 고정한다.** 고쳐서 잡히게 되면 여기가
+#     실패하고, 그때 이 목록에서 빼면 된다 - 조용히 좋아지는 것도 알아야 한다.
+_KNOWN_GAPS = (
+    ("시도 생략", "성남시 분당구 판교로 123"),
+    ("시군구 접미 없음", "경기 성남 분당구 판교로 123"),
+    ("시도와 시가 붙음", "경기도성남시 분당구 판교로 123"),
+)
+
+
+@pytest.mark.parametrize("why, text", _KNOWN_GAPS)
+def test_known_gaps_in_the_address_net(why: str, text: str):
+    """지금 **못 잡는** 주소 형태. 고쳐서 잡히면 이 검사가 실패한다."""
+    clean, _ = sanitize({"row": [_row(RTRVLPRVNS=text)]})
+    assert residual(clean) == [], (
+        f"{why}: 이제 잡힌다 - 좋은 일이다. `_KNOWN_GAPS` 에서 빼라"
+    )

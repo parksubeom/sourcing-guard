@@ -66,13 +66,31 @@ def register_secret(value: str | None) -> None:
         _SECRETS.add(value)
 
 
+#: 앱이 들고 있는 시크릿 설정 이름. **여기가 한 곳이다.**
+#:
+#: ⚠ `settings` 에 새 시크릿 필드를 넣고 여기 안 적으면 그 키는 마스킹을
+#:   지나지 않는다. `tests/test_masking.py` 가 `settings` 의 시크릿처럼 생긴
+#:   필드와 이 목록을 대조해 **어긋나면 실패**한다.
+#:
+#: ⚠ `DOMEGGOOK_API_KEY` · `MFDS_API_KEY` 는 여기 없다. **앱이 안 읽는다** -
+#:   `scripts/` 전용이고 각 스크립트가 호출 전에 `register_secret` 을 부른다
+#:   (CLAUDE.md R4 - 식약처는 배포본이 부르지 않는다).
+SECRET_SETTINGS: tuple[str, ...] = (
+    "anthropic_api_key", "gpt_api_key", "kats_service_key", "sync_token",
+)
+
+
 def register_settings_secrets() -> None:
-    """`.env` 에서 읽은 키를 모두 등록한다. 앱·스크립트가 시작할 때 부른다."""
+    """`.env` 에서 읽은 앱 키를 전부 등록한다. **앱이 시작할 때 맨 먼저** 부른다.
+
+    ⚠⚠ 등록 전에 던져진 예외는 키를 그대로 담는다. 2026-09-14 까지 이 함수가
+      프로덕션에서 **한 번도 안 불렸고**, 마스킹이 `scripts/` 에서만 일하고
+      있었다 - `HostNotAllowedError` 가 배포본에서 키를 담을 수 있었다.
+    """
     from .config import settings
 
-    for value in (settings.anthropic_api_key, settings.gpt_api_key,
-                  settings.kats_service_key, settings.sync_token):
-        register_secret(value)
+    for name in SECRET_SETTINGS:
+        register_secret(getattr(settings, name, None))
 
 
 def mask(text: str) -> str:

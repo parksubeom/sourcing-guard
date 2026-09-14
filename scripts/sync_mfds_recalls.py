@@ -27,6 +27,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import sys
 import time
@@ -125,9 +126,37 @@ def collect(key: str, *, page: int = PAGE, limit: int | None = None,
     return rows, total, calls
 
 
+def compare(before: Path, rows: list[dict], total: int) -> None:
+    """이전 수집본과 대조한다. **두 질문이 한 번에 닫힌다.**
+
+        총건수가 늘었나              → 새 회수가 붙는가
+        어제 식별자가 전부 살아 있나   → 과거분이 빠지는가
+
+    ⚠⚠ **이 답이 화면 문구를 정한다.** 과거분이 빠지면 "매일 갱신" 이 아니라
+      **"현재 회수 중인 목록"** 이다 - 전혀 다른 말이고 리콜 축에서 틀리면
+      비싸다. 답이 나오기 전에는 문구를 정하지 않는다 (R5).
+    """
+    old = json.loads(before.read_text(encoding="utf-8"))
+    old_ids = {str(r.get("RTRVLDSUSE_SEQ") or "") for r in old.get("행", [])} - {""}
+    new_ids = {str(r.get("RTRVLDSUSE_SEQ") or "") for r in rows} - {""}
+    gone = old_ids - new_ids
+    added = new_ids - old_ids
+    print()
+    print(f"대조 {before.name}")
+    print(f"  총건수      {len(old.get('행', []))} → {total}")
+    print(f"  사라진 식별자 {len(gone)}건   ← 0 이면 과거분이 안 빠진다")
+    print(f"  새 식별자    {len(added)}건")
+    if gone:
+        print(f"    예: {sorted(gone)[:5]}")
+    print("  → 사라진 것이 0 이면 '매일 갱신', 아니면 '현재 회수 중인 목록' 이다")
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--out", default=f"tests/fixtures/식약처회수_{date.today()}.json")
+    ap.add_argument("--out",
+                    default=f"tests/fixtures/식약처회수_수집본_{date.today()}.json")
+    ap.add_argument("--compare", default="",
+                    help="이전 수집본과 대조한다. 총건수 변화와 사라진 식별자를 센다")
     ap.add_argument("--page", type=int, default=PAGE)
     ap.add_argument("--limit", type=int, default=None,
                     help="시험용. 이 수를 넘으면 멈춘다")
@@ -145,6 +174,9 @@ def main() -> int:
 
     out = Path(args.out)
     counts = write_sanitized(out, {SERVICE: {"row": rows}})
+
+    if args.compare:
+        compare(Path(args.compare), rows, total)
     print()
     print(f"총건수 {total} · 받은 행 {len(rows)} · **실호출 {calls}회**")
     print(f"정제 건수 {dict(sorted(counts.items()))}")

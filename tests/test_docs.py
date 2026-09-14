@@ -817,3 +817,31 @@ def test_the_domeggook_quota_is_recorded_as_verified_with_a_source():
     # 작업로그는 그대로 - 날짜 기록이다.
     log = (root / "docs" / "작업로그_2026-09-04.md").read_text(encoding="utf-8")
     assert "이 문서에 없다" in log
+
+
+def test_no_stale_copy_of_the_readme_is_tracked():
+    """⚠⚠ **옛 사본이 정본처럼 보이는 것**이 이 리포의 알려진 위험이다.
+
+    `해커톤1/CLAUDE.md`·`해커톤1/hazard_rules.yaml` 이 그 자리였고(미완 §1-e),
+    2026-09-14 에 `Claude outputs/README.md` 가 같은 모양으로 발견됐다 -
+    70.4%·83.7%·"1487 passed"·"화면 네 개" 를 들고 있었다. 전부 은퇴한 값이다.
+
+    ⚠ 문서를 옮겨 적는 것을 막는 게 아니라 **정본 전체를 복사한 파일**이
+      추적되는 것을 막는다. 첫 문단은 정본에만 있어야 한다.
+    """
+    import subprocess
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[1]
+    mark = "소싱하려는 상품에 KC 인증·리콜·유해물질 문제가 없는지 정부 자료로 확인해"
+    assert mark in (root / "README.md").read_text(encoding="utf-8"), (
+        "정본 README 의 첫 문단이 바뀌었다 - 이 검사의 표지를 함께 옮겨라")
+
+    tracked = subprocess.run(["git", "ls-files", "*.md"], capture_output=True,
+                             text=True, cwd=root).stdout.split("\n")
+    copies = [
+        name for name in tracked
+        if name and name != "README.md" and (root / name).is_file()
+        and mark in (root / name).read_text(encoding="utf-8", errors="ignore")
+    ]
+    assert copies == [], f"정본 README 사본이 추적되고 있다: {copies}"

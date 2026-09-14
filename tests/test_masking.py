@@ -198,3 +198,57 @@ def test_dotenv_is_ignored():
     assert not [t for t in tracked if t == ".env" or t.endswith("/.env")]
     assert re.search(r"^\.env$", (_ROOT / ".gitignore").read_text(encoding="utf-8"),
                      re.M), ".gitignore 에 .env 가 없다"
+
+
+# ── 앱이 실제로 등록하는가 ───────────────────────────────────────
+def test_the_app_registers_its_secrets_on_startup():
+    """⚠⚠ **2026-09-14 까지 프로덕션 호출이 0회였다.**
+
+    `mask()` 는 **등록된 값만** 지운다. 등록 전에 던져진 예외는 키를 그대로
+    담는다 - 그 사이 마스킹은 `scripts/` 에서만 일하고 있었고, 배포본의
+    `HostNotAllowedError` 는 키를 담을 수 있었다. 만들어 두고 안 부른 것이
+    안 만든 것과 같은 자리다.
+    """
+    from fastapi.testclient import TestClient
+
+    from sourcing_guard import masking
+    from sourcing_guard.config import settings
+    from sourcing_guard.main import app
+
+    before = set(masking._SECRETS)
+    masking._SECRETS.clear()
+    try:
+        with TestClient(app) as c:          # lifespan 이 돈다
+            c.get("/healthz")
+        registered = set(masking._SECRETS)
+    finally:
+        masking._SECRETS.clear()
+        masking._SECRETS.update(before)
+
+    expected = {getattr(settings, n) for n in masking.SECRET_SETTINGS
+                if getattr(settings, n, None)}
+    assert expected <= registered, (
+        "앱이 시작했는데 등록 안 된 키가 있다: "
+        f"{sorted(len(x) for x in expected - registered)}자리"
+    )
+
+
+def test_every_secret_shaped_setting_is_in_the_list():
+    """⚠ `settings` 에 새 시크릿 필드를 넣고 목록에 안 적으면 마스킹을 지나지 않는다.
+
+    이름으로 가린다 - `*_key` · `*_token` · `*_secret` 은 시크릿이다.
+    (`kats_base_url` 처럼 주소인 것은 이름에 안 걸린다.)
+    """
+    import re as _re
+
+    from sourcing_guard.config import Settings
+    from sourcing_guard.masking import SECRET_SETTINGS
+
+    looks_secret = {
+        n for n in Settings.__dataclass_fields__
+        if _re.search(r"(?:_key|_token|_secret|password)$", n)
+    }
+    assert looks_secret == set(SECRET_SETTINGS), (
+        f"목록에 없는 시크릿 설정 {sorted(looks_secret - set(SECRET_SETTINGS))} · "
+        f"설정에 없는 이름 {sorted(set(SECRET_SETTINGS) - looks_secret)}"
+    )

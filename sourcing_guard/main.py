@@ -54,6 +54,7 @@ from .verifier import (
     verify,
     verify_rf_by_model,
 )
+from .masking import register_settings_secrets
 from .watchlist import sweep
 
 @asynccontextmanager
@@ -64,7 +65,14 @@ async def _lifespan(app: FastAPI):
     생기는데 뜨자마자 한 번 돌면 그 공백이 사라진다 (증분은 400KB 다).
 
     루프가 죽어도 앱은 계속 뜬다. 정부 API 장애로 스캔까지 멈추면 안 된다.
+
+    ⚠⚠ **맨 먼저 시크릿을 등록한다.** `masking.mask()` 는 등록된 값만 지운다 -
+      등록 전에 던져진 예외는 키를 그대로 담는다. 2026-09-14 까지 이 함수가
+      **프로덕션에서 한 번도 안 불렸고**, 그 사이 마스킹은 `scripts/` 에서만
+      일하고 있었다 (`tests/test_masking.py::test_the_app_registers_its_secrets`).
     """
+    register_settings_secrets()
+
     task = None
     if settings.sync_enabled:
         task = asyncio.create_task(

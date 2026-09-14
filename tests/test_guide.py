@@ -98,6 +98,17 @@ def test_the_page_never_calls_a_silent_category_out_of_scope():
     assert "못 붙인 것" in body, "붙음 0 의 뜻을 화면이 설명하지 않는다"
 
 
+def test_the_page_declares_its_boundary_not_a_hole():
+    """⚠ 침묵 47 중 다수가 식품·여행이다. **구멍이 아니라 선언된 경계다.**
+
+    심사에서 "왜 비었나" 를 물었을 때 답이 있는 것과 없는 것은 다르다.
+    README 의 "화장품·식품 등 식약처 소관 | 불가" 와 같은 말이어야 한다.
+    """
+    body = re.sub(r"<!--.*?-->", "", _HTML, flags=re.S)
+    assert "식약처 소관" in body
+    assert "선언된" in body and "경계" in body
+
+
 def test_the_page_says_the_number_is_not_an_accuracy():
     body = re.sub(r"<!--.*?-->", "", _HTML, flags=re.S)
     assert "맞힌 비율이 아닙니다" in body

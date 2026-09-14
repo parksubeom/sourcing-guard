@@ -156,3 +156,58 @@ def test_the_landing_reads_the_same_baseline(path: Path):
     guard = (_ROOT / "tests/test_landing.py").read_text(encoding="utf-8")
     assert "BASELINE_EXTRACTOR" in guard, "랜딩 가드가 기준선을 안 본다"
     assert path.exists()
+
+
+def test_the_draft_names_the_extractors_we_actually_use():
+    """⚠⚠ **제출문이 사실과 달랐다 (2026-09-14).**
+
+    §3 「사용한 AI 도구」가 "모델을 Claude 하나로 통일" 을 세 번 적고 GPT 를
+    한 번도 안 적었다. 실제 기본값은 `gpt,claude` 이고 기준 추출기는
+    `gpt-5.4-mini` 다 (CLAUDE.md R7). **대회 제출문에 사실과 다른 문장**이었고,
+    심사 유의사항은 쓴 도구를 밝히라고 요구한다.
+
+    R7 은 "납품 문서에 두 벤더를 함께 적는다" 고 이미 적어 뒀다 - 여기가
+    그것을 지키는지 보는 자리다.
+
+    ⚠ 범위는 **제출되는 답변 본문**이다. 문서 전체를 보면 정정 이력 주석이
+      통과시킨다 - 실제로 처음 판이 그래서 안 물었다.
+    """
+    from sourcing_guard.baseline import BASELINE_EXTRACTOR
+    from sourcing_guard.config import settings
+
+    for label, body in _answer_bodies().items():
+        if "AI 도구" not in label:
+            continue
+        assert settings.gpt_model in body, (
+            f"{label}: 기준 추출기 모델 {settings.gpt_model} 이 없다")
+        assert "Claude" in body, f"{label}: 2순위 벤더가 없다"
+        assert BASELINE_EXTRACTOR.upper() in body, f"{label}: 어느 쪽이 기준인지 없다"
+        for gone in ("Claude 하나로 통일", "모델은 Claude 하나", "Claude 단일"):
+            assert gone not in body, f"{label}: 사실과 다른 문장이 돌아왔다 {gone!r}"
+
+
+def test_the_draft_discloses_the_second_transfer_path():
+    """⚠ 벤더가 둘이면 **국외 전송 경로도 둘**이다 (R7).
+
+    B2B 납품 심사에서 답해야 하는 항목이라 이득만 적고 대가를 빼면 안 된다.
+    """
+    joined = "\n".join(b for k, b in _answer_bodies().items() if "AI 도구" in k)
+    assert "경로가 둘" in joined, "전송 경로가 둘이라는 사실이 안 적혀 있다"
+    assert "상세페이지 텍스트" in joined, "무엇을 보내는지 안 적혀 있다"
+
+
+def _answer_bodies() -> dict[str, str]:
+    """제출되는 답변 본문만. `## <항목>` 아래 `### N자` 절들.
+
+    ⚠ 문서 전체를 보면 정정 이력 주석이 검사를 통과시킨다 - 이 저장소에서
+      여러 번 걸린 자리다.
+    """
+    doc = _DRAFT.read_text(encoding="utf-8")
+    out: dict[str, str] = {}
+    for m in re.finditer(r"^## \d+\. (.+?)\n(.*?)(?=^## |\Z)", doc, re.S | re.M):
+        title, chunk = m.group(1).strip(), m.group(2)
+        bodies = re.findall(r"^### (\d+자)\n(.*?)(?=^### |\Z)", chunk, re.S | re.M)
+        for n, b in bodies:
+            out[f"{title} {n}"] = b
+    assert out, "답변 본문을 못 찾았다 - 제출문 구조가 바뀌었다"
+    return out
