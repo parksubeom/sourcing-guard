@@ -266,10 +266,21 @@ def test_the_readme_describes_the_automatic_sweep():
       기획서 §6.1 이 보증한다고 적은 것의 실행부이므로 README 가 말해야 한다.
     """
     readme = (Path(__file__).resolve().parents[1] / "README.md").read_text(encoding="utf-8")
-    row = next((ln for ln in readme.splitlines() if "`main.py`" in ln), "")
-    assert row, "README 에서 main.py 행을 못 찾았다"
-    assert "자동" in row and "스윕" in row, row
-    assert "{items, sweep, alerts}" in row, "GET 응답 모양이 적혀 있지 않다"
+    # ⚠ **한 줄에 매여 있었다.** 2026-09-14 에 README 를 셀러용으로 다시 쓰면서
+    #   `main.py` 행의 문구가 바뀌자, 사실이 README 안에 남아 있는데도 걸렸다.
+    #   어디에 적혔는지가 아니라 **적혔는지**를 본다.
+    assert "자동" in readme and "스윕" in readme, "자동 스윕이 README 에 없다"
+
+    # ① 셀러가 읽는 자리. 개발자 표에만 있으면 "내가 눌러야 하나" 에 답이 없다.
+    row = next((ln for ln in readme.splitlines() if "| 감시 목록 |" in ln), "")
+    assert row, "README 에서 감시 목록 행을 못 찾았다"
+    assert "자동" in row and "매일" in row, row
+
+    # ② 개발자가 읽는 자리. 응답 모양이 바뀐 적이 있어 함께 잠근다.
+    dev = next((ln for ln in readme.splitlines() if "`main.py`" in ln), "")
+    assert dev, "README 에서 main.py 행을 못 찾았다"
+    assert "자동 스윕" in dev, dev
+    assert "{items, sweep, alerts}" in dev, "GET 응답 모양이 적혀 있지 않다"
 
 
 # ── [C-화면] 실물 확인에서 잰 결함 넷 (2026-09-13) ──────────────────
