@@ -138,6 +138,50 @@ _JS_FAINT = """(minPx) => {
 }"""
 
 
+def _demo_stack(page, tag: str) -> list[str]:
+    """데모 버튼은 칩·제목·부제를 **세로로** 쌓는다 (시피님 지시 2026-09-14).
+
+    가로로 놓으면 셋이 폭을 나눠 가져 세 칸 모두 두세 어절마다 끊겼다 -
+    실측 1440px /scan 에서 칩 74 · 제목 103 · 부제 157px 였다.
+
+    이름(`flex-direction`)이 아니라 **좌표**로 잰다. 방향을 어떻게 주든
+    "아래로 쌓였는가" 가 우리가 원하는 것이다.
+
+    주의: **"한 줄에 들어가는가" 는 세지 않는다.** 처음에 그렇게 썼더니 랜딩
+      데모 셋이 전부 걸렸다 - 거기는 히어로 한 칸 안이라 카드가 좁고, 두 줄로
+      접히는 것이 정상이다. 시피님이 지적한 것은 줄 수가 아니라 **셋이 폭을
+      나눠 가지는 것**이었다. 증상이 아니라 원인을 센다.
+    """
+    rows = page.evaluate("""() => [...document.querySelectorAll('.demo')].map(d => {
+      const box = (s) => { const e = d.querySelector(s);
+                           if (!e) return null;
+                           const r = e.getBoundingClientRect();
+                           return {top: r.top, bottom: r.bottom, w: r.width}; };
+      const line = (s) => { const e = d.querySelector(s);
+                            if (!e) return null;
+                            const c = getComputedStyle(e);
+                            return {px: parseFloat(c.fontSize),
+                                    lh: parseFloat(c.lineHeight),
+                                    h: e.getBoundingClientRect().height}; };
+      return {chip: box('.chip'), t: box('.t'), n: box('.n'),
+              tL: line('.t'), nL: line('.n')};
+    })""")
+    bad: list[str] = []
+    if not rows:
+        return [f"[{tag}] 데모 버튼이 없다 - 이 검사는 아무것도 재지 않았다"]
+    for i, r in enumerate(rows):
+        seq = [x for x in (r["chip"], r["t"], r["n"]) if x]
+        for a, b in zip(seq, seq[1:]):
+            if a["bottom"] > b["top"] + 0.5:
+                bad.append(f"[{tag}] 데모 {i} 가 가로로 붙어 있다 "
+                           f"(윗칸 하단 {a['bottom']:.0f} > 아랫칸 상단 {b['top']:.0f})")
+        # 부제는 한정어다. 제목과 같은 크기면 위계가 없다.
+        if r["nL"] and r["tL"] and r["nL"]["px"] >= r["tL"]["px"]:
+            bad.append(f"[{tag}] 데모 {i} 부제가 {r['nL']['px']}px 로 "
+                       "제목과 같거나 크다")
+    return bad
+
+
 def _scan_card(page, tag: str) -> list[str]:
     """/scan 결과 카드 v2 의 자리와 동작을 잰다 (design/README §10-4·10-5)."""
     bad: list[str] = []
@@ -416,6 +460,9 @@ def main() -> int:
                             bad.append(f"[{tag}] 근거 줄 {len(card['rows'])}개에 "
                                        f"링크가 {card['links']}개다 (R2)")
 
+                    # ⑩-b 데모 버튼이 세로로 쌓였는가
+                    bad += _demo_stack(page, tag)
+
                     # ⑪ 파비콘 (버전 쿼리가 붙는다)
                     icon = page.eval_on_selector("link[rel=icon]", "e => e.href")
                     if not icon or "favicon.svg" not in icon:
@@ -464,6 +511,7 @@ def main() -> int:
                         page.wait_for_timeout(500)
                         if path == "/scan":
                             bad += _scan_card(page, tag)
+                            bad += _demo_stack(page, tag)
 
                         fam = page.evaluate(
                             "() => getComputedStyle(document.body).fontFamily")
