@@ -127,10 +127,22 @@ _KEY_LITERAL = re.compile(
     r"""(?ix)
     # ⚠ `\b` 를 쓰지 않는다. `KATS_SERVICE_KEY` 의 `_` 는 낱말 문자라
     # `SERVICE` 앞에 경계가 없다 - 실측에서 그 줄을 놓쳤다.
-    (?:api[_-]?key|service[_-]?key|auth[_-]?key|secret|token|aid|passwd|password)
+    #
+    # ⚠⚠ **이름 목록을 열거하면 우리가 안 적은 이름이 새 나간다** (2026-09-14).
+    #   `api_key|service_key|auth_key` 만 적었더니 `FOOD_SAFETY_KEY = "..."` 이
+    #   안 걸렸다 - 지금 붙이려는 식약처 키가 정확히 그 이름이 될 자리였다.
+    #   이름을 세지 말고 **`key` 로 끝나는 낱말 전부**를 본다.
+    (?:[a-z0-9]*[_-]?key|secret|token|aid|passwd|password)
     \s*[:=]\s*
     ["']?(?P<value>[A-Za-z0-9+/=\-_]{16,})["']?
     """
+)
+
+#: 식약처는 **키가 URL 경로에 들어간다.** 이름이 없으므로 이름 규칙으로는 못 본다.
+#: 모양(40자 16진수)으로 잡으면 git 해시가 전부 걸리므로 **그 호스트의 그 자리**만
+#: 본다 - 해시는 이 자리에 오지 않는다.
+_KEY_IN_PATH = re.compile(
+    r"(?i)foodsafetykorea\.go\.kr/api/(?P<value>[A-Za-z0-9]{16,})/"
 )
 
 #: 값이 아닌 것들. 이름·자리표시자·환경변수 참조.
@@ -145,9 +157,17 @@ _NOT_A_VALUE = re.compile(
 def looks_like_a_key(text: str) -> list[str]:
     """키 리터럴이 박힌 자리를 돌려준다. 커밋 전에 부른다."""
     out = []
-    for m in _KEY_LITERAL.finditer(text or ""):
-        value = m.group("value")
-        if value == MASK or _NOT_A_VALUE.match(value):
-            continue
-        out.append(value)
+    for rx in (_KEY_LITERAL, _KEY_IN_PATH):
+        for m in rx.finditer(text or ""):
+            value = m.group("value")
+            if value == MASK or _NOT_A_VALUE.match(value):
+                continue
+            # ⚠ **숫자가 하나도 없으면 키가 아니라 이름이다.** 이름 규칙을 넓히니
+            #   `key = _normalize_number` 같은 평범한 변수 대입이 걸렸다(실측 1건).
+            #   우리가 받은 키 셋(국표원·도매꾹·식약처)은 전부 숫자를 포함한다.
+            #   ⚠ 뒤집으면 - **글자만으로 된 키는 못 본다.** 그런 키를 받으면
+            #     여기를 고친다.
+            if not any(c.isdigit() for c in value):
+                continue
+            out.append(value)
     return out

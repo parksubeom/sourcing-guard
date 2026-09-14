@@ -150,14 +150,28 @@ def test_the_food_safety_host_is_never_called_from_the_app():
     ⚠ `ALLOWED_HOSTS` 에 있다는 것은 "나가도 되는 곳" 이지 "앱이 부른다" 는
       뜻이 아니다. 그 구분을 여기서 지킨다 - 없으면 다음 사람이 목록에 있다는
       이유로 어댑터를 패키지 안에 만든다.
+
+    ⚠⚠ **"이름이 나오는가" 가 아니라 "주소를 만드는가" 를 잰다** (2026-09-14).
+      처음엔 `"foodsafetykorea" in 본문` 으로 쟀는데, 키를 **가리는** 코드가
+      호스트 이름을 적자 걸렸다 - 부르는 것과 정반대인 코드다. 증상(이름)이
+      아니라 원인(주소 조립)을 본다. `httpx` 에 넘길 수 있는 것은 스킴이 붙은
+      주소뿐이다.
     """
+    import re
     from pathlib import Path
 
     root = Path(__file__).resolve().parents[1]
+    builds_a_url = re.compile(r"https?://[a-z0-9.\-]*foodsafetykorea", re.I)
     users = [
         p.relative_to(root)
         for p in (root / "sourcing_guard").rglob("*.py")
-        if "foodsafetykorea" in p.read_text(encoding="utf-8")
+        if builds_a_url.search(p.read_text(encoding="utf-8"))
         and p.name not in ("allowed_hosts.py",)
     ]
-    assert users == [], f"배포본 패키지가 식약처를 부르고 있다: {users}"
+    assert users == [], f"배포본 패키지가 식약처 주소를 만들고 있다: {users}"
+
+    # 반대 방향 - 이 정규식이 실제로 잡는지. 빈 목록이 "안 봤다" 일 수 있다.
+    assert builds_a_url.search(
+        'r = httpx.get("http://openapi.foodsafetykorea.go.kr/api/K/I0490/json/1/5")')
+    assert not builds_a_url.search(
+        r're.compile(r"foodsafetykorea\.go\.kr/api/(?P<value>[A-Za-z0-9]{16,})/")')

@@ -114,10 +114,16 @@ def test_the_host_error_does_not_keep_a_raw_copy():
     ('KATS_SERVICE_KEY = "abc123def456ghi789jkl"', True),
     ("api_key: 3f2a9c4d1e6b8a7f0c5d2e9b4a1f6c3d8e7b2a5f", True),
     ('aid="ABCDEFGH12345678IJKLMNOP"', True),
+    # ⚠ 2026-09-14 에 뚫려 있던 자리 셋. 이름을 열거하면 안 적은 이름이 샌다.
+    ('FOOD_SAFETY_KEY = "1d2c7b4a1e6f3082c5d9a7b4e1f60c38d2a95b7e"', True),
+    ("food_safety_key=1d2c7b4a1e6f3082c5d9a7b4e1f60c38d2a95b7e", True),
+    ("http://openapi.foodsafetykorea.go.kr/api/"
+     "1d2c7b4a1e6f3082c5d9a7b4e1f60c38d2a95b7e/I0490/json/1/5", True),
     ('kats_service_key=os.getenv("KATS_SERVICE_KEY")', False),   # 이름이지 값이 아니다
     ("gpt_api_key: str | None", False),                          # 타입 선언
     ("옛 HEAD  1ebf65f089765c37a9ed6c8d35057dd74f5e95c7", False),  # git 해시
     ("aid=***", False),                                          # 이미 가려진 것
+    ('key = _normalize_number(row.get("cert_number"))', False),   # 평범한 변수 대입
 ])
 def test_a_key_literal_is_found_by_its_position_not_its_shape(line, caught):
     """⚠⚠ **모양만으로는 못 가린다.**
@@ -132,11 +138,32 @@ def test_a_key_literal_is_found_by_its_position_not_its_shape(line, caught):
     assert bool(looks_like_a_key(line)) is caught, line
 
 
+#: 이 파일이 **탐지기를 시험하려고 일부러 적어 둔** 가짜 값들. 탐지기의 양성
+#: 예시는 없앨 수 없다 - 없애면 탐지기가 도는지 알 수 없다.
+#:
+#: ⚠ **파일을 통째로 빼지 않고 값을 적는다.** 파일을 빼면 이 파일에 진짜 키를
+#:   붙여넣어도 안 걸린다. 값으로 적으면 여기 없는 새 리터럴은 그대로 걸린다.
+_FAKE_EXAMPLES = frozenset({
+    "SECRET-KEY-1234567890abcdef",
+    "1d2c7b4a1e6f3082c5d9a7b4e1f60c38d2a95b7e",
+    "ABCDEFGH12345678",
+    "ABCDEFGH12345678IJKLMNOP",
+    "abc123def456ghi789jkl",
+    "3f2a9c4d1e6b8a7f0c5d2e9b4a1f6c3d8e7b2a5f",
+})
+
+
 def test_no_key_literal_is_committed():
     """커밋 전 확인. 키 리터럴이 추적 중인 파일에 있으면 실패한다.
 
     ⚠ 원자료(fixtures)는 `domeggook_pii` 가 따로 지킨다 - 여기서는 **우리가
       키를 두는 자리**(코드·설정·스크립트·문서)만 본다.
+
+    ⚠⚠ **이 검사는 커밋 전과 커밋 후의 답이 달랐다** (2026-09-14).
+      `git ls-files` 는 추적 중인 파일만 준다 - 새로 만든 이 파일은 커밋 전에는
+      목록에 없어서 **자기 자신을 안 봤고 통과했다.** 커밋한 순간 목록에 들어와
+      자기 예시 5개를 잡았다. 0a184a2 는 그래서 빨간 검사를 싣고 나갔다.
+      `git ls-files` 를 쓰는 검사는 **커밋 후에 한 번 더 돌린다.**
     """
     tracked = subprocess.run(
         ["git", "ls-files", "*.py", "*.yaml", "*.yml", "*.toml", "*.cfg", "*.env",
@@ -150,8 +177,18 @@ def test_no_key_literal_is_committed():
         for i, line in enumerate(path.read_text(encoding="utf-8",
                                                 errors="ignore").splitlines(), 1):
             for found in looks_like_a_key(line):
+                if found in _FAKE_EXAMPLES:
+                    continue
                 hits.append(f"{name}:{i} {found[:8]}…")
     assert hits == [], hits[:6]
+
+
+def test_the_fake_examples_are_all_still_used():
+    """면제 목록이 남아서 진짜 키를 덮지 않게. 안 쓰는 값은 지운다."""
+    src = (_ROOT / "tests/test_masking.py").read_text(encoding="utf-8")
+    for fake in _FAKE_EXAMPLES:
+        # 목록 선언 한 번 + 예시로 쓰이는 자리 한 번 이상.
+        assert src.count(fake) >= 2, f"{fake} 는 이제 예시로 안 쓰인다 - 목록에서 지울 것"
 
 
 def test_dotenv_is_ignored():
