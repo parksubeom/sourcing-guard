@@ -247,3 +247,103 @@ def test_item_scoped_rules_do_not_spill_across_the_category():
     toy = ids("블록", ItemCategory.CHILDREN_TOY)
     assert any(i.startswith("KC-COMMON-") for i in toy)
     assert any(i.startswith("KC-ANNEX6") for i in toy)
+
+
+# ---------------------------------------------------------------------------
+# 문장이 **화면까지 살아서 가는가** (2026-09-14)
+#
+# ⚠⚠ 이 파일의 다른 검사는 `_performance_statement` 를 **직접 불러서** 봤다.
+#   그래서 `verify()` 가 그 문장을 만들어 놓고 아래 공통 블록으로 **덮어쓰는**
+#   것을 아무도 못 봤다. 단위 검사가 통과하는데 화면은 다른 문장을 받는 자리다.
+#   부르는 쪽을 지나가는 검사가 없으면 죽은 코드가 살아남는다.
+# ---------------------------------------------------------------------------
+
+
+def _hazard_findings(legal_name: str):
+    """목 모드 휴리스틱으로는 category 가 안 잡혀 룰이 안 걸린다.
+
+    그래서 `facts` 를 직접 만들어 `verify()` 를 부른다 - 재는 것은 추출이
+    아니라 **verifier 의 분기**다.
+    """
+    from sourcing_guard.kats_client import KatsClient
+    from sourcing_guard.models import ItemCategory, ProductFacts
+    from sourcing_guard.verifier import verify
+
+    facts = ProductFacts(product_name=legal_name,
+                         category=ItemCategory.HOUSEHOLD,
+                         legal_item_name=legal_name)
+    kats = KatsClient(base_url="http://mock.invalid", service_key="x")
+    return [f for f in verify(facts, kats, RuleBook())
+            if f.kind.value == "hazard_rule_applies"]
+
+
+@pytest.mark.parametrize(
+    "legal_name, rule_id, tests, sample",
+    [
+        ("승차용 안전모", "KC-LIFE-HELMET-PERF",
+         ("충격 흡수", "유지 시스템 강도", "내관통"), "10개 중 7개"),
+        ("휴대용 레이저용품", "KC-LIFE-LASER-PERF",
+         ("겉모양", "구조", "레이저의 등급"), "10개 중 8개"),
+    ],
+)
+def test_performance_statement_survives_to_the_finding(legal_name, rule_id, tests, sample):
+    """verified 성능 룰 2건이 **시험 이름과 부적합률을 달고** 나온다."""
+    found = [f for f in _hazard_findings(legal_name)
+             if (f.detail or {}).get("rule_id") == rule_id]
+    assert len(found) == 1, [f.detail for f in _hazard_findings(legal_name)]
+    f = found[0]
+    for name in tests:
+        assert name in f.statement_ko, (name, f.statement_ko)
+    assert sample in f.statement_ko, f.statement_ko
+    # 비율만 쓰지 않고 표본을 함께 낸다 - "88%" 만 적으면 표본 8개짜리 수치가
+    # 통계처럼 읽힌다 (기획서 §2.2 에서 한 번 틀렸던 실수다).
+    assert f.detail["failure_rate"]["sample"] == sample
+    assert f.detail["test_items"] == list(tests)
+    assert f.detail["requirement_type"] == "performance"
+
+
+def test_performance_rules_never_fall_through_to_the_common_sentence():
+    """공통 물질 문장이 성능 룰을 덮지 않는다.
+
+    덮였을 때 나오던 문장을 그대로 적어 둔다 - 다시 나오면 이 검사가 잡는다.
+    """
+    for legal_name in ("승차용 안전모", "휴대용 레이저용품"):
+        for f in _hazard_findings(legal_name):
+            if (f.detail or {}).get("requirement_type") != "performance":
+                continue
+            assert "기준이 적용됩니다" not in f.statement_ko, f.statement_ko
+            assert "공통안전기준" not in f.statement_ko, f.statement_ko
+    # 되살리기 전 실측 문장. 리포 어디에도 코드로 남아 있으면 안 된다.
+    stale = "'승차용 안전모 안전요건' 기준이 적용됩니다"
+    src = (Path(sourcing_guard.__file__).parent / "verifier.py").read_text(encoding="utf-8")
+    assert stale not in src
+
+
+def test_requirement_rules_still_say_must_be_within():
+    """세 갈래로 바로 세우면서 `requirement` 가지를 깨지 않았는지 함께 잰다."""
+    found = _hazard_findings("속눈썹 열 성형기")
+    assert len(found) == 2, [f.detail for f in found]
+    for f in found:
+        assert "이하여야 합니다" in f.statement_ko, f.statement_ko
+        assert f.detail["rule_type"] == "requirement"
+        assert "requirement_type" not in f.detail
+
+
+def test_no_unreachable_append_after_continue():
+    """`continue` 뒤에 놓인 도달 불가 블록이 다시 생기지 않게 한다.
+
+    같은 코드를 두 곳에 두면 한쪽만 고쳐도 나머지가 거짓말을 계속한다 (§6).
+    """
+    import ast
+
+    src = (Path(sourcing_guard.__file__).parent / "verifier.py").read_text(encoding="utf-8")
+    tree = ast.parse(src)
+    dead: list[int] = []
+    for node in ast.walk(tree):
+        body = getattr(node, "body", None)
+        if not isinstance(body, list):
+            continue
+        for i, stmt in enumerate(body[:-1]):
+            if isinstance(stmt, (ast.Continue, ast.Break, ast.Return, ast.Raise)):
+                dead.append(body[i + 1].lineno)
+    assert dead == [], f"도달할 수 없는 줄: {dead}"

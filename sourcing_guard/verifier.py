@@ -1688,10 +1688,41 @@ def verify(
             # 말하면 셀러에게 실제보다 느슨한 수치를 보여주게 된다. 이건 "모른다"
             # 가 아니라 "틀렸다" 라서, 부속서를 수록할 때까지 그 한계를 문장에
             # 적어둔다. 값을 지어내지 않고 단정만 걷어내는 것이다 (R5·§1).
+            # 세 갈래다. **셋 다 여기서 finding 을 만들고 끝낸다** - 아래로
+            # 흘려보내면 공통 문장이 덮어쓴다.
+            #
+            # ⚠⚠ 2026-09-14 까지 그렇게 덮어쓰고 있었다. `performance` 가지가
+            #   `statement` 만 만들고 `continue` 를 안 해서 아래 공통 블록이
+            #   그 문장을 버렸고, `requirement` 가지의 `continue` **뒤에**
+            #   같은 append 가 한 벌 더 놓여 도달하지 못했다. 실측:
+            #
+            #     승차용 안전모 → "이 품목에는 '승차용 안전모 안전요건' 기준이
+            #                      적용됩니다. 시험성적서로 확인이 필요합니다."
+            #
+            #   통과해야 할 시험 이름과 정부 안전성조사 부적합률이 사라졌다.
+            #   거짓은 아니지만 셀러가 쓸 수 있는 것이 전부 빠진 문장이다.
             if rule.requirement_type == "performance":
-                # 값이 없는 시험 절차 규격이다 - 통과해야 할 시험 이름만 낸다.
-                statement = _performance_statement(rule)
-            elif rule.rule_type == "requirement":
+                # 값이 없는 시험 절차 규격이다 - 통과해야 할 시험 이름을 낸다.
+                findings.append(
+                    Finding(
+                        kind=FindingKind.HAZARD_RULE_APPLIES,
+                        signal=Signal.UNKNOWN,
+                        statement_ko=_performance_statement(rule),
+                        source_label=rule.legal_basis,
+                        source_url=rule.source_url,
+                        legal_basis=rule.legal_basis,
+                        detail={
+                            "rule_id": rule.id,
+                            "rule_type": rule.rule_type,
+                            "requirement_type": "performance",
+                            "test_items": list(rule.test_items),
+                            "failure_rate": rule.failure_rate,
+                        },
+                        checked_at=today,
+                    )
+                )
+                continue
+            if rule.rule_type == "requirement":
                 # 요건이고 기준치가 있다 - "충족 여부" 를 말한다.
                 findings.append(
                     Finding(
@@ -1702,24 +1733,6 @@ def verify(
                         source_url=rule.source_url,
                         legal_basis=rule.legal_basis,
                         detail={"rule_id": rule.id, "rule_type": "requirement"},
-                        checked_at=today,
-                    )
-                )
-                continue
-                findings.append(
-                    Finding(
-                        kind=FindingKind.HAZARD_RULE_APPLIES,
-                        signal=Signal.UNKNOWN,
-                        statement_ko=statement,
-                        source_label=rule.legal_basis,
-                        source_url=rule.source_url,
-                        legal_basis=rule.legal_basis,
-                        detail={
-                            "rule_id": rule.id,
-                            "requirement_type": "performance",
-                            "test_items": list(rule.test_items),
-                            "failure_rate": rule.failure_rate,
-                        },
                         checked_at=today,
                     )
                 )
