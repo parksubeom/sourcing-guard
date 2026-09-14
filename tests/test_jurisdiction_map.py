@@ -203,3 +203,52 @@ def test_the_baseline_five_do_not_move():
             f"소관 안내가 다섯 숫자를 움직였다 - {key}: {base[key]} → {got[key]}. "
             "안내 축은 숫자를 움직이면 안 된다 (미완 §1-d)"
         )
+
+
+# ── 소관 부처는 **목록**으로 본다 (2026-09-14) ──────────────────────
+#
+# ⚠⚠ law.go.kr 이 같은 사실을 두 칸으로 주는데 **값이 다르다.**
+#
+#     법령        lawSearch 소관부처명        lawService 소관부처.content
+#     약사법       보건복지부,식품의약품안전처    보건복지부
+#     의료기기법    보건복지부,식품의약품안전처    식품의약품안전처
+#
+#   `lawService` 는 공동 소관을 하나로 줄인다. 그 칸만 보고 우리 문구를
+#   대조했더니 약사법이 "어긋났다" 로 나왔는데, **어긋난 것은 yaml 이 아니라
+#   내가 고른 칸**이었다. 네트워크 없이 되짚을 수 있게 두 값을 yaml 에 적고
+#   여기서 잠근다.
+
+
+def test_every_row_records_both_ministry_fields(rows):
+    for r in rows:
+        assert r.get("소관부처_목록"), f"{r['key']} 에 소관부처_목록 이 없다"
+        assert r.get("소관부처_대표"), f"{r['key']} 에 소관부처_대표 가 없다"
+        assert isinstance(r["소관부처_목록"], list)
+        # 대표는 목록 안에 있어야 한다. 밖이면 둘 중 하나를 잘못 적은 것이다.
+        assert r["소관부처_대표"] in r["소관부처_목록"], r["key"]
+
+
+def test_the_wording_names_a_ministry_that_is_actually_in_charge(rows):
+    """우리 문구의 앞 기관이 **목록 안에** 있어야 한다.
+
+    ⚠ 대표와 같을 필요는 없다 - 약사법은 대표가 보건복지부인데 우리는 식약처를
+      앞에 둔다(의약품 품목허가 창구). 같은 목록인데 의료기기법은 대표가
+      식약처다. **대표로 문구를 정하면 안 된다.**
+    """
+    for r in rows:
+        head = r["기관"].split(" (")[0].strip()
+        assert head in r["소관부처_목록"], (
+            f"{r['key']}: 문구의 {head!r} 가 소관 목록 {r['소관부처_목록']} 에 없다"
+        )
+
+
+def test_the_two_fields_really_disagree_somewhere(rows):
+    """**반대 방향.** 둘이 늘 같다면 두 칸을 적을 이유가 없다.
+
+    약사법이 그 자리다 - 목록은 둘, 대표는 보건복지부 하나. 이 검사가
+    실패하면 "왜 두 칸을 적나" 를 다시 물어야 한다.
+    """
+    diverging = [r["법령"] for r in rows
+                 if len(r["소관부처_목록"]) > 1 and r["소관부처_대표"] != r["기관"].split(" (")[0]]
+    assert diverging, "두 칸이 어긋나는 줄이 하나도 없다 - 기록할 이유가 사라졌다"
+    assert "약사법" in diverging, diverging

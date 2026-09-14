@@ -66,28 +66,39 @@ def main() -> int:
                                            "type": "JSON",
                                            "MST": hit["법령일련번호"]}).json()
             info = detail["법령"]["기본정보"]
-            ministry = info["소관부처"]["content"]
+            # ⚠⚠ **두 칸이 다르다. 목록 쪽이 완전하다** (2026-09-14 실측).
+            #
+            #   lawSearch  소관부처명                 lawService  소관부처.content
+            #   약사법      보건복지부,식품의약품안전처     보건복지부
+            #   의료기기법   보건복지부,식품의약품안전처     식품의약품안전처
+            #   자동차관리법 국토교통부                  국토교통부
+            #
+            #   `lawService` 는 공동 소관을 **하나로 줄여** 준다. 그 칸만 보고
+            #   대조했더니 약사법이 "어긋났다" 로 나왔는데, 어긋난 것은 우리
+            #   yaml 이 아니라 내가 고른 칸이었다 - 목록 쪽을 본다.
+            listed = [m.strip() for m in
+                      (hit.get("소관부처명") or "").split(",") if m.strip()]
+            one = info["소관부처"]["content"]
             effective = str(info.get("시행일자") or "")
             print(f"\n=== {name}")
-            print(f"    소관 {ministry}   시행 {effective}")
-            # ⚠ yaml 은 괄호로 단서를 붙인다("식품의약품안전처 (보건복지부 공동
-            #   소관)"). 앞부분만 대조한다.
-            #
-            # ⚠⚠ **다르면 실패가 아니라 경고다.** law.go.kr 의 `소관부처` 칸은
-            #   값이 하나뿐이라 공동 소관을 담지 못한다 - 그 칸과 우리 문구가
-            #   다를 수 있고, 어느 쪽이 맞는지는 이 스크립트가 정할 일이 아니다.
-            #   대신 **yaml 이 원문 값을 적어 두게** 하고, 안 적혀 있으면 실패다.
+            print(f"    소관 {', '.join(listed) or one}"
+                  f"   (lawService 는 {one} 하나)   시행 {effective}")
+            # yaml 은 괄호로 단서를 붙인다("식품의약품안전처 (보건복지부 공동
+            # 소관)"). 앞부분이 **목록 안에** 있으면 맞다.
             head_ministry = row["기관"].split(" (")[0].strip()
-            if head_ministry != ministry:
-                if row.get("소관부처_원문") != ministry:
-                    bad.append(
-                        f"{name}: 기관이 다른데 yaml 에 원문 값이 없다 "
-                        f"(yaml {head_ministry} · 원문 {ministry}) - "
-                        "`소관부처_원문` 과 `소관_비고` 를 적으세요"
-                    )
-                else:
-                    print(f"    주의: yaml {head_ministry} · 원문 {ministry} "
-                          f"— {row.get('소관_비고', '')}")
+            if listed and head_ministry not in listed:
+                bad.append(
+                    f"{name}: 기관이 소관 목록에 없다 "
+                    f"(yaml {head_ministry} · 원문 {listed})"
+                )
+            # yaml 이 들고 있는 원문 값도 지금 받은 것과 같아야 한다. 어긋나면
+            # 법이 바뀐 것이고, 그러면 우리 문구도 다시 봐야 한다.
+            if row.get("소관부처_목록") not in (None, listed):
+                bad.append(f"{name}: yaml 소관부처_목록 {row['소관부처_목록']} "
+                           f"· 지금 {listed}")
+            if row.get("소관부처_대표") not in (None, one):
+                bad.append(f"{name}: yaml 소관부처_대표 {row['소관부처_대표']!r} "
+                           f"· 지금 {one!r}")
             if effective and effective != str(row.get("시행") or ""):
                 print(f"    ⚠ yaml 시행 {row.get('시행')} · 원문 {effective} - 갱신 필요")
 
