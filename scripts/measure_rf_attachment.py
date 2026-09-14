@@ -76,7 +76,19 @@ def main() -> int:
         for line, item in wrong:
             print(f"    {line[:58]!r}\n      → {item}")
         return 1
-    print("비대상 오부착 0 — 화면에 올릴 수 있다")
+    # ⚠⚠ **"올려도 된다" 고 말하지 않는다.** 0 은 필요조건이지 충분조건이
+    #   아니다 - 이 스크립트는 **분류된 표본만** 센다. 도매꾹239 는 아직 전수
+    #   대상분류가 없어 그 줄들은 세지도 못했다.
+    #
+    #   이 문장이 없으면 다음 사람이 `exit 0` 만 보고 화면을 켠다.
+    unclassified = sum(1 for name, sample in SAMPLES.items()
+                       for line in sample.read_text(encoding="utf-8").splitlines()
+                       if line.strip() and line.strip() not in verdicts
+                       and book.lookup_all(line.strip(), extra_aliases=alias))
+    print("비대상 오부착 0 — 다만 **아직 올리지 않는다**")
+    print(f"    분류가 없어 세지 못한 줄이 {unclassified}개다(도매꾹239).")
+    print("    선행조건은 docs/미완_목록.md §0 에 있다 - 그 표본을 전수")
+    print("    대상분류한 뒤 다시 재서 0 이면 그때 `화면연결: true` 로 켠다.")
     return 0
 
 
