@@ -156,11 +156,13 @@ def test_the_sidecar_records_what_was_removed(tmp_path: Path):
 
 # ── 저장 경로 잠금 ──────────────────────────────────────────────
 #
-# ⚠⚠ **지금은 대상이 0개다** (실호출 0회 · 수집 스크립트는 ⑦-b-3 에서 생긴다).
-#   빈 목록을 보고 통과하는 검사를 이 저장소에서 여러 번 겪었으므로, 그 수를
-#   여기 적어 **늘어나는 순간 실패하게** 둔다. 그때 아래 검사가 실제로 무는지
-#   확인하고 이 수를 옮긴다.
-_EXPECTED_COLLECTORS = 0
+# ⚠ 대상 수를 적어 **늘어나는 순간 실패하게** 둔다. 빈 목록을 보고 통과하는
+#   검사를 이 저장소에서 여러 번 겪었다.
+#
+#   0 → 1  2026-09-14 `scripts/sync_mfds_recalls.py` 가 생겼다. 래칫이 실제로
+#          물었고(설계대로), 옮기기 전에 아래 검사가 무는지 확인했다 -
+#          `write_sanitized` 를 빼면 실패, `.write_text(` 를 넣으면 실패.
+_EXPECTED_COLLECTORS = 1
 
 
 def test_any_mfds_collector_saves_only_through_write_sanitized():
