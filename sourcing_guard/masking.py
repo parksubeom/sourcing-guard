@@ -68,15 +68,26 @@ def register_secret(value: str | None) -> None:
 
 #: 앱이 들고 있는 시크릿 설정 이름. **여기가 한 곳이다.**
 #:
-#: ⚠ `settings` 에 새 시크릿 필드를 넣고 여기 안 적으면 그 키는 마스킹을
-#:   지나지 않는다. `tests/test_masking.py` 가 `settings` 의 시크릿처럼 생긴
-#:   필드와 이 목록을 대조해 **어긋나면 실패**한다.
+#: ⚠⚠ **이름으로 가리지 않는다. 둘로 나눠 전부 분류한다.**
+#:   전에는 `*_key`·`*_token` 이라는 이름 규칙으로 대조했는데, 그러면
+#:   `credential` 처럼 **이름이 다른 시크릿**이 조용히 빠진다. 지금은
+#:   `SECRET_SETTINGS` 와 `PUBLIC_SETTINGS` 를 양쪽에 두고
+#:   "`Settings` 의 모든 필드가 **둘 중 하나에** 있어야 한다" 를 검사한다 -
+#:   새 필드를 넣는 순간 **분류를 강제당하므로** 이름을 맞힐 필요가 없다.
 #:
 #: ⚠ `DOMEGGOOK_API_KEY` · `MFDS_API_KEY` 는 여기 없다. **앱이 안 읽는다** -
 #:   `scripts/` 전용이고 각 스크립트가 호출 전에 `register_secret` 을 부른다
 #:   (CLAUDE.md R4 - 식약처는 배포본이 부르지 않는다).
 SECRET_SETTINGS: tuple[str, ...] = (
     "anthropic_api_key", "gpt_api_key", "kats_service_key", "sync_token",
+)
+
+#: 시크릿이 **아닌** 설정. 모델 이름·경로·스위치처럼 로그에 남아도 되는 것.
+#:
+#: ⚠ `kats_base_url` 은 주소이지 키가 아니다. `extractor_order` 는 벤더 순서다.
+PUBLIC_SETTINGS: tuple[str, ...] = (
+    "mock_mode", "extractor_model", "gpt_model", "extractor_order",
+    "kats_base_url", "watchlist_db_path", "sync_enabled",
 )
 
 

@@ -127,6 +127,10 @@ def test_an_address_inside_a_free_text_field_is_caught():
     "황색포도상구균 검출",
     "전남 구례군 산수유 농축액",          # 원산지 표기는 개인정보가 아니다
     "제주 감귤 착즙 원액",
+    # ⚠⚠ **실측이 찾아 준 경계다** (2026-09-14 2차). 시도를 선택으로만 두면
+    #   `표시`(시로 끝남) + `식품으로`(로로 끝남)가 '시군구 + 도로명' 이 된다.
+    #   안 적어 두면 다음 사람이 또 느슨하게 만든다.
+    "제조일자 표시 식품으로 해당사항 없음",
 ])
 def test_a_real_recall_reason_is_not_read_as_an_address(text: str):
     """⚠⚠ **실측 376건이 처음 그물을 반증했다.**
@@ -276,26 +280,34 @@ def test_the_sidecar_records_the_unknown_fields_that_were_dropped():
     assert side["잔존"] == []
 
 
-# ── 알려진 빈틈 ─────────────────────────────────────────────────
+# ── 빈틈이었던 셋 — **이제 잡는다** ──────────────────────────────
 #
-# ⚠⚠ **안 적은 반대 방향이 이 리포의 실제 결함 패턴이다** (CLAUDE.md §6 - 네 번
-#   났다). 그물을 정확하게 만들면서 **빠져나가는 형태 셋**을 총괄이 실측했다.
-#   376건 실측에서는 잔존 0 이라 지금 자료엔 문제가 없지만, 자료가 자라거나
-#   다른 서비스ID 를 부르면 새는 자리다.
-#
-#   ⚠ 이 검사는 **"지금 못 잡는다" 를 고정한다.** 고쳐서 잡히게 되면 여기가
-#     실패하고, 그때 이 목록에서 빼면 된다 - 조용히 좋아지는 것도 알아야 한다.
-_KNOWN_GAPS = (
+# ⚠⚠ **안 적은 반대 방향이 이 리포의 실제 결함 패턴이다** (CLAUDE.md §6).
+#   2026-09-14 1차에서 이 셋이 빠져나갔고 "알려진 빈틈" 으로 박아 뒀다가,
+#   2차에서 닫았다. **목록을 지우지 않고 방향을 뒤집는다** - 셋이 왜 빈틈
+#   이었는지가 기록이고, 느슨해지면 여기가 먼저 운다.
+_WAS_A_GAP = (
     ("시도 생략", "성남시 분당구 판교로 123"),
     ("시군구 접미 없음", "경기 성남 분당구 판교로 123"),
     ("시도와 시가 붙음", "경기도성남시 분당구 판교로 123"),
 )
 
 
-@pytest.mark.parametrize("why, text", _KNOWN_GAPS)
-def test_known_gaps_in_the_address_net(why: str, text: str):
-    """지금 **못 잡는** 주소 형태. 고쳐서 잡히면 이 검사가 실패한다."""
+@pytest.mark.parametrize("why, text", _WAS_A_GAP)
+def test_the_addresses_that_used_to_slip_through_are_caught(why: str, text: str):
+    """1차에서 빠져나갔던 셋. **지금은 잡는다.**"""
     clean, _ = sanitize({"row": [_row(RTRVLPRVNS=text)]})
-    assert residual(clean) == [], (
-        f"{why}: 이제 잡힌다 - 좋은 일이다. `_KNOWN_GAPS` 에서 빼라"
-    )
+    assert residual(clean) == ["행[0].RTRVLPRVNS (주소)"], f"{why}: 다시 새고 있다"
+
+
+@pytest.mark.parametrize("text", [
+    "부산 중구 중앙대로 100",        # ⚠ 한 글자 구가 실재한다
+    "서울특별시 중구 세종대로 1",
+])
+def test_a_one_syllable_district_is_still_an_address(text: str):
+    """⚠ '표시' 를 막으려고 두 글자를 요구하면 **부산 중구**가 샌다.
+
+    그래서 시도가 있을 때만 한 글자를 연다.
+    """
+    clean, _ = sanitize({"row": [_row(RTRVLPRVNS=text)]})
+    assert residual(clean) == ["행[0].RTRVLPRVNS (주소)"], text

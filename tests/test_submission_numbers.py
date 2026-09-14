@@ -182,7 +182,10 @@ def test_the_draft_names_the_extractors_we_actually_use():
             f"{label}: 기준 추출기 모델 {settings.gpt_model} 이 없다")
         assert "Claude" in body, f"{label}: 2순위 벤더가 없다"
         assert BASELINE_EXTRACTOR.upper() in body, f"{label}: 어느 쪽이 기준인지 없다"
-        for gone in ("Claude 하나로 통일", "모델은 Claude 하나", "Claude 단일"):
+        # ⚠ **벤더 이름을 빼고 막는다.** "Claude 하나로 통일" 만 막으면
+        #   "GPT 하나로 통일" 로 바꿔 적어도 통과한다 - 우리가 겪은 거짓은
+        #   벤더 이름이 아니라 **"하나뿐"** 이라는 주장이었다.
+        for gone in ("하나로 통일", "모델은 Claude 하나", "단일 모델", "Claude 단일"):
             assert gone not in body, f"{label}: 사실과 다른 문장이 돌아왔다 {gone!r}"
 
 

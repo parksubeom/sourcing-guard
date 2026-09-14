@@ -233,22 +233,26 @@ def test_the_app_registers_its_secrets_on_startup():
     )
 
 
-def test_every_secret_shaped_setting_is_in_the_list():
-    """⚠ `settings` 에 새 시크릿 필드를 넣고 목록에 안 적으면 마스킹을 지나지 않는다.
+def test_every_setting_is_classified_as_secret_or_public():
+    """⚠⚠ **새 필드를 넣는 순간 분류를 강제당한다.**
 
-    이름으로 가린다 - `*_key` · `*_token` · `*_secret` 은 시크릿이다.
-    (`kats_base_url` 처럼 주소인 것은 이름에 안 걸린다.)
+    전에는 `*_key`·`*_token` 이라는 **이름 규칙**으로 대조했다. 그러면
+    `credential` 처럼 이름이 다른 시크릿이 조용히 빠진다 - 이름을 맞히는
+    검사는 이름을 안 맞힌 것을 못 본다.
+
+    지금은 목록 둘을 양쪽에 두고 `Settings` 의 **모든** 필드가 둘 중 하나에
+    있는지 본다. 어느 쪽에 넣을지는 사람이 정하고, 안 정하면 실패한다.
     """
-    import re as _re
-
     from sourcing_guard.config import Settings
-    from sourcing_guard.masking import SECRET_SETTINGS
+    from sourcing_guard.masking import PUBLIC_SETTINGS, SECRET_SETTINGS
 
-    looks_secret = {
-        n for n in Settings.__dataclass_fields__
-        if _re.search(r"(?:_key|_token|_secret|password)$", n)
-    }
-    assert looks_secret == set(SECRET_SETTINGS), (
-        f"목록에 없는 시크릿 설정 {sorted(looks_secret - set(SECRET_SETTINGS))} · "
-        f"설정에 없는 이름 {sorted(set(SECRET_SETTINGS) - looks_secret)}"
+    fields = set(Settings.__dataclass_fields__)
+    secret, public = set(SECRET_SETTINGS), set(PUBLIC_SETTINGS)
+
+    assert not secret & public, f"양쪽에 있다: {sorted(secret & public)}"
+    assert not (secret | public) - fields, (
+        f"설정에 없는 이름: {sorted((secret | public) - fields)}")
+    assert not fields - (secret | public), (
+        "분류되지 않은 설정이 있다 - 시크릿이면 SECRET_SETTINGS, 아니면 "
+        f"PUBLIC_SETTINGS 에 넣어라: {sorted(fields - (secret | public))}"
     )
