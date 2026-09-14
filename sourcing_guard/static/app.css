@@ -232,16 +232,21 @@ textarea::placeholder{color:var(--fg-3)}
 textarea:hover{border-color:var(--fg-3)}
 textarea:focus{border-color:var(--primary-50); outline:2px solid var(--border-focus); outline-offset:2px}
 .actions{display:flex; align-items:center; gap:var(--s4); margin-top:var(--s4); flex-wrap:wrap}
+/* 주 버튼은 랜딩과 같은 눈금이다 - 높이 60 · 글자 19 · 반경 --r-l
+   (`.lv2 .btn-primary`). 도구 화면만 56 이면 같은 제품이 두 벌로 보인다. */
 .btn{
-  height:56px; padding:0 var(--s6); border:0; border-radius:var(--r-m);
+  height:60px; padding:0 32px; border:0; border-radius:var(--r-l);
   background:var(--primary-50); color:#fff; font:inherit; font-size:19px; font-weight:700;
   cursor:pointer; transition:background-color 160ms ease-out;
 }
 .btn:hover{background:var(--primary-60)}
 .btn:active{background:var(--primary-70)}
 .btn:disabled{background:var(--bg-subtle); color:var(--fg-4); cursor:not-allowed}
+/* 짝이 되는 보조 버튼. **높이는 같고 무게가 다르다** - 나란히 놓였을 때
+   높이가 다르면 줄이 어긋나 보인다. /watch 의 "지금 대조하기" 도 이것이다.
+   카드 안 작은 버튼은 `.btn-t.sm` 이 38px 로 따로 받는다. */
 .btn-t{
-  height:48px; padding:0 var(--s5); border:1px solid var(--border-default); border-radius:var(--r-s);
+  height:60px; padding:0 var(--s5); border:1px solid var(--border-default); border-radius:var(--r-l);
   background:var(--bg-canvas); color:var(--fg-1); font:inherit; font-size:17px; cursor:pointer;
 }
 .btn-t:hover{border-color:var(--fg-3)}

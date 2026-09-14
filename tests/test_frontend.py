@@ -586,3 +586,35 @@ def test_watch_cta_sits_right_after_the_findings():
     assert body.index('class="watch-cta') < body.index('class="rv-foot"')
     # UNKNOWN 도 GREEN 처럼 강조한다.
     assert 'sig === "GREEN" || sig === "UNKNOWN"' in html
+
+
+# ---------------------------------------------------------------------------
+# ②-e 메타 줄은 셀러가 읽는 줄이다 (2026-09-14)
+# ---------------------------------------------------------------------------
+
+
+def test_the_meta_footer_has_no_english_state_words():
+    """`ok` 하나만 영어로 남아 있었다.
+
+    `조회 실패` · `시도 안 함` 은 한국어인데 성공만 `ok` 였다 - 셀러는 그 줄에서
+    "이게 뭔가" 로 멈춘다. 상태 낱말 셋이 같은 말로 읽혀야 비교가 된다.
+
+    ⚠ 이름(변수 `LOOKUP`)이 아니라 **값**을 본다. 키는 서버가 주는 영어이고
+      그것은 바뀌면 안 된다.
+    """
+    html = (Path(__file__).resolve().parents[1] / "sourcing_guard" / "static"
+            / "index.html").read_text(encoding="utf-8")
+    line = next(ln for ln in html.splitlines() if "var LOOKUP" in ln)
+    values = re.findall(r':\s*"([^"]+)"', line)
+    assert values, line
+    for v in values:
+        assert not re.fullmatch(r"[A-Za-z _-]+", v), f"메타 줄에 영어 리터럴: {v!r}"
+    assert "성공" in values
+
+
+def test_the_lookup_keys_stay_as_the_server_sends_them():
+    """값만 한국어로 바꾼다. 키를 번역하면 서버 응답과 못 맞춘다."""
+    html = (Path(__file__).resolve().parents[1] / "sourcing_guard" / "static"
+            / "index.html").read_text(encoding="utf-8")
+    line = next(ln for ln in html.splitlines() if "var LOOKUP" in ln)
+    assert set(re.findall(r"(\w+):", line)) == {"ok", "failed", "not_attempted"}

@@ -138,6 +138,39 @@ _JS_FAINT = """(minPx) => {
 }"""
 
 
+def _button_scale(page, tag: str) -> list[str]:
+    """주 버튼이 랜딩과 **같은 눈금**인가 (총괄 명령 ②-f · 높이 60 · 글자 19).
+
+    도구 화면만 56px 이면 같은 제품이 두 벌로 보인다. 좌표로 잰다 - CSS 선언을
+    읽으면 상속·미디어쿼리로 실제 값이 달라진 것을 못 본다.
+
+    주의: 짝이 되는 보조 버튼(`.btn-t`)은 **높이만** 같다. 나란히 놓였을 때
+      높이가 다르면 줄이 어긋나 보이고, 무게는 글자 크기와 배경이 가른다.
+    """
+    rows = page.evaluate("""() => {
+      const pick = (el) => { const r = el.getBoundingClientRect();
+                             const c = getComputedStyle(el);
+                             return {sel: el.tagName + '.' + el.className,
+                                     t: el.textContent.trim().slice(0, 10),
+                                     h: Math.round(r.height),
+                                     px: parseFloat(c.fontSize)}; };
+      return {
+        primary: [...document.querySelectorAll('.btn, .lv2 .btn-primary')].map(pick),
+        second: [...document.querySelectorAll('.btn-t:not(.sm)')].map(pick),
+      };
+    }""")
+    bad: list[str] = []
+    if not rows["primary"] and not rows["second"]:
+        return [f"[{tag}] 버튼이 없다 - 이 검사는 아무것도 재지 않았다"]
+    for b in rows["primary"]:
+        if (b["h"], b["px"]) != (60, 19.0):
+            bad.append(f"[{tag}] 주 버튼 {b['t']!r} 가 {b['h']}px/{b['px']}px 다 (60/19)")
+    for b in rows["second"]:
+        if b["h"] != 60:
+            bad.append(f"[{tag}] 보조 버튼 {b['t']!r} 높이가 {b['h']}px 다 (60)")
+    return bad
+
+
 def _demo_stack(page, tag: str) -> list[str]:
     """데모 버튼은 칩·제목·부제를 **세로로** 쌓는다 (시피님 지시 2026-09-14).
 
@@ -462,6 +495,7 @@ def main() -> int:
 
                     # ⑩-b 데모 버튼이 세로로 쌓였는가
                     bad += _demo_stack(page, tag)
+                    bad += _button_scale(page, tag)
 
                     # ⑪ 파비콘 (버전 쿼리가 붙는다)
                     icon = page.eval_on_selector("link[rel=icon]", "e => e.href")
@@ -512,6 +546,7 @@ def main() -> int:
                         if path == "/scan":
                             bad += _scan_card(page, tag)
                             bad += _demo_stack(page, tag)
+                        bad += _button_scale(page, tag)
 
                         fam = page.evaluate(
                             "() => getComputedStyle(document.body).fontFamily")
@@ -533,6 +568,8 @@ def main() -> int:
                         faint = page.evaluate(_JS_FAINT, 18)
                         if faint:
                             bad.append(f"[{tag}] --fg-4 로 그린 18px 미만 글자: {faint}")
+
+                        bad += _button_scale(page, tag)
 
                         blues = page.evaluate("""() => {
                             const out = [];

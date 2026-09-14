@@ -47,9 +47,14 @@ def test_root_is_the_landing_and_scan_is_the_tool():
     with TestClient(app) as c:
         root = c.get("/").text
         scan = c.get("/scan").text
+    # ⚠ **주석을 걷어내고 본다.** 무엇을 왜 옮겼는지 적으려면 옛 문구를
+    #   인용해야 하고, 그러면 이 가드가 **자기 감사 기록에 걸린다** - 이
+    #   저장소에서 열네 번째다. 화면에 그려지는 것만 센다.
+    root_body = re.sub(r"<!--[\s\S]*?-->", " ", root)
+    scan_body = re.sub(r"<!--[\s\S]*?-->", " ", scan)
     # v2 문구 (design/landing-v2.html). 랜딩은 소개, /scan 이 도구다.
-    assert "내 상품 검사하기" in root and 'id="pt"' not in root
-    assert 'id="pt"' in scan and "내 상품 검사하기" not in scan
+    assert "내 상품 검사하기" in root_body and 'id="pt"' not in root_body
+    assert 'id="pt"' in scan_body and "내 상품 검사하기" not in scan_body
 
 
 def test_every_page_links_the_tool_at_scan_not_root():
@@ -68,6 +73,12 @@ _SHARED_BY_DESIGN = (
     "출처 · 국가기술표준원 제품안전정보센터 공개 API, 어린이제품 공통안전기준(산업통상자원부고시 제2022-220호)",
     "안심 소싱 돋보기",
     "이 상품, 팔아도 되는지 확인합니다",   # 히어로 제목 - 설계 §2 가 두 화면 같게 뒀다
+    # ⚠ **일부러 같게 뒀다** (총괄 명령 ②-d · 2026-09-14). 랜딩 히어로가
+    #   "상세페이지를 붙여넣으세요 / KC 인증 · 리콜 · 유해물질 기준을 정부
+    #   원문으로 확인합니다" 로 약속하고, /scan 이 그 약속을 실행하는 화면이다.
+    #   누르고 넘어온 셀러가 같은 말을 다시 보는 것이 맞다.
+    "상세페이지를 붙여넣으세요.",
+    "KC 인증 · 리콜 · 유해물질 기준을 정부 원문으로 확인합니다.",
 )
 
 
