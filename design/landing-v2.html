@@ -199,7 +199,7 @@
       <h2 class="h" style="margin: 0; font-size: 32px; line-height: 42px;">AI는 읽기만 합니다.<br>판정은 규칙이 합니다.</h2>
       <p style="margin: 0; font-size: 18px; line-height: 30px; color: var(--fg-2);">AI는 상세페이지에서 품목·재질·인증번호를 읽어냅니다. 정상·주의·위험은 정부 데이터와 사람이 검수한 규칙이 정합니다.</p>
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 4px;">
-        <div style="display: flex; flex-direction: column; gap: 4px; padding: 18px 20px; background: var(--bg-subtle); border-radius: 16px;"><span style="font-size: 40px; line-height: 48px; font-weight: 700; font-variant-numeric: tabular-nums;">70.4<span style="font-size: 22px; color: var(--fg-2);">%</span></span><span style="font-size: 15px; line-height: 22px; color: var(--fg-2);">품목을 맞힌 비율 · 사람이 검수한 135건</span></div>
+        <div style="display: flex; flex-direction: column; gap: 4px; padding: 18px 20px; background: var(--bg-subtle); border-radius: 16px;"><span style="font-size: 40px; line-height: 48px; font-weight: 700; font-variant-numeric: tabular-nums;">77.0<span style="font-size: 22px; color: var(--fg-2);">%</span></span><span style="font-size: 15px; line-height: 22px; color: var(--fg-2);">품목을 맞힌 비율 · 사람이 검수한 135건</span></div>
         <div style="display: flex; flex-direction: column; gap: 4px; padding: 18px 20px; background: var(--bg-subtle); border-radius: 16px;"><span style="font-size: 40px; line-height: 48px; font-weight: 700; font-variant-numeric: tabular-nums;">0<span style="font-size: 22px; color: var(--fg-2);">건</span></span><span style="font-size: 15px; line-height: 22px; color: var(--fg-2);">대상이 아닌 상품에 등급을 붙인 수</span></div>
       </div>
       <a class="src" href="#" style="color: var(--brand); margin-top: 0;">숫자 이력 전체 · 기획서 ↗</a>
@@ -224,7 +224,7 @@
   <!-- ── 여기부터는 화면이 아니라 구현 메모 (보드 전용) ── -->
   <section class="memo" style="margin: 32px 64px 48px; padding: 24px 28px; border: 1.5px dashed var(--brand); border-radius: 16px; color: var(--fg-2); display: grid; grid-template-columns: 1fr 1fr; gap: 12px 32px;">
     <div style="grid-column: 1 / -1; color: var(--brand); font-weight: 700;">구현 메모 — 화면에 그리지 않는다</div>
-    <div>숫자는 넷만: 리콜 건수(/healthz sync.recalls 국내+국외 합, 공표분 날짜 포함) · 5개 중 1개(static/data 안전성조사_보도자료.json 2026-05-14 420/85) · 70.4%(audit_tally BASELINE ①/분모) · 0건(BASELINE ④). 전부 그 자리에서 그린다. 하드코딩 금지.</div>
+    <div>숫자는 넷만: 리콜 건수(/healthz sync.recalls 국내+국외 합, 공표분 날짜 포함) · 5개 중 1개(static/data 안전성조사_보도자료.json 2026-05-14 420/85) · 77.0%(audit_tally BASELINE ①/분모) · 0건(BASELINE ④). 전부 그 자리에서 그린다. 하드코딩 금지.</div>
     <div>예시 셋의 문구는 /api/v1/demos 의 title 만 쓴다. note 는 랜딩에서 그리지 않는다(/scan 에서만). 결과 카드 문구는 전부 서버 것: _HEADLINE[AMBER] 를 " — " 에서 두 줄로 나눠 그린다. axes name·label 그대로. 축에는 신호 색을 칠하지 않는다(ResultAxis 주석).</div>
     <div>글자 최소 15px(카드 안 한정어 14px). ink3(#8A7F78)는 본문에 쓰지 않는다 — 대비 3.7:1. 초록 칩 글자색은 #166B3A(5.8:1). 버튼 60px · 칩 15px/점 10px · 카드 테두리 1.5px.</div>
     <div>§9 단정 금지 검사 그대로. 없어진 문구: "⓪①②④" 번호, "조사 결과가 먼저 말합니다", "안 한 것과 없는 것은 다르다", 94개 · 88/83/80/70% · 71/24/20.0% · 83.7% · 규칙 수 · 두 번째 보도자료. 기획서 이력은 링크로만.</div>

@@ -456,9 +456,16 @@ def test_the_proposal_numbers_match_the_code():
     assert _flat(f"미검수 포함 상한 {s_got['ok']}건 ({s_pct}%)") in _flat(doc), (
         s_got, s_pct
     )
-    assert _flat(f"미검수 {s_rev_unreviewed}건 판정 대기") in _flat(doc), (
-        s_rev_unreviewed
-    )
+    # ⚠ 2026-09-14 에 미검수가 0 이 됐다. "미검수 0건 판정 대기" 는 한국어가
+    #   아니므로 그 경우만 문구를 달리 요구한다. **숫자는 여전히 코드에서
+    #   온다** - 0 이 아닌데 0 이라고 적으면 여기서 걸린다.
+    if s_rev_unreviewed:
+        assert _flat(f"미검수 {s_rev_unreviewed}건 판정 대기") in _flat(doc), (
+            s_rev_unreviewed
+        )
+    else:
+        assert _flat("미검수 0건") in _flat(doc), "미검수 0 을 문서가 안 적었다"
+        assert "전수 검수 완료" in doc, "검수가 끝났다는 말이 없다"
     # 애매 부착도 문서에 있어야 한다 (기준 ⑤). 분모 밖이라고 빼지 않는다.
     assert _flat(f"애매 47건 → {s_got['on_vague']}건 부착") in _flat(doc), s_got
     assert '화면에는 "비대상입니다"를 출력하지 않습니다' in doc

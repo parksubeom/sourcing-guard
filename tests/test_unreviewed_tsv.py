@@ -15,8 +15,14 @@ from pathlib import Path
 import pytest
 
 _ROOT = Path(__file__).resolve().parents[1]
-_CURRENT = _ROOT / "tests/fixtures/미검수_gpt_2026-09-12.tsv"
-_SUPERSEDED = _ROOT / "tests/fixtures/미검수_gpt.tsv"
+_CURRENT = _ROOT / "tests/fixtures/미검수_gpt_2026-09-14.tsv"
+
+#: 대체된 판들. 지우지 않고 **쓰지 못하게** 적어 둔다 - 그 날의 기록이다.
+#: 값은 그 파일이 스스로 말하던 줄 수다("왜 20이었나" 에 답하려면 필요하다).
+_SUPERSEDED = {
+    "미검수_gpt.tsv": "20줄 시점",
+    "미검수_gpt_2026-09-12.tsv": "18줄 시점",
+}
 
 
 def _sections(path: Path) -> dict[str, list[str]]:
@@ -97,14 +103,19 @@ def test_the_appendix_keeps_the_pairs_that_are_not_in_the_second_criterion():
         assert line.split("\t")[4] == "대상"
 
 
-def test_the_old_file_says_it_was_superseded():
+@pytest.mark.parametrize("name, marker", sorted(_SUPERSEDED.items()))
+def test_the_old_file_says_it_was_superseded(name: str, marker: str):
     """옛 파일을 지우지 않고 **대체됨**을 적는다 - 그 날의 기록이다.
 
     ⚠ 지우면 "왜 20이었나" 에 답할 수 없다. 남기되 쓰지 못하게 한다.
+
+    ⚠ 판이 늘면 여기에 한 줄 더한다. 머리에 **정본 이름**이 있어야 하므로
+      새 판을 낼 때 옛 판 전부를 다시 가리키게 된다 - 손이 한 번 더 가지만
+      "어느 것이 정본인가" 를 파일만 보고 알 수 있다.
     """
-    head = _SUPERSEDED.read_text(encoding="utf-8")[:1200]
-    assert "대체됨" in head and "20줄 시점" in head
-    assert _CURRENT.name in head, "정본 파일 이름이 없다"
+    head = (_ROOT / "tests/fixtures" / name).read_text(encoding="utf-8")[:1200]
+    assert "대체됨" in head and marker in head
+    assert _CURRENT.name in head, f"{name} 에 정본 파일 이름이 없다"
 
 
 @pytest.mark.parametrize("path", [_CURRENT])

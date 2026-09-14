@@ -97,7 +97,7 @@
 |---|---|
 | 약 37,000건 | 대조하는 리콜 공표 건수 (국내·국외 합계, 매일 갱신). 화면에 실제 건수와 기준일이 뜹니다 |
 | 596건 | 인증 등급을 담은 세부품목 표 (전기·생활용품 561 + 어린이제품 35) |
-| 70.4% | 실제 도매 상품 135건에 상품명만 넣었을 때 품목을 맞힌 비율 (95건). 아직 검수 못 한 18건을 모두 맞혔다고 치면 83.7% 입니다 |
+| 77.0% | 실제 도매 상품 135건에 상품명만 넣었을 때 품목을 맞힌 비율 (104건). 135건에 붙은 답을 한 줄도 남기지 않고 사람이 확인했습니다 |
 | 0건 | 안전관리 대상이 아닌 상품 53건에 등급을 잘못 붙인 수 |
 
 마지막 줄이 앞의 셋보다 중요합니다. 모든 상품에 등급을 붙이면 정답률은 올라가지만, 셀러에게 없는 의무를 만들게 됩니다. 모르는 것은 모른다고 두는 쪽을 택했습니다.
@@ -120,7 +120,7 @@ Python 3.11 이상이 필요합니다.
 python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 cp .env.example .env          # MOCK_MODE=true 라 키 없이 돕니다
-pytest -q                     # 1487 passed (2026-09-14)
+pytest -q                     # 1595 passed (2026-09-14)
 uvicorn sourcing_guard.main:app --reload
 curl -s localhost:8000/healthz
 ```

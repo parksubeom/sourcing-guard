@@ -1,6 +1,6 @@
 # ⚠⚠ **대체됨 — 2026-09-11 (20줄 시점)의 기록이다. 쓰지 마라.**
 #
-#   정본: `tests/fixtures/미검수_gpt_2026-09-12.tsv`
+#   정본: `tests/fixtures/미검수_gpt_2026-09-14.tsv`
 #   생성: `python scripts/export_unreviewed.py --out <파일>`  (LLM 0회)
 #
 #   무엇이 틀렸나: 이 파일은 **애매 줄 2건을 ② 미검수에 섞어** 20줄이었다.

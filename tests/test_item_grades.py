@@ -1026,9 +1026,10 @@ def test_the_audited_wrong_answers_are_the_only_ones_left():
     ⚠ 발표에 쓰는 숫자는 매칭률이 아니라 **정답률**이다.
     ⚠ 분모는 235 가 아니라 **안전관리대상 136** 이다 (새표본235_대상분류.tsv).
     ⚠ 발표 숫자는 **단건 경로**다 (데모가 단건이다). 이 검사는 배치를 잠근다.
-        배치 · 상품명만 · 대상 135    정답 111 (82.2%) · 애매 2 · 오답 1
-        단건 · 상품명만 · 대상 135    정답 113 (83.7%) · 애매 2 · 오답 1  ← 발표
-        전체 매칭 116/235
+      숫자는 `sourcing_guard/baseline.py` 한 곳에서 읽는다 - 여기 적으면 갈린다.
+      2026-09-14 미검수 전수 검수 뒤: 배치 103 · 단건 104 · 미검수 둘 다 0.
+      전에 이 자리에 있던 111(82.2%) · 113(83.7%)은 **미검수를 다 맞았다고 친
+      상한**이었고, 검수해 보니 둘 다 내려갔다.
 
     ⚠ 2026-09-07~08 101 → 116: 안전기준준수 부속서 1(가정용 섬유제품)
       [표 1] 세부분류를 옮겼다 (docs/부속서1_가정용섬유제품_종류표.md).
@@ -1060,10 +1061,13 @@ def test_the_audited_wrong_answers_are_the_only_ones_left():
     results = {r: sorted({g.item for g in book.lookup_all(r)}) for r in rows}
     got = tally(results)
 
-    assert got["matched_all"] == 116, got
-    assert got["ok"] == 111, got
-    assert got["vague"] == 2, got
-    assert got["wrong"] == 1, got
+    # ⚠ 숫자를 여기 적지 않는다. `baseline.py` 가 한 곳이고, 전에 111 을 여기
+    #   적어 둔 것이 제출문의 82.2% 와 갈려 있던 그 자리다 (CLAUDE.md §6).
+    from sourcing_guard.baseline import BASELINE_BATCH, BASELINE_MATCH
+
+    assert got["matched_all"] == BASELINE_MATCH["새표본235"]["matched"], got
+    for key in ("denominator", "ok", "ok_upper", "unreviewed", "vague", "wrong"):
+        assert got[key] == BASELINE_BATCH[key], (key, got[key], BASELINE_BATCH[key])
 
     # 검수 파일에 적힌 줄은 **아직 그 품목이 붙고 있어야** 한다 - 다른 품목이
     # 붙어 고쳐졌으면 [고쳐짐]·[검수했고 정답] 절로 옮기거나 사유를 적을 것.
