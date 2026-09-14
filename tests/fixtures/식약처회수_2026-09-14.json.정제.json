@@ -1,0 +1,31 @@
+{
+ "대상": "식약처회수_2026-09-14.json",
+ "남긴_필드": [
+  "PRDTNM",
+  "BSSHNM",
+  "RTRVLPRVNS",
+  "BRCDNO",
+  "PRDLST_CD",
+  "PRDLST_CD_NM",
+  "RTRVL_GRDCD_NM",
+  "CRET_DTM",
+  "RTRVLDSUSE_SEQ",
+  "MNFDT",
+  "DISTBTMLMT"
+ ],
+ "이름_찍어_버린_필드": [
+  "ADDR",
+  "TELNO",
+  "IMG_FILE_PATH",
+  "LCNS_NO"
+ ],
+ "건수": {
+  "ADDR 제거": 376,
+  "IMG_FILE_PATH 제거": 376,
+  "LCNS_NO 제거": 376,
+  "TELNO 제거": 376,
+  "목록 밖 필드 제거": 1504,
+  "행": 376
+ },
+ "잔존": []
+}

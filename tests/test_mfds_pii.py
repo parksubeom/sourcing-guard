@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 import pytest
@@ -116,8 +117,35 @@ def test_a_phone_inside_a_free_text_field_stops_the_save(tmp_path: Path):
 
 
 def test_an_address_inside_a_free_text_field_is_caught():
-    clean, _ = sanitize({"row": [_row(BSSHNM="○○식품 (경기도 성남시)")]})
+    """세 토막(시도 + 시군구 + 로/길/읍/면/동/리)이면 잡는다."""
+    clean, _ = sanitize({"row": [_row(BSSHNM="○○식품 (경기도 성남시 분당구 판교로 123)")]})
     assert residual(clean) == ["행[0].BSSHNM (주소)"]
+
+
+@pytest.mark.parametrize("text", [
+    "황색포도상구균 기준 규격 부적합",   # ⚠ 실측 5건. '황색포도'+'상구' 로 걸렸었다
+    "황색포도상구균 검출",
+    "전남 구례군 산수유 농축액",          # 원산지 표기는 개인정보가 아니다
+    "제주 감귤 착즙 원액",
+])
+def test_a_real_recall_reason_is_not_read_as_an_address(text: str):
+    """⚠⚠ **실측 376건이 처음 그물을 반증했다.**
+
+    잔존 검사가 걸리면 수집 **전체가 멈춘다** - 오탐이 특히 비싸다.
+    """
+    clean, _ = sanitize({"row": [_row(RTRVLPRVNS=text, PRDTNM=text)]})
+    assert residual(clean) == [], text
+
+
+@pytest.mark.parametrize("text", [
+    "경기 광주시 곤지암읍 소재 업소 제품",
+    "○○식품(서울특별시 강남구 테헤란로 1) 회수",
+    "충남 아산시 배방읍 공장에서 제조",
+])
+def test_a_full_address_in_free_text_still_stops_the_save(text: str):
+    """반대 방향 - 그물을 성기게 했다고 진짜 주소를 놓치면 안 된다."""
+    clean, _ = sanitize({"row": [_row(RTRVLPRVNS=text)]})
+    assert residual(clean) == ["행[0].RTRVLPRVNS (주소)"], text
 
 
 def test_a_barcode_is_not_a_phone_number():
@@ -194,3 +222,54 @@ def test_any_mfds_collector_saves_only_through_write_sanitized():
         assert not re.search(r"\.write_text\(", code), (
             f"{p.name} 이 정제 경로 밖에서 파일을 쓴다"
         )
+
+
+# ── 커밋된 정제본에 대한 실제 보증 ──────────────────────────────
+_COLLECTED = Path(__file__).resolve().parents[1] / "tests/fixtures/식약처회수_2026-09-14.json"
+
+
+def test_the_collected_fixture_has_no_third_party_contact_left():
+    """**리포에 대한 실제 보증이다.** 커밋된 정제본을 다시 훑는다.
+
+    2026-09-14 20:54 KST · 실호출 4회 · 376건 전량.
+    """
+    import json
+
+    body = _COLLECTED.read_text(encoding="utf-8")
+    data = json.loads(body)
+    assert len(data["행"]) == 376, len(data["행"])
+    assert data["행_경로"] == ".I0490.row"
+
+    for name, rx in (("전화", r"0\d{1,2}-\d{3,4}-\d{4}"),
+                     ("대표번호", r"1[568]\d{2}-\d{4}"),
+                     ("사업자번호", r"\d{3}-\d{2}-\d{5}"),
+                     ("이메일", r"[\w.]+@[\w.]+\.\w{2,}")):
+        assert not re.findall(rx, body), f"{name} 패턴이 남아 있다"
+    for gone in DROPPED_ON_PURPOSE:
+        assert gone not in body, f"{gone} 가 정제본에 있다"
+
+    keys: set[str] = set()
+    for row in data["행"]:
+        keys |= set(row)
+    assert keys <= set(KEEP_FIELDS), f"남길 목록 밖 필드: {sorted(keys - set(KEEP_FIELDS))}"
+    assert residual(data) == []
+
+
+def test_the_sidecar_records_the_unknown_fields_that_were_dropped():
+    """⚠⚠ **남길 목록이 실제로 일한 증거다.**
+
+    총괄 목록에 없던 필드 4개(FRMLCUNIT · PRDLST_REPORT_NO · PRDLST_TYPE ·
+    RTRVLPLANDOC_RTRVLMTHD)가 왔고 자동으로 버려졌다. 지울 목록이었으면 넷 다
+    디스크에 남았다 - 방향을 뒤집은 이유가 여기서 실측으로 확인됐다.
+    """
+    import json
+
+    side = json.loads(
+        Path(str(_COLLECTED) + ".정제.json").read_text(encoding="utf-8"))
+    c = side["건수"]
+    assert c["행"] == 376
+    for gone in DROPPED_ON_PURPOSE:
+        assert c[f"{gone} 제거"] == 376, (gone, c)
+    # 376행 × 목록 밖 4필드
+    assert c["목록 밖 필드 제거"] == 376 * 4, c
+    assert side["잔존"] == []
