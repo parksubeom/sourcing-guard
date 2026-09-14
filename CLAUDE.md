@@ -69,6 +69,7 @@ v1 에서 뺐고(핸드오프 §3.4 - 투표자가 확장을 설치할 리 없�
 | `rra.go.kr` | 전파인증 모델명 검색·부적합 현황 (HTML) | 예정 `rra_client.py` |
 | `law.go.kr` | 고시·별표·부속서 원문 (DRF OpenAPI, `OC=test`) | `verifier.py` 근거 URL · `scripts/` 자료 수집 |
 | `domeggook.com` | 도매꾹·도매매 상품 상세 (**공개 Open API 전용**) | `domeggook_client.py` |
+| `openapi.foodsafetykorea.go.kr` | 식약처 회수·판매중지 (I0490) | **`scripts/` 전용** — 배포본은 부르지 않는다 |
 
 전부 정부 도메인이며 상거래 사이트가 아니다. 도메인을 추가하려면 이 표에 먼저 적는다.
 
@@ -77,6 +78,24 @@ v1 에서 뺐고(핸드오프 §3.4 - 투표자가 확장을 설치할 리 없�
 쓰지 않기 위한 통로다 (R5).
 
 `domeggook.com` 은 **공개 Open API 만** 쓴다. HTML 스크래핑은 금지다.
+
+⚠⚠ **`openapi.foodsafetykorea.go.kr` 은 `scripts/` 안에서만 부른다** (2026-09-14
+    총괄 판단). 배포본 앱은 이 호스트로 나가지 않는다.
+
+    이유가 둘이다. **키가 URL 경로에 들어가고**(`/api/{키}/I0490/json/1/5`)
+    **HTTPS 가 안 된다**(총괄 실측: https → connection reset ×2 · http → 200).
+    배포본이 매일 직접 부르면 키가 평문으로, 그것도 fly 로그·예외 메시지에
+    URL 째로 남는다.
+
+    우리 리콜 동기화는 이미 "받아서 로컬 사본을 쓴다" 구조이므로 같은 모양으로
+    간다 — `scripts/sync_mfds_recalls.py` 가 받아 사본을 만들고 앱은 그 사본만
+    읽는다. **fly secret 은 넣지 않는다.**
+
+    ⚠ 다음 사람이 배포본에서 부르려 한다. 그때 이 줄을 읽어라.
+
+⚠ 키가 문자열에 남는 자리는 `sourcing_guard/masking.py` 가 지운다. 새는 자리를
+  재고 만들었다(2026-09-14) — `HostNotAllowedError` 의 `str`·`repr`·`.url` 이
+  **유일하게 확인된 누출**이었고, httpx 예외는 메시지에 URL 을 담지 않는다.
 
 허용: `https://www.domeggook.com/ssl/api/` (`mode=getItemView`, `aid`=API Key).
       상품번호로 상세 정보를 받는다. 이 API 에는 `detail.safetyCert[].no`

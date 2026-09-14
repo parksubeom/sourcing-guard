@@ -138,3 +138,26 @@ def test_the_domeggook_client_is_not_wired_into_the_deployed_app():
     assert "domeggook" not in main.lower(), (
         "main.py 가 도매꾹을 부른다 - 고정 egress IP 를 확정했는가"
     )
+
+
+def test_the_food_safety_host_is_never_called_from_the_app():
+    """⚠⚠ **식약처는 `scripts/` 안에서만 부른다** (2026-09-14 총괄 판단).
+
+    키가 URL **경로**에 들어가고 HTTPS 가 안 된다. 배포본이 매일 부르면 키가
+    평문으로, 그것도 로그·예외에 URL 째로 남는다. 받아서 로컬 사본을 만들고
+    앱은 사본만 읽는다.
+
+    ⚠ `ALLOWED_HOSTS` 에 있다는 것은 "나가도 되는 곳" 이지 "앱이 부른다" 는
+      뜻이 아니다. 그 구분을 여기서 지킨다 - 없으면 다음 사람이 목록에 있다는
+      이유로 어댑터를 패키지 안에 만든다.
+    """
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[1]
+    users = [
+        p.relative_to(root)
+        for p in (root / "sourcing_guard").rglob("*.py")
+        if "foodsafetykorea" in p.read_text(encoding="utf-8")
+        and p.name not in ("allowed_hosts.py",)
+    ]
+    assert users == [], f"배포본 패키지가 식약처를 부르고 있다: {users}"
