@@ -59,7 +59,7 @@ def test_root_is_the_landing_and_scan_is_the_tool():
 
 def test_every_page_links_the_tool_at_scan_not_root():
     """`/` 가 도구에서 소개로 바뀌었다. 옛 링크가 남으면 소개로 튄다."""
-    for name in ("index.html", "batch.html", "watch.html", "landing.html"):
+    for name in ("index.html", "batch.html", "watch.html", "landing.html", "guide.html"):
         src = (_STATIC / name).read_text(encoding="utf-8")
         assert 'href="/scan"' in src, f"{name} 에 /scan 링크가 없다"
         # "/" 는 소개 링크로만 남는다 - 도구 문구를 달고 있으면 옛 링크다.

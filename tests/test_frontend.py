@@ -17,7 +17,9 @@ from fastapi.testclient import TestClient
 
 STATIC = Path("sourcing_guard/static")
 # ⚠ landing.html 을 넣어야 이모지·h1·고지문·단정 표현 가드가 랜딩에도 걸린다.
-PAGES = ["index.html", "watch.html", "landing.html"]
+# ⚠ guide.html 도 넣는다 - 이모지·h1·고지문·단정 표현 가드가 새 화면에도
+#   걸려야 한다. 화면을 늘리면서 가드 목록을 안 늘리면 새 화면만 무방비다.
+PAGES = ["index.html", "watch.html", "landing.html", "guide.html"]
 ASSETS = PAGES + ["app.css", "owner.js"]
 
 
@@ -90,7 +92,10 @@ def test_body_does_not_use_h1(html):
     for name in PAGES:
         body = (STATIC / name).read_text(encoding="utf-8")
         found = re.findall(r"<h1[\s>]", body, re.I)
-        if _Path(name).stem == "landing":
+        # ⚠ **문서 화면**은 제목이 하나 있어야 한다. 도구 화면(스캔·감시)은
+        #   머리말이 곧 제목이라 h1 을 두지 않지만, 랜딩과 가이드는 읽는 글이고
+        #   h1 이 없으면 스크린리더가 문서 제목을 못 읽는다. 둘 다 **하나만**.
+        if _Path(name).stem in ("landing", "guide"):
             assert len(found) <= 1, f"{name}: h1 이 {len(found)}개 - 하나만 둔다"
             continue
         assert not found, f"{name}: 도구 화면은 h2 이하로 운영한다"

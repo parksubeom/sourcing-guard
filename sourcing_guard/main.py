@@ -309,6 +309,20 @@ def watch_page() -> HTMLResponse:
     return _page("watch.html")
 
 
+@app.api_route("/guide", methods=_PAGE_METHODS, response_class=HTMLResponse, include_in_schema=False)
+def guide_page() -> HTMLResponse:
+    """[M-5] 카테고리 가이드 — **안내 축이다. 아무것도 판정하지 않는다.**
+
+    도매 카테고리마다 "이 도구가 실제로 무엇을 말할 수 있는지" 를 보여 준다.
+    카테고리 이름으로 정한 것이 아니라 그 카테고리 상품명을 배치 경로에
+    넣어 **붙은 것만** 옮겼다 (R5).
+
+    ⚠ 숫자는 전부 매칭률이고 정답률이 아니다. 화면이 라벨을 반드시 그린다
+      (`tests/test_guide.py`).
+    """
+    return _page("guide.html")
+
+
 @app.api_route("/healthz", methods=_PAGE_METHODS)
 def healthz() -> dict:
     """우리 프로세스 상태 + 정부 API 상태.
@@ -487,6 +501,20 @@ def trigger_sync(
     return run_sync(
         _kats, _store, force_initial=force_initial, on_updated=_recalls.invalidate
     ).to_dict()
+
+
+@app.get("/api/v1/guide", include_in_schema=False)
+def guide_data() -> dict:
+    """[M-5] 카테고리 가이드 자료.
+
+    ⚠⚠ **화면에 숫자를 적지 않으려고 있는 경로다.** 카테고리 수·말할 수 있는
+      수·라벨 문구까지 전부 여기서 그린다 - HTML 에 적으면 자료가 바뀔 때
+      한쪽만 낡는다 (§6 · 랜딩 ④ 와 같은 규칙).
+    """
+    from .category_guide import rows as _guide_rows, summary as _guide_summary
+
+    return {"summary": _guide_summary(),
+            "rows": [r.as_dict() for r in _guide_rows()]}
 
 
 @app.get("/api/v1/demos", include_in_schema=False)

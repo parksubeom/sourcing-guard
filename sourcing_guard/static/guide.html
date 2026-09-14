@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>카테고리 가이드 — 안심 소싱 돋보기</title>
+<meta name="description" content="도매 카테고리별로 이 도구가 실제로 무엇을 말할 수 있는지. 관찰된 등급·부속서·소관만 적었습니다.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+<link rel="stylesheet" href="/static/app.css">
+<!--
+  [M-5] 카테고리 가이드. 스타일은 app.css 의 "가이드" 절에만 있다 -
+  페이지 전용 style 태그를 여기 두지 않는다 (검사가 막는다).
+
+  **숫자와 문구를 여기 적지 않는다.** 전부 /api/v1/guide 가 그린다:
+    카테고리 수 · 말할 수 있는 수 · 침묵 수 · 제목 수 · 라벨 문구 · 표 전체
+  자료는 sourcing_guard/data/category_guide.tsv 이고
+  scripts/build_category_guide.py 가 만든다 (LLM 0 · 네트워크 0).
+
+  주의(중요): 붙음 0 은 "비대상" 이 아니다. 우리가 못 붙인 것이다 (R3).
+    화면 문구를 그렇게 쓰지 않는다.
+-->
+</head>
+<body class="lv2">
+<a class="skip" href="#main">본문으로 건너가기</a>
+
+<header class="masthead">
+  <div class="container">
+    <a class="brand" href="/">
+      <svg class="mark" viewBox="0 0 120 120" aria-hidden="true"><use href="/static/mascot.svg#mungchi-calm"/></svg>
+      <span class="wordmark">안심 소싱 돋보기</span>
+    </a>
+    <nav class="pages" aria-label="주요 화면">
+      <a href="/">소개</a>
+      <a href="/scan">상품 검사</a>
+      <a href="/batch">대량 검사</a>
+      <a href="/watch">감시 목록</a>
+      <a href="/guide" aria-current="page">카테고리 가이드</a>
+    </nav>
+  </div>
+</header>
+
+<main id="main" class="container gd">
+  <h1>카테고리 가이드</h1>
+  <p class="gd-lede">도매 카테고리마다 <strong>이 도구가 실제로 무엇을 말할 수 있는지</strong> 적었습니다.
+    카테고리 이름으로 정한 것이 아니라, 그 카테고리의 상품명을 실제로 넣어 보고
+    <strong>붙은 것만</strong> 옮겼습니다.</p>
+
+  <p class="gd-label" id="label" role="note"></p>
+
+  <ul class="gd-sum" id="sum"></ul>
+
+  <div class="gd-tools">
+    <label class="gd-find" for="q">카테고리 찾기</label>
+    <input id="q" type="search" placeholder="예: 유아동 · 가전 · 가방" autocomplete="off">
+    <label class="gd-only"><input type="checkbox" id="only"> 말할 수 있는 것만</label>
+  </div>
+
+  <div class="gd-wrap">
+    <table class="gd-tbl">
+      <thead>
+        <tr>
+          <th scope="col">카테고리</th>
+          <th scope="col">표본에서 붙음</th>
+          <th scope="col">관찰된 품목</th>
+          <th scope="col">관찰된 등급</th>
+          <th scope="col">근거 · 소관</th>
+        </tr>
+      </thead>
+      <tbody id="body"></tbody>
+    </table>
+  </div>
+
+  <p class="gd-none" id="none" hidden>찾는 카테고리가 없습니다.</p>
+
+  <section class="gd-read">
+    <h2>읽는 법</h2>
+    <dl>
+      <dt>“표본에서 붙음”</dt>
+      <dd>그 카테고리 상품명 표본 중 우리 등급표에 걸린 비율입니다.
+        <strong>맞힌 비율이 아닙니다</strong> — 사람이 검수하지 않았습니다.</dd>
+      <dt>붙음이 0인 카테고리</dt>
+      <dd>우리가 <strong>못 붙인 것</strong>이지, 의무가 없다는 뜻이 아닙니다.
+        안전관리 대상인지는 따로 확인이 필요합니다.</dd>
+      <dt>“관찰된 등급”</dt>
+      <dd>그 카테고리에서 실제로 붙은 품목의 등급입니다. 등급은 정부 등급표에서
+        그대로 읽었고, 링크로 원문을 확인하실 수 있습니다.</dd>
+      <dt>“소관”</dt>
+      <dd>전안법 밖으로 보이는 표기가 표본에서 관찰된 경우입니다. 괄호 안이 관찰
+        건수이고, <strong>건수가 적으면 그 카테고리 전체가 그 소관이라는 뜻이 아닙니다.</strong></dd>
+    </dl>
+  </section>
+
+  <p class="note">본 결과는 공개된 정부 데이터에 기반한 참고 정보이며, 법적 판단이나 안전 인증을 대체하지 않습니다.</p>
+</main>
+
+<script src="/static/guide.js"></script>
+</body>
+</html>

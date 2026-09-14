@@ -965,3 +965,54 @@ body{background:var(--bg-page)}
 .rv-foot span{font-size:14px; line-height:20px; color:var(--fg-2)}
 .rv-foot b{font-weight:700; color:var(--fg-1)}
 @media (max-width:640px){ .rv-foot{padding:14px 20px} }
+
+/* ── [M-5] 카테고리 가이드 ────────────────────────────────────────
+   주의(중요): 화면 글자는 15px 이상이다. 이 절에 14px 이하를 두지 않는다.
+   숫자·문구는 전부 /api/v1/guide 가 그린다 - 여기에도 HTML 에도 안 적는다. */
+.gd{padding-block:var(--s8) var(--s12)}
+.gd h1{font-size:28px; line-height:36px; font-weight:700; color:var(--fg-1); margin:0 0 var(--s3)}
+.gd-lede{font-size:16px; line-height:26px; color:var(--fg-2); margin:0 0 var(--s5); max-width:62ch}
+.gd-label{font-size:15px; line-height:24px; color:var(--signal-amber-text);
+          background:var(--signal-amber-tint); border:1px solid var(--signal-amber-border);
+          border-radius:var(--r-m); padding:12px 16px; margin:0 0 var(--s6)}
+.gd-sum{list-style:none; display:flex; flex-wrap:wrap; gap:var(--s3); padding:0; margin:0 0 var(--s6)}
+.gd-sum li{flex:1 1 160px; background:var(--bg-subtle); border-radius:var(--r-xl); padding:16px 18px;
+           display:flex; flex-direction:column; gap:2px}
+.gd-sum b{font-size:30px; line-height:36px; font-weight:700; color:var(--fg-1); font-variant-numeric:tabular-nums}
+.gd-sum span{font-size:15px; line-height:22px; color:var(--fg-2)}
+.gd-tools{display:flex; flex-wrap:wrap; align-items:center; gap:var(--s3); margin:0 0 var(--s4)}
+.gd-find{font-size:15px; line-height:22px; color:var(--fg-2); font-weight:500}
+.gd-tools input[type=search]{flex:1 1 240px; min-width:0; font:inherit; font-size:16px; line-height:24px;
+    padding:12px 14px; border:1px solid var(--border-default); border-radius:var(--r-m);
+    background:var(--bg-canvas); color:var(--fg-1)}
+.gd-tools input[type=search]:focus-visible{outline:2px solid var(--border-focus); outline-offset:1px}
+.gd-only{font-size:15px; line-height:24px; color:var(--fg-2); display:flex; align-items:center; gap:8px}
+.gd-wrap{overflow-x:auto; border:1px solid var(--border-default); border-radius:var(--r-xl); background:var(--bg-canvas)}
+.gd-tbl{width:100%; border-collapse:collapse; min-width:760px}
+.gd-tbl th, .gd-tbl td{text-align:left; vertical-align:top; padding:14px 16px;
+                       border-bottom:1px solid var(--border-default); font-size:15px; line-height:22px}
+.gd-tbl thead th{font-size:15px; line-height:22px; font-weight:700; color:var(--fg-2);
+                 background:var(--bg-subtle); position:sticky; top:0}
+.gd-tbl tbody tr:last-child th, .gd-tbl tbody tr:last-child td{border-bottom:0}
+.gd-cat{display:block; font-size:16px; line-height:24px; font-weight:700; color:var(--fg-1)}
+.gd-parent{display:block; font-size:15px; line-height:22px; color:var(--fg-3)}
+.gd-n{white-space:nowrap; font-variant-numeric:tabular-nums; color:var(--fg-2)}
+.gd-n b{color:var(--fg-1); font-weight:700}
+.gd-pill, .gd-grade{display:inline-block; margin:0 6px 6px 0; padding:4px 10px; border-radius:var(--r-pill);
+                    font-size:15px; line-height:22px}
+.gd-pill{background:var(--bg-subtle); color:var(--fg-1)}
+.gd-grade{background:var(--brand-tint); color:var(--primary-70); font-weight:500}
+.gd-basis{color:var(--fg-3); max-width:40ch}
+.gd-quiet{background:var(--bg-page)}
+.gd-quiet-txt{color:var(--fg-3)}
+.gd-none{font-size:16px; line-height:26px; color:var(--fg-2); padding:var(--s6) 0}
+.gd-read{margin-top:var(--s10)}
+.gd-read h2{font-size:20px; line-height:28px; font-weight:700; color:var(--fg-1); margin:0 0 var(--s3)}
+.gd-read dl{margin:0; display:grid; gap:var(--s3)}
+.gd-read dt{font-size:16px; line-height:24px; font-weight:700; color:var(--fg-1)}
+.gd-read dd{margin:2px 0 0; font-size:15px; line-height:24px; color:var(--fg-2); max-width:64ch}
+@media (max-width:640px){
+  .gd h1{font-size:24px; line-height:32px}
+  .gd-sum li{flex:1 1 140px; padding:14px 16px}
+  .gd-sum b{font-size:26px; line-height:32px}
+}
