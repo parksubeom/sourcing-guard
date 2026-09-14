@@ -42,13 +42,30 @@ def example_aliases() -> dict[str, tuple[str, ...]]:
 
     ⚠ 이것이 없으면 매칭이 **0건**이다 - 표의 이름이 `전기청소기류` 처럼 류
       단위라 상품명(`로봇청소기`)과 한 글자도 안 겹친다. 실측으로 확인했다.
+
+    ⚠⚠ **괄호 앞 머리 낱말도 넣는다 (2026-09-14 · ⑦-a-3).**
+
+      고시가 `A(B, C)` 로 적었다면 **A 가 품목명이고 괄호는 A 를 좁히는
+      말**이다. A 를 별칭으로 내는 것은 고시를 읽는 것이지 지어내는 것이
+      아니다 (R5). ⑦-a-2 에서 꼬리(B·C)를 뺀 것과 **같은 축의 반대쪽**이다 -
+      머리는 안전하고 꼬리는 안전하지 않다.
+
+      이것이 없으면 `전기토스터(팝업, 오븐 포함)` 는 상품명에 그 문자열이
+      통째로 있어야 맞는다. 그런 상품명은 없다.
+
+    ⚠ `rstrip(")")` 을 **뺐다.** 옛 조각(`'블라인드)'`)을 다듬으려고 넣었던
+      것인데, 합친 예시에 걸리면 **여는 괄호만 남은 문자열**이 된다
+      (`'전기토스터(팝업, 오븐 포함'`). 그런 별칭은 영원히 아무것도 못 맞힌다 -
+      ⑦-a-2 직후 57개가 그랬다. 머리 낱말이 그 자리를 대신한다.
     """
     out: dict[str, list[str]] = collections.defaultdict(list)
     for row in table().get("items") or ():
         for raw in row.get("examples") or ():
-            word = str(raw).strip().rstrip(")")
-            if 2 <= len(word) <= 20 and row["item"] not in out[word]:
-                out[word].append(row["item"])
+            full = str(raw).strip()
+            head = full.split("(")[0].strip() if "(" in full else ""
+            for word in (full, head):
+                if 2 <= len(word) <= 20 and row["item"] not in out[word]:
+                    out[word].append(row["item"])
     return {k: tuple(v) for k, v in out.items()}
 
 

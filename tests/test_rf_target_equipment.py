@@ -78,8 +78,14 @@ def test_a_name_split_across_two_physical_rows_is_joined(rows):
     assert "장치의 기기" in sv["scope_note"], sv["scope_note"]
 
 
-def test_a_definition_paragraph_is_not_used_as_the_item_name(rows):
-    """11절 소분류는 정의 문단이다. 이름은 그 위 칸이고 문단은 예시로 간다."""
+def test_a_definition_marker_paragraph_is_not_used_as_the_item_name(rows):
+    """11절 소분류의 **`(정의)` 문단**은 이름이 아니다. 이름은 그 위 칸이다.
+
+    ⚠⚠ **이 검사의 범위는 두 문자열뿐이다** - `"(정의)"` 와 `"대표적인 품목"`.
+      전 이름(`…definition_paragraph…`)은 그보다 넓게 들리는데, 실제로는
+      **제외·조건 문장은 못 잡는다**("…적합성평가 대상에서 제외한다…").
+      이름을 읽고 덮였다고 믿으면 안 된다 - 그쪽은 아래 래칫 검사가 센다.
+    """
     cln = next(r for r in rows if r["device_code"] == "CLN11")
     assert cln["item"] == "전기청소기류"
     assert "진공청소기" in cln["examples"] and "로봇청소기" in cln["examples"]
@@ -200,6 +206,99 @@ def test_the_three_false_attachments_stay_gone(rows):
     ):
         got = book.lookup_all(line, extra_aliases=alias)
         assert got == [], (line, [g.item for g in got])
+
+
+def test_the_known_false_attachment_stays_visible(rows):
+    """⚠⚠ **알려진 오부착 1건. 고치지 않고 눈에 보이게 둔다** (⑦-a-3).
+
+        '온풍기 Y36 윈드키스 미니 히터 난풍기' → 동식물용 전기기기류
+        머리 `히터` 가 `히터(관상어용·식물용, 동물부화·사육용 히터)` 에서 나왔다.
+
+    떼어낼 규칙 셋을 재 봤는데 **셋 다 이 한 줄에 맞춰 만든 규칙**이었다
+    (자세한 것은 `data/rf_target_equipment.yaml` 머리 주석). 그래서 틀린 채로
+    두고 적는다.
+
+    ⚠ 이 검사는 **"붙으면 실패" 가 아니다.** 지금 이 줄이 여기 붙는다는
+      **사실**을 잠근다 - 나중에 도매꾹239 를 전수분류해서 이 줄이 비대상으로
+      판명되면 그때 게이트(비대상 오부착 0)가 스스로 닫힌다.
+    """
+    book, alias = rf_book(), example_aliases()
+    got = book.lookup_all("온풍기 Y36 윈드키스 미니 히터 난풍기 KC인증 대량구매 최신형",
+                          extra_aliases=alias)
+    assert [g.item for g in got] == ["동식물용 전기기기류"], [g.item for g in got]
+    assert "알려진 오부착 1건" in _YAML.read_text(encoding="utf-8")
+
+
+def test_the_head_word_of_a_parenthesised_example_is_an_alias():
+    """`A(B, C)` 의 **A** 는 별칭이다 - 고시가 A 를 품목명으로 적은 것이다.
+
+    ⚠ 꼬리(B·C)는 아니다. ⑦-a-2 가 뺀 쪽이고 여기가 넣는 쪽이다 -
+      **머리는 안전하고 꼬리는 안전하지 않다.**
+    """
+    alias = example_aliases()
+    for head in ("전기토스터", "제모기", "전기그릴", "전기밥솥"):
+        assert head in alias, f"머리 낱말이 별칭에 없다: {head}"
+    for tail in ("포함", "자동차", "셔터", "그릴", "차양", "캡슐"):
+        assert tail not in alias, f"괄호 안 조각이 별칭이 됐다: {tail}"
+
+
+def test_no_alias_is_left_with_an_unclosed_parenthesis():
+    """여는 괄호만 남은 별칭은 **영원히 아무것도 못 맞힌다.**
+
+    ⑦-a-2 직후 `rstrip(")")` 때문에 57개가 그랬다 - 상품명에 그 문자열이
+    통째로 들어 있어야 맞는데 그런 상품명은 없다.
+    """
+    broken = [k for k in example_aliases() if k.count("(") != k.count(")")]
+    assert broken == [], broken[:6]
+
+
+# ── 래칫: 제외·조건 문장이 이름인 행 ────────────────────────────────
+#
+# ⚠⚠ **이 수는 결함이다. 0 이 되어야 한다.** 늘면 실패한다.
+#
+#   "…적합성평가 대상에서 제외한다…" 라고 적힌 줄에 `자기적합확인` 등급이
+#   붙어 있다. 화면에 올라가 있었다면 제외 문장을 품목명 자리에 띄우면서
+#   "대상입니다" 라고 말했을 것이다 - §6 이 이름 붙인 **"없는데 있다고 하는"**
+#   방향이고 이 제품에서 가장 비싼 오류다.
+#
+#   원인은 파서의 이름 경계다. `4)` · `⑫` · `o ` 에서 잘라야 하는데 안 자른다.
+#   고치는 것은 파서를 다시 만지는 일이라 **본선으로 미뤘다**(프리즈 4일 전).
+#   가짜 가드를 두는 것보다 **결함을 눈에 보이게 세어 두는 것**이 낫다.
+#
+#   ⚠ 커밋의 "버린 행 0" 이 여기서는 미덕이 아니라 대가다. 아무것도 안 버려서
+#     제외 조항이 대상 행이 됐다. 94행을 살린 판단은 옳았고, 그 판단이 동시에
+#     이것을 들여왔다 - 둘은 같은 결정의 양면이다.
+_SENTENCE_NOT_A_NAME = re.compile(r"^o\s|(?:한다|된다)[\s.]|제외한다")
+
+#: 2026-09-14 실측. **줄이면 이 수도 줄여 잠근다.**
+_SENTENCE_NAMES_TODAY = 22
+#: 그중 examples 가 있어 **매칭에 닿는** 행. 여기가 진짜 위험한 자리다.
+_SENTENCE_NAMES_REACHABLE = 2
+
+
+def test_sentence_shaped_names_do_not_grow(rows):
+    hit = [r for r in rows if _SENTENCE_NOT_A_NAME.search(r["item"])]
+    reachable = [r for r in hit if r.get("examples")]
+    assert len(hit) <= _SENTENCE_NAMES_TODAY, (
+        f"제외·조건 문장이 이름인 행이 {len(hit)}개로 늘었다 "
+        f"(기준 {_SENTENCE_NAMES_TODAY}). 파서의 이름 경계를 고치세요."
+    )
+    assert len(reachable) <= _SENTENCE_NAMES_REACHABLE, (
+        f"그중 매칭에 닿는 행이 {len(reachable)}개다 "
+        f"(기준 {_SENTENCE_NAMES_REACHABLE}): "
+        f"{[r['device_code'] for r in reachable]}"
+    )
+    # 줄었으면 기준도 같이 내린다 - 래칫은 한 방향으로만 돈다.
+    assert len(hit) == _SENTENCE_NAMES_TODAY, (
+        f"{len(hit)}개로 줄었습니다. _SENTENCE_NAMES_TODAY 를 내리세요."
+    )
+
+
+def test_the_two_reachable_sentence_rows_are_named(rows):
+    """닿는 둘이 어느 것인지 적어 둔다. 바뀌면 다시 봐야 한다."""
+    hit = [r for r in rows
+           if _SENTENCE_NOT_A_NAME.search(r["item"]) and r.get("examples")]
+    assert sorted(r["device_code"] for r in hit) == ["IMV11", "LIN"]
 
 
 def test_the_reason_for_not_wiring_is_written_down():
