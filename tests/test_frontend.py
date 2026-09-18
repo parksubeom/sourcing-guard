@@ -623,3 +623,44 @@ def test_the_lookup_keys_stay_as_the_server_sends_them():
             / "index.html").read_text(encoding="utf-8")
     line = next(ln for ln in html.splitlines() if "var LOOKUP" in ln)
     assert set(re.findall(r"(\w+):", line)) == {"ok", "failed", "not_attempted"}
+
+
+def test_the_scan_input_says_one_product_at_a_time():
+    """[§1-j] 여러 상품을 한 번에 붙이면 **한 상품으로 합쳐진다.**
+
+    ⚠⚠ **막는 것이 아니라 알리는 것이다.** 감지·차단 코드를 넣지 않았다 -
+      오탐은 코드가 막을 때만 생기고, 문구는 아무것도 막지 않으므로 오탐이 없다.
+
+    ⚠ 문구가 "섞입니다" 가 아닌 이유가 실측이다 (2026-09-18 · 10쌍 · gpt):
+        상품명이 한쪽으로 쏠림 **8/10** · 품목은 **언제나 하나** · 밖의 번호 섞임 2/10
+      8/10 은 섞인 것이 아니라 **다른 상품이 아예 검사되지 않은 것**이고,
+      셀러에게 더 위험한 쪽이 그쪽이다 - "섞입니다" 를 읽으면 "갈라 읽으면
+      되겠다" 고 생각하는데 **갈라 읽을 것이 없다.**
+
+    ⚠ 둘째 줄(세트 상품)은 도매꾹 상세 317건 실측이 받친다 - safetyCert 항목
+      2개 이상 13건(4.1% · 상한) · 실제 KC 2개 이상 2건(0.6%). 0 이 아니다.
+    """
+    scan = (STATIC / "index.html").read_text(encoding="utf-8")
+    body = re.sub(r"<!--.*?-->", "", scan, flags=re.S)
+
+    assert "한 상품씩 넣어 주세요" in body, "입력부에 '한 상품씩' 안내가 없다"
+    assert "한쪽 기준으로만 결과가 나옵니다" in body, (
+        "'한쪽 기준으로만' 이 빠졌다 - '섞입니다' 는 8/10 을 설명하지 않는다")
+    assert "구성품이 여러 개인 한 상품은 그대로 넣으셔도 됩니다" in body, (
+        "세트 상품 안내가 빠졌다 - 그 줄이 없으면 '한 상품씩' 이 세트 상품 "
+        "셀러에게는 틀린 말로 읽힌다")
+
+    # ⚠ **입력부다. 결과 카드가 아니다.** 결과에 붙이면 이미 합쳐진 다음이라 늦다.
+    head = body[: body.index('<textarea id="pt"')]
+    assert "한 상품씩 넣어 주세요" in head, "안내가 입력창 **뒤**에 있다"
+
+    # ⚠ 막지 않는다 - 감지 코드가 들어오면 여기서 운다.
+    for banned in ("여러 상품", "multi_product", "multiple_product"):
+        assert banned not in scan.replace("여러 상품을 함께 붙이면", ""), (
+            f"감지/차단 코드가 들어왔다: {banned}")
+
+
+def test_the_batch_screen_does_not_carry_the_one_product_hint():
+    """⚠ `/batch` 는 **한 줄에 한 상품**이 설계다. 거기 붙이면 틀린 말이 된다."""
+    batch = (STATIC / "batch.html").read_text(encoding="utf-8")
+    assert "한 상품씩 넣어 주세요" not in batch
