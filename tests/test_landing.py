@@ -200,7 +200,8 @@ def test_landing_keeps_its_styles_in_app_css_and_its_mark_empty():
       (네 화면이 같은 파비콘·폰트를 쓴다). 같은 단정을 두 곳에 적지 않는다.
 
     ⚠⚠ **2026-09-13 에 마크를 뒤집었다.** 위에서 "단계 4~5 에서 채운다" 고
-      적었고 그대로 됐다 - 빈 span 이던 자리에 `#mungchi-calm` 32px 이 들어갔다.
+      적었고 그대로 됐다 - 빈 span 이던 자리에 마스코트 32px 이 들어갔다.
+      (2026-09-18 에 `#mungchi-calm` → `#ansimi-GREEN` 으로 갈았다.)
       빈 span 이 자리만 차지하고 있어 **워드마크가 본문보다 오른쪽으로 밀려
       보였다**(헤더-본문 좌측선 불일치). 그림이 들어가면서 정렬이 맞았다.
     """
@@ -213,7 +214,7 @@ def test_landing_keeps_its_styles_in_app_css_and_its_mark_empty():
     m = re.search(r'<svg class="mark"[^>]*>', _LANDING)
     assert m, "헤더 마크가 없다"
     assert "aria-hidden" in m.group(0), "마크에 aria-hidden 이 없다"
-    assert 'href="/static/mascot.svg#mungchi-calm"' in _LANDING
+    assert 'href="/static/mascot.svg#ansimi-GREEN"' in _LANDING
     assert '<span class="mark"' not in _LANDING, "빈 span 이 남아 있다"
     # 인라인 색상 지정이 없다 - app.css 토큰만.
     assert not re.search(r'style="[^"]*(color|background)', _LANDING)

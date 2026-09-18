@@ -704,3 +704,65 @@ def test_the_nav_wraps_on_phones_instead_of_pushing_the_page_sideways():
     assert m.start() > last_base, (
         "미디어쿼리가 기본 nav.pages 선언보다 앞에 있다 - 같은 명시도라 "
         "나중 것이 이겨서 gap 이 안 먹는다")
+
+
+# ── 마스코트 안심이 (2026-09-18 교체) ──────────────────────────
+def test_the_sprite_ids_are_the_signal_values_themselves():
+    """주의(가장 중요): **id 가 곧 신호다. 지도를 따로 적지 않는다.**
+
+    전에는 `{GREEN:"calm", AMBER:"alert", RED:"worried", UNKNOWN:"unsure"}` 가
+    `index.html` 과 `landing.html` **두 곳에** 적혀 있었고 잠그는 검사가 없었다.
+    마스코트를 갈면서 symbol id 를 `Signal` 값 그대로 붙여 **적을 곳 자체를
+    없앴다** - 같은 판단을 두 곳에 적지 않는 가장 싼 방법이다 (CLAUDE.md §6).
+    """
+    from sourcing_guard.models import Signal
+
+    sprite = (STATIC / "mascot.svg").read_text(encoding="utf-8")
+    ids = set(re.findall(r'<symbol id="([^"]+)"', sprite))
+    want = {f"ansimi-{s.value}" for s in Signal} | {"ansimi-look"}
+    assert ids == want, f"스프라이트에만 {sorted(ids - want)} · 빠진 것 {sorted(want - ids)}"
+
+
+def test_no_face_map_survives_anywhere():
+    """지도가 되살아나면 실패한다. **되돌리면 실패해야 하는 검사다.**"""
+    for name in ("index.html", "landing.html", "watch.html", "batch.html", "guide.html"):
+        src = (STATIC / name).read_text(encoding="utf-8")
+        # 주석은 **왜 없앴는지**를 적고 있으므로 뺀다 (자기 걸림 방지).
+        code = re.sub(r"<!--.*?-->|/\*.*?\*/", "", src, flags=re.S)
+        code = "\n".join(ln for ln in code.splitlines()
+                         if not ln.strip().startswith("//"))
+        # 주의(중요): **값이 표정 이름인 지도**만 본다. `SIGNAL_LABEL` ·
+        #   `SIGNAL_SHORT` 는 화면 문구 지도이고 있어야 한다 - 처음에
+        #   `GREEN\s*:` 로만 걸었다가 그 둘을 잡았다. 이름이 아니라 **값**으로
+        #   가린다.
+        assert not re.search(
+            r'GREEN\s*:\s*["\'](?:calm|alert|worried|unsure)', code), (
+            f"{name}: Signal→표정 지도가 돌아왔다 - id 를 신호 이름으로 두면 필요 없다")
+        for gone in ("mungchi", "kkureomi", "kongi"):
+            assert gone not in code, f"{name}: 옛 마스코트 이름 {gone}"
+
+
+def test_every_mascot_reference_points_at_an_id_that_exists():
+    """끊어진 `<use>` 는 **조용히 빈 칸**이 된다. 화면이 안 깨진 것처럼 보인다."""
+    sprite = (STATIC / "mascot.svg").read_text(encoding="utf-8")
+    ids = set(re.findall(r'<symbol id="([^"]+)"', sprite))
+    for name in ("index.html", "landing.html", "watch.html", "batch.html", "guide.html"):
+        src = (STATIC / name).read_text(encoding="utf-8")
+        for ref in re.findall(r'mascot\.svg#(ansimi-[A-Za-z]+)"', src):
+            assert ref in ids, f"{name}: {ref} 가 스프라이트에 없다"
+
+
+def test_the_sprite_carries_the_images_itself():
+    """주의(중요): PNG 를 `static/` 에 뿌리면 **요청이 열 번** 간다.
+
+    base64 로 품고 있어야 한다. SVG 원본이 오면 같은 id 로 이 파일만 갈아
+    끼운다 - 호출부·검사 변경 0.
+    """
+    sprite = (STATIC / "mascot.svg").read_text(encoding="utf-8")
+    assert sprite.count("data:image/png;base64,") == 5, "symbol 다섯이 그림을 품어야 한다"
+    assert not list(STATIC.glob("ansimi-*.png")), "PNG 를 static/ 에 뿌렸다"
+
+    fav = (STATIC / "favicon.svg").read_text(encoding="utf-8")
+    assert "data:image/png;base64," in fav
+    # 주의(중요): 20px 에서 전신을 쓰면 눈이 1px 이 된다. 파비콘은 **머리만**.
+    assert 'viewBox="0 0 64 49"' in fav, "파비콘이 머리 비율이 아니다 - 전신을 넣었나"

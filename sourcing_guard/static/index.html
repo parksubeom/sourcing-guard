@@ -17,7 +17,7 @@
 <header class="masthead">
   <div class="container">
     <a class="brand" href="/">
-      <svg class="mark" viewBox="0 0 120 120" aria-hidden="true"><use href="/static/mascot.svg#mungchi-calm"/></svg>
+      <svg class="mark" viewBox="0 0 120 120" aria-hidden="true"><use href="/static/mascot.svg#ansimi-GREEN"/></svg>
       <span class="wordmark">안심 소싱 돋보기</span>
     </a>
     <nav class="pages" aria-label="주요 화면">
@@ -116,7 +116,7 @@
       <div id="skel" class="loading" hidden aria-busy="true" aria-live="polite">
         <div class="head">
           <svg class="m-bob" viewBox="0 0 120 120" width="88" height="88" aria-hidden="true"
-               style="flex:none;overflow:visible"><use href="/static/mascot.svg#mungchi-look"/></svg>
+               style="flex:none;overflow:visible"><use href="/static/mascot.svg#ansimi-look"/></svg>
           <div style="display:flex;flex-direction:column;gap:8px;flex:1">
             <h3>확인 중입니다<span class="ell"><span></span><span></span><span></span></span></h3>
             <div class="sub">처음 보는 상품은 정부 DB 조회까지 시간이 걸립니다.</div>
@@ -652,12 +652,16 @@
     // 조용히 사라진다. " — " 에서 **자르기만** 한다(문장은 안 바꾼다).
     var head = data.headline || SIGNAL_LABEL[sig] || sig;
     var cut = String(head).split(" — ");
-    // Signal ↔ 표정. **판정 기호(체크·X·엄지)는 쓰지 않는다** - 얼굴은 뜻을
-    // 나르지 않으므로 aria-hidden 이고, 뜻은 칩과 헤드라인이 나른다.
-    var FACE = { GREEN: "calm", AMBER: "alert", RED: "worried", UNKNOWN: "unsure" };
+    // 얼굴은 **판정 기호(체크·X·엄지)를 쓰지 않는다** - 뜻을 나르지 않으므로
+    // aria-hidden 이고, 뜻은 칩과 헤드라인이 나른다.
+    //
+    // 주의(가장 중요): **Signal ↔ 표정 지도가 없어졌다** (2026-09-18).
+    //   전에는 `{GREEN:"calm", …}` 이 여기와 landing.html 두 곳에 적혀 있었고
+    //   잠그는 검사가 없었다. 마스코트를 갈면서 **symbol id 를 신호 값 그대로**
+    //   (`ansimi-GREEN` …) 붙여 적을 곳 자체를 없앴다 (CLAUDE.md §6).
     html += '<div class="rv-head ' + esc(sig) + '">' +
-      '<svg class="rv-face" viewBox="0 0 120 120" aria-hidden="true"><use href="/static/mascot.svg#mungchi-' +
-        esc(FACE[sig] || "unsure") + '"/></svg>' +
+      '<svg class="rv-face" viewBox="0 0 120 120" aria-hidden="true"><use href="/static/mascot.svg#ansimi-' +
+        esc(sig || "UNKNOWN") + '"/></svg>' +
       '<div class="rv-say">' +
         '<div class="rv-sig">' +
           '<span class="chip solid ' + esc(sig) + '"><span class="dot"></span>' +

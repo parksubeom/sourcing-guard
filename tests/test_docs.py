@@ -845,3 +845,56 @@ def test_no_stale_copy_of_the_readme_is_tracked():
         and mark in (root / name).read_text(encoding="utf-8", errors="ignore")
     ]
     assert copies == [], f"정본 README 사본이 추적되고 있다: {copies}"
+
+
+def test_the_retired_three_candidate_mascots_are_still_on_disk():
+    """⚠⚠ **2026-09-18 에 내가 직접 지웠다.** 그래서 검사를 붙인다.
+
+    안심이를 넣으면서 새 스프라이트를 `design/mascot.svg` 에 **덮어썼다** -
+    뭉치·꾸러미·콩이 15종이 한 번에 날아갔다. `git checkout` 으로 되돌렸고
+    새 것은 `design/mascot-ansimi/` 로 옮겼다.
+
+    옛 15종은 **"왜 3안이었나" 에 답하는 유일한 자료**다. 화면에서는 안 쓰지만
+    (`static/mascot.svg` 는 안심이 하나다) 기록으로 남긴다 -
+    `design/README.md` §4 와 `docs/미완_목록.md` §1-m 이 둘 다 그렇게 적었다.
+
+    ⚠ 이 검사는 **개수만 세지 않는다.** 파일이 15개여도 내용이 안심이로
+      바뀌었으면 잃은 것은 같다. 그래서 id 를 읽는다.
+    """
+    from pathlib import Path
+
+    design = Path(__file__).resolve().parents[1] / "design"
+
+    faces = ("calm", "alert", "worried", "unsure", "look")
+    want = {f"{name}-{face}" for name in ("mungchi", "kkureomi", "kongi")
+            for face in faces}
+
+    sprite = (design / "mascot.svg").read_text(encoding="utf-8")
+    missing = sorted(i for i in want if f'id="{i}"' not in sprite)
+    assert missing == [], (
+        f"design/mascot.svg 에서 옛 3안이 사라졌다: {missing} - "
+        "안심이 스프라이트는 design/mascot-ansimi/mascot.svg 다")
+
+    files = {p.stem for p in (design / "mascot").glob("*.svg")}
+    assert want <= files, f"design/mascot/ 에서 사라진 것: {sorted(want - files)}"
+
+
+def test_the_live_sprite_is_ansimi_and_carries_every_signal():
+    """화면이 쓰는 스프라이트는 **안심이 하나**다 - 옛 3안이 아니다.
+
+    ⚠ 표정 이름이 아니라 **`Signal` 값 그대로** 가 id 다 (`ansimi-GREEN` …).
+      `index.html`·`landing.html` 두 곳에 있던 지도를 없앤 자리이므로,
+      신호 넷이 다 있는지를 여기서 잠근다 (CLAUDE.md §6 "같은 판단을 두 곳에").
+    """
+    from pathlib import Path
+
+    from sourcing_guard.models import Signal
+
+    root = Path(__file__).resolve().parents[1]
+    live = (root / "sourcing_guard" / "static" / "mascot.svg").read_text(encoding="utf-8")
+
+    for sig in Signal:
+        assert f'id="ansimi-{sig.value}"' in live, f"산 스프라이트에 {sig.value} 가 없다"
+    assert 'id="ansimi-look"' in live, "로딩 화면이 쓰는 look 이 없다"
+    for old in ("mungchi", "kkureomi", "kongi"):
+        assert old not in live, f"산 스프라이트에 은퇴한 {old} 가 남아 있다"

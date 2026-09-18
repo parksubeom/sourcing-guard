@@ -33,7 +33,7 @@
 <header class="masthead">
   <div class="container">
     <a class="brand" href="/">
-      <svg class="mark" viewBox="0 0 120 120" aria-hidden="true"><use href="/static/mascot.svg#mungchi-calm"/></svg>
+      <svg class="mark" viewBox="0 0 120 120" aria-hidden="true"><use href="/static/mascot.svg#ansimi-GREEN"/></svg>
       <span class="wordmark">안심 소싱 돋보기</span>
     </a>
     <nav class="pages" aria-label="주요 화면">
@@ -246,8 +246,10 @@
     face.setAttribute("class", "rc-face");
     face.setAttribute("aria-hidden", "true");
     var use = document.createElementNS("http://www.w3.org/2000/svg", "use");
-    use.setAttribute("href", "/static/mascot.svg#mungchi-" +
-      ({ GREEN: "calm", AMBER: "alert", RED: "worried", UNKNOWN: "unsure" }[sig] || "unsure"));
+    // 주의(가장 중요): **지도가 없어졌다** - symbol id 가 신호 값 그대로다
+    //   (`ansimi-GREEN` …). 전에는 이 줄과 index.html 두 곳에 같은 지도가
+    //   있었고 잠그는 검사가 없었다 (CLAUDE.md §6).
+    use.setAttribute("href", "/static/mascot.svg#ansimi-" + (sig || "UNKNOWN"));
     face.appendChild(use);
     head.appendChild(face);
 
