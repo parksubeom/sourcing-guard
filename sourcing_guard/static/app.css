@@ -379,7 +379,6 @@ nav.pages a{
 }
 nav.pages a:hover{color:var(--primary-60); background:var(--gray-10)}
 nav.pages a[aria-current="page"]{color:var(--primary-60); background:var(--primary-10)}
-@media (max-width:640px){ nav.pages{margin-left:0; flex-basis:100%; margin-top:var(--s1)} }
 
 /* ── 감시 목록 ─────────────────────────────────────────── */
 .promise{
@@ -549,6 +548,28 @@ nav.pages a[aria-current="page"]{
   background:none; border-radius:0; padding:0 0 2px;
   border-bottom:2px solid var(--brand);
 }
+
+/* 주의(가장 중요): **이 미디어쿼리는 위 `nav.pages` 규칙들 *뒤*에 있어야 한다.**
+   `nav.pages` 선언이 이 파일에 **두 벌**이다 - 374행(머리글)과 556행(랜딩 v2).
+   뒤엣것이 `gap:28px` 를 다시 준다. 미디어쿼리를 앞에 두면 같은 명시도라
+   **나중 것이 이겨** 행 간격까지 28px 이 되고 머리글이 108px 로 두꺼워진다.
+   2026-09-18 에 앞에 두었다가 실측(108px)으로 잡았다. */
+/* 주의(가장 중요): **접지 않으면 화면이 옆으로 밀린다** (2026-09-18 실측).
+   내비 폭이 515px 라 390px 안에 안 들어가고, 문서 scrollWidth 가 539 가 된다.
+   [④ M-5] 로 다섯째 항목(카테고리 가이드)이 들어오면서 넘쳤다 - **9/17 부터**
+   폰에서 그 화면이 내비 밖에 있어 안 보였다. 만들어 놓고 못 닿게 둔 것이다.
+
+   주의(중요): 가로·세로 gap 을 **따로** 준다. `gap:28px` 하나만 두면 행 간격도 28px 이
+     되어 머리글이 108px 로 두꺼워진다(실측). 접는 것이 목적이지 머리글을
+     키우는 것이 아니다.
+
+   주의(중요): `overflow-x:auto` 로도 넘침은 없어지지만 **항목이 여전히 숨는다** -
+     보이게 하는 것이 목적이라 접는 쪽을 골랐다. */
+@media (max-width:640px){
+  nav.pages{margin-left:0; flex-basis:100%; margin-top:var(--s1);
+            flex-wrap:wrap; gap:10px 18px}
+}
+
 
 /* ── 랜딩 v2 본문 (design/landing-v2.html · README §10) ──────────────
  *

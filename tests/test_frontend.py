@@ -664,3 +664,43 @@ def test_the_batch_screen_does_not_carry_the_one_product_hint():
     """⚠ `/batch` 는 **한 줄에 한 상품**이 설계다. 거기 붙이면 틀린 말이 된다."""
     batch = (STATIC / "batch.html").read_text(encoding="utf-8")
     assert "한 상품씩 넣어 주세요" not in batch
+
+
+def test_the_nav_wraps_on_phones_instead_of_pushing_the_page_sideways():
+    """⚠⚠ **다섯째 항목이 들어오면서 폰에서 화면이 옆으로 밀렸다** (9/17~).
+
+    실측 (2026-09-18 · Chromium · 배포본):
+
+        390px   scrollWidth 539 / viewport 390   nav 515×40   ← 넘쳤다
+        360px   scrollWidth 539 / viewport 360
+
+    내비가 안 접혀서 `카테고리 가이드` 가 **화면 밖에 있었다** - [④ M-5] 로
+    만든 화면이 폰에서 안 보였다. 만들어 놓고 못 닿게 둔 것이다.
+
+    고친 뒤: 390/390 · 360/360 · nav 342×90 · 가이드 보임.
+
+    ⚠⚠ **이 검사는 약하다.** 실제 브라우저를 안 띄우고 **CSS 규칙의 존재**만
+      본다. 폭을 재는 것이 아니므로 "접히게 돼 있다" 까지만 말하고 "안 넘친다"
+      를 말하지 못한다. 실제 폭은 손으로 잰다(위 수치).
+
+    ⚠ **순서도 함께 잠근다.** `nav.pages` 선언이 이 파일에 **두 벌**이고
+      (머리글 · 랜딩 v2) 뒤엣것이 `gap:28px` 를 다시 준다. 미디어쿼리가 그보다
+      앞에 있으면 같은 명시도라 **나중 것이 이겨** 행 간격이 28px 이 되고
+      머리글이 108px 로 두꺼워진다 - 2026-09-18 에 실제로 그렇게 됐다.
+    """
+    css = (STATIC / "app.css").read_text(encoding="utf-8")
+
+    m = re.search(r"@media \(max-width:640px\)\{\s*\n?\s*nav\.pages\{([^}]*)\}", css)
+    assert m, "폰 폭에서 nav.pages 를 손보는 미디어쿼리가 없다"
+    rule = m.group(1)
+    assert "flex-wrap:wrap" in rule.replace(" ", ""), (
+        "내비가 안 접힌다 - 다섯째 항목이 화면 밖으로 나가고 페이지가 옆으로 밀린다")
+    assert re.search(r"gap:\s*\d+px\s+\d+px", rule), (
+        "gap 을 한 값으로 주면 행 간격까지 그 값이 되어 머리글이 두꺼워진다 "
+        "(실측: gap:28px 하나면 108px, 10px 18px 이면 90px)")
+
+    # ⚠ 순서 - 마지막 `nav.pages{` 기본 선언보다 **뒤**여야 한다.
+    last_base = max(mm.start() for mm in re.finditer(r"^nav\.pages\{", css, re.M))
+    assert m.start() > last_base, (
+        "미디어쿼리가 기본 nav.pages 선언보다 앞에 있다 - 같은 명시도라 "
+        "나중 것이 이겨서 gap 이 안 먹는다")
