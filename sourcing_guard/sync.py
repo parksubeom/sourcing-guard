@@ -242,6 +242,21 @@ def run_sync(
     #   같은 함정이 평시에도 있다. 정부가 기존 공표의 내용을 정정하면 uid 는
     #   그대로이므로 new=0 이고, 정정된 내용이 재시작 전까지 반영되지 않는다.
     wrote_something = bool(report.fetched) and any(report.fetched.values())
+
+    # ⚠⚠ **받아 온 때만** 쓰는 시각. `last_sync_at`(시도 시각)과 다르다.
+    #
+    #   2026-09-15~18 에 safetykorea.kr 호출이 사흘 실패하는 동안 화면이
+    #   "2026-09-17 14:21 갱신" 이라고 말했다 - **아무것도 못 받아 온 시도의
+    #   시각**이다. 셀러를 안심시키려고 넣은 문장이 정반대로 작동했다.
+    #
+    #   ⚠ 조건을 새로 쓰지 않는다. `on_updated` 를 부르는 **그 조건**을 그대로
+    #     쓴다 - 두 곳에 적으면 갈린다 (§6 "같은 판단을 두 곳에 적지 마라").
+    #
+    #   ⚠ `last_sync_at` 은 **그대로 둔다.** `/healthz` 가 "언제 시도했고 무엇이
+    #     틀렸나" 를 말하는 값이라 없애면 관측이 약해진다.
+    if wrote_something:
+        store.set_sync_state("last_sync_ok_at", report.finished_at)
+
     if on_updated is not None and wrote_something:
         try:
             on_updated()

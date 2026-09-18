@@ -38,7 +38,7 @@ from .models import (
     SellerHints,
     WatchItem,
 )
-from .scorer import gov_lookup_state, has_specific_finding, score
+from .scorer import KST, gov_lookup_state, has_specific_finding, score
 from .demos import DEMOS, DEMO_TEXTS
 from .demos import preview as demo_preview
 
@@ -684,12 +684,21 @@ def scan(req: ScanRequest, request: Request) -> ScanResult:
     # 공표일과 갱신 시각을 함께 넘긴다. 공표일만 화면에 적으면 셀러가
     # "3일 전 데이터" 로 읽는데, 주말·공휴일에는 정부 공표가 없어서 공표일이
     # 며칠 전인 것이 정상이다. /healthz 가 이미 주는 값이다.
+    #
+    # ⚠⚠ **`last_sync_ok_at` 이다. `last_sync_at`(시도 시각)이 아니다.**
+    #   2026-09-15~18 에 호출이 사흘 실패하는 동안 화면이 "어제 갱신" 이라고
+    #   말했다 - 아무것도 못 받아 온 시도의 시각이었다. 못 받아 왔으면 이 값이
+    #   없고, `_sync_label` 이 빈 문자열을 돌려주어 "…갱신" 절이 안 붙는다.
+    #
+    # ⚠ `today` 는 **KST** 다. 컨테이너가 UTC 라 "오늘 02:06 갱신" 이 떴는데
+    #   한국은 11:06 이었다. 여기만 바꾼다 - 스윕(771)·워치(896·968)의
+    #   `date.today()` 는 저장·만료 기준이라 손대지 않는다.
     result = score(
         facts,
         findings,
         recall_data_as_of=_recalls.as_of,
-        recall_synced_at=_store.get_sync_state("last_sync_at"),
-        today=date.today(),
+        recall_synced_at=_store.get_sync_state("last_sync_ok_at"),
+        today=datetime.now(KST).date(),
         # 화면 상단 두 줄이 읽는 값. 하드코딩 금지.
         meta=ScanMeta(
             extracted_by=trace.label_ko,

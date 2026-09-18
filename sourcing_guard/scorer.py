@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import re
 import unicodedata
-from datetime import date, datetime
+from datetime import date, datetime, timedelta, timezone
 
 from .models import SPECIFIC_FINDING_KINDS, Finding, FindingKind, ProductFacts, ScanMeta, ScanResult, Signal, ItemCategory, WatchSuggestion, ExtractedField, FindingGroup
 
@@ -772,10 +772,24 @@ def _signal_for(
     return Signal.UNKNOWN
 
 
+#: 화면 시각대. 셀러는 한국에 있다.
+#:
+#: ⚠⚠ **2026-09-18 실측**: 컨테이너가 UTC 라 "오늘 02:06 갱신" 이 떴는데 그때
+#:   한국 시각은 11:06 이었다. 9시간 어긋난다 - 셀러는 "새벽 2시에 갱신" 으로
+#:   읽고, 09시 이전에 갱신되면 **날짜까지 하루 틀린다.**
+#:   `fly.toml` 에 TZ 가 없고 코드에도 Asia/Seoul 이 0건이었다.
+KST = timezone(timedelta(hours=9))
+
+
 def _sync_label(synced_at: str | None, today: "date | None") -> str:
     """마지막 동기화 시각을 사람이 읽는 말로. 없으면 빈 문자열.
 
     ⚠ 순수하다 - today 를 인자로 받는다. 스스로 시계를 읽지 않는다.
+      시각대 변환은 시계를 읽지 않으므로 순수성을 깨지 않는다.
+
+    ⚠ **빈 문자열이 중요하다.** 못 받아 왔으면 `main.py` 가 `last_sync_ok_at`
+      (없음)을 넘기고, 그러면 "…갱신" 절이 **아예 안 붙는다.** 앞 절
+      ("2026-09-16 공표분까지")만 남는다 - 하지 않은 것을 했다고 말하지 않는다 (§9).
     """
     if not synced_at:
         return ""
@@ -783,6 +797,10 @@ def _sync_label(synced_at: str | None, today: "date | None") -> str:
         when = datetime.fromisoformat(synced_at)
     except ValueError:
         return ""
+    # 시각대가 없으면 UTC 로 본다 - 서버가 UTC 이고 옛 값이 naive 로 남아 있다.
+    if when.tzinfo is None:
+        when = when.replace(tzinfo=timezone.utc)
+    when = when.astimezone(KST)
     hhmm = when.strftime("%H:%M")
     if today is not None and when.date() == today:
         return f"오늘 {hhmm} 갱신"

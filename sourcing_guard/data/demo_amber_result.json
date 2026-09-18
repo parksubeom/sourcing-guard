@@ -54,7 +54,7 @@
     {
       "kind": "recall_clear",
       "signal": "GREEN",
-      "statement_ko": "리콜 공표 목록에서 모델명·인증번호가 일치하는 항목을 찾지 못했습니다. 리콜 대조 기준: 2026-09-08 공표분까지 (매일 갱신)",
+      "statement_ko": "리콜 공표 목록에서 모델명·인증번호가 일치하는 항목을 찾지 못했습니다. 리콜 대조 기준: 2026-09-08 공표분까지",
       "source_label": "국가기술표준원 리콜정보",
       "source_url": "https://www.safetykorea.kr/recall/recallBoard"
     },

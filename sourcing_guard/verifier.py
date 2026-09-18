@@ -1583,9 +1583,13 @@ def verify(
             Finding(
                 kind=FindingKind.RECALL_CLEAR,
                 signal=Signal.GREEN,
+                # ⚠ "(매일 갱신)" 을 뗐다 (2026-09-18). 2026-09-15~18 에 정부
+                #   API 호출이 사흘 실패하는 동안 이 문장이 거짓이었다 - 서
+                #   있는 약속을 화면에 두지 않는다 (§9). **신호·등급·근거는
+                #   한 글자도 안 바뀐다** - 문구뿐이다.
                 statement_ko=(
                     f"리콜 공표 목록에서 모델명·인증번호가 일치하는 항목을 "
-                    f"찾지 못했습니다. 리콜 대조 기준: {as_of} (매일 갱신)"
+                    f"찾지 못했습니다. 리콜 대조 기준: {as_of}"
                 ),
                 source_label="국가기술표준원 리콜정보",
                 source_url=recall_evidence(None)[1],

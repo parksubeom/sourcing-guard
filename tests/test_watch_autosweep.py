@@ -508,3 +508,115 @@ def test_the_manual_sync_sweeps_too_not_just_invalidates():
     )
     assert "on_updated=_recalls.invalidate" not in body, (
         "색인 무효화만 넘기고 있다 - 스윕이 빠진다")
+
+
+# ── 못 받아 온 동기화는 "갱신" 이라고 말하지 않는다 ────────────────
+#
+# ⚠⚠ **2026-09-15~18 에 실제로 일어났다.** `safetykorea.kr` 호출이 사흘 실패
+#   하는 동안 화면이 "2026-09-17 14:21 갱신" 이라고 말했다 - 아무것도 못 받아
+#   온 **시도의 시각**이었다. 셀러를 안심시키려고 넣은 문장이 정반대로 작동했다.
+def test_a_failed_sync_does_not_write_the_success_time(tmp_path):
+    """받아 온 것이 없으면 `last_sync_ok_at` 은 **안 써진다.**
+
+    ⚠ 반대쪽도 함께 본다 - `last_sync_at`(시도 시각)은 **써져야** 한다.
+      그 값은 `/healthz` 가 "언제 시도했고 무엇이 틀렸나" 를 말하는 값이라
+      없애면 관측이 약해진다.
+    """
+    from sourcing_guard.storage import SqliteWatchStore
+    from sourcing_guard.sync import run_sync
+
+    store = SqliteWatchStore(str(tmp_path / "w.db"))
+
+    class _Dead:
+        """정부 API 가 죽은 상태. 아무것도 못 받아 온다.
+
+        2026-09-15~18 이 정확히 이 상태였다 - `last_error_code` 가 `network`.
+        """
+
+        def recalls_all(self, *a, **k):
+            raise RuntimeError("network")
+
+        def recalls_published_on(self, *a, **k):
+            raise RuntimeError("network")
+
+    called: list[str] = []
+    report = run_sync(_Dead(), store, on_updated=lambda: called.append("swept"))
+
+    assert not any(report.fetched.values()), report.fetched
+    assert store.get_sync_state("last_sync_ok_at") in (None, ""), (
+        "못 받아 왔는데 성공 시각을 썼다 - 화면이 '갱신했다' 고 말하게 된다")
+    assert store.get_sync_state("last_sync_at"), (
+        "시도 시각까지 안 쓰면 /healthz 가 장애를 못 보여 준다")
+    assert called == [], "받아 온 것이 없는데 스윕이 돌았다"
+
+
+def test_a_successful_sync_writes_both_times(tmp_path):
+    """반대 방향 - 받아 왔으면 **둘 다** 써지고 스윕이 돈다."""
+    from sourcing_guard.storage import SqliteWatchStore
+    from sourcing_guard.sync import run_sync
+
+    store = SqliteWatchStore(str(tmp_path / "w.db"))
+
+    class _Alive:
+        def recalls_all(self, *a, overseas=False, **k):
+            return [] if overseas else [_recall(uid="u-ok-1")]
+
+        def recalls_published_on(self, *a, **k):
+            return []
+
+    called: list[str] = []
+    report = run_sync(_Alive(), store, on_updated=lambda: called.append("swept"))
+
+    assert any(report.fetched.values()), report.fetched
+    assert store.get_sync_state("last_sync_ok_at"), "받아 왔는데 성공 시각이 없다"
+    assert store.get_sync_state("last_sync_at")
+    assert called == ["swept"]
+
+
+def test_the_screen_is_handed_the_success_time_not_the_attempt_time():
+    """`main.py` 가 화면에 넘기는 값이 `last_sync_ok_at` 인가.
+
+    ⚠ 같은 판단을 두 곳에 적지 않는다 (§6) - 이름으로 잠근다.
+    """
+    import re
+    from pathlib import Path
+
+    src = (Path(__file__).resolve().parents[1] / "sourcing_guard/main.py").read_text(
+        encoding="utf-8")
+    code = "\n".join(ln for ln in src.splitlines() if not ln.lstrip().startswith("#"))
+    m = re.search(r"recall_synced_at=([^\n,]+)", code)
+    assert m, "recall_synced_at 를 못 찾았다"
+    assert "last_sync_ok_at" in m.group(1), (
+        f"화면에 시도 시각을 넘기고 있다: {m.group(1)}")
+
+
+def test_no_screen_string_promises_a_daily_refresh():
+    """⚠ **서 있는 약속을 화면에 두지 않는다** (§9).
+
+    "매일 갱신"·"매일 대조" 는 2026-09-15~18 사흘 동안 거짓이었다. 우리가
+    보증할 수 있는 것은 "대조한다" 까지이고, 언제 받아 왔는지는 결과 카드의
+    리콜 축 주석이 말한다(못 받아 왔으면 그 절이 아예 안 붙는다).
+    """
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[1]
+    watched = [
+        "sourcing_guard/static/index.html",
+        "sourcing_guard/static/watch.html",
+        "sourcing_guard/static/landing.html",
+        "sourcing_guard/static/batch.html",
+        "sourcing_guard/static/guide.html",
+        "sourcing_guard/verifier.py",
+        "sourcing_guard/data/demo_amber_result.json",
+    ]
+    bad: list[str] = []
+    for name in watched:
+        for i, line in enumerate((root / name).read_text(encoding="utf-8").splitlines(), 1):
+            stripped = line.strip()
+            # 주석은 **왜 뗐는지**를 적고 있으므로 건너뛴다.
+            if stripped.startswith(("#", "//", "/*", "*", "<!--")):
+                continue
+            for promise in ("매일 갱신", "매일 대조"):
+                if promise in line:
+                    bad.append(f"{name}:{i} {promise}")
+    assert bad == [], f"서 있는 약속이 화면에 남아 있다: {bad}"

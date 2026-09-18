@@ -675,7 +675,7 @@ def test_axis_note_shows_both_publish_date_and_sync_time():
             date(2026, 9, 7),
         )
     }
-    assert got["recall"]["note"] == "2026-09-04 공표분까지 · 오늘 10:10 갱신"
+    assert got["recall"]["note"] == "2026-09-04 공표분까지 · 오늘 19:10 갱신"
 
 
 def test_axis_note_dates_an_older_sync_explicitly():
@@ -691,7 +691,18 @@ def test_axis_note_dates_an_older_sync_explicitly():
             date(2026, 9, 7),
         )
     }
-    assert got["recall"]["note"] == "2026-09-04 공표분까지 · 2026-09-05 23:00 갱신"
+    assert got["recall"]["note"] == "2026-09-04 공표분까지 · 2026-09-06 08:00 갱신"
+
+
+#: ⚠⚠ **시각은 KST 로 적는다. 저장값은 UTC 다** (2026-09-18).
+#:
+#:   위 세 검사의 기대값이 전에는 UTC 를 그대로 적어 뒀다 - **현재 출력에
+#:   맞춰 쓴 기대값**이고, §6 이 "그 검사는 버그를 지키고 있다" 고 말한 자리다.
+#:   실측: 컨테이너가 UTC 라 화면이 "오늘 02:06 갱신" 이라고 떴는데 한국은
+#:   11:06 이었다. 셀러는 한국에 있고, 09시 이전 갱신이면 **날짜까지 하루**
+#:   틀린다(아래 두 번째 검사가 그 경우다 - 09-05 23:00Z = 09-06 08:00 KST).
+#:
+#:   기대값은 "무엇이 옳은가" 에서 온다 - 셀러가 읽는 시각이다.
 
 
 def test_scorer_never_reads_the_clock_itself():
@@ -713,7 +724,7 @@ def test_scorer_never_reads_the_clock_itself():
     got = {a["key"]: a for a in _axes(
         [f(FindingKind.RECALL_CLEAR, Signal.GREEN)], "20260904",
         "2026-09-07T10:10:52+00:00", None)}
-    assert got["recall"]["note"] == "2026-09-04 공표분까지 · 2026-09-07 10:10 갱신"
+    assert got["recall"]["note"] == "2026-09-04 공표분까지 · 2026-09-07 19:10 갱신"
 
 
 def test_electrical_coverage_gap_names_the_reason_not_our_laziness():

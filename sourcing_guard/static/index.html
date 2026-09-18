@@ -156,7 +156,11 @@
 
   function asOfLabel(v) {
     if (!v || !/^\d{8}$/.test(v)) return "리콜 대조 기준일을 확인하지 못했습니다";
-    return "리콜 대조 기준: " + v.slice(0,4) + "-" + v.slice(4,6) + "-" + v.slice(6) + " 공표분까지 (매일 갱신)";
+    /* 주의(중요): "(매일 갱신)" 을 뗐다 (2026-09-18). 2026-09-15~18 에 정부 API
+       호출이 사흘 실패하는 동안 이 문장이 거짓이었다 - 서 있는 약속을 화면에
+       두지 않는다 (§9). 실제로 언제 받아 왔는지는 결과 카드의 리콜 축 주석이
+       말한다(못 받아 왔으면 그 절이 아예 안 붙는다). */
+    return "리콜 대조 기준: " + v.slice(0,4) + "-" + v.slice(4,6) + "-" + v.slice(6) + " 공표분까지";
   }
 
   // ── 이미지 붙여넣기 ────────────────────────────────────────────────
@@ -699,7 +703,7 @@
     var ws = data.watch_suggestion;
     var canWatch = ws ? ws.can_watch : true;
     var reason = (ws && ws.reason) ||
-      "검사는 이 시점의 판단입니다. 저장해두면 새로 공표되는 리콜과 매일 대조합니다.";
+      "검사는 이 시점의 판단입니다. 저장해두면 새로 공표되는 리콜과 대조합니다.";
     var lead = canWatch && (sig === "GREEN" || sig === "UNKNOWN") ? " lead" : "";
     html += '<div class="watch-cta' + (canWatch ? lead : " off") + '" id="cta">' +
             "<p>" + esc(reason) + "</p>" +
