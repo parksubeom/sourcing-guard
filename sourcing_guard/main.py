@@ -506,8 +506,22 @@ def trigger_sync(
     """
     if not settings.sync_token or x_sync_token != settings.sync_token:
         raise HTTPException(status_code=403, detail="유효한 X-Sync-Token 이 필요합니다.")
+    # ⚠⚠ **배경 루프와 같은 handler 를 쓴다** (2026-09-18 실측으로 잡았다).
+    #
+    #   전에는 `on_updated=_recalls.invalidate` 였다 - 색인만 버리고
+    #   **전체 스윕을 안 돌렸다.** 그래서 이 경로로 들어온 새 리콜은 워치
+    #   항목과 대조되지 않았다. 실측: 수동 동기화로 새 레코드 11건(국내 2 ·
+    #   국외 9)이 들어왔는데 `last_full_sweep_at` 이 안 움직였다.
+    #
+    #   ⚠ 이 docstring 이 "데모 직전에 강제로 최신화" 라고 적은 그 용도가
+    #     정확히 위험한 자리다 - 데모 직전에 부르면 새 리콜이 조용히 들어오고
+    #     아무에게도 안 알린다. 놓친 알림이 이 서비스가 하는 유일한 약속을
+    #     깨뜨린다 (R6 · 기획서 §6.1).
+    #
+    #   ⚠ 같은 판단을 두 곳에 적지 않는다 (§6). 루프와 이 경로가 **같은 이름**
+    #     을 부르고, `tests/test_watch_autosweep.py` 가 그것을 잠근다.
     return run_sync(
-        _kats, _store, force_initial=force_initial, on_updated=_recalls.invalidate
+        _kats, _store, force_initial=force_initial, on_updated=_on_recalls_updated
     ).to_dict()
 
 

@@ -466,3 +466,45 @@ def test_the_watch_screen_offers_the_button(pages=None):
     assert "load()" in body
     # 되돌릴 수 없으므로 한 번 묻는다.
     assert "window.confirm" in body
+
+
+def test_the_manual_sync_sweeps_too_not_just_invalidates():
+    """⚠⚠ **수동 동기화도 스윕한다** (2026-09-18 실측으로 잡았다).
+
+    `POST /api/v1/sync` 가 `on_updated=_recalls.invalidate` 를 넘기고 있었다 -
+    색인만 버리고 **전체 스윕을 안 돌렸다.** 그래서 이 경로로 들어온 새 리콜은
+    워치 항목과 대조되지 않았다.
+
+    실측: 수동 동기화로 새 레코드 11건(국내 2 · 국외 9)이 들어왔는데
+    `last_full_sweep_at` 이 2026-09-15 에서 안 움직였다.
+
+    ⚠ 그 엔드포인트의 docstring 이 적은 용도("데모 직전에 강제로 최신화")가
+      정확히 위험한 자리다 - 데모 직전에 부르면 새 리콜이 조용히 들어오고
+      아무에게도 안 알린다. **놓친 알림이 우리가 하는 유일한 약속을 깨뜨린다**
+      (R6 · 기획서 §6.1).
+
+    ⚠ 같은 판단을 두 곳에 적지 않는다 (§6). 루프와 수동 경로가 **같은 이름**을
+      부르는지를 본다 - 이름이 갈리면 한쪽만 고쳐도 나머지가 조용히 틀린다.
+    """
+    import re
+    from pathlib import Path
+
+    src = (Path(__file__).resolve().parents[1] / "sourcing_guard/main.py").read_text(
+        encoding="utf-8")
+    code = "\n".join(ln for ln in src.splitlines() if not ln.lstrip().startswith("#"))
+
+    # 배경 루프가 쓰는 이름.
+    loop = re.search(r"sync_loop\((.*?)\n\s*\)\n", code, re.S)
+    assert loop, "sync_loop 호출을 못 찾았다 - main.py 모양이 바뀌었다"
+    assert "on_updated=_on_recalls_updated" in loop.group(1), loop.group(1)[:200]
+
+    # 수동 경로가 **같은 이름**을 쓰는가.
+    manual = re.search(r"def trigger_sync\(.*?\n\n\n", code, re.S)
+    assert manual, "trigger_sync 를 못 찾았다"
+    body = manual.group(0)
+    assert "on_updated=_on_recalls_updated" in body, (
+        "수동 동기화가 전체 스윕을 안 돌린다 - 이 경로로 들어온 리콜은 "
+        "워치 항목과 대조되지 않는다 (R6)"
+    )
+    assert "on_updated=_recalls.invalidate" not in body, (
+        "색인 무효화만 넘기고 있다 - 스윕이 빠진다")
