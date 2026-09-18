@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&display=swap">
+<style>
+  :root{
+    --bg:#FFF8F0; --card:#FFFFFF;
+    --brand:#8B4CCB; --brand-strong:#6E37AB; --brand-tint:#F3EBFB;
+    --ink:#2A2320; --muted:#6F645D; --faint:#8A7F78;
+    --line:#EADFD4;
+    --amber:#D97B00; --amber-tint:#FFF1DE; --amber-text:#9A5600; --amber-border:#EFC28A;
+    --red:#D63B3B; --red-tint:#FDE8E8; --red-text:#B02A2A;
+    --green:#1F8A4C; --green-tint:#E6F5EC; --green-text:#166B3A;
+    --blob:#FBEBDD;
+    --disp:"Gowun Dodum","Noto Sans CJK KR",sans-serif;
+    --body:"Noto Sans CJK KR","Noto Sans KR",sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{width:1920px;height:1080px}
+  body{
+    background:var(--bg); color:var(--ink); font-family:var(--body);
+    display:flex; overflow:hidden; word-break:keep-all; position:relative;
+  }
+  .blob{
+    position:absolute; right:-160px; top:-220px; width:1180px; height:1180px;
+    border-radius:50%; background:var(--blob); z-index:0;
+  }
+  .blob2{
+    position:absolute; left:-260px; bottom:-420px; width:760px; height:760px;
+    border-radius:50%; background:var(--brand-tint); opacity:.55; z-index:0;
+  }
+
+  .left{
+    position:relative; z-index:1; width:1010px;
+    padding:100px 0 78px 112px; display:flex; flex-direction:column;
+  }
+  .brand{display:flex; align-items:center; gap:18px; margin-bottom:60px}
+  .brand svg{width:64px; height:64px; flex:none}
+  .brand b{font-family:var(--disp); font-size:34px; font-weight:400; letter-spacing:-.01em}
+  .brand span{
+    font-size:19px; color:var(--brand-strong); font-weight:700;
+    background:var(--brand-tint); padding:7px 16px; border-radius:999px; letter-spacing:.02em;
+  }
+
+  h1{
+    font-family:var(--disp); font-weight:400;
+    font-size:100px; line-height:1.18; letter-spacing:-.025em;
+    margin-bottom:38px;
+  }
+  h1 em{font-style:normal; color:var(--brand-strong)}
+
+  .sub{font-size:29px; line-height:1.62; color:var(--muted); max-width:900px}
+  .sub b{color:var(--ink); font-weight:700}
+
+  .spacer{flex:1}
+
+  .nums{display:flex; gap:0; border-top:2px solid var(--line); padding-top:34px}
+  .num{padding-right:42px; margin-right:42px; border-right:1px solid var(--line); white-space:nowrap}
+  .num:last-child{border-right:0; padding-right:0; margin-right:0}
+  .num .v{
+    font-family:var(--disp); font-size:48px; line-height:1.1; letter-spacing:-.02em;
+    font-variant-numeric:tabular-nums; margin-bottom:10px; white-space:nowrap;
+  }
+  .num .k{font-size:18px; color:var(--faint); letter-spacing:.01em; white-space:nowrap}
+  .num.hero .v{color:var(--brand-strong)}
+
+  .right{
+    position:relative; z-index:1; flex:1;
+    display:flex; align-items:center; justify-content:center; padding-right:104px;
+  }
+
+  .card{
+    width:660px; background:var(--card); border-radius:26px;
+    border:1px solid var(--line); box-shadow:0 26px 60px rgba(42,35,32,.13);
+    overflow:hidden;
+  }
+  .card .head{
+    background:var(--amber-tint); border-bottom:1px solid var(--amber-border);
+    padding:30px 36px 28px; display:flex; align-items:center; gap:18px;
+  }
+  .card .head svg{width:62px;height:62px;flex:none}
+  .chip{
+    display:inline-flex; align-items:center; gap:10px;
+    background:#fff; border:1.5px solid var(--amber-border);
+    color:var(--amber-text); font-size:20px; font-weight:700;
+    padding:9px 20px; border-radius:999px;
+  }
+  .chip i{width:13px;height:13px;border-radius:50%;background:var(--amber);display:block}
+  .card .body{padding:32px 36px 30px}
+  .pname{font-size:25px; font-weight:700; line-height:1.42; margin-bottom:28px}
+  .row{display:flex; gap:16px; padding:19px 0; border-top:1px solid #F4EDE5}
+  .row:first-of-type{border-top:0; padding-top:0}
+  .dot{width:11px;height:11px;border-radius:50%;margin-top:11px;flex:none}
+  .dot.g{background:var(--green)} .dot.r{background:var(--red)}
+  .rtxt{flex:1}
+  .rtxt .t{font-size:21px; line-height:1.5; margin-bottom:7px}
+  .rtxt .t b.g{color:var(--green-text); font-weight:700}
+  .rtxt .t b.r{color:var(--red-text); font-weight:700}
+  .rtxt .s{font-size:16px; color:var(--faint)}
+  .card .foot{
+    border-top:1px solid #F4EDE5; padding:20px 36px 24px;
+    font-size:15px; line-height:1.55; color:var(--faint);
+  }
+</style>
+</head>
+<body>
+  <div class="blob"></div><div class="blob2"></div>
+
+  <div class="left">
+    <div class="brand">
+      <svg viewBox="0 0 120 120" aria-hidden="true">
+        <path d="M62 12 C88 10 108 30 106 58 C104 88 84 108 58 108 C30 108 12 88 14 60 C16 32 36 14 62 12 Z" fill="#FFC29B"/>
+        <g transform="translate(0 58)" fill="#3B2A5E" stroke="#3B2A5E" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
+          <ellipse cx="34" cy="10" rx="7" ry="4" fill="#F29B6B" opacity="0.55"/>
+          <ellipse cx="86" cy="10" rx="7" ry="4" fill="#F29B6B" opacity="0.55"/>
+          <circle cx="48" cy="-1" r="5" stroke="none"/><circle cx="80" cy="-1" r="5" stroke="none"/>
+          <path d="M53 14 Q61 20 69 14" fill="none"/>
+        </g>
+      </svg>
+      <b>안심 소싱 돋보기</b>
+      <span>셀러용 · 무료 · 로그인 없음</span>
+    </div>
+
+    <h1>인증번호만 보면<br><em>통과합니다.</em></h1>
+    <p class="sub">
+      이 기차놀이는 인증이 <b>“적합”</b>인데, <b>2026년 7월 23일 리콜</b>됐습니다.<br>
+      소싱 전에 KC 인증·리콜·유해물질을 정부 원문으로 확인합니다.
+    </p>
+
+    <div class="spacer"></div>
+
+    <div class="nums">
+      <div class="num"><div class="v">37,363건</div><div class="k">리콜 공표 · 매일 갱신</div></div>
+      <div class="num"><div class="v">596건</div><div class="k">세부품목 등급표</div></div>
+      <div class="num"><div class="v">104 / 135</div><div class="k">실상품 검수 품목 적중</div></div>
+      <div class="num hero"><div class="v">0건</div><div class="k">없는 의무를 붙인 수</div></div>
+    </div>
+  </div>
+
+  <div class="right">
+    <div class="card">
+      <div class="head">
+        <svg viewBox="0 0 120 120" aria-hidden="true">
+          <path d="M62 12 C88 10 108 30 106 58 C104 88 84 108 58 108 C30 108 12 88 14 60 C16 32 36 14 62 12 Z" fill="#FFC29B"/>
+          <g transform="translate(0 58)" fill="#3B2A5E" stroke="#3B2A5E" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
+            <ellipse cx="34" cy="10" rx="7" ry="4" fill="#F29B6B" opacity="0.55"/>
+            <ellipse cx="86" cy="10" rx="7" ry="4" fill="#F29B6B" opacity="0.55"/>
+            <circle cx="48" cy="2" r="5" stroke="none"/><circle cx="80" cy="2" r="5" stroke="none"/>
+            <path d="M53 16 Q61 11 69 16" fill="none"/>
+          </g>
+        </svg>
+        <span class="chip"><i></i>주의</span>
+      </div>
+      <div class="body">
+        <div class="pname">모형완구 기차놀이 클래식 기차 장난감 세트</div>
+
+        <div class="row">
+          <span class="dot g"></span>
+          <div class="rtxt">
+            <div class="t">인증번호가 <b class="g">조회되었습니다</b> — 상태 “적합”</div>
+            <div class="s">국가기술표준원 제품안전정보센터</div>
+          </div>
+        </div>
+
+        <div class="row">
+          <span class="dot r"></span>
+          <div class="rtxt">
+            <div class="t">공표된 <b class="r">리콜 목록과 일치합니다</b> — 2026-07-23</div>
+            <div class="s">제품안전정보센터 리콜 공표 · 원문 링크 첨부</div>
+          </div>
+        </div>
+      </div>
+      <div class="foot">
+        본 결과는 공개된 정부 데이터에 기반한 참고 정보이며,<br>
+        법적 판단이나 안전 인증을 대체하지 않습니다.
+      </div>
+    </div>
+  </div>
+</body>
+</html>
