@@ -109,6 +109,14 @@
     sync.last_sync_error                **비어 있지 않으면 수집이 실패했다**
     sync.latest_published_on · recalls
     watch_sweep.last_full_sweep_at      동기화 시각보다 뒤인가
+    extraction.failures_by_vendor       **한 벤더라도 쌓이면 적는다** (2026-09-20 추가)
+                                        Anthropic 잔액이 0 이라 지금은 GPT 한 벌로
+                                        돈다 - OpenAI 가 막히면 휴리스틱으로
+                                        떨어지고 product_name·category 가 빈다
+                                        (미완 §1-o)
+    cert_seed.loaded / skipped          **0 이면 재배포 뒤 데모의 인증 축이 죽는다**
+                                        (국표원이 죽어 있는 동안). skipped 가 0 이
+                                        아니면 시드 파일이 깨진 것이다
 
 ⚠⚠ `recalls` 와 `latest_published_on` **만** 읽으면 멈춘 것을 못 본다.
   수는 마지막 성공 때의 값이 그대로 남는다 — 2026-09-15~18 에 정확히 그랬다.

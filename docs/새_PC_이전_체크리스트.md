@@ -149,6 +149,21 @@ PYTHONUTF8=1 pytest -q             # 1,667 passed 나오면 정상 (2026-09-19)
 ⚠ `EXTRACTOR_ORDER` 는 **비워 두는 것이 정상**이다(기본 `gpt,claude`). 순서를
 바꿔 시험할 때만 채우고, 그때 재는 숫자는 어느 추출기 것인지 함께 적는다.
 
+⚠⚠ **키가 있어도 패키지가 없으면 추출기가 죽는다.** 2026-09-20 에 이 PC 에서
+`openai` 가 설치돼 있지 않아(requirements.txt 에는 `openai>=1.40` 이 있다)
+기준 추출기가 통째로 빠졌다. 증상이 **조용하다** — 오류가 아니라 휴리스틱으로
+내려가고, 그 상태로 기록한 표본 열 건이 전부 `path=heuristic` 이었다.
+
+```bash
+pip install -r requirements.txt          # 옮긴 직후 한 번. 키보다 먼저다
+python -c "import openai, anthropic; print('ok')"
+```
+
+⚠ 같은 날 **Anthropic 잔액이 0** 이었다(400 `credit balance is too low`). 키가
+있어도 부른 순간 실패한다. R7 이 두 벌을 둔 이유가 가용성인데 2순위가 죽어
+있으면 한 벌짜리다 — `/healthz` 의 `failures_by_vendor` 로 본다. 부를 때마다
+돈이 나가므로 `claude_reachable` 같은 값을 헬스체크에 넣지 않는다.
+
 ⚠ `DOMEGGOOK_API_KEY` 는 **호출 IP 가 등록된 키**다. PC 를 옮기면 공인 IP 가
 바뀌어 401/403 이 난다 - **도매꾹에 새 IP 등록을 먼저 신청해야 한다.** 쿼터는
 분당 180회 · 하루 15,000회. 도매꾹 호출은 `scripts/` 안에서만 한다.
