@@ -954,6 +954,16 @@ body{background:var(--bg-page)}
    흔들려고 고른 값이지 화면에 내보이려고 고른 값이 아니다 (index.html 주석).
    점 자리(10px + gap 14px)를 padding 으로 메워 다른 줄과 왼쪽을 맞춘다. */
 .rv-row.rv-nosignal{padding-left:24px}
+/* 공급처에 보낼 문안. 복사가 막힌 브라우저에서는 이 블록을 펼쳐 보여 주고
+   셀러가 직접 고른다 - 우리가 선택을 대신 잡아 주지 않는다(잴 것이 생긴다). */
+.rv-ask{display:flex; flex-direction:column; gap:10px; padding:16px 0 0}
+.rv-ask-text{
+  margin:0; padding:14px 16px; border:1px solid var(--border-default);
+  border-radius:var(--r-m); background:var(--bg-canvas);
+  font-family:var(--font-mono); font-size:13px; line-height:21px;
+  white-space:pre-wrap; overflow-wrap:anywhere; user-select:all;
+  max-height:340px; overflow-y:auto;
+}
 .rv-line{display:flex; align-items:flex-start; justify-content:space-between; gap:12px}
 @media (max-width:640px){
   .rv-groups{padding:0 20px 8px}

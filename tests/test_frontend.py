@@ -160,10 +160,19 @@ def test_hazard_rules_are_collapsed(html):
     assert "유해물질 공통안전기준" in html
     assert "FOLD_AT = 4" in html, "접기 문턱이 4건이어야 한다 (총괄 명령)"
     # 알약 값은 **서버 detail** 에서 읽는다. 문장에서 뽑으면 화면이 값을 짓는다.
-    fold = html[html.index("function hazardChip("):]
-    fold = fold[: fold.index("\n  }")]
-    assert "d.substance" in fold and "d.limit_value" in fold
-    assert "statement_ko" not in fold, "알약을 문장에서 뽑고 있다 (R5)"
+    #
+    # ⚠ 오너가 `hazardLabel` 이다 (2026-09-20). 화면 알약과 공급처에 보낼
+    #   문안이 같은 문자열을 써야 해서 뺐다 - 두 곳에 적으면 셀러가 보내는
+    #   글과 화면이 갈린다 (§6). 검사는 **오너를 따라간다.**
+    label = html[html.index("function hazardLabel("):]
+    label = label[: label.index("\n  }")]
+    assert "d.substance" in label and "d.limit_value" in label
+    assert "statement_ko" not in label, "알약을 문장에서 뽑고 있다 (R5)"
+
+    chip = html[html.index("function hazardChip("):]
+    chip = chip[: chip.index("\n  }")]
+    assert "hazardLabel(" in chip, "알약이 오너를 안 쓴다"
+    assert "d.substance" not in chip, "값 읽기가 두 곳에 있다 (§6)"
 
 
 def test_source_links_open_in_a_new_tab_safely(html):
@@ -853,3 +862,80 @@ def test_the_hazard_fold_says_what_to_do_next(html):
     fold = fold[: fold.index("\n  }")]
     assert "상세페이지로 알 수 없습니다" in fold
     assert "공급처에 시험성적서를 요청하세요" in fold
+
+
+# ── 공급처에 보낼 문안 (2026-09-20) ────────────────────────────────
+def _ask_src(html: str) -> str:
+    body = html[html.index("function askText("):]
+    return body[: body.index("\n  function stamp(")]
+
+
+def test_the_supplier_message_quotes_the_server_and_writes_nothing_new(html):
+    """⚠⚠ **여기서 문장을 만들지 않는다.**
+
+    이 글은 **공급처에게 나간다.** 셀러가 자기 주장으로 보내는 글에 우리가
+    지어낸 문장이 섞이면 화면에서보다 비싸다 (R5). 그래서 줄마다 서버가 낸
+    `statement_ko` 를 그대로 인용하고 `source_url` 을 붙인다.
+
+    ⚠ 서류 목록도 우리가 짜지 않는다. "안전확인신고증" 은 완구에는 맞지만
+      공급자적합성확인 품목에는 **틀린 서류**다. finding 들이 이미 무엇을
+      요청해야 하는지 말하고 있다.
+    """
+    src = _ask_src(html)
+    assert "f.statement_ko" in src, "서버 문장을 인용하지 않는다"
+    assert "f.source_url" in src, "근거 링크를 안 붙인다 (R2)"
+    assert "data.disclaimer" in src, "§9 고정 문구를 서버에서 받지 않는다"
+    # 서류 이름을 우리가 적지 않는다.
+    for invented in ("신고증", "성적서 사본", "수입신고필증", "시험성적서를 첨부"):
+        assert invented not in src, f"서류 목록을 우리가 짜고 있다: {invented}"
+
+
+def test_the_supplier_message_folds_like_the_screen(html):
+    """클립보드에 들어가는 것은 화면에 보이는 것과 같다.
+
+    ⚠ 딱 한 군데만 다르다 - 유해물질은 알약 넷 + "+10" 이 아니라 **전부**
+      적는다. "+10" 은 메시지에서 쓸모가 없다.
+    """
+    src = _ask_src(html)
+    assert "FOLD_AT" in src, "접기 문턱이 화면과 다른 값을 쓴다"
+    assert "FOLD_CHIPS" not in src, "메시지가 알약을 넷으로 자르고 있다"
+    assert "hazardLabel(" in src or "hazardLabel(" in html[html.index("function askHazard("):], (
+        "물질 문자열이 화면과 다른 오너에서 온다")
+
+
+def test_the_supplier_message_never_misattributes_a_legal_basis(html):
+    """⚠⚠ **근거로 묶는다.** `isHazard` 는 kind 로만 묶으므로 한 덩어리 안에
+    근거가 섞인다 - 검수 완료 21건이 공통안전기준 17 · 안전확인 부속서 2 ·
+    공급자적합성 부속서 2 다.
+
+    화면은 펼치면 줄마다 제 근거를 들어 R2 가 지켜지지만, 이 글은 공급처에게
+    나간다. `source_url` 로 계열을 나누고 그 안에서 `legal_basis` 로 조항을
+    나눈다 - 물질이 제 조항에만 붙는다.
+    """
+    src = html[html.index("function askHazard("):]
+    src = src[: src.index("\n  // 검사한 시각")]
+    assert "source_url" in src, "계열(문서)로 안 나눈다"
+    assert "legal_basis" in src, "조항으로 안 나눈다"
+
+
+def test_the_supplier_message_block_sits_below_the_watch_cta(html):
+    """⚠ 감시 CTA 가 밀려 내려가면 안 된다.
+
+    UNKNOWN 에서 우리가 주는 **유일한 확정적 가치**가 그 버튼이다.
+    """
+    assert html.index('id="cta"') < html.index('class="rv-ask"'), (
+        "문안 블록이 감시 CTA 위에 있다 - CTA 가 접힘 아래로 밀린다")
+
+
+def test_the_copy_fallback_needs_no_browser_api(html):
+    """⚠ 실패하면 **텍스트를 그냥 펼친다.** 우리가 선택을 대신 잡아 주지 않는다.
+
+    선택을 잡아 주려 하면 브라우저마다 되는지 재야 하고, 우리는 그것을 안
+    쟀다. 펼쳐서 보여 주면 API 가 0개라 잴 것이 없다 - 재지 않아도 되는
+    설계를 고른다 (§8).
+    """
+    block = html[html.index("var askBtn = document.getElementById"):]
+    block = block[: block.index("\n    // 접힌 유해물질")]
+    assert "pre.hidden = false" in block, "실패해도 텍스트를 안 보여 준다"
+    for api in ("getSelection", "createRange", "execCommand", "select()"):
+        assert api not in block, f"선택을 대신 잡고 있다: {api}"
