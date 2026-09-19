@@ -42,7 +42,7 @@ from .models import (
 from .scorer import KST, gov_lookup_state, has_specific_finding, score
 from .demos import DEMOS, DEMO_TEXTS
 from .demos import preview as demo_preview
-from .samples import compare_cut, payload as sample_payload
+from .samples import compare_cut, misses as sample_misses, payload as sample_payload
 
 _log = logging.getLogger(__name__)
 from .ratelimit import RateLimiter, text_fingerprint
@@ -343,6 +343,13 @@ def samples_page() -> HTMLResponse:
     return _page("samples.html")
 
 
+@app.api_route("/misses", methods=_PAGE_METHODS, response_class=HTMLResponse,
+               include_in_schema=False)
+def misses_page() -> HTMLResponse:
+    """「우리가 틀린 것」 — 틀린 것을 내놓는 것이 이 제품의 논리와 맞는다."""
+    return _page("misses.html")
+
+
 @app.api_route("/guide", methods=_PAGE_METHODS, response_class=HTMLResponse, include_in_schema=False)
 def guide_page() -> HTMLResponse:
     """[M-5] 카테고리 가이드 — **안내 축이다. 아무것도 판정하지 않는다.**
@@ -587,6 +594,16 @@ def demos() -> dict:
     # ⚠ 대비 한 컷도 여기서 보낸다. 랜딩이 이미 이 하나를 부르므로 왕복이
     #   늘지 않는다 - 첫 화면의 요청 수가 곧 이탈이다.
     return {"items": DEMOS, "preview": demo_preview(), "compare": compare_cut()}
+
+
+@app.get("/api/v1/misses", include_in_schema=False)
+def misses() -> dict:
+    """「우리가 틀린 것」. 오답 8 · 애매 4 · 못 맞힌 19 을 그대로 내놓는다.
+
+    ⚠ 수는 `baseline.BASELINE` 과 같아야 한다 - 자료를 만드는 스크립트가
+      어긋나면 파일을 만들지 않으므로 여기 오는 수는 언제나 발표 숫자다.
+    """
+    return sample_misses()
 
 
 @app.get("/api/v1/samples", include_in_schema=False)

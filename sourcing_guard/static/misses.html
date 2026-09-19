@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>우리가 틀린 것 — 안심 소싱 돋보기</title>
+<meta name="description" content="도매 실상품을 전수 검수해 저희가 틀린 것과 못 맞힌 것을 그대로 적었습니다. 무엇을 왜 틀렸는지까지.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+<link rel="stylesheet" href="/static/app.css">
+<!--
+  「우리가 틀린 것」. 스타일은 app.css 의 그 절에만 있다 - 페이지 전용 style
+  태그를 여기 두지 않는다 (검사가 막는다).
+
+  주의(중요): **숫자와 문구를 여기 적지 않는다.** 전부 /api/v1/misses 가 그린다.
+    자료는 scripts/build_misses.py 가 만들고, 그 스크립트는 만든 수가
+    baseline.BASELINE 과 어긋나면 파일을 만들지 않는다. 그래서 이 화면의 수는
+    발표 숫자와 갈릴 수 없다.
+
+  주의(중요): 설명은 사람이 검수해 적은 것이다. 화면에서 문장을 만들지 않는다.
+
+  주의(중요): §9 는 여기도 적용된다 - "고치겠습니다" 는 되고 "고쳤습니다" 는
+    안 된다.
+-->
+</head>
+<body class="lv2">
+<a class="skip" href="#main">본문으로 건너가기</a>
+
+<header class="masthead">
+  <div class="container">
+    <a class="brand" href="/">
+      <svg class="mark" viewBox="0 0 120 120" aria-hidden="true"><use href="/static/mascot.svg#ansimi-GREEN"/></svg>
+      <span class="wordmark">안심 소싱 돋보기</span>
+    </a>
+    <nav class="pages" aria-label="주요 화면">
+      <a href="/">소개</a>
+      <a href="/scan">상품 검사</a>
+      <a href="/batch">대량 검사</a>
+      <a href="/watch">감시 목록</a>
+      <a href="/guide">카테고리 가이드</a>
+    </nav>
+  </div>
+</header>
+
+<main id="main" class="container mx">
+  <h1>우리가 틀린 것</h1>
+  <p class="mx-lede">도매 실상품을 사람이 전수 검수해 <strong>틀린 것과 못 맞힌 것</strong>을
+    그대로 적었습니다. 무엇을 왜 틀렸는지까지 씁니다. 정확도 숫자 하나보다
+    이 목록이 저희를 더 잘 설명합니다.</p>
+
+  <ul class="mx-sum" id="sum"></ul>
+  <p class="mx-note">저희가 맞힌 예는 <a href="/samples">체험 표본</a>에 있습니다.</p>
+
+  <section aria-labelledby="wrong-h">
+    <h2 id="wrong-h">틀린 품목을 말한 것</h2>
+    <p class="mx-note">가장 아픈 자리입니다. 없는 의무를 만들지는 않았지만,
+      다른 품목의 기준을 말했습니다.</p>
+    <div class="mx-list" id="wrong"></div>
+  </section>
+
+  <section aria-labelledby="vague-h">
+    <h2 id="vague-h">갈리는 것</h2>
+    <p class="mx-note">상품명만으로는 어느 쪽인지 고를 수 없어, 저희가 고르지
+      않기로 한 줄입니다.</p>
+    <div class="mx-list" id="vague"></div>
+  </section>
+
+  <section aria-labelledby="missed-h">
+    <h2 id="missed-h">아무 말도 못 한 것</h2>
+    <p class="mx-note">품목을 붙이지 못했습니다. 틀린 말을 한 것은 아니지만
+      셀러에게 드린 것이 없습니다.</p>
+    <ul class="mx-missed" id="missed"></ul>
+  </section>
+
+  <p class="note">본 결과는 공개된 정부 데이터에 기반한 참고 정보이며, 법적 판단이나 안전 인증을 대체하지 않습니다.</p>
+</main>
+
+<script src="/static/misses.js"></script>
+</body>
+</html>

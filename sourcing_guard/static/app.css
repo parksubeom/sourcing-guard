@@ -1113,3 +1113,59 @@ body{background:var(--bg-page)}
 @media (max-width:640px){
   .cmp{grid-template-columns:minmax(0,1fr)}
 }
+
+/* == 우리가 틀린 것 (/misses) =========================================
+   틀린 것을 내놓는 화면이다. 붉게 칠해 겁주지 않는다 - 사실을 읽기 쉽게
+   두는 것이 목적이고, 강조는 **없는 의무를 붙인 0** 하나에만 준다. */
+.mx h1{font-size:30px; line-height:38px; margin:0 0 12px}
+.mx-lede{margin:0 0 20px; font-size:17px; line-height:28px; color:var(--fg-2); max-width:760px}
+.mx-sum{
+  list-style:none; margin:0 0 32px; padding:0; display:flex; flex-wrap:wrap; gap:12px;
+}
+.mx-sum li{
+  flex:1 1 150px; min-width:0; padding:16px 18px; border-radius:var(--r-m);
+  background:var(--bg-canvas); border:1px solid var(--border-default);
+}
+.mx-sum b{display:block; font-size:28px; line-height:34px; font-family:var(--font-display)}
+.mx-sum span{font-size:14px; line-height:20px; color:var(--fg-2)}
+.mx-sum li.zero{border-color:var(--signal-green); background:var(--signal-green-tint)}
+.mx h2{font-size:22px; line-height:30px; margin:28px 0 6px}
+.mx-note{margin:0 0 14px; font-size:15px; line-height:24px; color:var(--fg-2)}
+.mx-list{
+  display:grid; grid-template-columns:repeat(auto-fill, minmax(min(100%, 320px), 1fr));
+  gap:14px; margin-bottom:8px;
+}
+.mx-card{
+  padding:18px; border:1px solid var(--border-default); border-radius:var(--r-l);
+  background:var(--bg-card); min-width:0;
+}
+.mx-card h3{margin:0 0 10px; font-size:16px; line-height:24px; overflow-wrap:anywhere}
+.mx-row{display:flex; gap:10px; margin-bottom:6px; font-size:14px; line-height:22px}
+.mx-k{flex:none; width:110px; color:var(--fg-3)}
+.mx-v{min-width:0; overflow-wrap:anywhere}
+.mx-said{
+  display:inline-block; margin:0 6px 4px 0; padding:2px 8px; border-radius:var(--r-pill);
+  background:var(--bg-canvas); border:1px solid var(--border-default); font-size:13px;
+}
+.mx-why{margin:10px 0 0; font-size:14px; line-height:23px; color:var(--fg-2); overflow-wrap:anywhere}
+.mx-missed{
+  list-style:none; margin:0; padding:0; display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap:8px;
+}
+.mx-missed li{
+  padding:12px 14px; border-radius:var(--r-m); background:var(--bg-canvas);
+  border:1px solid var(--border-default); font-size:14px; line-height:22px;
+  min-width:0; overflow-wrap:anywhere;
+}
+
+@media (max-width:640px){
+  .mx h1{font-size:24px; line-height:32px}
+  .mx-list{grid-template-columns:minmax(0,1fr)}
+  .mx-missed{grid-template-columns:minmax(0,1fr)}
+  .mx-k{width:88px}
+}
+.sx-own{
+  margin:0; padding:10px 12px; border-radius:var(--r-m);
+  background:var(--signal-unknown-tint); color:var(--signal-unknown-text);
+  font-size:13px; line-height:20px;
+}

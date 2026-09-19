@@ -63,6 +63,20 @@
                 "</b> · 리콜 <b>" + esc(LOOKUP[s.gov_lookup.recall] || s.gov_lookup.recall) + "</b>");
     }
 
+    /* 주의(중요): 표본 중 **우리가 못 맞힌 것**을 카드가 스스로 밝힌다.
+       "여기 있는 것은 저희가 맞힌 예입니다" 라고만 두면 그 카드에는 거짓이
+       된다 - 실측에서 초록불 한 장(봉제인형)이 미매칭 19 에 있었다.
+       감추는 대신 적는다. 그게 이 제품이 파는 것과 같다. */
+    var BUCKET = {
+      missed: "이 상품은 저희가 품목을 붙이지 못한 쪽에 속합니다",
+      wrong: "이 상품은 저희가 품목을 틀리게 말한 쪽에 속합니다",
+      vague: "이 상품은 품목이 갈려 저희가 고르지 않은 쪽에 속합니다"
+    };
+    var owned = s.bucket
+      ? '<p class="sx-own">' + esc(BUCKET[s.bucket] || "") +
+        ' <a href="/misses">우리가 틀린 것</a></p>'
+      : "";
+
     return (
       '<article class="sx-card">' +
         '<header class="sx-head">' +
@@ -70,7 +84,7 @@
             esc(TONE[s.signal] || s.signal) + "</span>" +
           "<h2>" + esc(s.title) + "</h2>" +
         "</header>" +
-        '<p class="sx-headline">' + esc(s.headline) + "</p>" +
+        '<p class="sx-headline">' + esc(s.headline) + "</p>" + owned +
         '<ul class="sx-rows">' + rows + "</ul>" +
         '<div class="sx-foot">' +
           '<a class="btn-t" href="/scan?sample=' + encodeURIComponent(s.id) + '">지금 다시 검사</a>' +
@@ -99,6 +113,10 @@
           "여기 있는 것은 저희가 맞힌 예입니다. 실상품 " + b.denominator +
           "건 기준 품목 적중 " + b.ok + "건(" + pct + "%)이고, 틀린 " + b.wrong +
           "건과 못 맞힌 " + b.missed + "건도 저장소에 공개돼 있습니다.";
+        var link = document.createElement("a");
+        link.href = "/misses";
+        link.textContent = " 우리가 틀린 것 보기";
+        honestBaseline.appendChild(link);
       }
 
       list.innerHTML = data.items.map(card).join("");

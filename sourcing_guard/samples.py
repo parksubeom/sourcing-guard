@@ -31,6 +31,7 @@ _log = logging.getLogger(__name__)
 
 SAMPLES_PATH = Path(__file__).resolve().parent / "data" / "experience_samples.json"
 COMPARE_PATH = Path(__file__).resolve().parent / "data" / "compare_cut.json"
+MISSES_PATH = Path(__file__).resolve().parent / "data" / "misses.json"
 
 #: 카드에 그리는 근거 줄. 인증 축 하나 · 리콜 축 하나면 카드가 말할 것을 다
 #: 말한다. 유해물질 줄은 **수만 적는다** - 열넷을 그대로 그리면 카드가 화면을
@@ -93,6 +94,12 @@ def payload() -> dict[str, Any]:
         return {"recorded_at": None, "items": []}
 
     cards = [c for c in (_card(i) for i in raw.get("items") or []) if c]
+    # ⚠⚠ 표본 중 **우리가 못 맞힌 것**을 카드가 스스로 밝힌다. "여기 있는 것은
+    #   저희가 맞힌 예입니다" 라고만 두면 그 카드에는 거짓이 된다 - 실측에서
+    #   초록불 한 장(봉제인형)이 미매칭 19 에 있었다. 감추지 않는다.
+    buckets = _sample_buckets()
+    for card in cards:
+        card["bucket"] = buckets.get(card["id"])
     base = BASELINE[BASELINE_EXTRACTOR]
     return {
         # ⚠ 날짜는 **파일에 적힌 실측 시각**이다. 화면이 "2026-09-19 에 실제로
@@ -142,3 +149,37 @@ def compare_cut() -> dict[str, Any] | None:
         "cert": raw["cert"],
         "recall": raw["recall"],
     }
+
+
+@lru_cache(maxsize=1)
+def misses() -> dict[str, Any]:
+    """「우리가 틀린 것」 — 오답 8 · 애매 4 · 못 맞힌 19.
+
+    ⚠⚠ 심사위원은 정확도 99% 를 믿지 않는다. **틀린 것을 내놓는 팀**은 믿는다.
+      그리고 그것이 이 제품의 논리와 맞는다 - 우리가 파는 것은 정확도가 아니라
+      "모르면 모른다고 말한다" 이기 때문이다 (총괄 판정 §2-C).
+
+    ⚠ 설명은 사람이 검수해 적은 것이고 `scripts/build_misses.py` 가 옮긴다.
+      그 스크립트는 만든 수가 `baseline.BASELINE` 과 어긋나면 파일을 만들지
+      않는다 - 이 페이지의 수가 발표 숫자와 갈릴 수 없다.
+    """
+    try:
+        raw = json.loads(MISSES_PATH.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        _log.warning("「우리가 틀린 것」 자료를 읽지 못했습니다: %s", exc)
+        return {"counts": {}, "wrong": [], "vague": [], "missed": []}
+    return {
+        "counts": raw.get("counts") or {},
+        "extractor": raw.get("extractor"),
+        "wrong": raw.get("wrong") or [],
+        "vague": raw.get("vague") or [],
+        "missed": raw.get("missed") or [],
+    }
+
+
+def _sample_buckets() -> dict[str, str]:
+    try:
+        raw = json.loads(MISSES_PATH.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    return raw.get("sample_buckets") or {}

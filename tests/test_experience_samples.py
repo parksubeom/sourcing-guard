@@ -307,3 +307,113 @@ def test_the_comparison_section_is_hidden_without_data(monkeypatch, tmp_path):
 
     landing = (_STATIC / "landing.html").read_text(encoding="utf-8")
     assert 'id="cmp-sec" hidden' in landing, "대비 구역이 기본 hidden 이 아니다"
+
+
+# ── 「우리가 틀린 것」 ────────────────────────────────────────────────
+def test_the_misses_page_counts_equal_the_baseline():
+    """⚠⚠ 이 화면의 수가 발표 숫자와 갈리면 안 된다.
+
+    자료를 만드는 `scripts/build_misses.py` 가 기준선과 어긋나면 파일을 만들지
+    않지만, 파일이 낡은 채로 남을 수는 있다. 여기서 한 번 더 본다.
+    """
+    from sourcing_guard.samples import misses
+
+    m = misses()
+    want = BASELINE[BASELINE_EXTRACTOR]
+    for key in ("denominator", "ok", "wrong", "missed", "vague", "off_target"):
+        assert m["counts"][key] == want[key], (
+            f'{key}: 화면 {m["counts"][key]} · 기준선 {want[key]}')
+
+
+def test_the_misses_page_lists_every_row():
+    """수만 적고 줄을 안 내놓으면 "공개돼 있습니다" 가 거짓이 된다."""
+    from sourcing_guard.samples import misses
+
+    m = misses()
+    assert len(m["wrong"]) == m["counts"]["wrong"]
+    assert len(m["vague"]) == m["counts"]["vague"]
+    assert len(m["missed"]) == m["counts"]["missed"]
+
+
+def test_every_wrong_row_says_why():
+    """틀린 것을 내놓는 것만으로는 부족하다 - **왜** 틀렸는지가 값이다."""
+    from sourcing_guard.samples import misses
+
+    for row in misses()["wrong"]:
+        assert row["why"], f'{row["name"]} 에 이유가 없다'
+        assert row["said"], f'{row["name"]} 에 우리가 말한 품목이 없다'
+
+
+def test_no_shop_name_survives_in_the_misses_list():
+    """⚠ 이 목록은 공급사가 붙인 제목을 그대로 옮기는 자리다. 상호가 가운데·
+    끝에도 들어온다 - 실측에서 `…[효정무역]` 이 끝에 있었다. 괄호 묶음을 전부 뗀다.
+    """
+    from sourcing_guard.samples import misses
+
+    m = misses()
+    for bucket in ("wrong", "vague", "missed"):
+        for row in m[bucket]:
+            assert not re.search(r"[\[(（【]", row["name"]), (
+                f'{bucket} 에 괄호가 남았다: {row["name"]}')
+
+
+def _no_comments(text: str) -> str:
+    """HTML·JS 주석을 뺀 것. **화면에 보이는 것만** 검사한다.
+
+    ⚠ 주석까지 검사하면 "이 낱말을 쓰지 마라" 라고 적은 주석이 그 검사에
+      걸린다. 실제로 두 번 걸렸다.
+    """
+    text = re.sub(r"<!--.*?-->", " ", text, flags=re.S)
+    text = re.sub(r"/\*.*?\*/", " ", text, flags=re.S)
+    return re.sub(r"^\s*//.*$", " ", text, flags=re.M)
+
+
+def test_the_misses_page_does_not_hardcode_numbers():
+    html = _no_comments((_STATIC / "misses.html").read_text(encoding="utf-8"))
+    js = _no_comments((_STATIC / "misses.js").read_text(encoding="utf-8"))
+    base = BASELINE[BASELINE_EXTRACTOR]
+    for value in (base["denominator"], base["ok"], base["wrong"], base["missed"]):
+        assert f"{value}건" not in html and f"{value}건" not in js
+
+
+def test_the_misses_page_does_not_claim_it_is_fixed():
+    """§9 는 여기도 적용된다 - "고치겠습니다" 는 되고 "고쳤습니다" 는 안 된다."""
+    html = _no_comments((_STATIC / "misses.html").read_text(encoding="utf-8"))
+    js = _no_comments((_STATIC / "misses.js").read_text(encoding="utf-8"))
+    for banned in ("고쳤습니다", "해결했습니다", "개선했습니다", "안전합니다"):
+        assert banned not in html and banned not in js, banned
+
+
+def test_a_sample_that_we_missed_says_so_on_its_card():
+    """⚠⚠ "여기 있는 것은 저희가 맞힌 예입니다" 가 **모든 카드에 참**이 아니다.
+
+    실측에서 초록불 한 장(봉제인형)이 미매칭 19 에 있었다. 감추는 대신 그
+    카드가 스스로 밝힌다 - 그게 이 제품이 파는 것과 같다.
+    """
+    from sourcing_guard.samples import misses
+
+    missed_names = {r["name"] for r in misses()["missed"]}
+    marked = [c for c in _cards() if c.get("bucket")]
+    for c in _cards():
+        # 표본 제목은 앞머리만 뗀 것이고 미매칭 목록은 괄호를 전부 뗀 것이라
+        # 문자열이 다를 수 있다. 갈래가 붙은 카드가 하나라도 있으면 배선이 산다.
+        assert "bucket" in c, f'{c["id"]} 에 갈래 칸이 없다'
+    assert marked, (
+        "표본 중 우리가 못 맞힌 것이 하나도 표시되지 않았다 - 배선이 끊겼거나 "
+        f"자료가 낡았다 (미매칭 {len(missed_names)}건)")
+    for c in marked:
+        assert c["bucket"] in ("missed", "wrong", "vague"), c["bucket"]
+    assert "sx-own" in _JS, "카드가 갈래를 그리지 않는다"
+
+
+def test_the_two_pages_point_at_each_other():
+    misses_html = (_STATIC / "misses.html").read_text(encoding="utf-8")
+    assert "/samples" in misses_html, "틀린 것 페이지에서 표본으로 가는 길이 없다"
+    assert "/misses" in _JS, "표본 페이지에서 틀린 것으로 가는 길이 없다"
+
+
+def test_the_misses_page_is_served():
+    with TestClient(app) as c:
+        assert c.get("/misses").status_code == 200
+        body = c.get("/api/v1/misses").json()
+        assert body["counts"]["ok"] == BASELINE[BASELINE_EXTRACTOR]["ok"]
