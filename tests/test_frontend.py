@@ -791,3 +791,65 @@ def test_the_sprite_carries_the_images_itself():
     assert "data:image/png;base64," in fav
     # 주의(중요): 20px 에서 전신을 쓰면 눈이 1px 이 된다. 파비콘은 **머리만**.
     assert 'viewBox="0 0 64 49"' in fav, "파비콘이 머리 비율이 아니다 - 전신을 넣었나"
+
+
+# ── 접힌 유해물질 줄 (2026-09-20) ──────────────────────────────────
+def test_only_the_hazard_fold_loses_its_signal_dot(html):
+    """⚠⚠ **양쪽을 다 단정한다.** 이것이 이 검사의 값이다.
+
+    `hazard_rule_applies` 의 `signal=UNKNOWN` 은 `verifier.py` 가 **축을 안
+    흔들려고** 고른 값이다("이 finding 하나로 신호가 갈리면 규제 품목군이 전부
+    AMBER 가 된다"). 화면에 내보이려고 고른 값이 아니므로 점을 뗀다.
+
+    ⚠⚠ 그런데 **참고 정보 줄 열셋 전부에서 떼면 안 된다.** `kc_verified` 와
+      `recall_clear` 는 방금 정부 DB 에서 **확인된 것**이고 초록 점을 달고
+      있다. 떼면 확인된 줄이 나머지와 같아 보이고, 그건 R3 을 화면에서
+      뒤집는 것이다 - 값이 있는 것을 없는 것으로 반올림한다.
+
+      2026-09-20 에 실제로 "CONTEXT 줄의 점을 전부 뗀다" 는 지시가 나왔다가
+      물렸다. 잰 것은 한 kind 인데 결론을 열세 kind 에 걸었던 것이다.
+      **아래 두 번째 단정이 없으면 다음에 누가 "정리" 하며 같은 일을 해도
+      아무것도 안 깨진다.**
+    """
+    fold = html[html.index("function hazardFold("):]
+    fold = fold[: fold.index("\n  }")]
+    assert "rv-dot" not in fold, "접힌 유해물질 줄에 신호 점이 있다"
+    assert "rv-nosignal" in fold, "점 자리를 메우는 클래스가 없다 - 줄이 왼쪽으로 튄다"
+
+    # ⚠ 반대 방향. 일반 근거 줄은 점을 **가지고 있어야** 한다.
+    row = html[html.index("function findingRow("):]
+    row = row[: row.index("\n  }")]
+    assert "rv-dot" in row, (
+        "일반 근거 줄에서 신호 점이 사라졌다 - kc_verified·recall_clear 는 "
+        "확인된 줄이고 점이 그 사실을 말한다 (R3)")
+
+
+def test_the_fold_label_has_one_owner(html):
+    """⚠ 같은 문자열이 두 곳에 있었다 - 처음 그릴 때와 토글이 다시 접을 때.
+
+    한 곳만 고치면 **한 번 접었다 펴는 순간** 옛 문구로 돌아간다 (§6).
+    """
+    assert "function foldLabel(" in html, "문구 오너가 없다"
+    # 주석을 뺀 뒤 센다 - "이 문구를 두 곳에 적지 마라" 라고 적은 주석이
+    # 그 검사에 걸린다 (오늘 두 번 걸린 자리다).
+    code = re.sub(r"^\s*//.*$", " ", html, flags=re.M)
+    assert code.count("적용되는 기준 ") == 1, (
+        "문구가 두 곳에 적혀 있다 - foldLabel 하나만 두고 두 곳이 부른다")
+    # 두 자리가 모두 오너를 부른다.
+    assert "foldLabel(run.length)" in html, "최초 렌더가 오너를 안 쓴다"
+    assert "foldLabel(box.children.length)" in html, "토글 핸들러가 오너를 안 쓴다"
+    # ⚠ 여기도 주석을 뺀 것을 본다. 옛 문구를 **설명하는 주석**이 그 문구를
+    #   인용하기 때문이다 - 오늘 이 함정에 세 번 걸렸다.
+    assert "건 펼치기" not in code, "옛 문구가 코드에 남아 있다"
+
+
+def test_the_hazard_fold_says_what_to_do_next(html):
+    """"확인합니다" 로 끝나면 셀러가 무엇을 해야 하는지 없다.
+
+    ⚠ 이 줄은 우리가 못 본 것이 아니라 **상세페이지로는 알 수 없는 것**이다.
+      둘을 가려 적는다 (R3 · §9).
+    """
+    fold = html[html.index("function hazardFold("):]
+    fold = fold[: fold.index("\n  }")]
+    assert "상세페이지로 알 수 없습니다" in fold
+    assert "공급처에 시험성적서를 요청하세요" in fold

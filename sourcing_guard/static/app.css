@@ -950,6 +950,10 @@ body{background:var(--bg-page)}
 /* 공급처 참고 정보·약한 일치는 이 상품의 판정이 아니다. 같은 모양으로 그리면
    셀러가 "이 상품이 리콜됐다" 로 읽는다. */
 .rv-row.aside .rv-t{color:var(--fg-2)}
+/* 신호 점이 없는 줄. 유해물질 접힘 하나뿐이다 - 그 줄의 UNKNOWN 은 축을 안
+   흔들려고 고른 값이지 화면에 내보이려고 고른 값이 아니다 (index.html 주석).
+   점 자리(10px + gap 14px)를 padding 으로 메워 다른 줄과 왼쪽을 맞춘다. */
+.rv-row.rv-nosignal{padding-left:24px}
 .rv-line{display:flex; align-items:flex-start; justify-content:space-between; gap:12px}
 @media (max-width:640px){
   .rv-groups{padding:0 20px 8px}
