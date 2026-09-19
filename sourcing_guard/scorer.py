@@ -630,12 +630,40 @@ def downgrade_unqualified_recall_reds(
     return out
 
 
+#: `gov_lookup_state` 가 낼 수 있는 값 전부. **여기가 소유자다.**
+#:
+#: ⚠ 화면(`static/index.html` 의 `LOOKUP`)이 이 넷을 한국어로 옮긴다. 값을
+#:   늘리고 화면을 안 고치면 `LOOKUP[x] || x` 라 **조용히 영어가 찍힌다** -
+#:   깨지지 않으므로 검사가 없으면 못 본다
+#:   (`test_the_screen_has_a_korean_word_for_every_lookup_state`).
+GOV_LOOKUP_STATES = ("ok", "stale", "failed", "not_attempted")
+
+#: 인증 축이 **답을 받았다**고 볼 수 있는 kind 들.
+#:
+#: ⚠ 상수로 뺀 이유: `gov_lookup_state` 가 이 집합을 두 번 본다(답이 있나 ·
+#:   그 답이 캐시에서 왔나). 두 곳에 적으면 한쪽만 고쳐져 갈린다
+#:   (CLAUDE.md §6 "같은 판단을 두 곳에 적지 마라").
+_CERT_ANSWER_KINDS = frozenset({
+    FindingKind.KC_VERIFIED, FindingKind.KC_NOT_FOUND, FindingKind.KC_UNDER_ACTION,
+    FindingKind.KC_REVOKED, FindingKind.KC_EXPIRED, FindingKind.KC_SUSPENDED,
+})
+
+
 def gov_lookup_state(findings: list[Finding]) -> dict[str, str]:
     """**이 스캔**에서 정부 조회가 됐나. 축별로 셋 중 하나다 (4-p).
 
         ok              조회해서 답을 받았다
+        stale           **조회는 실패했고 캐시로 답했다** — 답은 있지만 이번에
+                        정부에 닿지는 못했다
         failed          조회를 시도했는데 실패했다
         not_attempted   조회할 것이 없었다 (번호가 없거나 대조 대상이 없음)
+
+    ⚠⚠ `stale` 이 없을 때 이 함수는 캐시 폴백을 `ok` 로 셌다. 그러면 화면
+      바닥이 "정부 조회 인증 **성공**" 을 찍는데 바로 위 근거 줄은 "연결하지
+      못해 2026-09-18 조회분으로 표시합니다" 다 - **같은 화면이 서로 반대를
+      말한다.** 메모리 캐시만 있던 동안에는 검사에 안 걸렸다(검사는 늘 빈
+      캐시로 돌았다). 시드가 들어오면서 이것이 평상 상태가 됐다.
+      CLAUDE.md §6 - "성공 판정이 '오류 표시가 없다' 에 기대는 자리를 의심할 것."
 
     ⚠⚠ **"조회했더니 없다" 와 "조회를 못 했다" 는 다르다.** 이것이 R3 의
       핵심이고 화면이 반드시 갈라야 하는 것이다. 실증이 있다 - 같은 스크립트를
@@ -660,13 +688,19 @@ def gov_lookup_state(findings: list[Finding]) -> dict[str, str]:
         if f.kind is FindingKind.LOOKUP_FAILED
     }
 
+    # 캐시로 답한 인증 줄. `verifier` 가 `detail.from_cache` 로 표시한다.
+    cert_from_cache = any(
+        (f.detail or {}).get("from_cache")
+        for f in findings
+        if f.kind in _CERT_ANSWER_KINDS
+    )
+
     if "인증" in failed_scopes:
         cert = "failed"
-    elif kinds & {
-        FindingKind.KC_VERIFIED, FindingKind.KC_NOT_FOUND, FindingKind.KC_UNDER_ACTION,
-        FindingKind.KC_REVOKED, FindingKind.KC_EXPIRED, FindingKind.KC_SUSPENDED,
-    }:
-        cert = "ok"
+    elif kinds & _CERT_ANSWER_KINDS:
+        # ⚠ 캐시로 답한 것을 `ok` 로 반올림하지 않는다. 답이 있는 것과 이번에
+        #   정부에 닿은 것은 다르다.
+        cert = "stale" if cert_from_cache else "ok"
     else:
         cert = "not_attempted"
 

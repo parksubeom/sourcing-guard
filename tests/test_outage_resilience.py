@@ -66,7 +66,13 @@ def scan(monkeypatch):
     """장애를 주입하고 스캔을 한 번 부른다. 응답 전체를 돌려준다."""
     import sourcing_guard.main as m
 
-    def _run(*, kats_handler=None, rra_handler=None, text=_TEXT_KC):
+    def _run(*, kats_handler=None, rra_handler=None, text=_TEXT_KC, seed=False):
+        # ⚠⚠ 기본은 **시드 없음**이다. 이 파일이 재는 것은 "캐시조차 없을 때
+        #   조회 실패가 조용히 '없음' 으로 바뀌지 않는가" 이고, 시드가 얹히면
+        #   그 경로를 아예 안 타기 때문이다. 시드가 있는 세계는 바로 아래
+        #   `test_a_seeded_number_...` 가 따로 잰다 - 둘 다 실제 상태다.
+        if not seed:
+            monkeypatch.setattr(m, "apply_cert_seed", lambda *a, **kw: m.SeedStats())
         k = KatsClient(None, "KEY123", mock=False) if kats_handler else KatsClient(None, None, mock=True)
         if kats_handler:
             k._client = httpx.Client(transport=httpx.MockTransport(kats_handler))
@@ -83,6 +89,22 @@ def scan(monkeypatch):
             logging.disable(logging.NOTSET)
 
     return _run
+
+
+def test_a_seeded_number_answers_from_cache_and_says_it_is_not_fresh(scan):
+    """**시드가 있는 세계.** 같은 장애인데 답이 있다 - 그러면 정직하게 갈라야 한다.
+
+    ⚠⚠ 여기서 `ok` 가 나오면 화면 바닥이 "정부 조회 인증 **성공**" 을 찍는다.
+      바로 위 근거 줄은 "연결하지 못해 …조회분으로 표시합니다" 다. 한 화면이
+      서로 반대를 말하게 되고, 그게 `stale` 을 만든 이유다.
+    """
+    r = scan(kats_handler=_raiser(httpx.ConnectError), seed=True)
+    assert r.status_code == 200, r.text[:200]
+    body = r.json()
+
+    assert body["meta"]["gov_lookup"]["cert"] == "stale", body["meta"]["gov_lookup"]
+    said = " ".join(f["statement_ko"] for f in body["findings"])
+    assert "조회분으로 표시합니다" in said, said[:300]
 
 
 def _raiser(exc_cls):

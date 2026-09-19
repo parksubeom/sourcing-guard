@@ -1,0 +1,586 @@
+{
+ "_기록": "국표원 인증 조회 캐시 시드. `scripts/build_cert_seed.py` 가 실조회로 만든다. 손으로 고치지 않는다 - 값이 낡으면 다시 돌린다.",
+ "built_at": "2026-09-19T14:03:11+00:00",
+ "entries": [
+  {
+   "cert_number": "CB061R2170-3018",
+   "fetched_at": "2026-09-19T14:02:56+00:00",
+   "record": {
+    "cert_number": "CB061R2170-3018",
+    "product_name": "완구",
+    "model_name": "매직액체",
+    "maker": "-",
+    "status": "적합",
+    "state": "ok",
+    "detail_url": "http://www.safetykorea.kr/search/searchPop?certNum=CB061R2170-3018",
+    "brand_name": null,
+    "category_name": "어린이>완구",
+    "maker_country": "중국",
+    "importer": "(주)대양무역",
+    "import_div": "수입",
+    "cert_div": "어린이제품 특별법 대상>안전확인 대상",
+    "cert_date": "20231123"
+   }
+  },
+  {
+   "cert_number": "CB067R317-5002",
+   "fetched_at": "2026-09-19T14:02:57+00:00",
+   "record": {
+    "cert_number": "CB067R317-5002",
+    "product_name": "완구",
+    "model_name": "기차놀이",
+    "maker": "-",
+    "status": "적합",
+    "state": "ok",
+    "detail_url": "http://www.safetykorea.kr/search/searchPop?certNum=CB067R317-5002",
+    "brand_name": "",
+    "category_name": "어린이>완구",
+    "maker_country": "중국",
+    "importer": "(주) 제우스 (ZEUS CO. LTD)",
+    "import_div": "수입",
+    "cert_div": "어린이제품 특별법 대상>안전확인 대상",
+    "cert_date": "20250408"
+   }
+  },
+  {
+   "cert_number": "A071R018-24003",
+   "fetched_at": "2026-09-19T14:02:57+00:00",
+   "record": {
+    "cert_number": "A071R018-24003",
+    "product_name": "물놀이기구",
+    "model_name": "SWIM PLAYING 3",
+    "maker": "SHANGHAICHUNHANPLASTICPRODUCTSCO.,LTD.",
+    "status": "적합",
+    "state": "ok",
+    "detail_url": "http://www.safetykorea.kr/search/searchPop?certNum=A071R018-24003",
+    "brand_name": null,
+    "category_name": "생활용품>물놀이기구>공기주입물놀이기구",
+    "maker_country": "중국",
+    "importer": "해시컴퍼니",
+    "import_div": "수입",
+    "cert_div": "전기용품 및 생활용품 안전관리법 대상>안전인증대상 생활용품",
+    "cert_date": "20240524"
+   }
+  },
+  {
+   "cert_number": "A071R018-24004",
+   "fetched_at": "2026-09-19T14:02:58+00:00",
+   "record": {
+    "cert_number": "A071R018-24004",
+    "product_name": "물놀이기구",
+    "model_name": "SWIM PLAYING 2",
+    "maker": "SHANGHAICHUNHANPLASTICPRODUCTSCO.,LTD.",
+    "status": "적합",
+    "state": "ok",
+    "detail_url": "http://www.safetykorea.kr/search/searchPop?certNum=A071R018-24004",
+    "brand_name": null,
+    "category_name": "생활용품>물놀이기구>공기주입물놀이기구",
+    "maker_country": "중국",
+    "importer": "해시컴퍼니",
+    "import_div": "수입",
+    "cert_div": "전기용품 및 생활용품 안전관리법 대상>안전인증대상 생활용품",
+    "cert_date": "20240524"
+   }
+  },
+  {
+   "cert_number": "A071R033-23001",
+   "fetched_at": "2026-09-19T14:02:58+00:00",
+   "record": {
+    "cert_number": "A071R033-23001",
+    "product_name": "물놀이기구",
+    "model_name": "BYON-PINEAPPLE TUBES",
+    "maker": "JINHUA LIXING PLASTIC PRODUCTS CO., LTD.",
+    "status": "기간만료",
+    "state": "expired",
+    "detail_url": "http://www.safetykorea.kr/search/searchPop?certNum=A071R033-23001",
+    "brand_name": null,
+    "category_name": "생활용품>물놀이기구>공기주입물놀이기구",
+    "maker_country": "중국",
+    "importer": "주식회사바이온",
+    "import_div": "수입",
+    "cert_div": "전기용품 및 생활용품 안전관리법 대상>안전인증대상 생활용품",
+    "cert_date": "20230420"
+   }
+  },
+  {
+   "cert_number": "B362R241-8002A",
+   "fetched_at": "2026-09-19T14:02:59+00:00",
+   "record": {
+    "cert_number": "B362R241-8002A",
+    "product_name": "완구",
+    "model_name": "트랜스시리즈",
+    "maker": "QIEMENG PLASTIC",
+    "status": "기간만료",
+    "state": "expired",
+    "detail_url": "http://www.safetykorea.kr/search/searchPop?certNum=B362R241-8002A",
+    "brand_name": "트랜스시리즈",
+    "category_name": "",
+    "maker_country": "중국",
+    "importer": "",
+    "import_div": "수입",
+    "cert_div": "품질경영 및 공산품안전관리법 대상>자율안전확인 대상",
+    "cert_date": "20080429"
+   }
+  },
+  {
+   "cert_number": "CA011R017-7001",
+   "fetched_at": "2026-09-19T14:03:00+00:00",
+   "record": {
+    "cert_number": "CA011R017-7001",
+    "product_name": "어린이용물놀이기구",
+    "model_name": "BYON-EAGLE",
+    "maker": "ZHEJIANGMPMMODERNPLASTICCO.,LTD",
+    "status": "기간만료",
+    "state": "expired",
+    "detail_url": "http://www.safetykorea.kr/search/searchPop?certNum=CA011R017-7001",
+    "brand_name": null,
+    "category_name": "어린이>어린이용 물놀이기구",
+    "maker_country": "중국",
+    "importer": "주식회사바이온",
+    "import_div": "수입",
+    "cert_div": "어린이제품 특별법 대상>안전인증 대상",
+    "cert_date": "20170406"
+   }
+  },
+  {
+   "cert_number": "CA011R017-7002",
+   "fetched_at": "2026-09-19T14:03:00+00:00",
+   "record": {
+    "cert_number": "CA011R017-7002",
+    "product_name": "어린이용물놀이기구",
+    "model_name": "BYON-FLAMINGO",
+    "maker": "ZHEJIANGMPMMODERNPLASTICCO.,LTD",
+    "status": "기간만료",
+    "state": "expired",
+    "detail_url": "http://www.safetykorea.kr/search/searchPop?certNum=CA011R017-7002",
+    "brand_name": null,
+    "category_name": "어린이>어린이용 물놀이기구",
+    "maker_country": "중국",
+    "importer": "주식회사바이온",
+    "import_div": "수입",
+    "cert_div": "어린이제품 특별법 대상>안전인증 대상",
+    "cert_date": "20170406"
+   }
+  },
+  {
+   "cert_number": "CA011R021-4001",
+   "fetched_at": "2026-09-19T14:03:00+00:00",
+   "record": {
+    "cert_number": "CA011R021-4001",
+    "product_name": "어린이용물놀이기구",
+    "model_name": "SWIM PLAYING 4",
+    "maker": "SHANGHAI CHUN HAN PLASTIC PRODUCTS CO., LTD.",
+    "status": "안전인증취소",
+    "state": "revoked",
+    "detail_url": "http://www.safetykorea.kr/search/searchPop?certNum=CA011R021-4001",
+    "brand_name": null,
+    "category_name": "어린이>어린이용 물놀이기구",
+    "maker_country": "중국",
+    "importer": "해시컴퍼니",
+    "import_div": "수입",
+    "cert_div": "어린이제품 특별법 대상>안전인증 대상",
+    "cert_date": "20240522"
+   }
+  },
+  {
+   "cert_number": "CB025H0054-4001",
+   "fetched_at": "2026-09-19T14:03:01+00:00",
+   "record": {
+    "cert_number": "CB025H0054-4001",
+    "product_name": "합성수지제 어린이용품",
+    "model_name": "PVC 놀이방 매트",
+    "maker": "(주)넬라켐",
+    "status": "적합",
+    "state": "ok",
+    "detail_url": "http://www.safetykorea.kr/search/searchPop?certNum=CB025H0054-4001",
+    "brand_name": "",
+    "category_name": "어린이>합성수지제 어린이제품",
+    "maker_country": "대한민국",
+    "importer": "",
+    "import_div": "제조",
+    "cert_div": "어린이제품 특별법 대상>안전확인 대상",
+    "cert_date": "20240530"
+   }
+  },
+  {
+   "cert_number": "CB063R10777-3001",
+   "fetched_at": "2026-09-19T14:03:01+00:00",
+   "record": {
+    "cert_number": "CB063R10777-3001",
+    "product_name": "완구",
+    "model_name": "숀&그로밋",
+    "maker": "-",
+    "status": "적합",
+    "state": "ok",
+    "detail_url": "http://www.safetykorea.kr/search/searchPop?certNum=CB063R10777-3001",
+    "brand_name": null,
+    "category_name": "어린이>완구",
+    "maker_country": "중국",
+    "importer": "주식회사 드림씨앤씨",
+    "import_div": "수입",
+    "cert_div": "어린이제품 특별법 대상>안전확인 대상",
+    "cert_date": "20230525"
+   }
+  },
+  {
+   "cert_number": "HU071406-18008A",
+   "fetched_at": "2026-09-19T14:03:02+00:00",
+   "record": {
+    "cert_number": "HU071406-18008A",
+    "product_name": "전기오븐기기",
+    "model_name": "AOV-1200",
+    "maker": "Foshan Sanshui Dongnan Electric Appliance Co, Ltd.",
+    "status": "적합",
+    "state": "ok",
+    "detail_url": "http://www.safetykorea.kr/search/searchPop?certNum=HU071406-18008A",
+    "brand_name": null,
+    "category_name": "전기기기>주방용 전열기구>전기오븐기기",
+    "maker_country": "중국",
+    "importer": null,
+    "import_div": "수입",
+    "cert_div": "전기용품 및 생활용품 안전관리법 대상>안전인증대상 전기용품",
+    "cert_date": "20180621"
+   }
+  },
+  {
+   "cert_number": "HU072005-17001A",
+   "fetched_at": "2026-09-19T14:03:02+00:00",
+   "record": {
+    "cert_number": "HU072005-17001A",
+    "product_name": "전기주전자",
+    "model_name": "KEK-TP1830S",
+    "maker": "Lianjiang City Gelaibo Electrical Technology Co.,Ltd",
+    "status": "적합",
+    "state": "ok",
+    "detail_url": "http://www.safetykorea.kr/search/searchPop?certNum=HU072005-17001A",
+    "brand_name": null,
+    "category_name": "전기기기>전기액체 가열기기>전기주전자",
+    "maker_country": "중국",
+    "importer": null,
+    "import_div": "수입",
+    "cert_div": "전기용품 및 생활용품 안전관리법 대상>안전인증대상 전기용품",
+    "cert_date": "20170413"
+   }
+  },
+  {
+   "cert_number": "HU072034-17002A",
+   "fetched_at": "2026-09-19T14:03:03+00:00",
+   "record": {
+    "cert_number": "HU072034-17002A",
+    "product_name": "전기휴대형그릴",
+    "model_name": "EG-002",
+    "maker": "Zhejiang Yongkang Xinhai Electric Appliance Co., Ltd.",
+    "status": "적합",
+    "state": "ok",
+    "detail_url": "http://www.safetykorea.kr/search/searchPop?certNum=HU072034-17002A",
+    "brand_name": null,
+    "category_name": "전기기기>주방용 전열기구>전기휴대형그릴",
+    "maker_country": "중국",
+    "importer": null,
+    "import_div": "수입",
+    "cert_div": "전기용품 및 생활용품 안전관리법 대상>안전인증대상 전기용품",
+    "cert_date": "20170925"
+   }
+  },
+  {
+   "cert_number": "HU072034-17002D",
+   "fetched_at": "2026-09-19T14:03:03+00:00",
+   "record": {
+    "cert_number": "HU072034-17002D",
+    "product_name": "전기휴대형그릴",
+    "model_name": "EG-002",
+    "maker": "Zhejiang Yongkang Xinhai Electric Appliance Co., Ltd.",
+    "status": "적합",
+    "state": "ok",
+    "detail_url": "http://www.safetykorea.kr/search/searchPop?certNum=HU072034-17002D",
+    "brand_name": null,
+    "category_name": "전기기기>주방용 전열기구>전기휴대형그릴",
+    "maker_country": "중국",
+    "importer": null,
+    "import_div": "수입",
+    "cert_div": "전기용품 및 생활용품 안전관리법 대상>안전인증대상 전기용품",
+    "cert_date": "20180629"
+   }
+  },
+  {
+   "cert_number": "HU072034-17002F",
+   "fetched_at": "2026-09-19T14:03:04+00:00",
+   "record": {
+    "cert_number": "HU072034-17002F",
+    "product_name": "전기휴대형그릴",
+    "model_name": "EG-002",
+    "maker": "Zhejiang Yongkang Xinhai Electric Appliance Co., Ltd.",
+    "status": "적합",
+    "state": "ok",
+    "detail_url": "http://www.safetykorea.kr/search/searchPop?certNum=HU072034-17002F",
+    "brand_name": null,
+    "category_name": "전기기기>주방용 전열기구>전기휴대형그릴",
+    "maker_country": "중국",
+    "importer": null,
+    "import_div": "수입",
+    "cert_div": "전기용품 및 생활용품 안전관리법 대상>안전인증대상 전기용품",
+    "cert_date": "20191227"
+   }
+  },
+  {
+   "cert_number": "HU072693-20003J",
+   "fetched_at": "2026-09-19T14:03:04+00:00",
+   "record": {
+    "cert_number": "HU072693-20003J",
+    "product_name": "전기휴대형그릴",
+    "model_name": "JP-002",
+    "maker": "ZHEJIANG AORAN ELECTRIC APPLIANCE CO., LTD",
+    "status": "안전인증취소",
+    "state": "revoked",
+    "detail_url": "http://www.safetykorea.kr/search/searchPop?certNum=HU072693-20003J",
+    "brand_name": null,
+    "category_name": "전기기기>주방용 전열기구>전기휴대형그릴",
+    "maker_country": "중국",
+    "importer": null,
+    "import_div": "제조",
+    "cert_div": "전기용품 및 생활용품 안전관리법 대상>안전인증대상 전기용품",
+    "cert_date": "20210914"
+   }
+  },
+  {
+   "cert_number": "HU073506-24001",
+   "fetched_at": "2026-09-19T14:03:05+00:00",
+   "record": {
+    "cert_number": "HU073506-24001A",
+    "product_name": "전기휴대형그릴",
+    "model_name": "Lime-0325G",
+    "maker": "Yongkang Dekao Industry and Trade Co., Ltd",
+    "status": "적합",
+    "state": "ok",
+    "detail_url": "http://www.safetykorea.kr/search/searchPop?certNum=HU073506-24001A",
+    "brand_name": null,
+    "category_name": "전기기기>주방용 전열기구>전기휴대형그릴",
+    "maker_country": "중국",
+    "importer": null,
+    "import_div": "수입",
+    "cert_div": "전기용품 및 생활용품 안전관리법 대상>안전인증대상 전기용품",
+    "cert_date": "20251031"
+   }
+  },
+  {
+   "cert_number": "HU073519-24001",
+   "fetched_at": "2026-09-19T14:03:05+00:00",
+   "record": {
+    "cert_number": "HU073519-24001A",
+    "product_name": "전기휴대형그릴",
+    "model_name": "Lime-0718G",
+    "maker": "YONGKANG E-JIA COOKWARE  CO., LTD",
+    "status": "적합",
+    "state": "ok",
+    "detail_url": "http://www.safetykorea.kr/search/searchPop?certNum=HU073519-24001A",
+    "brand_name": null,
+    "category_name": "전기기기>주방용 전열기구>전기휴대형그릴",
+    "maker_country": "중국",
+    "importer": null,
+    "import_div": "수입",
+    "cert_div": "전기용품 및 생활용품 안전관리법 대상>안전인증대상 전기용품",
+    "cert_date": "20250306"
+   }
+  },
+  {
+   "cert_number": "HU101339-24004",
+   "fetched_at": "2026-09-19T14:03:06+00:00",
+   "record": {
+    "cert_number": "HU101339-24004B",
+    "product_name": "직류전원장치",
+    "model_name": "HY24-P25U2",
+    "maker": "Lianjiang HY-ETECH Co.,Ltd.",
+    "status": "적합",
+    "state": "ok",
+    "detail_url": "http://www.safetykorea.kr/search/searchPop?certNum=HU101339-24004B",
+    "brand_name": null,
+    "category_name": "정보통신 사무기기>직류전원장치>직류전원장치",
+    "maker_country": "중국",
+    "importer": null,
+    "import_div": "수입",
+    "cert_div": "전기용품 및 생활용품 안전관리법 대상>안전인증대상 전기용품",
+    "cert_date": "20250331"
+   }
+  },
+  {
+   "cert_number": "SU071354-12001",
+   "fetched_at": "2026-09-19T14:03:06+00:00",
+   "record": {
+    "cert_number": "SU071354-12001ZZC",
+    "product_name": "전기주전자",
+    "model_name": "HQ-909",
+    "maker": "Zhongshan City Xiaolan Town Feiying Electrical Appliance Factory",
+    "status": "반납",
+    "state": "expired",
+    "detail_url": "http://www.safetykorea.kr/search/searchPop?certNum=SU071354-12001ZZC",
+    "brand_name": null,
+    "category_name": "전기기기>전기액체 가열기기>전기주전자",
+    "maker_country": "중국",
+    "importer": null,
+    "import_div": "수입",
+    "cert_div": "전기용품 및 생활용품 안전관리법 대상>안전인증대상 전기용품",
+    "cert_date": "20230316"
+   }
+  },
+  {
+   "cert_number": "SU07654-12004C",
+   "fetched_at": "2026-09-19T14:03:07+00:00",
+   "record": {
+    "cert_number": "SU07654-12004C",
+    "product_name": "전기주전자",
+    "model_name": "TP-1500D",
+    "maker": "Ningbo Goodfriends Electric Appliance Co., Ltd",
+    "status": "적합",
+    "state": "ok",
+    "detail_url": "http://www.safetykorea.kr/search/searchPop?certNum=SU07654-12004C",
+    "brand_name": null,
+    "category_name": "전기기기>전기액체 가열기기>전기주전자",
+    "maker_country": "중국",
+    "importer": null,
+    "import_div": "수입",
+    "cert_div": "전기용품 및 생활용품 안전관리법 대상>안전인증대상 전기용품",
+    "cert_date": "20130910"
+   }
+  },
+  {
+   "cert_number": "SU07918-13001H",
+   "fetched_at": "2026-09-19T14:03:07+00:00",
+   "record": {
+    "cert_number": "SU07918-13001H",
+    "product_name": "전기휴대형그릴",
+    "model_name": "XH-2000W",
+    "maker": "Haiyan Xinhua Electric Appliance Co., Ltd.",
+    "status": "적합",
+    "state": "ok",
+    "detail_url": "http://www.safetykorea.kr/search/searchPop?certNum=SU07918-13001H",
+    "brand_name": null,
+    "category_name": "전기기기>주방용 전열기구>전기휴대형그릴",
+    "maker_country": "중국",
+    "importer": null,
+    "import_div": "수입",
+    "cert_div": "전기용품 및 생활용품 안전관리법 대상>안전인증대상 전기용품",
+    "cert_date": "20160205"
+   }
+  },
+  {
+   "cert_number": "XH070736-23002A",
+   "fetched_at": "2026-09-19T14:03:08+00:00",
+   "record": {
+    "cert_number": "XH070736-23002A",
+    "product_name": "전기방석",
+    "model_name": "LW2303-5V1A-CN",
+    "maker": "(주)라이프웰",
+    "status": "적합",
+    "state": "ok",
+    "detail_url": "http://www.safetykorea.kr/search/searchPop?certNum=XH070736-23002A",
+    "brand_name": null,
+    "category_name": "전기기기>교류전원을 사용하는 전기찜질기, 발 보온기>전기방석",
+    "maker_country": "대한민국",
+    "importer": null,
+    "import_div": "제조",
+    "cert_div": "전기용품 및 생활용품 안전관리법 대상>안전확인대상 전기용품",
+    "cert_date": "20231012"
+   }
+  },
+  {
+   "cert_number": "XU102215-20004A",
+   "fetched_at": "2026-09-19T14:03:08+00:00",
+   "record": {
+    "cert_number": "XU102215-20004A",
+    "product_name": "전지",
+    "model_name": "18650 (1S1P) 3.7V 2600mAh",
+    "maker": "Ningbo Yiyang New Energy Technology Co.,Ltd.",
+    "status": "적합",
+    "state": "ok",
+    "detail_url": "http://www.safetykorea.kr/search/searchPop?certNum=XU102215-20004A",
+    "brand_name": null,
+    "category_name": "정보·통신·사무기기>전지(충전지만 해당)>전지",
+    "maker_country": "중국 ",
+    "importer": null,
+    "import_div": "수입",
+    "cert_div": "전기용품 및 생활용품 안전관리법 대상>안전확인대상 전기용품",
+    "cert_date": "20200629"
+   }
+  },
+  {
+   "cert_number": "XU102377-20001A",
+   "fetched_at": "2026-09-19T14:03:09+00:00",
+   "record": {
+    "cert_number": "XU102377-20001A",
+    "product_name": "전지",
+    "model_name": "KS 18650 7.2V 2000mAh 14.4Wh",
+    "maker": "Ningbo Kun Shun New Energy Co., Ltd.",
+    "status": "적합",
+    "state": "ok",
+    "detail_url": "http://www.safetykorea.kr/search/searchPop?certNum=XU102377-20001A",
+    "brand_name": null,
+    "category_name": "정보·통신·사무기기>전지(충전지만 해당)>전지",
+    "maker_country": "중국 ",
+    "importer": null,
+    "import_div": "수입",
+    "cert_div": "전기용품 및 생활용품 안전관리법 대상>안전확인대상 전기용품",
+    "cert_date": "20201105"
+   }
+  },
+  {
+   "cert_number": "XU103198-23003B",
+   "fetched_at": "2026-09-19T14:03:09+00:00",
+   "record": {
+    "cert_number": "XU103198-23003B",
+    "product_name": "전지",
+    "model_name": "ICR18650 7.4V 2200mAh",
+    "maker": "Guangdong United New Energy Co., Ltd",
+    "status": "적합",
+    "state": "ok",
+    "detail_url": "http://www.safetykorea.kr/search/searchPop?certNum=XU103198-23003B",
+    "brand_name": null,
+    "category_name": "정보·통신·사무기기>전지(충전지만 해당)>전지",
+    "maker_country": "중국",
+    "importer": null,
+    "import_div": "제조",
+    "cert_div": "전기용품 및 생활용품 안전관리법 대상>안전확인대상 전기용품",
+    "cert_date": "20231123"
+   }
+  },
+  {
+   "cert_number": "YU101649-22001",
+   "fetched_at": "2026-09-19T14:03:10+00:00",
+   "record": {
+    "cert_number": "YU101649-22001A",
+    "product_name": "전지",
+    "model_name": "18650 2400mAh",
+    "maker": "DONG GUAN SHI RUIFENG ENERGY TECHNOLOGY Co., Ltd.",
+    "status": "적합",
+    "state": "ok",
+    "detail_url": "http://www.safetykorea.kr/search/searchPop?certNum=YU101649-22001A",
+    "brand_name": null,
+    "category_name": "정보·통신·사무기기>전지(충전지만 해당)>전지",
+    "maker_country": "중국",
+    "importer": "DONG GUAN SHI RUIFENG ENERGY TECHNOLOGY Co., Ltd.",
+    "import_div": "수입",
+    "cert_div": "전기용품 및 생활용품 안전관리법 대상>안전확인대상 전기용품",
+    "cert_date": "20240426"
+   }
+  },
+  {
+   "cert_number": "YU102043-24001",
+   "fetched_at": "2026-09-19T14:03:10+00:00",
+   "record": {
+    "cert_number": "YU102043-24001",
+    "product_name": "전지",
+    "model_name": "ICR18650-2S1P",
+    "maker": "SHENZHEN WINTIDE TECHNOLOGY CO., LTD DONGGUAN BRANCH",
+    "status": "적합",
+    "state": "ok",
+    "detail_url": "http://www.safetykorea.kr/search/searchPop?certNum=YU102043-24001",
+    "brand_name": null,
+    "category_name": "정보·통신·사무기기>전지(충전지만 해당)>전지",
+    "maker_country": "중국",
+    "importer": "SHENZHEN WINTIDE TECHNOLOGY CO., LTD DONGGUAN BRANCH",
+    "import_div": "수입",
+    "cert_div": "전기용품 및 생활용품 안전관리법 대상>안전확인대상 전기용품",
+    "cert_date": "20240227"
+   }
+  }
+ ]
+}

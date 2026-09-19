@@ -1306,6 +1306,13 @@ def verify(
                             "cert_div": rec.cert_div,
                             "registered_model": rec.model_name,
                             "registered_product": rec.product_name,
+                            # ⚠⚠ **이번 스캔에서 정부에 닿았는가.** 문장에는
+                            #   "…조회분으로 표시합니다" 로 이미 적히지만, 기계가
+                            #   읽는 값이 없으면 `gov_lookup` 이 이것을 `ok` 로
+                            #   센다 - 그러면 화면 바닥이 "정부 조회 인증 성공" 이
+                            #   되어 **바로 위 근거 줄과 정반대**를 말한다.
+                            "from_cache": bool(lookup.stale),
+                            "fetched_at": lookup.fetched_at if lookup.stale else None,
                         },
                         checked_at=today,
                     )

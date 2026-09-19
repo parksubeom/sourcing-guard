@@ -235,6 +235,31 @@ class CertCache:
         with self._lock:
             self._entries[key] = (time.monotonic(), fetched_at, record)
 
+    def seed(self, key: str, record: CertRecord | None, fetched_at: str) -> None:
+        """재배포로 잃은 캐시를 파일에서 되살린다 — **이미 만료된 것으로** 넣는다.
+
+        ⚠⚠ `put()` 을 쓰면 안 된다. `put()` 은 지금 조회한 것으로 도장을 찍어
+          24시간 동안 `get()` 이 **fresh** 로 준다. 그러면 화면이 하루 묵은
+          레코드를 두고 "인증번호가 조회되었습니다" 라고 말한다 - **조회하지
+          않았는데 조회했다고 하는 것**이고, 이 저장소에서 가장 비싼 방향의
+          오류다 (CLAUDE.md §6 "없는데 있다고 하는 쪽이 더 비싸다").
+
+        만료된 것으로 두면 두 가지가 동시에 맞는다:
+
+          정부 API 가 살아 있으면   `get()` 이 비어 실조회로 가고 캐시가 갱신된다.
+                                  시드는 **자동으로 밀려난다** - 낡은 값이
+                                  24시간 눌러앉지 않는다
+          죽어 있으면             실패 폴백이 `allow_stale=True` 로 집어
+                                  `stale=True` 로 답한다 → 화면이
+                                  "YYYY-MM-DD 조회분으로 표시합니다" 를 붙인다
+
+        즉 시드는 **답을 만들어 주는 것이 아니라 답의 출처를 정직하게 남기는
+        것**이다.
+        """
+        with self._lock:
+            # TTL 보다 1초 더 지난 것으로 둔다. `get()` 의 비교가 `> ttl` 이다.
+            self._entries[key] = (time.monotonic() - self._ttl - 1.0, fetched_at, record)
+
     def clear(self) -> None:
         with self._lock:
             self._entries.clear()

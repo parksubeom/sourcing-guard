@@ -738,7 +738,11 @@
     var meta = data.meta || {};
     // 주의(중요): 셀러가 읽는 줄이다. `ok` 를 그대로 두면 "이게 뭔가" 가 된다 -
     //   나머지 둘은 이미 한국어인데 하나만 영어로 남아 있었다.
-    var LOOKUP = { ok: "성공", failed: "조회 실패", not_attempted: "시도 안 함" };
+    // 주의(중요): `stale` 을 "성공" 으로 묶지 않는다. 캐시로 답한 것을 성공이라
+    //   적으면 바로 위 근거 줄("연결하지 못해 …조회분으로 표시합니다")과
+    //   **정반대**를 말하게 된다.
+    var LOOKUP = { ok: "성공", stale: "이전 조회분", failed: "조회 실패",
+                   not_attempted: "시도 안 함" };
     var bits = [];
     if (meta.extraction_path === "heuristic") {
       bits.push("추출 <b>휴리스틱(LLM 응답 없음)</b>");

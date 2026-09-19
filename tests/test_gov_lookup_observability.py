@@ -33,7 +33,7 @@ from fastapi.testclient import TestClient
 from sourcing_guard.kats_client import KatsClient, KatsHealth
 from sourcing_guard.models import Finding, FindingKind, Signal
 from sourcing_guard.rra_client import RraClient
-from sourcing_guard.scorer import gov_lookup_state
+from sourcing_guard.scorer import GOV_LOOKUP_STATES, gov_lookup_state
 
 
 def _f(kind: FindingKind, **detail) -> Finding:
@@ -133,7 +133,7 @@ def test_transport_errors_become_KatsApiError_not_raw_httpx(exc_cls):
 
 @pytest.mark.parametrize("exc_cls", _TRANSPORT_ERRORS,
                          ids=[e.__name__ for e in _TRANSPORT_ERRORS])
-def test_the_scan_survives_a_government_outage(exc_cls):
+def test_the_scan_survives_a_government_outage(exc_cls, monkeypatch):
     """⚠⚠ **정부 API 가 죽어도 스캔은 200 이어야 한다.** 이것이 (2) 다.
 
     남의 API 장애로 우리를 죽이지 않는 설계가 실제로 지켜지는지 **상태코드로**
@@ -145,6 +145,11 @@ def test_the_scan_survives_a_government_outage(exc_cls):
 
     def boom(request):
         raise exc_cls("boom")
+
+    # ⚠ 시드를 끈다. 이 검사는 **캐시조차 없는** 세계를 재는 것이다 - 시드가
+    #   얹히면 `stale` 로 답하고(그것도 맞는 동작이다) 이 경로를 안 탄다.
+    #   시드가 있는 세계는 `test_outage_resilience` 가 따로 잰다.
+    monkeypatch.setattr(m, "apply_cert_seed", lambda *a, **kw: m.SeedStats())
 
     k = KatsClient(None, "KEY123", mock=False)
     k._client = httpx.Client(transport=httpx.MockTransport(boom))
@@ -235,8 +240,13 @@ def test_the_scan_response_says_whether_the_lookup_happened(client):
     gov = body["meta"]["gov_lookup"]
     assert set(gov) == {"cert", "recall", "rf"}
     assert gov["cert"] == "ok", gov
-    # 값은 셋 중 하나여야 한다 - 화면이 그 셋만 다룬다.
-    assert set(gov.values()) <= {"ok", "failed", "not_attempted"}
+    # 값은 **넷** 중 하나여야 한다 - 화면이 그 넷만 다룬다.
+    # ⚠ `stale` 이 2026-09-19 에 늘었다. 캐시로 답한 것을 `ok` 로 세면 화면
+    #   바닥이 "정부 조회 인증 성공" 을 찍는데 근거 줄은 "연결하지 못해
+    #   …조회분으로 표시합니다" 라 서로 반대를 말한다.
+    #   화면의 대응표는 `static/index.html` 의 `LOOKUP` 이다 - 여기 넷과 같아야
+    #   한다(아래 검사가 대조한다).
+    assert set(gov.values()) <= set(GOV_LOOKUP_STATES)
 
 
 def test_a_page_with_no_number_reports_not_attempted(client):

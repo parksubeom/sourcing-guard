@@ -26,6 +26,7 @@ from .baseline import BASELINE, BASELINE_EXTRACTOR
 from .build_info import snapshot as build_snapshot
 from .config import settings
 from .batch import MAX_ROWS, BatchReport, screen
+from .cert_seed import SeedStats, apply_to as apply_cert_seed
 from .extractor import extract_traced, stats as extraction_stats
 from .kats_client import KatsClient, health
 from .noncompliant_index import NoncompliantIndex
@@ -73,6 +74,14 @@ async def _lifespan(app: FastAPI):
     """
     register_settings_secrets()
 
+    # ⚠ 캐시는 프로세스 메모리다. **재배포하면 0 이 된다.** 국표원 조회가 죽어
+    #   있는 동안 배포하면 데모 셋이 전부 "조회 실패" 로 뜬다. 실조회로 받아 둔
+    #   레코드를 조회 시각과 함께 얹어 그 구멍을 막는다 - fresh 가 아니라
+    #   **만료된 것으로** 얹으므로, 조회가 살아나면 곧바로 밀려나고 죽어 있으면
+    #   화면이 "…조회분으로 표시합니다" 를 단다 (`cert_seed` 모듈 주석).
+    global _cert_seed_stats
+    _cert_seed_stats = apply_cert_seed(_kats)
+
     task = None
     if settings.sync_enabled:
         task = asyncio.create_task(
@@ -106,6 +115,9 @@ app.mount(
 )
 
 _kats = KatsClient(settings.kats_base_url, settings.kats_service_key, mock=settings.mock_mode)
+# 시작 전에는 비어 있다. `_lifespan` 이 채운다 - 0 으로 두면 "아직 안 얹었다" 와
+# "얹었는데 0건" 이 같아 보이므로 `/healthz` 를 읽을 때 앱이 떴는지 먼저 본다.
+_cert_seed_stats = SeedStats()
 # 전파인증 조회. 인증키가 필요 없어 MOCK_MODE 만 따른다.
 _rra = RraClient(mock=settings.mock_mode)
 _rules = RuleBook()
@@ -349,6 +361,10 @@ def healthz() -> dict:
         #   없게 한다 - 2026-09-11 에 실제로 그래야 했다.
         "build": build_snapshot(),
         "kats": health.snapshot(),
+        # ⚠ 시드가 몇 건 얹혔나. **0 이면 재배포 뒤 데모의 인증 축이 죽는다**
+        #   (국표원이 죽어 있는 동안). `skipped` 가 0 이 아니면 시드 파일이
+        #   깨진 것이고, 걸러진 줄은 조용히 없어진 것이 아니라 여기 센다.
+        "cert_seed": _cert_seed_stats.as_dict(),
         "sync": {"enabled": settings.sync_enabled, **_store.sync_snapshot()},
         # ⚠ 저장소가 손상돼 격리됐는지 (4-q). None 이 정상이다 - 값이 있으면
         #   **등록된 워치 항목을 잃었다는 뜻**이고, 그러면 "리콜을 가장 먼저

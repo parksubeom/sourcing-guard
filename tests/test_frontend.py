@@ -609,7 +609,7 @@ def test_the_meta_footer_has_no_english_state_words():
     """
     html = (Path(__file__).resolve().parents[1] / "sourcing_guard" / "static"
             / "index.html").read_text(encoding="utf-8")
-    line = next(ln for ln in html.splitlines() if "var LOOKUP" in ln)
+    line = _lookup_block(html)
     values = re.findall(r':\s*"([^"]+)"', line)
     assert values, line
     for v in values:
@@ -617,12 +617,37 @@ def test_the_meta_footer_has_no_english_state_words():
     assert "성공" in values
 
 
+def _lookup_block(html: str) -> str:
+    """`var LOOKUP = {...};` 선언 전체.
+
+    ⚠ 전에는 `var LOOKUP` 이 들어간 **한 줄**만 봤다. 2026-09-19 에 값이 넷이
+      되며 선언이 두 줄로 나뉘자 뒤 줄의 `not_attempted` 를 통째로 놓쳤고,
+      검사는 "키가 셋이다" 로 **성공한 것처럼** 깨졌다. 줄 수에 기대지 않는다.
+    """
+    m = re.search(r"var LOOKUP\s*=\s*\{(.+?)\};", html, re.S)
+    assert m, "index.html 에서 LOOKUP 대응표를 못 찾았다"
+    return m.group(1)
+
+
 def test_the_lookup_keys_stay_as_the_server_sends_them():
-    """값만 한국어로 바꾼다. 키를 번역하면 서버 응답과 못 맞춘다."""
+    """값만 한국어로 바꾼다. 키를 번역하면 서버 응답과 못 맞춘다.
+
+    ⚠⚠ 기대값을 **손으로 적지 않는다.** 서버가 낼 수 있는 상태값의 소유자는
+      `scorer.GOV_LOOKUP_STATES` 하나다. 여기 목록을 따로 적어 두면 값을 늘릴
+      때 한쪽만 고쳐지고, 화면은 `LOOKUP[x] || x` 라 **조용히 영어를 찍는다** -
+      깨지지 않으므로 아무도 못 본다 (2026-09-19 에 `stale` 을 늘리며 실제로
+      이 검사가 잡았다).
+    """
+    from sourcing_guard.scorer import GOV_LOOKUP_STATES
+
     html = (Path(__file__).resolve().parents[1] / "sourcing_guard" / "static"
             / "index.html").read_text(encoding="utf-8")
-    line = next(ln for ln in html.splitlines() if "var LOOKUP" in ln)
-    assert set(re.findall(r"(\w+):", line)) == {"ok", "failed", "not_attempted"}
+    keys = set(re.findall(r"(\w+):", _lookup_block(html)))
+    assert keys == set(GOV_LOOKUP_STATES), (
+        "화면 대응표와 서버 상태값이 어긋난다.\n"
+        f"  화면에만: {keys - set(GOV_LOOKUP_STATES)}\n"
+        f"  서버에만: {set(GOV_LOOKUP_STATES) - keys}"
+    )
 
 
 def test_the_scan_input_says_one_product_at_a_time():
