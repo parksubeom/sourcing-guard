@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>체험 표본 — 안심 소싱 돋보기</title>
+<meta name="description" content="도매 실상품 열 개를 저희가 실제로 검사한 결과 그대로입니다. 인증이 만료·취소된 것도 함께 두었습니다.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+<link rel="stylesheet" href="/static/app.css">
+<!--
+  체험 표본. 스타일은 app.css 의 "체험 표본" 절에만 있다 - 페이지 전용 style
+  태그를 여기 두지 않는다 (검사가 막는다).
+
+  주의(중요): **문구와 숫자를 여기 적지 않는다.** 전부 /api/v1/samples 가 그린다.
+    카드의 모든 문장은 우리 서버가 실제로 낸 /api/v1/scan 응답 그대로이고
+    (scripts/record_samples.py 가 받아 둔 것), 정직 문구의 다섯 숫자는
+    baseline.BASELINE 에서 온다. 화면에 박으면 기준선이 움직일 때 한쪽만
+    고쳐진다.
+
+  주의(중요): 기록본이지 실시간 검사가 아니다. 그래서 카드마다 "지금 다시 검사"
+    가 있고, 그것은 /scan?sample=<번호> 로 가서 **일반 예산 안의** 검사를 돈다.
+    표본을 면제 지문으로 늘리면 투표 18일 동안 상한 없는 호출이 된다.
+-->
+</head>
+<body class="lv2">
+<a class="skip" href="#main">본문으로 건너가기</a>
+
+<header class="masthead">
+  <div class="container">
+    <a class="brand" href="/">
+      <svg class="mark" viewBox="0 0 120 120" aria-hidden="true"><use href="/static/mascot.svg#ansimi-GREEN"/></svg>
+      <span class="wordmark">안심 소싱 돋보기</span>
+    </a>
+    <nav class="pages" aria-label="주요 화면">
+      <a href="/">소개</a>
+      <a href="/scan">상품 검사</a>
+      <a href="/batch">대량 검사</a>
+      <a href="/watch">감시 목록</a>
+      <a href="/guide">카테고리 가이드</a>
+    </nav>
+  </div>
+</header>
+
+<main id="main" class="container sx">
+  <h1>체험 표본</h1>
+  <p class="sx-lede">도매 실상품 열 개를 <strong>저희가 실제로 검사한 결과 그대로</strong>입니다.
+    인증번호가 상세페이지에 적혀 있는 상품만 골랐고, 그중에는
+    <strong>인증이 기간만료되었거나 취소된 것</strong>도 있습니다.</p>
+
+  <p class="sx-honest" id="honest-recorded"></p>
+  <p class="sx-honest" id="honest-baseline"></p>
+
+  <div class="sx-list" id="list" aria-live="polite"></div>
+
+  <p class="note">본 결과는 공개된 정부 데이터에 기반한 참고 정보이며, 법적 판단이나 안전 인증을 대체하지 않습니다.</p>
+</main>
+
+<script src="/static/samples.js"></script>
+</body>
+</html>

@@ -48,6 +48,7 @@
       <h3 id="demo-h">예시로 바로 확인하기</h3>
       <p class="hint">버튼을 누르면 아래 입력란이 채워지고 검사가 실행됩니다.</p>
       <div class="demos" id="demos"></div>
+      <p class="hint">실제 도매 상품 열 개를 저희가 검사한 결과는 <a href="/samples">체험 표본</a>에 있습니다. 기간만료·취소 사례를 함께 두었습니다.</p>
     </section>
 
     <section aria-labelledby="input-h">
@@ -317,6 +318,30 @@
       });
     })
     .catch(function () { /* 데모가 없어도 본 기능은 돈다 */ });
+
+  // 체험 표본에서 "지금 다시 검사" 로 넘어온 경우. 기록본이 아니라 **지금**
+  // 돌린다 - 그래서 면제 지문이 아니라 일반 예산 안의 검사다.
+  //
+  // 주의(중요): 문구를 여기 들고 있지 않는다. /api/v1/samples 에서 받아서 넣는다 -
+  //   프론트가 사본을 들면 기록본과 갈라지고, 그러면 "다시 검사" 가 표본과
+  //   **다른 문장**을 검사하게 된다.
+  var wantSample = new URLSearchParams(location.search).get("sample");
+  if (wantSample) {
+    fetch("/api/v1/samples")
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (data) {
+        var hit = ((data && data.items) || []).filter(function (s) {
+          return s.id === wantSample;
+        })[0];
+        if (!hit) return;
+        shots.forEach(function (s2) { URL.revokeObjectURL(s2.url); });
+        shots = [];
+        renderShots();
+        pt.value = hit.text; updateCount();
+        scan();
+      })
+      .catch(function () { /* 표본을 못 받으면 빈 입력란으로 둔다 */ });
+  }
 
   pt.addEventListener("input", function () {
     updateCount();

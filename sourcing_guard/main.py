@@ -42,6 +42,7 @@ from .models import (
 from .scorer import KST, gov_lookup_state, has_specific_finding, score
 from .demos import DEMOS, DEMO_TEXTS
 from .demos import preview as demo_preview
+from .samples import payload as sample_payload
 
 _log = logging.getLogger(__name__)
 from .ratelimit import RateLimiter, text_fingerprint
@@ -329,6 +330,19 @@ def watch_page() -> HTMLResponse:
     return _page("watch.html")
 
 
+@app.api_route("/samples", methods=_PAGE_METHODS, response_class=HTMLResponse,
+               include_in_schema=False)
+def samples_page() -> HTMLResponse:
+    """체험 표본 — 실상품 열 개를 우리가 실제로 검사한 결과 그대로.
+
+    ⚠ **전역 내비에 넣지 않았다.** 320px 내비 넘침을 2026-09-18 에 닫았고
+      (미완 §1-l), 항목을 여섯째로 늘리면 그것이 되돌아올 수 있다. 랜딩과
+      검사 화면에서 링크한다. 넣으려면 `scripts/measure_widths.py` 로 폭
+      열넷을 먼저 재고 넣는다.
+    """
+    return _page("samples.html")
+
+
 @app.api_route("/guide", methods=_PAGE_METHODS, response_class=HTMLResponse, include_in_schema=False)
 def guide_page() -> HTMLResponse:
     """[M-5] 카테고리 가이드 — **안내 축이다. 아무것도 판정하지 않는다.**
@@ -571,6 +585,21 @@ def demos() -> dict:
       파일이 없으면 `null` 이고, 화면은 그러면 카드를 안 그린다 (R5).
     """
     return {"items": DEMOS, "preview": demo_preview()}
+
+
+@app.get("/api/v1/samples", include_in_schema=False)
+def samples() -> dict:
+    """체험 표본 기록본. **우리가 실제로 낸 결과**를 그대로 얼려 둔 것이다.
+
+    ⚠ 이 경로는 LLM·정부 API 를 부르지 않는다. 투표 18일 × 공개 접근 × 10개를
+      면제 지문으로 두면 상한 없는 비용이고, 첫 10초에 6초 대기가 붙는다
+      (총괄 판정 2026-09-19 §2).
+
+    ⚠ 화면에는 **"지금 다시 검사"** 가 함께 있고 그것은 `/scan?sample=<번호>`
+      로 가서 **면제가 아닌 일반 예산 안의** `/api/v1/scan` 을 부른다. 기록만
+      보여 준다는 의심에 대한 답이 화면 안에 있어야 한다.
+    """
+    return sample_payload()
 
 
 def _client_ip(request: Request) -> str:

@@ -1,0 +1,4824 @@
+{
+ "_기록": "체험 표본 기록본. `scripts/record_samples.py` 가 실제 /api/v1/scan 응답을 그대로 담는다. 손으로 고치지 않는다 - 고치면 화면이 없는 문장을 말한다.",
+ "recorded_at": "2026-09-19T14:54:44+00:00",
+ "items": [
+  {
+   "cert_number": "CB063R10777-3001",
+   "title": "KC인증 정품 그로밋 인형 큰 대형 [40cm 월레스와그로밋 강아지 캐릭터 부드러운 동물 봉제 안고자는 선물]",
+   "text": "KC인증 정품 그로밋 인형 큰 대형 [40cm 월레스와그로밋 강아지 캐릭터 부드러운 동물 봉제 안고자는 선물] KC 인증번호 CB063R10777-3001",
+   "result": {
+    "signal": "GREEN",
+    "headline": "소싱 가능 — 판매자 제공 정보 기준으로 리콜·인증 문제가 확인되지 않습니다. 실제 검증은 시험성적서로 이루어집니다.",
+    "score": 100,
+    "facts": {
+     "product_name": "그로밋 인형",
+     "model_name": null,
+     "maker": null,
+     "materials": [],
+     "substances_mentioned": [],
+     "kc_numbers": [
+      "CB063R10777-3001"
+     ],
+     "kc_numbers_from_image": [],
+     "rf_numbers": [],
+     "wireless_hints": [],
+     "target_age": null,
+     "legal_item_name": "봉제인형",
+     "category": "children_toy",
+     "category_confidence": 0.92,
+     "source_page_url": null,
+     "raw_language": "ko"
+    },
+    "findings": [
+     {
+      "kind": "kc_verified",
+      "signal": "GREEN",
+      "statement_ko": "인증번호 'CB063R10777-3001'이 조회되었습니다(인증상태: 적합). 등록 제품명: 완구",
+      "source_label": "국가기술표준원 안전인증정보 조회",
+      "source_url": "http://www.safetykorea.kr/search/searchPop?certNum=CB063R10777-3001",
+      "legal_basis": null,
+      "detail": {
+       "maker": "-",
+       "maker_country": "중국",
+       "cert_state": "적합",
+       "cert_div": "어린이제품 특별법 대상>안전확인 대상",
+       "registered_model": "숀&그로밋",
+       "registered_product": "완구",
+       "from_cache": false,
+       "fetched_at": null
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "recall_clear",
+      "signal": "GREEN",
+      "statement_ko": "리콜 공표 목록에서 모델명·인증번호가 일치하는 항목을 찾지 못했습니다. 리콜 대조 기준: 2026-09-14 공표분까지",
+      "source_label": "국가기술표준원 리콜정보",
+      "source_url": "https://www.safetykorea.kr/recall/recallBoard",
+      "legal_basis": null,
+      "detail": {
+       "recall_data_as_of": "20260914"
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "info_request",
+      "signal": "UNKNOWN",
+      "statement_ko": "[재질 확인 필요] 재질(합성수지 종류, 도장·코팅 유무)을 확인해 주세요. 합성수지제는 프탈레이트 기준이, 도장면은 유해원소 용출 기준이 적용됩니다.",
+      "source_label": "제품안전정보센터 대상 품목 안내",
+      "source_url": "https://www.safetykorea.kr/policy/targetsSafetyCheck3",
+      "legal_basis": null,
+      "detail": {
+       "missing": "재질",
+       "asks_for": [
+        "materials"
+       ],
+       "unlocks": [
+        "hazard_rule"
+       ]
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "info_request",
+      "signal": "UNKNOWN",
+      "statement_ko": "[대상연령 확인 필요] 대상연령(또는 권장 사용연령) 표기를 확인해 주세요. 만 13세 이하이면 어린이제품 공통안전기준이 적용됩니다.",
+      "source_label": "제품안전정보센터 대상 품목 안내",
+      "source_url": "https://www.safetykorea.kr/policy/targetsSafetyCheck3",
+      "legal_basis": null,
+      "detail": {
+       "missing": "대상연령",
+       "asks_for": [
+        "target_age"
+       ],
+       "unlocks": [
+        "item_grade",
+        "hazard_rule"
+       ]
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "hazard_rule_applies",
+      "signal": "UNKNOWN",
+      "statement_ko": "이 품목에는 '안티모니' 공통안전기준 (60mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+      "source_label": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+      "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+      "legal_basis": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+      "detail": {
+       "rule_id": "KC-COMMON-3.1.1-SB",
+       "substance": "안티모니",
+       "limit_value": 60,
+       "unit": "mg/kg"
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "hazard_rule_applies",
+      "signal": "UNKNOWN",
+      "statement_ko": "이 품목에는 '비소' 공통안전기준 (25mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+      "source_label": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+      "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+      "legal_basis": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+      "detail": {
+       "rule_id": "KC-COMMON-3.1.1-AS",
+       "substance": "비소",
+       "limit_value": 25,
+       "unit": "mg/kg"
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "hazard_rule_applies",
+      "signal": "UNKNOWN",
+      "statement_ko": "이 품목에는 '바륨' 공통안전기준 (1000mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+      "source_label": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+      "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+      "legal_basis": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+      "detail": {
+       "rule_id": "KC-COMMON-3.1.1-BA",
+       "substance": "바륨",
+       "limit_value": 1000,
+       "unit": "mg/kg"
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "hazard_rule_applies",
+      "signal": "UNKNOWN",
+      "statement_ko": "이 품목에는 '카드뮴' 공통안전기준 (75mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+      "source_label": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+      "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+      "legal_basis": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+      "detail": {
+       "rule_id": "KC-COMMON-3.1.1-CD",
+       "substance": "카드뮴",
+       "limit_value": 75,
+       "unit": "mg/kg"
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "hazard_rule_applies",
+      "signal": "UNKNOWN",
+      "statement_ko": "이 품목에는 '크로뮴' 공통안전기준 (60mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+      "source_label": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+      "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+      "legal_basis": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+      "detail": {
+       "rule_id": "KC-COMMON-3.1.1-CR",
+       "substance": "크로뮴",
+       "limit_value": 60,
+       "unit": "mg/kg"
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "hazard_rule_applies",
+      "signal": "UNKNOWN",
+      "statement_ko": "이 품목에는 '납(용출)' 공통안전기준 (90mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+      "source_label": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+      "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+      "legal_basis": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+      "detail": {
+       "rule_id": "KC-COMMON-3.1.1-PB",
+       "substance": "납(용출)",
+       "limit_value": 90,
+       "unit": "mg/kg"
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "hazard_rule_applies",
+      "signal": "UNKNOWN",
+      "statement_ko": "이 품목에는 '수은' 공통안전기준 (60mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+      "source_label": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+      "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+      "legal_basis": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+      "detail": {
+       "rule_id": "KC-COMMON-3.1.1-HG",
+       "substance": "수은",
+       "limit_value": 60,
+       "unit": "mg/kg"
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "hazard_rule_applies",
+      "signal": "UNKNOWN",
+      "statement_ko": "이 품목에는 '셀레늄' 공통안전기준 (500mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+      "source_label": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+      "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+      "legal_basis": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+      "detail": {
+       "rule_id": "KC-COMMON-3.1.1-SE",
+       "substance": "셀레늄",
+       "limit_value": 500,
+       "unit": "mg/kg"
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "hazard_rule_applies",
+      "signal": "UNKNOWN",
+      "statement_ko": "이 품목에는 '총 납(함유량)' 공통안전기준 (100mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+      "source_label": "어린이제품 공통안전기준 3.1.2 (산업통상자원부고시 제2022-220호)",
+      "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+      "legal_basis": "어린이제품 공통안전기준 3.1.2 (산업통상자원부고시 제2022-220호)",
+      "detail": {
+       "rule_id": "KC-COMMON-3.1.2-PB",
+       "substance": "총 납(함유량)",
+       "limit_value": 100,
+       "unit": "mg/kg"
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "hazard_rule_applies",
+      "signal": "UNKNOWN",
+      "statement_ko": "이 품목에는 '총 카드뮴(함유량)' 공통안전기준 (75mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+      "source_label": "어린이제품 공통안전기준 3.1.2 (산업통상자원부고시 제2022-220호)",
+      "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+      "legal_basis": "어린이제품 공통안전기준 3.1.2 (산업통상자원부고시 제2022-220호)",
+      "detail": {
+       "rule_id": "KC-COMMON-3.1.2-CD",
+       "substance": "총 카드뮴(함유량)",
+       "limit_value": 75,
+       "unit": "mg/kg"
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "hazard_rule_applies",
+      "signal": "UNKNOWN",
+      "statement_ko": "이 품목에는 '프탈레이트계 가소제' 공통안전기준 (0.1%)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+      "source_label": "어린이제품 공통안전기준 3.1.3 (산업통상자원부고시 제2022-220호)",
+      "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+      "legal_basis": "어린이제품 공통안전기준 3.1.3 (산업통상자원부고시 제2022-220호)",
+      "detail": {
+       "rule_id": "KC-COMMON-3.1.3-PHT",
+       "substance": "프탈레이트계 가소제",
+       "limit_value": 0.1,
+       "unit": "%"
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "hazard_rule_applies",
+      "signal": "UNKNOWN",
+      "statement_ko": "이 품목에는 '니트로사민류' 공통안전기준 (0.01mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+      "source_label": "어린이제품 공통안전기준 3.1.4 (산업통상자원부고시 제2022-220호)",
+      "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+      "legal_basis": "어린이제품 공통안전기준 3.1.4 (산업통상자원부고시 제2022-220호)",
+      "detail": {
+       "rule_id": "KC-COMMON-3.1.4-NITROSAMINE",
+       "substance": "니트로사민류",
+       "limit_value": 0.01,
+       "unit": "mg/kg"
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "hazard_rule_applies",
+      "signal": "UNKNOWN",
+      "statement_ko": "이 품목에는 '니트로사민류 생성 가능물질' 공통안전기준 (0.1mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+      "source_label": "어린이제품 공통안전기준 3.1.4 (산업통상자원부고시 제2022-220호)",
+      "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+      "legal_basis": "어린이제품 공통안전기준 3.1.4 (산업통상자원부고시 제2022-220호)",
+      "detail": {
+       "rule_id": "KC-COMMON-3.1.4-NITROSATABLE",
+       "substance": "니트로사민류 생성 가능물질",
+       "limit_value": 0.1,
+       "unit": "mg/kg"
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "hazard_rule_applies",
+      "signal": "UNKNOWN",
+      "statement_ko": "이 품목에는 '석면' 공통안전기준이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+      "source_label": "어린이제품 공통안전기준 3.1.6 (산업통상자원부고시 제2022-220호)",
+      "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+      "legal_basis": "어린이제품 공통안전기준 3.1.6 (산업통상자원부고시 제2022-220호)",
+      "detail": {
+       "rule_id": "KC-COMMON-3.1.6-ASBESTOS",
+       "substance": "석면",
+       "limit_value": null,
+       "unit": null
+      },
+      "checked_at": "2026-09-19"
+     }
+    ],
+    "coverage_note": "이 품목에는 유해물질 기준이 적용됩니다. 실제 함유량은 시험성적서로만 확인되며, 인증번호 도용·상표권·수입요건은 확인 대상이 아닙니다.",
+    "recall_data_as_of": "20260914",
+    "watch_suggestion": {
+     "can_watch": true,
+     "reason": "지금은 리콜·인증 문제가 없지만, 이는 조회 시점 기준입니다. 이 상품을 감시 목록에 넣으면 나중에 리콜이 공표될 때 가장 먼저 알려드립니다."
+    },
+    "extracted": [
+     {
+      "label": "제품명",
+      "value": "그로밋 인형",
+      "link": null
+     },
+     {
+      "label": "인증번호",
+      "value": "CB063R10777-3001",
+      "link": "http://www.safetykorea.kr/search/searchPop?certNum=CB063R10777-3001"
+     },
+     {
+      "label": "품목 구분",
+      "value": "완구",
+      "link": null
+     }
+    ],
+    "axes": [
+     {
+      "key": "cert",
+      "name": "인증 조회",
+      "label": "조회함",
+      "done": true,
+      "note": ""
+     },
+     {
+      "key": "recall",
+      "name": "리콜 대조",
+      "label": "대조함",
+      "done": true,
+      "note": "2026-09-14 공표분까지 · 2026-09-18 12:53 갱신"
+     },
+     {
+      "key": "hazard",
+      "name": "유해물질",
+      "label": "수록됨",
+      "done": true,
+      "note": ""
+     }
+    ],
+    "grouped_findings": [
+     {
+      "group": "action",
+      "header": "소싱하려면 확인할 것",
+      "findings": [
+       {
+        "kind": "info_request",
+        "signal": "UNKNOWN",
+        "statement_ko": "[재질 확인 필요] 재질(합성수지 종류, 도장·코팅 유무)을 확인해 주세요. 합성수지제는 프탈레이트 기준이, 도장면은 유해원소 용출 기준이 적용됩니다.",
+        "source_label": "제품안전정보센터 대상 품목 안내",
+        "source_url": "https://www.safetykorea.kr/policy/targetsSafetyCheck3",
+        "legal_basis": null,
+        "detail": {
+         "missing": "재질",
+         "asks_for": [
+          "materials"
+         ],
+         "unlocks": [
+          "hazard_rule"
+         ]
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "info_request",
+        "signal": "UNKNOWN",
+        "statement_ko": "[대상연령 확인 필요] 대상연령(또는 권장 사용연령) 표기를 확인해 주세요. 만 13세 이하이면 어린이제품 공통안전기준이 적용됩니다.",
+        "source_label": "제품안전정보센터 대상 품목 안내",
+        "source_url": "https://www.safetykorea.kr/policy/targetsSafetyCheck3",
+        "legal_basis": null,
+        "detail": {
+         "missing": "대상연령",
+         "asks_for": [
+          "target_age"
+         ],
+         "unlocks": [
+          "item_grade",
+          "hazard_rule"
+         ]
+        },
+        "checked_at": "2026-09-19"
+       }
+      ]
+     },
+     {
+      "group": "context",
+      "header": "참고 정보",
+      "findings": [
+       {
+        "kind": "kc_verified",
+        "signal": "GREEN",
+        "statement_ko": "인증번호 'CB063R10777-3001'이 조회되었습니다(인증상태: 적합). 등록 제품명: 완구",
+        "source_label": "국가기술표준원 안전인증정보 조회",
+        "source_url": "http://www.safetykorea.kr/search/searchPop?certNum=CB063R10777-3001",
+        "legal_basis": null,
+        "detail": {
+         "maker": "-",
+         "maker_country": "중국",
+         "cert_state": "적합",
+         "cert_div": "어린이제품 특별법 대상>안전확인 대상",
+         "registered_model": "숀&그로밋",
+         "registered_product": "완구",
+         "from_cache": false,
+         "fetched_at": null
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "recall_clear",
+        "signal": "GREEN",
+        "statement_ko": "리콜 공표 목록에서 모델명·인증번호가 일치하는 항목을 찾지 못했습니다. 리콜 대조 기준: 2026-09-14 공표분까지",
+        "source_label": "국가기술표준원 리콜정보",
+        "source_url": "https://www.safetykorea.kr/recall/recallBoard",
+        "legal_basis": null,
+        "detail": {
+         "recall_data_as_of": "20260914"
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "hazard_rule_applies",
+        "signal": "UNKNOWN",
+        "statement_ko": "이 품목에는 '안티모니' 공통안전기준 (60mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+        "source_label": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+        "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+        "legal_basis": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+        "detail": {
+         "rule_id": "KC-COMMON-3.1.1-SB",
+         "substance": "안티모니",
+         "limit_value": 60,
+         "unit": "mg/kg"
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "hazard_rule_applies",
+        "signal": "UNKNOWN",
+        "statement_ko": "이 품목에는 '비소' 공통안전기준 (25mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+        "source_label": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+        "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+        "legal_basis": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+        "detail": {
+         "rule_id": "KC-COMMON-3.1.1-AS",
+         "substance": "비소",
+         "limit_value": 25,
+         "unit": "mg/kg"
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "hazard_rule_applies",
+        "signal": "UNKNOWN",
+        "statement_ko": "이 품목에는 '바륨' 공통안전기준 (1000mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+        "source_label": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+        "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+        "legal_basis": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+        "detail": {
+         "rule_id": "KC-COMMON-3.1.1-BA",
+         "substance": "바륨",
+         "limit_value": 1000,
+         "unit": "mg/kg"
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "hazard_rule_applies",
+        "signal": "UNKNOWN",
+        "statement_ko": "이 품목에는 '카드뮴' 공통안전기준 (75mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+        "source_label": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+        "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+        "legal_basis": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+        "detail": {
+         "rule_id": "KC-COMMON-3.1.1-CD",
+         "substance": "카드뮴",
+         "limit_value": 75,
+         "unit": "mg/kg"
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "hazard_rule_applies",
+        "signal": "UNKNOWN",
+        "statement_ko": "이 품목에는 '크로뮴' 공통안전기준 (60mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+        "source_label": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+        "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+        "legal_basis": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+        "detail": {
+         "rule_id": "KC-COMMON-3.1.1-CR",
+         "substance": "크로뮴",
+         "limit_value": 60,
+         "unit": "mg/kg"
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "hazard_rule_applies",
+        "signal": "UNKNOWN",
+        "statement_ko": "이 품목에는 '납(용출)' 공통안전기준 (90mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+        "source_label": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+        "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+        "legal_basis": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+        "detail": {
+         "rule_id": "KC-COMMON-3.1.1-PB",
+         "substance": "납(용출)",
+         "limit_value": 90,
+         "unit": "mg/kg"
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "hazard_rule_applies",
+        "signal": "UNKNOWN",
+        "statement_ko": "이 품목에는 '수은' 공통안전기준 (60mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+        "source_label": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+        "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+        "legal_basis": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+        "detail": {
+         "rule_id": "KC-COMMON-3.1.1-HG",
+         "substance": "수은",
+         "limit_value": 60,
+         "unit": "mg/kg"
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "hazard_rule_applies",
+        "signal": "UNKNOWN",
+        "statement_ko": "이 품목에는 '셀레늄' 공통안전기준 (500mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+        "source_label": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+        "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+        "legal_basis": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+        "detail": {
+         "rule_id": "KC-COMMON-3.1.1-SE",
+         "substance": "셀레늄",
+         "limit_value": 500,
+         "unit": "mg/kg"
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "hazard_rule_applies",
+        "signal": "UNKNOWN",
+        "statement_ko": "이 품목에는 '총 납(함유량)' 공통안전기준 (100mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+        "source_label": "어린이제품 공통안전기준 3.1.2 (산업통상자원부고시 제2022-220호)",
+        "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+        "legal_basis": "어린이제품 공통안전기준 3.1.2 (산업통상자원부고시 제2022-220호)",
+        "detail": {
+         "rule_id": "KC-COMMON-3.1.2-PB",
+         "substance": "총 납(함유량)",
+         "limit_value": 100,
+         "unit": "mg/kg"
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "hazard_rule_applies",
+        "signal": "UNKNOWN",
+        "statement_ko": "이 품목에는 '총 카드뮴(함유량)' 공통안전기준 (75mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+        "source_label": "어린이제품 공통안전기준 3.1.2 (산업통상자원부고시 제2022-220호)",
+        "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+        "legal_basis": "어린이제품 공통안전기준 3.1.2 (산업통상자원부고시 제2022-220호)",
+        "detail": {
+         "rule_id": "KC-COMMON-3.1.2-CD",
+         "substance": "총 카드뮴(함유량)",
+         "limit_value": 75,
+         "unit": "mg/kg"
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "hazard_rule_applies",
+        "signal": "UNKNOWN",
+        "statement_ko": "이 품목에는 '프탈레이트계 가소제' 공통안전기준 (0.1%)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+        "source_label": "어린이제품 공통안전기준 3.1.3 (산업통상자원부고시 제2022-220호)",
+        "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+        "legal_basis": "어린이제품 공통안전기준 3.1.3 (산업통상자원부고시 제2022-220호)",
+        "detail": {
+         "rule_id": "KC-COMMON-3.1.3-PHT",
+         "substance": "프탈레이트계 가소제",
+         "limit_value": 0.1,
+         "unit": "%"
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "hazard_rule_applies",
+        "signal": "UNKNOWN",
+        "statement_ko": "이 품목에는 '니트로사민류' 공통안전기준 (0.01mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+        "source_label": "어린이제품 공통안전기준 3.1.4 (산업통상자원부고시 제2022-220호)",
+        "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+        "legal_basis": "어린이제품 공통안전기준 3.1.4 (산업통상자원부고시 제2022-220호)",
+        "detail": {
+         "rule_id": "KC-COMMON-3.1.4-NITROSAMINE",
+         "substance": "니트로사민류",
+         "limit_value": 0.01,
+         "unit": "mg/kg"
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "hazard_rule_applies",
+        "signal": "UNKNOWN",
+        "statement_ko": "이 품목에는 '니트로사민류 생성 가능물질' 공통안전기준 (0.1mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+        "source_label": "어린이제품 공통안전기준 3.1.4 (산업통상자원부고시 제2022-220호)",
+        "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+        "legal_basis": "어린이제품 공통안전기준 3.1.4 (산업통상자원부고시 제2022-220호)",
+        "detail": {
+         "rule_id": "KC-COMMON-3.1.4-NITROSATABLE",
+         "substance": "니트로사민류 생성 가능물질",
+         "limit_value": 0.1,
+         "unit": "mg/kg"
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "hazard_rule_applies",
+        "signal": "UNKNOWN",
+        "statement_ko": "이 품목에는 '석면' 공통안전기준이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+        "source_label": "어린이제품 공통안전기준 3.1.6 (산업통상자원부고시 제2022-220호)",
+        "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+        "legal_basis": "어린이제품 공통안전기준 3.1.6 (산업통상자원부고시 제2022-220호)",
+        "detail": {
+         "rule_id": "KC-COMMON-3.1.6-ASBESTOS",
+         "substance": "석면",
+         "limit_value": null,
+         "unit": null
+        },
+        "checked_at": "2026-09-19"
+       }
+      ]
+     }
+    ],
+    "meta": {
+     "extracted_by": "LLM(GPT · gpt-5.4-mini)",
+     "extraction_path": "llm",
+     "extractor_vendor": "gpt",
+     "extractor_model": "gpt-5.4-mini",
+     "extraction_reason": null,
+     "gov_lookup": {
+      "cert": "ok",
+      "recall": "ok",
+      "rf": "not_attempted"
+     },
+     "recall_data_as_of": "20260914"
+    },
+    "input_note": null,
+    "extraction_note": null,
+    "disclaimer": "본 결과는 공개된 정부 데이터에 기반한 참고 정보이며, 법적 판단이나 안전 인증을 대체하지 않습니다."
+   }
+  },
+  {
+   "cert_number": "CB025H0054-4001",
+   "title": "놀이방매트 층간소음방지 pvc놀이 유아거실바닥 어린이안전 아기방",
+   "text": "놀이방매트 층간소음방지 pvc놀이 유아거실바닥 어린이안전 아기방 KC 인증번호 CB025H0054-4001",
+   "result": {
+    "signal": "AMBER",
+    "headline": "확인 후 소싱 — 공급처에 아래 항목을 확인한 뒤 판단하세요.",
+    "score": 75,
+    "facts": {
+     "product_name": "놀이방매트",
+     "model_name": null,
+     "maker": null,
+     "materials": [
+      "PVC"
+     ],
+     "substances_mentioned": [
+      "pvc"
+     ],
+     "kc_numbers": [
+      "CB025H0054-4001"
+     ],
+     "kc_numbers_from_image": [],
+     "rf_numbers": [],
+     "wireless_hints": [],
+     "target_age": null,
+     "legal_item_name": "매트",
+     "category": "children_textile",
+     "category_confidence": 0.72,
+     "source_page_url": null,
+     "raw_language": "ko"
+    },
+    "findings": [
+     {
+      "kind": "kc_verified",
+      "signal": "GREEN",
+      "statement_ko": "인증번호 'CB025H0054-4001'이 조회되었습니다(인증상태: 적합). 등록 제품명: 합성수지제 어린이용품",
+      "source_label": "국가기술표준원 안전인증정보 조회",
+      "source_url": "http://www.safetykorea.kr/search/searchPop?certNum=CB025H0054-4001",
+      "legal_basis": null,
+      "detail": {
+       "maker": "(주)넬라켐",
+       "maker_country": "대한민국",
+       "cert_state": "적합",
+       "cert_div": "어린이제품 특별법 대상>안전확인 대상",
+       "registered_model": "PVC 놀이방 매트",
+       "registered_product": "합성수지제 어린이용품",
+       "from_cache": false,
+       "fetched_at": null
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "item_grade_matched",
+      "signal": "UNKNOWN",
+      "statement_ko": "세부품목 등급표에서 '매트류'는 안전기준준수 대상으로 조회됩니다. 안전기준준수 대상이면 인증·신고 절차가 없어 정부 조회 DB 에 번호가 없는 것이 정상입니다. 품목이 맞는지 확인하고, 공급처에 인증 구분을 요청하세요.",
+      "source_label": "전기용품 및 생활용품 안전관리 운용요령 별표 7",
+      "source_url": "https://www.law.go.kr/행정규칙/전기용품및생활용품안전관리운용요령",
+      "legal_basis": null,
+      "detail": {
+       "grade": "안전기준준수",
+       "candidates": [
+        {
+         "item": "매트류",
+         "grade": "안전기준준수",
+         "scope_note": "",
+         "matched_by": "alias",
+         "source": "전기용품 및 생활용품 안전관리 운용요령 별표 7",
+         "source_url": "https://www.law.go.kr/행정규칙/전기용품및생활용품안전관리운용요령"
+        }
+       ]
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "recall_clear",
+      "signal": "GREEN",
+      "statement_ko": "리콜 공표 목록에서 모델명·인증번호가 일치하는 항목을 찾지 못했습니다. 리콜 대조 기준: 2026-09-14 공표분까지",
+      "source_label": "국가기술표준원 리콜정보",
+      "source_url": "https://www.safetykorea.kr/recall/recallBoard",
+      "legal_basis": null,
+      "detail": {
+       "recall_data_as_of": "20260914"
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "info_request",
+      "signal": "UNKNOWN",
+      "statement_ko": "[대상연령 확인 필요] 대상연령(또는 권장 사용연령) 표기를 확인해 주세요. 만 13세 이하이면 어린이제품 공통안전기준이 적용됩니다.",
+      "source_label": "제품안전정보센터 대상 품목 안내",
+      "source_url": "https://www.safetykorea.kr/policy/targetsSafetyCheck3",
+      "legal_basis": null,
+      "detail": {
+       "missing": "대상연령",
+       "asks_for": [
+        "target_age"
+       ],
+       "unlocks": [
+        "item_grade",
+        "hazard_rule"
+       ]
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "hazard_rule_applies",
+      "signal": "UNKNOWN",
+      "statement_ko": "이 품목에는 '안티모니' 공통안전기준 (60mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+      "source_label": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+      "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+      "legal_basis": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+      "detail": {
+       "rule_id": "KC-COMMON-3.1.1-SB",
+       "substance": "안티모니",
+       "limit_value": 60,
+       "unit": "mg/kg"
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "hazard_rule_applies",
+      "signal": "UNKNOWN",
+      "statement_ko": "이 품목에는 '비소' 공통안전기준 (25mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+      "source_label": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+      "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+      "legal_basis": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+      "detail": {
+       "rule_id": "KC-COMMON-3.1.1-AS",
+       "substance": "비소",
+       "limit_value": 25,
+       "unit": "mg/kg"
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "hazard_rule_applies",
+      "signal": "UNKNOWN",
+      "statement_ko": "이 품목에는 '바륨' 공통안전기준 (1000mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+      "source_label": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+      "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+      "legal_basis": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+      "detail": {
+       "rule_id": "KC-COMMON-3.1.1-BA",
+       "substance": "바륨",
+       "limit_value": 1000,
+       "unit": "mg/kg"
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "hazard_rule_applies",
+      "signal": "UNKNOWN",
+      "statement_ko": "이 품목에는 '카드뮴' 공통안전기준 (75mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+      "source_label": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+      "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+      "legal_basis": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+      "detail": {
+       "rule_id": "KC-COMMON-3.1.1-CD",
+       "substance": "카드뮴",
+       "limit_value": 75,
+       "unit": "mg/kg"
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "hazard_rule_applies",
+      "signal": "UNKNOWN",
+      "statement_ko": "이 품목에는 '크로뮴' 공통안전기준 (60mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+      "source_label": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+      "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+      "legal_basis": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+      "detail": {
+       "rule_id": "KC-COMMON-3.1.1-CR",
+       "substance": "크로뮴",
+       "limit_value": 60,
+       "unit": "mg/kg"
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "hazard_rule_applies",
+      "signal": "UNKNOWN",
+      "statement_ko": "이 품목에는 '납(용출)' 공통안전기준 (90mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+      "source_label": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+      "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+      "legal_basis": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+      "detail": {
+       "rule_id": "KC-COMMON-3.1.1-PB",
+       "substance": "납(용출)",
+       "limit_value": 90,
+       "unit": "mg/kg"
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "hazard_rule_applies",
+      "signal": "UNKNOWN",
+      "statement_ko": "이 품목에는 '수은' 공통안전기준 (60mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+      "source_label": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+      "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+      "legal_basis": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+      "detail": {
+       "rule_id": "KC-COMMON-3.1.1-HG",
+       "substance": "수은",
+       "limit_value": 60,
+       "unit": "mg/kg"
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "hazard_rule_applies",
+      "signal": "UNKNOWN",
+      "statement_ko": "이 품목에는 '셀레늄' 공통안전기준 (500mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+      "source_label": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+      "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+      "legal_basis": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+      "detail": {
+       "rule_id": "KC-COMMON-3.1.1-SE",
+       "substance": "셀레늄",
+       "limit_value": 500,
+       "unit": "mg/kg"
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "hazard_rule_applies",
+      "signal": "UNKNOWN",
+      "statement_ko": "이 품목에는 '총 납(함유량)' 공통안전기준 (100mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+      "source_label": "어린이제품 공통안전기준 3.1.2 (산업통상자원부고시 제2022-220호)",
+      "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+      "legal_basis": "어린이제품 공통안전기준 3.1.2 (산업통상자원부고시 제2022-220호)",
+      "detail": {
+       "rule_id": "KC-COMMON-3.1.2-PB",
+       "substance": "총 납(함유량)",
+       "limit_value": 100,
+       "unit": "mg/kg"
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "hazard_rule_applies",
+      "signal": "UNKNOWN",
+      "statement_ko": "이 품목에는 '총 카드뮴(함유량)' 공통안전기준 (75mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+      "source_label": "어린이제품 공통안전기준 3.1.2 (산업통상자원부고시 제2022-220호)",
+      "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+      "legal_basis": "어린이제품 공통안전기준 3.1.2 (산업통상자원부고시 제2022-220호)",
+      "detail": {
+       "rule_id": "KC-COMMON-3.1.2-CD",
+       "substance": "총 카드뮴(함유량)",
+       "limit_value": 75,
+       "unit": "mg/kg"
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "hazard_rule_applies",
+      "signal": "UNKNOWN",
+      "statement_ko": "이 품목에는 '프탈레이트계 가소제' 공통안전기준 (0.1%)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+      "source_label": "어린이제품 공통안전기준 3.1.3 (산업통상자원부고시 제2022-220호)",
+      "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+      "legal_basis": "어린이제품 공통안전기준 3.1.3 (산업통상자원부고시 제2022-220호)",
+      "detail": {
+       "rule_id": "KC-COMMON-3.1.3-PHT",
+       "substance": "프탈레이트계 가소제",
+       "limit_value": 0.1,
+       "unit": "%"
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "substance_mentioned",
+      "signal": "AMBER",
+      "statement_ko": "상세페이지 본문에 규제 물질 '프탈레이트계 가소제' 관련 표기가 감지되었습니다.",
+      "source_label": "어린이제품 공통안전기준 3.1.3 (산업통상자원부고시 제2022-220호)",
+      "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+      "legal_basis": null,
+      "detail": {
+       "rule_id": "KC-COMMON-3.1.3-PHT"
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "hazard_rule_applies",
+      "signal": "UNKNOWN",
+      "statement_ko": "이 품목에는 '니트로사민류' 공통안전기준 (0.01mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+      "source_label": "어린이제품 공통안전기준 3.1.4 (산업통상자원부고시 제2022-220호)",
+      "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+      "legal_basis": "어린이제품 공통안전기준 3.1.4 (산업통상자원부고시 제2022-220호)",
+      "detail": {
+       "rule_id": "KC-COMMON-3.1.4-NITROSAMINE",
+       "substance": "니트로사민류",
+       "limit_value": 0.01,
+       "unit": "mg/kg"
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "hazard_rule_applies",
+      "signal": "UNKNOWN",
+      "statement_ko": "이 품목에는 '니트로사민류 생성 가능물질' 공통안전기준 (0.1mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+      "source_label": "어린이제품 공통안전기준 3.1.4 (산업통상자원부고시 제2022-220호)",
+      "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+      "legal_basis": "어린이제품 공통안전기준 3.1.4 (산업통상자원부고시 제2022-220호)",
+      "detail": {
+       "rule_id": "KC-COMMON-3.1.4-NITROSATABLE",
+       "substance": "니트로사민류 생성 가능물질",
+       "limit_value": 0.1,
+       "unit": "mg/kg"
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "hazard_rule_applies",
+      "signal": "UNKNOWN",
+      "statement_ko": "이 품목에는 '폼알데하이드' 공통안전기준 (75mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+      "source_label": "어린이제품 공통안전기준 3.1.5 (산업통상자원부고시 제2022-220호)",
+      "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+      "legal_basis": "어린이제품 공통안전기준 3.1.5 (산업통상자원부고시 제2022-220호)",
+      "detail": {
+       "rule_id": "KC-COMMON-3.1.5-HCHO",
+       "substance": "폼알데하이드",
+       "limit_value": 75,
+       "unit": "mg/kg"
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "hazard_rule_applies",
+      "signal": "UNKNOWN",
+      "statement_ko": "이 품목에는 '아릴아민' 공통안전기준 (30mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+      "source_label": "어린이제품 공통안전기준 3.1.5 (산업통상자원부고시 제2022-220호)",
+      "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+      "legal_basis": "어린이제품 공통안전기준 3.1.5 (산업통상자원부고시 제2022-220호)",
+      "detail": {
+       "rule_id": "KC-COMMON-3.1.5-ARYLAMINE",
+       "substance": "아릴아민",
+       "limit_value": 30,
+       "unit": "mg/kg"
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "hazard_rule_applies",
+      "signal": "UNKNOWN",
+      "statement_ko": "이 품목에는 'pH' 공통안전기준이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+      "source_label": "어린이제품 공통안전기준 3.1.5 (산업통상자원부고시 제2022-220호)",
+      "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+      "legal_basis": "어린이제품 공통안전기준 3.1.5 (산업통상자원부고시 제2022-220호)",
+      "detail": {
+       "rule_id": "KC-COMMON-3.1.5-PH",
+       "substance": "pH",
+       "limit_value": null,
+       "unit": null
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "hazard_rule_applies",
+      "signal": "UNKNOWN",
+      "statement_ko": "이 품목에는 '석면' 공통안전기준이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+      "source_label": "어린이제품 공통안전기준 3.1.6 (산업통상자원부고시 제2022-220호)",
+      "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+      "legal_basis": "어린이제품 공통안전기준 3.1.6 (산업통상자원부고시 제2022-220호)",
+      "detail": {
+       "rule_id": "KC-COMMON-3.1.6-ASBESTOS",
+       "substance": "석면",
+       "limit_value": null,
+       "unit": null
+      },
+      "checked_at": "2026-09-19"
+     }
+    ],
+    "coverage_note": "이 품목에는 유해물질 기준이 적용됩니다. 실제 함유량은 시험성적서로만 확인되며, 인증번호 도용·상표권·수입요건은 확인 대상이 아닙니다.",
+    "recall_data_as_of": "20260914",
+    "watch_suggestion": {
+     "can_watch": true,
+     "reason": "공급처에 확인하는 동안 이 상품을 감시 목록에 넣어두면, 그 사이 리콜이 공표되어도 놓치지 않습니다."
+    },
+    "extracted": [
+     {
+      "label": "제품명",
+      "value": "놀이방매트",
+      "link": null
+     },
+     {
+      "label": "인증번호",
+      "value": "CB025H0054-4001",
+      "link": "http://www.safetykorea.kr/search/searchPop?certNum=CB025H0054-4001"
+     },
+     {
+      "label": "재질",
+      "value": "PVC",
+      "link": null
+     },
+     {
+      "label": "품목 구분",
+      "value": "아동용 섬유제품",
+      "link": null
+     }
+    ],
+    "axes": [
+     {
+      "key": "cert",
+      "name": "인증 조회",
+      "label": "조회함",
+      "done": true,
+      "note": ""
+     },
+     {
+      "key": "recall",
+      "name": "리콜 대조",
+      "label": "대조함",
+      "done": true,
+      "note": "2026-09-14 공표분까지 · 2026-09-18 12:53 갱신"
+     },
+     {
+      "key": "hazard",
+      "name": "유해물질",
+      "label": "수록됨",
+      "done": true,
+      "note": ""
+     }
+    ],
+    "grouped_findings": [
+     {
+      "group": "action",
+      "header": "소싱하려면 확인할 것",
+      "findings": [
+       {
+        "kind": "item_grade_matched",
+        "signal": "UNKNOWN",
+        "statement_ko": "세부품목 등급표에서 '매트류'는 안전기준준수 대상으로 조회됩니다. 안전기준준수 대상이면 인증·신고 절차가 없어 정부 조회 DB 에 번호가 없는 것이 정상입니다. 품목이 맞는지 확인하고, 공급처에 인증 구분을 요청하세요.",
+        "source_label": "전기용품 및 생활용품 안전관리 운용요령 별표 7",
+        "source_url": "https://www.law.go.kr/행정규칙/전기용품및생활용품안전관리운용요령",
+        "legal_basis": null,
+        "detail": {
+         "grade": "안전기준준수",
+         "candidates": [
+          {
+           "item": "매트류",
+           "grade": "안전기준준수",
+           "scope_note": "",
+           "matched_by": "alias",
+           "source": "전기용품 및 생활용품 안전관리 운용요령 별표 7",
+           "source_url": "https://www.law.go.kr/행정규칙/전기용품및생활용품안전관리운용요령"
+          }
+         ]
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "info_request",
+        "signal": "UNKNOWN",
+        "statement_ko": "[대상연령 확인 필요] 대상연령(또는 권장 사용연령) 표기를 확인해 주세요. 만 13세 이하이면 어린이제품 공통안전기준이 적용됩니다.",
+        "source_label": "제품안전정보센터 대상 품목 안내",
+        "source_url": "https://www.safetykorea.kr/policy/targetsSafetyCheck3",
+        "legal_basis": null,
+        "detail": {
+         "missing": "대상연령",
+         "asks_for": [
+          "target_age"
+         ],
+         "unlocks": [
+          "item_grade",
+          "hazard_rule"
+         ]
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "substance_mentioned",
+        "signal": "AMBER",
+        "statement_ko": "상세페이지 본문에 규제 물질 '프탈레이트계 가소제' 관련 표기가 감지되었습니다.",
+        "source_label": "어린이제품 공통안전기준 3.1.3 (산업통상자원부고시 제2022-220호)",
+        "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+        "legal_basis": null,
+        "detail": {
+         "rule_id": "KC-COMMON-3.1.3-PHT"
+        },
+        "checked_at": "2026-09-19"
+       }
+      ]
+     },
+     {
+      "group": "context",
+      "header": "참고 정보",
+      "findings": [
+       {
+        "kind": "kc_verified",
+        "signal": "GREEN",
+        "statement_ko": "인증번호 'CB025H0054-4001'이 조회되었습니다(인증상태: 적합). 등록 제품명: 합성수지제 어린이용품",
+        "source_label": "국가기술표준원 안전인증정보 조회",
+        "source_url": "http://www.safetykorea.kr/search/searchPop?certNum=CB025H0054-4001",
+        "legal_basis": null,
+        "detail": {
+         "maker": "(주)넬라켐",
+         "maker_country": "대한민국",
+         "cert_state": "적합",
+         "cert_div": "어린이제품 특별법 대상>안전확인 대상",
+         "registered_model": "PVC 놀이방 매트",
+         "registered_product": "합성수지제 어린이용품",
+         "from_cache": false,
+         "fetched_at": null
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "recall_clear",
+        "signal": "GREEN",
+        "statement_ko": "리콜 공표 목록에서 모델명·인증번호가 일치하는 항목을 찾지 못했습니다. 리콜 대조 기준: 2026-09-14 공표분까지",
+        "source_label": "국가기술표준원 리콜정보",
+        "source_url": "https://www.safetykorea.kr/recall/recallBoard",
+        "legal_basis": null,
+        "detail": {
+         "recall_data_as_of": "20260914"
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "hazard_rule_applies",
+        "signal": "UNKNOWN",
+        "statement_ko": "이 품목에는 '안티모니' 공통안전기준 (60mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+        "source_label": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+        "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+        "legal_basis": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+        "detail": {
+         "rule_id": "KC-COMMON-3.1.1-SB",
+         "substance": "안티모니",
+         "limit_value": 60,
+         "unit": "mg/kg"
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "hazard_rule_applies",
+        "signal": "UNKNOWN",
+        "statement_ko": "이 품목에는 '비소' 공통안전기준 (25mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+        "source_label": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+        "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+        "legal_basis": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+        "detail": {
+         "rule_id": "KC-COMMON-3.1.1-AS",
+         "substance": "비소",
+         "limit_value": 25,
+         "unit": "mg/kg"
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "hazard_rule_applies",
+        "signal": "UNKNOWN",
+        "statement_ko": "이 품목에는 '바륨' 공통안전기준 (1000mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+        "source_label": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+        "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+        "legal_basis": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+        "detail": {
+         "rule_id": "KC-COMMON-3.1.1-BA",
+         "substance": "바륨",
+         "limit_value": 1000,
+         "unit": "mg/kg"
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "hazard_rule_applies",
+        "signal": "UNKNOWN",
+        "statement_ko": "이 품목에는 '카드뮴' 공통안전기준 (75mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+        "source_label": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+        "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+        "legal_basis": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+        "detail": {
+         "rule_id": "KC-COMMON-3.1.1-CD",
+         "substance": "카드뮴",
+         "limit_value": 75,
+         "unit": "mg/kg"
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "hazard_rule_applies",
+        "signal": "UNKNOWN",
+        "statement_ko": "이 품목에는 '크로뮴' 공통안전기준 (60mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+        "source_label": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+        "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+        "legal_basis": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+        "detail": {
+         "rule_id": "KC-COMMON-3.1.1-CR",
+         "substance": "크로뮴",
+         "limit_value": 60,
+         "unit": "mg/kg"
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "hazard_rule_applies",
+        "signal": "UNKNOWN",
+        "statement_ko": "이 품목에는 '납(용출)' 공통안전기준 (90mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+        "source_label": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+        "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+        "legal_basis": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+        "detail": {
+         "rule_id": "KC-COMMON-3.1.1-PB",
+         "substance": "납(용출)",
+         "limit_value": 90,
+         "unit": "mg/kg"
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "hazard_rule_applies",
+        "signal": "UNKNOWN",
+        "statement_ko": "이 품목에는 '수은' 공통안전기준 (60mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+        "source_label": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+        "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+        "legal_basis": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+        "detail": {
+         "rule_id": "KC-COMMON-3.1.1-HG",
+         "substance": "수은",
+         "limit_value": 60,
+         "unit": "mg/kg"
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "hazard_rule_applies",
+        "signal": "UNKNOWN",
+        "statement_ko": "이 품목에는 '셀레늄' 공통안전기준 (500mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+        "source_label": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+        "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+        "legal_basis": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+        "detail": {
+         "rule_id": "KC-COMMON-3.1.1-SE",
+         "substance": "셀레늄",
+         "limit_value": 500,
+         "unit": "mg/kg"
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "hazard_rule_applies",
+        "signal": "UNKNOWN",
+        "statement_ko": "이 품목에는 '총 납(함유량)' 공통안전기준 (100mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+        "source_label": "어린이제품 공통안전기준 3.1.2 (산업통상자원부고시 제2022-220호)",
+        "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+        "legal_basis": "어린이제품 공통안전기준 3.1.2 (산업통상자원부고시 제2022-220호)",
+        "detail": {
+         "rule_id": "KC-COMMON-3.1.2-PB",
+         "substance": "총 납(함유량)",
+         "limit_value": 100,
+         "unit": "mg/kg"
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "hazard_rule_applies",
+        "signal": "UNKNOWN",
+        "statement_ko": "이 품목에는 '총 카드뮴(함유량)' 공통안전기준 (75mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+        "source_label": "어린이제품 공통안전기준 3.1.2 (산업통상자원부고시 제2022-220호)",
+        "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+        "legal_basis": "어린이제품 공통안전기준 3.1.2 (산업통상자원부고시 제2022-220호)",
+        "detail": {
+         "rule_id": "KC-COMMON-3.1.2-CD",
+         "substance": "총 카드뮴(함유량)",
+         "limit_value": 75,
+         "unit": "mg/kg"
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "hazard_rule_applies",
+        "signal": "UNKNOWN",
+        "statement_ko": "이 품목에는 '프탈레이트계 가소제' 공통안전기준 (0.1%)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+        "source_label": "어린이제품 공통안전기준 3.1.3 (산업통상자원부고시 제2022-220호)",
+        "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+        "legal_basis": "어린이제품 공통안전기준 3.1.3 (산업통상자원부고시 제2022-220호)",
+        "detail": {
+         "rule_id": "KC-COMMON-3.1.3-PHT",
+         "substance": "프탈레이트계 가소제",
+         "limit_value": 0.1,
+         "unit": "%"
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "hazard_rule_applies",
+        "signal": "UNKNOWN",
+        "statement_ko": "이 품목에는 '니트로사민류' 공통안전기준 (0.01mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+        "source_label": "어린이제품 공통안전기준 3.1.4 (산업통상자원부고시 제2022-220호)",
+        "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+        "legal_basis": "어린이제품 공통안전기준 3.1.4 (산업통상자원부고시 제2022-220호)",
+        "detail": {
+         "rule_id": "KC-COMMON-3.1.4-NITROSAMINE",
+         "substance": "니트로사민류",
+         "limit_value": 0.01,
+         "unit": "mg/kg"
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "hazard_rule_applies",
+        "signal": "UNKNOWN",
+        "statement_ko": "이 품목에는 '니트로사민류 생성 가능물질' 공통안전기준 (0.1mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+        "source_label": "어린이제품 공통안전기준 3.1.4 (산업통상자원부고시 제2022-220호)",
+        "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+        "legal_basis": "어린이제품 공통안전기준 3.1.4 (산업통상자원부고시 제2022-220호)",
+        "detail": {
+         "rule_id": "KC-COMMON-3.1.4-NITROSATABLE",
+         "substance": "니트로사민류 생성 가능물질",
+         "limit_value": 0.1,
+         "unit": "mg/kg"
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "hazard_rule_applies",
+        "signal": "UNKNOWN",
+        "statement_ko": "이 품목에는 '폼알데하이드' 공통안전기준 (75mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+        "source_label": "어린이제품 공통안전기준 3.1.5 (산업통상자원부고시 제2022-220호)",
+        "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+        "legal_basis": "어린이제품 공통안전기준 3.1.5 (산업통상자원부고시 제2022-220호)",
+        "detail": {
+         "rule_id": "KC-COMMON-3.1.5-HCHO",
+         "substance": "폼알데하이드",
+         "limit_value": 75,
+         "unit": "mg/kg"
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "hazard_rule_applies",
+        "signal": "UNKNOWN",
+        "statement_ko": "이 품목에는 '아릴아민' 공통안전기준 (30mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+        "source_label": "어린이제품 공통안전기준 3.1.5 (산업통상자원부고시 제2022-220호)",
+        "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+        "legal_basis": "어린이제품 공통안전기준 3.1.5 (산업통상자원부고시 제2022-220호)",
+        "detail": {
+         "rule_id": "KC-COMMON-3.1.5-ARYLAMINE",
+         "substance": "아릴아민",
+         "limit_value": 30,
+         "unit": "mg/kg"
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "hazard_rule_applies",
+        "signal": "UNKNOWN",
+        "statement_ko": "이 품목에는 'pH' 공통안전기준이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+        "source_label": "어린이제품 공통안전기준 3.1.5 (산업통상자원부고시 제2022-220호)",
+        "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+        "legal_basis": "어린이제품 공통안전기준 3.1.5 (산업통상자원부고시 제2022-220호)",
+        "detail": {
+         "rule_id": "KC-COMMON-3.1.5-PH",
+         "substance": "pH",
+         "limit_value": null,
+         "unit": null
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "hazard_rule_applies",
+        "signal": "UNKNOWN",
+        "statement_ko": "이 품목에는 '석면' 공통안전기준이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+        "source_label": "어린이제품 공통안전기준 3.1.6 (산업통상자원부고시 제2022-220호)",
+        "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+        "legal_basis": "어린이제품 공통안전기준 3.1.6 (산업통상자원부고시 제2022-220호)",
+        "detail": {
+         "rule_id": "KC-COMMON-3.1.6-ASBESTOS",
+         "substance": "석면",
+         "limit_value": null,
+         "unit": null
+        },
+        "checked_at": "2026-09-19"
+       }
+      ]
+     }
+    ],
+    "meta": {
+     "extracted_by": "LLM(GPT · gpt-5.4-mini)",
+     "extraction_path": "llm",
+     "extractor_vendor": "gpt",
+     "extractor_model": "gpt-5.4-mini",
+     "extraction_reason": null,
+     "gov_lookup": {
+      "cert": "ok",
+      "recall": "ok",
+      "rf": "not_attempted"
+     },
+     "recall_data_as_of": "20260914"
+    },
+    "input_note": null,
+    "extraction_note": null,
+    "disclaimer": "본 결과는 공개된 정부 데이터에 기반한 참고 정보이며, 법적 판단이나 안전 인증을 대체하지 않습니다."
+   }
+  },
+  {
+   "cert_number": "HU101339-24004",
+   "title": "템플러 PD 2포트 가정용 충전기 25W 초고속충전",
+   "text": "템플러 PD 2포트 가정용 충전기 25W 초고속충전 KC 인증번호 HU101339-24004",
+   "result": {
+    "signal": "UNKNOWN",
+    "headline": "일부만 확인 — 인증·리콜은 대조했으나, 이 품목의 유해물질 기준은 아직 수록되지 않았습니다. 확인된 범위는 아래를 보세요.",
+    "score": 0,
+    "facts": {
+     "product_name": "템플러 PD 2포트 가정용 충전기 25W 초고속충전",
+     "model_name": null,
+     "maker": null,
+     "materials": [],
+     "substances_mentioned": [],
+     "kc_numbers": [
+      "HU101339-24004"
+     ],
+     "kc_numbers_from_image": [],
+     "rf_numbers": [],
+     "wireless_hints": [],
+     "target_age": null,
+     "legal_item_name": "직류전원장치",
+     "category": "electrical",
+     "category_confidence": 0.95,
+     "source_page_url": null,
+     "raw_language": "ko"
+    },
+    "findings": [
+     {
+      "kind": "kc_verified",
+      "signal": "GREEN",
+      "statement_ko": "인증번호 'HU101339-24004B'가 조회되었습니다(인증상태: 적합). 등록 제품명: 직류전원장치",
+      "source_label": "국가기술표준원 안전인증정보 조회",
+      "source_url": "http://www.safetykorea.kr/search/searchPop?certNum=HU101339-24004B",
+      "legal_basis": null,
+      "detail": {
+       "maker": "Lianjiang HY-ETECH Co.,Ltd.",
+       "maker_country": "중국",
+       "cert_state": "적합",
+       "cert_div": "전기용품 및 생활용품 안전관리법 대상>안전인증대상 전기용품",
+       "registered_model": "HY24-P25U2",
+       "registered_product": "직류전원장치",
+       "from_cache": false,
+       "fetched_at": null
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "item_grade_matched",
+      "signal": "UNKNOWN",
+      "statement_ko": "세부품목 등급표에서 '직류전원장치'는 안전인증 대상으로 조회됩니다 (범위 한정: 정격출력이 1 kVA 이하인 것에 한정한다.). 안전인증 대상이면 인증번호가 반드시 있어야 합니다. 품목이 맞는지 확인하고, 공급처에 인증 구분을 요청하세요.",
+      "source_label": "전기용품 및 생활용품 안전관리 운용요령 별표 1",
+      "source_url": "https://www.law.go.kr/행정규칙/전기용품및생활용품안전관리운용요령",
+      "legal_basis": null,
+      "detail": {
+       "grade": "안전인증",
+       "candidates": [
+        {
+         "item": "직류전원장치",
+         "grade": "안전인증",
+         "scope_note": "정격출력이 1 kVA 이하인 것에 한정한다.",
+         "matched_by": "alias",
+         "source": "전기용품 및 생활용품 안전관리 운용요령 별표 1",
+         "source_url": "https://www.law.go.kr/행정규칙/전기용품및생활용품안전관리운용요령"
+        }
+       ]
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "recall_clear",
+      "signal": "GREEN",
+      "statement_ko": "리콜 공표 목록에서 모델명·인증번호가 일치하는 항목을 찾지 못했습니다. 리콜 대조 기준: 2026-09-14 공표분까지",
+      "source_label": "국가기술표준원 리콜정보",
+      "source_url": "https://www.safetykorea.kr/recall/recallBoard",
+      "legal_basis": null,
+      "detail": {
+       "recall_data_as_of": "20260914"
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "info_request",
+      "signal": "UNKNOWN",
+      "statement_ko": "[재질 확인 필요] 재질(합성수지 종류, 도장·코팅 유무)을 확인해 주세요. 합성수지제는 프탈레이트 기준이, 도장면은 유해원소 용출 기준이 적용됩니다.",
+      "source_label": "제품안전정보센터 대상 품목 안내",
+      "source_url": "https://www.safetykorea.kr/policy/targetsSafetyCheck3",
+      "legal_basis": null,
+      "detail": {
+       "missing": "재질",
+       "asks_for": [
+        "materials"
+       ],
+       "unlocks": [
+        "hazard_rule"
+       ]
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "info_request",
+      "signal": "UNKNOWN",
+      "statement_ko": "[대상연령 확인 필요] 대상연령(또는 권장 사용연령) 표기를 확인해 주세요. 만 13세 이하이면 어린이제품 공통안전기준이 적용됩니다.",
+      "source_label": "제품안전정보센터 대상 품목 안내",
+      "source_url": "https://www.safetykorea.kr/policy/targetsSafetyCheck3",
+      "legal_basis": null,
+      "detail": {
+       "missing": "대상연령",
+       "asks_for": [
+        "target_age"
+       ],
+       "unlocks": [
+        "item_grade",
+        "hazard_rule"
+       ]
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "coverage_gap",
+      "signal": "UNKNOWN",
+      "statement_ko": "이 품목에는 유해물질 기준이 아니라 전기 안전기준(감전·발열·절연)이 적용됩니다. 그 기준은 실물 시험으로만 확인되며 상세페이지로는 판단할 수 없습니다. 안전인증 또는 안전확인 번호와 시험성적서를 공급처에 요청하세요.",
+      "source_label": "전기용품 안전기준",
+      "source_url": "https://www.law.go.kr/행정규칙/전기용품안전기준",
+      "legal_basis": null,
+      "detail": {},
+      "checked_at": "2026-09-19"
+     }
+    ],
+    "coverage_note": "현재 규칙 DB는 이 품목(품목군 electrical)의 유해물질 기준을 아직 수록하지 않았습니다. 인증·리콜 조회 결과만 반영되었습니다.",
+    "recall_data_as_of": "20260914",
+    "watch_suggestion": {
+     "can_watch": true,
+     "reason": "판단에 필요한 정보가 부족합니다. 감시 목록에 넣으면 이후 리콜 공표 시 알려드립니다."
+    },
+    "extracted": [
+     {
+      "label": "제품명",
+      "value": "템플러 PD 2포트 가정용 충전기 25W 초고속충전",
+      "link": null
+     },
+     {
+      "label": "인증번호",
+      "value": "HU101339-24004",
+      "link": "http://www.safetykorea.kr/search/searchPop?certNum=HU101339-24004"
+     },
+     {
+      "label": "품목 구분",
+      "value": "전기용품",
+      "link": null
+     }
+    ],
+    "axes": [
+     {
+      "key": "cert",
+      "name": "인증 조회",
+      "label": "조회함",
+      "done": true,
+      "note": ""
+     },
+     {
+      "key": "recall",
+      "name": "리콜 대조",
+      "label": "대조함",
+      "done": true,
+      "note": "2026-09-14 공표분까지 · 2026-09-18 12:53 갱신"
+     },
+     {
+      "key": "hazard",
+      "name": "유해물질",
+      "label": "이 품목 미수록",
+      "done": false,
+      "note": ""
+     }
+    ],
+    "grouped_findings": [
+     {
+      "group": "action",
+      "header": "소싱하려면 확인할 것",
+      "findings": [
+       {
+        "kind": "item_grade_matched",
+        "signal": "UNKNOWN",
+        "statement_ko": "세부품목 등급표에서 '직류전원장치'는 안전인증 대상으로 조회됩니다 (범위 한정: 정격출력이 1 kVA 이하인 것에 한정한다.). 안전인증 대상이면 인증번호가 반드시 있어야 합니다. 품목이 맞는지 확인하고, 공급처에 인증 구분을 요청하세요.",
+        "source_label": "전기용품 및 생활용품 안전관리 운용요령 별표 1",
+        "source_url": "https://www.law.go.kr/행정규칙/전기용품및생활용품안전관리운용요령",
+        "legal_basis": null,
+        "detail": {
+         "grade": "안전인증",
+         "candidates": [
+          {
+           "item": "직류전원장치",
+           "grade": "안전인증",
+           "scope_note": "정격출력이 1 kVA 이하인 것에 한정한다.",
+           "matched_by": "alias",
+           "source": "전기용품 및 생활용품 안전관리 운용요령 별표 1",
+           "source_url": "https://www.law.go.kr/행정규칙/전기용품및생활용품안전관리운용요령"
+          }
+         ]
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "info_request",
+        "signal": "UNKNOWN",
+        "statement_ko": "[재질 확인 필요] 재질(합성수지 종류, 도장·코팅 유무)을 확인해 주세요. 합성수지제는 프탈레이트 기준이, 도장면은 유해원소 용출 기준이 적용됩니다.",
+        "source_label": "제품안전정보센터 대상 품목 안내",
+        "source_url": "https://www.safetykorea.kr/policy/targetsSafetyCheck3",
+        "legal_basis": null,
+        "detail": {
+         "missing": "재질",
+         "asks_for": [
+          "materials"
+         ],
+         "unlocks": [
+          "hazard_rule"
+         ]
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "info_request",
+        "signal": "UNKNOWN",
+        "statement_ko": "[대상연령 확인 필요] 대상연령(또는 권장 사용연령) 표기를 확인해 주세요. 만 13세 이하이면 어린이제품 공통안전기준이 적용됩니다.",
+        "source_label": "제품안전정보센터 대상 품목 안내",
+        "source_url": "https://www.safetykorea.kr/policy/targetsSafetyCheck3",
+        "legal_basis": null,
+        "detail": {
+         "missing": "대상연령",
+         "asks_for": [
+          "target_age"
+         ],
+         "unlocks": [
+          "item_grade",
+          "hazard_rule"
+         ]
+        },
+        "checked_at": "2026-09-19"
+       }
+      ]
+     },
+     {
+      "group": "context",
+      "header": "참고 정보",
+      "findings": [
+       {
+        "kind": "kc_verified",
+        "signal": "GREEN",
+        "statement_ko": "인증번호 'HU101339-24004B'가 조회되었습니다(인증상태: 적합). 등록 제품명: 직류전원장치",
+        "source_label": "국가기술표준원 안전인증정보 조회",
+        "source_url": "http://www.safetykorea.kr/search/searchPop?certNum=HU101339-24004B",
+        "legal_basis": null,
+        "detail": {
+         "maker": "Lianjiang HY-ETECH Co.,Ltd.",
+         "maker_country": "중국",
+         "cert_state": "적합",
+         "cert_div": "전기용품 및 생활용품 안전관리법 대상>안전인증대상 전기용품",
+         "registered_model": "HY24-P25U2",
+         "registered_product": "직류전원장치",
+         "from_cache": false,
+         "fetched_at": null
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "recall_clear",
+        "signal": "GREEN",
+        "statement_ko": "리콜 공표 목록에서 모델명·인증번호가 일치하는 항목을 찾지 못했습니다. 리콜 대조 기준: 2026-09-14 공표분까지",
+        "source_label": "국가기술표준원 리콜정보",
+        "source_url": "https://www.safetykorea.kr/recall/recallBoard",
+        "legal_basis": null,
+        "detail": {
+         "recall_data_as_of": "20260914"
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "coverage_gap",
+        "signal": "UNKNOWN",
+        "statement_ko": "이 품목에는 유해물질 기준이 아니라 전기 안전기준(감전·발열·절연)이 적용됩니다. 그 기준은 실물 시험으로만 확인되며 상세페이지로는 판단할 수 없습니다. 안전인증 또는 안전확인 번호와 시험성적서를 공급처에 요청하세요.",
+        "source_label": "전기용품 안전기준",
+        "source_url": "https://www.law.go.kr/행정규칙/전기용품안전기준",
+        "legal_basis": null,
+        "detail": {},
+        "checked_at": "2026-09-19"
+       }
+      ]
+     }
+    ],
+    "meta": {
+     "extracted_by": "LLM(GPT · gpt-5.4-mini)",
+     "extraction_path": "llm",
+     "extractor_vendor": "gpt",
+     "extractor_model": "gpt-5.4-mini",
+     "extraction_reason": null,
+     "gov_lookup": {
+      "cert": "ok",
+      "recall": "ok",
+      "rf": "not_attempted"
+     },
+     "recall_data_as_of": "20260914"
+    },
+    "input_note": null,
+    "extraction_note": null,
+    "disclaimer": "본 결과는 공개된 정부 데이터에 기반한 참고 정보이며, 법적 판단이나 안전 인증을 대체하지 않습니다."
+   }
+  },
+  {
+   "cert_number": "XH070736-23002A",
+   "title": "1인용 사무실 usb방석 온열 전기 방석 발열 강아지 고양이",
+   "text": "1인용 사무실 usb방석 온열 전기 방석 발열 강아지 고양이 KC 인증번호 XH070736-23002A",
+   "result": {
+    "signal": "UNKNOWN",
+    "headline": "일부만 확인 — 인증·리콜은 대조했으나, 이 품목의 유해물질 기준은 아직 수록되지 않았습니다. 확인된 범위는 아래를 보세요.",
+    "score": 0,
+    "facts": {
+     "product_name": "1인용 사무실 usb방석 온열 전기 방석",
+     "model_name": null,
+     "maker": null,
+     "materials": [],
+     "substances_mentioned": [],
+     "kc_numbers": [
+      "XH070736-23002A"
+     ],
+     "kc_numbers_from_image": [],
+     "rf_numbers": [],
+     "wireless_hints": [],
+     "target_age": null,
+     "legal_item_name": "전기방석",
+     "category": "electrical",
+     "category_confidence": 0.93,
+     "source_page_url": null,
+     "raw_language": "ko"
+    },
+    "findings": [
+     {
+      "kind": "kc_verified",
+      "signal": "GREEN",
+      "statement_ko": "인증번호 'XH070736-23002A'가 조회되었습니다(인증상태: 적합). 등록 제품명: 전기방석",
+      "source_label": "국가기술표준원 안전인증정보 조회",
+      "source_url": "http://www.safetykorea.kr/search/searchPop?certNum=XH070736-23002A",
+      "legal_basis": null,
+      "detail": {
+       "maker": "(주)라이프웰",
+       "maker_country": "대한민국",
+       "cert_state": "적합",
+       "cert_div": "전기용품 및 생활용품 안전관리법 대상>안전확인대상 전기용품",
+       "registered_model": "LW2303-5V1A-CN",
+       "registered_product": "전기방석",
+       "from_cache": false,
+       "fetched_at": null
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "item_grade_split",
+      "signal": "UNKNOWN",
+      "statement_ko": "상품명만으로는 어느 세부품목인지 갈리지 않습니다 (전기방석 — 안전인증 / 전기방석 — 공급자적합성확인). 안전인증 대상이면 인증번호가 반드시 있어야 합니다. 공급자적합성확인 대상이면 제조·수입자가 스스로 시험해 확인하므로 정부 조회 DB 에 번호가 없는 것이 정상입니다. 어느 쪽인지 공급처에 확인하세요. 저희가 한쪽으로 단정하지 않습니다.",
+      "source_label": "전기용품 및 생활용품 안전관리 운용요령 별표 1·3",
+      "source_url": "https://www.law.go.kr/행정규칙/전기용품및생활용품안전관리운용요령",
+      "legal_basis": null,
+      "detail": {
+       "grades": [
+        "공급자적합성확인",
+        "안전인증"
+       ],
+       "candidates": [
+        {
+         "item": "전기방석",
+         "grade": "안전인증",
+         "scope_note": "교류전원 30V 이하에서 사용하는 것을 포함한다.",
+         "matched_by": "contains",
+         "source": "전기용품 및 생활용품 안전관리 운용요령 별표 1",
+         "source_url": "https://www.law.go.kr/행정규칙/전기용품및생활용품안전관리운용요령"
+        },
+        {
+         "item": "전기방석",
+         "grade": "공급자적합성확인",
+         "scope_note": "직류전원 42 V 이하에서 사용하는 것을 포함한다.",
+         "matched_by": "contains",
+         "source": "전기용품 및 생활용품 안전관리 운용요령 별표 3",
+         "source_url": "https://www.law.go.kr/행정규칙/전기용품및생활용품안전관리운용요령"
+        }
+       ]
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "recall_clear",
+      "signal": "GREEN",
+      "statement_ko": "리콜 공표 목록에서 모델명·인증번호가 일치하는 항목을 찾지 못했습니다. 리콜 대조 기준: 2026-09-14 공표분까지",
+      "source_label": "국가기술표준원 리콜정보",
+      "source_url": "https://www.safetykorea.kr/recall/recallBoard",
+      "legal_basis": null,
+      "detail": {
+       "recall_data_as_of": "20260914"
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "info_request",
+      "signal": "UNKNOWN",
+      "statement_ko": "[재질 확인 필요] 재질(합성수지 종류, 도장·코팅 유무)을 확인해 주세요. 합성수지제는 프탈레이트 기준이, 도장면은 유해원소 용출 기준이 적용됩니다.",
+      "source_label": "제품안전정보센터 대상 품목 안내",
+      "source_url": "https://www.safetykorea.kr/policy/targetsSafetyCheck3",
+      "legal_basis": null,
+      "detail": {
+       "missing": "재질",
+       "asks_for": [
+        "materials"
+       ],
+       "unlocks": [
+        "hazard_rule"
+       ]
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "info_request",
+      "signal": "UNKNOWN",
+      "statement_ko": "[대상연령 확인 필요] 대상연령(또는 권장 사용연령) 표기를 확인해 주세요. 만 13세 이하이면 어린이제품 공통안전기준이 적용됩니다.",
+      "source_label": "제품안전정보센터 대상 품목 안내",
+      "source_url": "https://www.safetykorea.kr/policy/targetsSafetyCheck3",
+      "legal_basis": null,
+      "detail": {
+       "missing": "대상연령",
+       "asks_for": [
+        "target_age"
+       ],
+       "unlocks": [
+        "item_grade",
+        "hazard_rule"
+       ]
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "coverage_gap",
+      "signal": "UNKNOWN",
+      "statement_ko": "이 품목에는 유해물질 기준이 아니라 전기 안전기준(감전·발열·절연)이 적용됩니다. 그 기준은 실물 시험으로만 확인되며 상세페이지로는 판단할 수 없습니다. 안전인증 또는 안전확인 번호와 시험성적서를 공급처에 요청하세요.",
+      "source_label": "전기용품 안전기준",
+      "source_url": "https://www.law.go.kr/행정규칙/전기용품안전기준",
+      "legal_basis": null,
+      "detail": {},
+      "checked_at": "2026-09-19"
+     }
+    ],
+    "coverage_note": "현재 규칙 DB는 이 품목(품목군 electrical)의 유해물질 기준을 아직 수록하지 않았습니다. 인증·리콜 조회 결과만 반영되었습니다.",
+    "recall_data_as_of": "20260914",
+    "watch_suggestion": {
+     "can_watch": true,
+     "reason": "판단에 필요한 정보가 부족합니다. 감시 목록에 넣으면 이후 리콜 공표 시 알려드립니다."
+    },
+    "extracted": [
+     {
+      "label": "제품명",
+      "value": "1인용 사무실 usb방석 온열 전기 방석",
+      "link": null
+     },
+     {
+      "label": "인증번호",
+      "value": "XH070736-23002A",
+      "link": "http://www.safetykorea.kr/search/searchPop?certNum=XH070736-23002A"
+     },
+     {
+      "label": "품목 구분",
+      "value": "전기용품",
+      "link": null
+     }
+    ],
+    "axes": [
+     {
+      "key": "cert",
+      "name": "인증 조회",
+      "label": "조회함",
+      "done": true,
+      "note": ""
+     },
+     {
+      "key": "recall",
+      "name": "리콜 대조",
+      "label": "대조함",
+      "done": true,
+      "note": "2026-09-14 공표분까지 · 2026-09-18 12:53 갱신"
+     },
+     {
+      "key": "hazard",
+      "name": "유해물질",
+      "label": "이 품목 미수록",
+      "done": false,
+      "note": ""
+     }
+    ],
+    "grouped_findings": [
+     {
+      "group": "action",
+      "header": "소싱하려면 확인할 것",
+      "findings": [
+       {
+        "kind": "item_grade_split",
+        "signal": "UNKNOWN",
+        "statement_ko": "상품명만으로는 어느 세부품목인지 갈리지 않습니다 (전기방석 — 안전인증 / 전기방석 — 공급자적합성확인). 안전인증 대상이면 인증번호가 반드시 있어야 합니다. 공급자적합성확인 대상이면 제조·수입자가 스스로 시험해 확인하므로 정부 조회 DB 에 번호가 없는 것이 정상입니다. 어느 쪽인지 공급처에 확인하세요. 저희가 한쪽으로 단정하지 않습니다.",
+        "source_label": "전기용품 및 생활용품 안전관리 운용요령 별표 1·3",
+        "source_url": "https://www.law.go.kr/행정규칙/전기용품및생활용품안전관리운용요령",
+        "legal_basis": null,
+        "detail": {
+         "grades": [
+          "공급자적합성확인",
+          "안전인증"
+         ],
+         "candidates": [
+          {
+           "item": "전기방석",
+           "grade": "안전인증",
+           "scope_note": "교류전원 30V 이하에서 사용하는 것을 포함한다.",
+           "matched_by": "contains",
+           "source": "전기용품 및 생활용품 안전관리 운용요령 별표 1",
+           "source_url": "https://www.law.go.kr/행정규칙/전기용품및생활용품안전관리운용요령"
+          },
+          {
+           "item": "전기방석",
+           "grade": "공급자적합성확인",
+           "scope_note": "직류전원 42 V 이하에서 사용하는 것을 포함한다.",
+           "matched_by": "contains",
+           "source": "전기용품 및 생활용품 안전관리 운용요령 별표 3",
+           "source_url": "https://www.law.go.kr/행정규칙/전기용품및생활용품안전관리운용요령"
+          }
+         ]
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "info_request",
+        "signal": "UNKNOWN",
+        "statement_ko": "[재질 확인 필요] 재질(합성수지 종류, 도장·코팅 유무)을 확인해 주세요. 합성수지제는 프탈레이트 기준이, 도장면은 유해원소 용출 기준이 적용됩니다.",
+        "source_label": "제품안전정보센터 대상 품목 안내",
+        "source_url": "https://www.safetykorea.kr/policy/targetsSafetyCheck3",
+        "legal_basis": null,
+        "detail": {
+         "missing": "재질",
+         "asks_for": [
+          "materials"
+         ],
+         "unlocks": [
+          "hazard_rule"
+         ]
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "info_request",
+        "signal": "UNKNOWN",
+        "statement_ko": "[대상연령 확인 필요] 대상연령(또는 권장 사용연령) 표기를 확인해 주세요. 만 13세 이하이면 어린이제품 공통안전기준이 적용됩니다.",
+        "source_label": "제품안전정보센터 대상 품목 안내",
+        "source_url": "https://www.safetykorea.kr/policy/targetsSafetyCheck3",
+        "legal_basis": null,
+        "detail": {
+         "missing": "대상연령",
+         "asks_for": [
+          "target_age"
+         ],
+         "unlocks": [
+          "item_grade",
+          "hazard_rule"
+         ]
+        },
+        "checked_at": "2026-09-19"
+       }
+      ]
+     },
+     {
+      "group": "context",
+      "header": "참고 정보",
+      "findings": [
+       {
+        "kind": "kc_verified",
+        "signal": "GREEN",
+        "statement_ko": "인증번호 'XH070736-23002A'가 조회되었습니다(인증상태: 적합). 등록 제품명: 전기방석",
+        "source_label": "국가기술표준원 안전인증정보 조회",
+        "source_url": "http://www.safetykorea.kr/search/searchPop?certNum=XH070736-23002A",
+        "legal_basis": null,
+        "detail": {
+         "maker": "(주)라이프웰",
+         "maker_country": "대한민국",
+         "cert_state": "적합",
+         "cert_div": "전기용품 및 생활용품 안전관리법 대상>안전확인대상 전기용품",
+         "registered_model": "LW2303-5V1A-CN",
+         "registered_product": "전기방석",
+         "from_cache": false,
+         "fetched_at": null
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "recall_clear",
+        "signal": "GREEN",
+        "statement_ko": "리콜 공표 목록에서 모델명·인증번호가 일치하는 항목을 찾지 못했습니다. 리콜 대조 기준: 2026-09-14 공표분까지",
+        "source_label": "국가기술표준원 리콜정보",
+        "source_url": "https://www.safetykorea.kr/recall/recallBoard",
+        "legal_basis": null,
+        "detail": {
+         "recall_data_as_of": "20260914"
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "coverage_gap",
+        "signal": "UNKNOWN",
+        "statement_ko": "이 품목에는 유해물질 기준이 아니라 전기 안전기준(감전·발열·절연)이 적용됩니다. 그 기준은 실물 시험으로만 확인되며 상세페이지로는 판단할 수 없습니다. 안전인증 또는 안전확인 번호와 시험성적서를 공급처에 요청하세요.",
+        "source_label": "전기용품 안전기준",
+        "source_url": "https://www.law.go.kr/행정규칙/전기용품안전기준",
+        "legal_basis": null,
+        "detail": {},
+        "checked_at": "2026-09-19"
+       }
+      ]
+     }
+    ],
+    "meta": {
+     "extracted_by": "LLM(GPT · gpt-5.4-mini)",
+     "extraction_path": "llm",
+     "extractor_vendor": "gpt",
+     "extractor_model": "gpt-5.4-mini",
+     "extraction_reason": null,
+     "gov_lookup": {
+      "cert": "ok",
+      "recall": "ok",
+      "rf": "not_attempted"
+     },
+     "recall_data_as_of": "20260914"
+    },
+    "input_note": null,
+    "extraction_note": null,
+    "disclaimer": "본 결과는 공개된 정부 데이터에 기반한 참고 정보이며, 법적 판단이나 안전 인증을 대체하지 않습니다."
+   }
+  },
+  {
+   "cert_number": "YU102043-24001",
+   "title": "허리케인 무선 차량용 청소기 에어건",
+   "text": "허리케인 무선 차량용 청소기 에어건 KC 인증번호 YU102043-24001",
+   "result": {
+    "signal": "UNKNOWN",
+    "headline": "일부만 확인 — 인증·리콜은 대조했으나, 이 품목의 유해물질 기준은 아직 수록되지 않았습니다. 확인된 범위는 아래를 보세요.",
+    "score": 0,
+    "facts": {
+     "product_name": "허리케인 무선 차량용 청소기 에어건",
+     "model_name": null,
+     "maker": null,
+     "materials": [],
+     "substances_mentioned": [],
+     "kc_numbers": [
+      "YU102043-24001"
+     ],
+     "kc_numbers_from_image": [],
+     "rf_numbers": [],
+     "wireless_hints": [],
+     "target_age": null,
+     "legal_item_name": "진공청소기",
+     "category": "electrical",
+     "category_confidence": 0.86,
+     "source_page_url": null,
+     "raw_language": "ko"
+    },
+    "findings": [
+     {
+      "kind": "kc_verified",
+      "signal": "GREEN",
+      "statement_ko": "인증번호 'YU102043-24001'이 조회되었습니다(인증상태: 적합). 등록 제품명: 전지",
+      "source_label": "국가기술표준원 안전인증정보 조회",
+      "source_url": "http://www.safetykorea.kr/search/searchPop?certNum=YU102043-24001",
+      "legal_basis": null,
+      "detail": {
+       "maker": "SHENZHEN WINTIDE TECHNOLOGY CO., LTD DONGGUAN BRANCH",
+       "maker_country": "중국",
+       "cert_state": "적합",
+       "cert_div": "전기용품 및 생활용품 안전관리법 대상>안전확인대상 전기용품",
+       "registered_model": "ICR18650-2S1P",
+       "registered_product": "전지",
+       "from_cache": false,
+       "fetched_at": null
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "item_grade_matched",
+      "signal": "UNKNOWN",
+      "statement_ko": "세부품목 등급표에서 여러 품목으로 보이나 등급은 모두 같아 안전인증 대상으로 조회됩니다 (범위 한정: 교류전원 30V 이하, 직류전원 42V 이하에서 사용하는 것을 포함하며, 이 경우 공급자적합성확인대상으로 한다.). 안전인증 대상이면 인증번호가 반드시 있어야 합니다. 품목이 맞는지 확인하고, 공급처에 인증 구분을 요청하세요.",
+      "source_label": "전기용품 및 생활용품 안전관리 운용요령 별표 1",
+      "source_url": "https://www.law.go.kr/행정규칙/전기용품및생활용품안전관리운용요령",
+      "legal_basis": null,
+      "detail": {
+       "grade": "안전인증",
+       "candidates": [
+        {
+         "item": "진공청소기",
+         "grade": "안전인증",
+         "scope_note": "교류전원 30V 이하, 직류전원 42V 이하에서 사용하는 것을 포함하며, 이 경우 공급자적합성확인대상으로 한다.",
+         "matched_by": "alias",
+         "source": "전기용품 및 생활용품 안전관리 운용요령 별표 1",
+         "source_url": "https://www.law.go.kr/행정규칙/전기용품및생활용품안전관리운용요령"
+        },
+        {
+         "item": "물흡입청소기",
+         "grade": "안전인증",
+         "scope_note": "교류전원 30V 이하, 직류전원 42V 이하에서 사용하는 것을 포함하며, 이 경우 공급자적합성확인대상으로 한다.",
+         "matched_by": "alias",
+         "source": "전기용품 및 생활용품 안전관리 운용요령 별표 1",
+         "source_url": "https://www.law.go.kr/행정규칙/전기용품및생활용품안전관리운용요령"
+        },
+        {
+         "item": "전기바닥청소기",
+         "grade": "안전인증",
+         "scope_note": "교류전원 30V 이하, 직류전원 42V 이하에서 사용하는 것을 포함하며, 이 경우 공급자적합성확인대상으로 한다.",
+         "matched_by": "alias",
+         "source": "전기용품 및 생활용품 안전관리 운용요령 별표 1",
+         "source_url": "https://www.law.go.kr/행정규칙/전기용품및생활용품안전관리운용요령"
+        },
+        {
+         "item": "스팀청소기",
+         "grade": "안전인증",
+         "scope_note": "교류전원 30V 이하, 직류전원 42V 이하에서 사용하는 것을 포함하며, 이 경우 공급자적합성확인대상으로 한다.",
+         "matched_by": "alias",
+         "source": "전기용품 및 생활용품 안전관리 운용요령 별표 1",
+         "source_url": "https://www.law.go.kr/행정규칙/전기용품및생활용품안전관리운용요령"
+        }
+       ]
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "recall_clear",
+      "signal": "GREEN",
+      "statement_ko": "리콜 공표 목록에서 모델명·인증번호가 일치하는 항목을 찾지 못했습니다. 리콜 대조 기준: 2026-09-14 공표분까지",
+      "source_label": "국가기술표준원 리콜정보",
+      "source_url": "https://www.safetykorea.kr/recall/recallBoard",
+      "legal_basis": null,
+      "detail": {
+       "recall_data_as_of": "20260914"
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "info_request",
+      "signal": "UNKNOWN",
+      "statement_ko": "[재질 확인 필요] 재질(합성수지 종류, 도장·코팅 유무)을 확인해 주세요. 합성수지제는 프탈레이트 기준이, 도장면은 유해원소 용출 기준이 적용됩니다.",
+      "source_label": "제품안전정보센터 대상 품목 안내",
+      "source_url": "https://www.safetykorea.kr/policy/targetsSafetyCheck3",
+      "legal_basis": null,
+      "detail": {
+       "missing": "재질",
+       "asks_for": [
+        "materials"
+       ],
+       "unlocks": [
+        "hazard_rule"
+       ]
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "info_request",
+      "signal": "UNKNOWN",
+      "statement_ko": "[대상연령 확인 필요] 대상연령(또는 권장 사용연령) 표기를 확인해 주세요. 만 13세 이하이면 어린이제품 공통안전기준이 적용됩니다.",
+      "source_label": "제품안전정보센터 대상 품목 안내",
+      "source_url": "https://www.safetykorea.kr/policy/targetsSafetyCheck3",
+      "legal_basis": null,
+      "detail": {
+       "missing": "대상연령",
+       "asks_for": [
+        "target_age"
+       ],
+       "unlocks": [
+        "item_grade",
+        "hazard_rule"
+       ]
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "coverage_gap",
+      "signal": "UNKNOWN",
+      "statement_ko": "이 품목에는 유해물질 기준이 아니라 전기 안전기준(감전·발열·절연)이 적용됩니다. 그 기준은 실물 시험으로만 확인되며 상세페이지로는 판단할 수 없습니다. 안전인증 또는 안전확인 번호와 시험성적서를 공급처에 요청하세요.",
+      "source_label": "전기용품 안전기준",
+      "source_url": "https://www.law.go.kr/행정규칙/전기용품안전기준",
+      "legal_basis": null,
+      "detail": {},
+      "checked_at": "2026-09-19"
+     }
+    ],
+    "coverage_note": "현재 규칙 DB는 이 품목(품목군 electrical)의 유해물질 기준을 아직 수록하지 않았습니다. 인증·리콜 조회 결과만 반영되었습니다.",
+    "recall_data_as_of": "20260914",
+    "watch_suggestion": {
+     "can_watch": true,
+     "reason": "판단에 필요한 정보가 부족합니다. 감시 목록에 넣으면 이후 리콜 공표 시 알려드립니다."
+    },
+    "extracted": [
+     {
+      "label": "제품명",
+      "value": "허리케인 무선 차량용 청소기 에어건",
+      "link": null
+     },
+     {
+      "label": "인증번호",
+      "value": "YU102043-24001",
+      "link": "http://www.safetykorea.kr/search/searchPop?certNum=YU102043-24001"
+     },
+     {
+      "label": "품목 구분",
+      "value": "전기용품",
+      "link": null
+     }
+    ],
+    "axes": [
+     {
+      "key": "cert",
+      "name": "인증 조회",
+      "label": "조회함",
+      "done": true,
+      "note": ""
+     },
+     {
+      "key": "recall",
+      "name": "리콜 대조",
+      "label": "대조함",
+      "done": true,
+      "note": "2026-09-14 공표분까지 · 2026-09-18 12:53 갱신"
+     },
+     {
+      "key": "hazard",
+      "name": "유해물질",
+      "label": "이 품목 미수록",
+      "done": false,
+      "note": ""
+     }
+    ],
+    "grouped_findings": [
+     {
+      "group": "action",
+      "header": "소싱하려면 확인할 것",
+      "findings": [
+       {
+        "kind": "item_grade_matched",
+        "signal": "UNKNOWN",
+        "statement_ko": "세부품목 등급표에서 여러 품목으로 보이나 등급은 모두 같아 안전인증 대상으로 조회됩니다 (범위 한정: 교류전원 30V 이하, 직류전원 42V 이하에서 사용하는 것을 포함하며, 이 경우 공급자적합성확인대상으로 한다.). 안전인증 대상이면 인증번호가 반드시 있어야 합니다. 품목이 맞는지 확인하고, 공급처에 인증 구분을 요청하세요.",
+        "source_label": "전기용품 및 생활용품 안전관리 운용요령 별표 1",
+        "source_url": "https://www.law.go.kr/행정규칙/전기용품및생활용품안전관리운용요령",
+        "legal_basis": null,
+        "detail": {
+         "grade": "안전인증",
+         "candidates": [
+          {
+           "item": "진공청소기",
+           "grade": "안전인증",
+           "scope_note": "교류전원 30V 이하, 직류전원 42V 이하에서 사용하는 것을 포함하며, 이 경우 공급자적합성확인대상으로 한다.",
+           "matched_by": "alias",
+           "source": "전기용품 및 생활용품 안전관리 운용요령 별표 1",
+           "source_url": "https://www.law.go.kr/행정규칙/전기용품및생활용품안전관리운용요령"
+          },
+          {
+           "item": "물흡입청소기",
+           "grade": "안전인증",
+           "scope_note": "교류전원 30V 이하, 직류전원 42V 이하에서 사용하는 것을 포함하며, 이 경우 공급자적합성확인대상으로 한다.",
+           "matched_by": "alias",
+           "source": "전기용품 및 생활용품 안전관리 운용요령 별표 1",
+           "source_url": "https://www.law.go.kr/행정규칙/전기용품및생활용품안전관리운용요령"
+          },
+          {
+           "item": "전기바닥청소기",
+           "grade": "안전인증",
+           "scope_note": "교류전원 30V 이하, 직류전원 42V 이하에서 사용하는 것을 포함하며, 이 경우 공급자적합성확인대상으로 한다.",
+           "matched_by": "alias",
+           "source": "전기용품 및 생활용품 안전관리 운용요령 별표 1",
+           "source_url": "https://www.law.go.kr/행정규칙/전기용품및생활용품안전관리운용요령"
+          },
+          {
+           "item": "스팀청소기",
+           "grade": "안전인증",
+           "scope_note": "교류전원 30V 이하, 직류전원 42V 이하에서 사용하는 것을 포함하며, 이 경우 공급자적합성확인대상으로 한다.",
+           "matched_by": "alias",
+           "source": "전기용품 및 생활용품 안전관리 운용요령 별표 1",
+           "source_url": "https://www.law.go.kr/행정규칙/전기용품및생활용품안전관리운용요령"
+          }
+         ]
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "info_request",
+        "signal": "UNKNOWN",
+        "statement_ko": "[재질 확인 필요] 재질(합성수지 종류, 도장·코팅 유무)을 확인해 주세요. 합성수지제는 프탈레이트 기준이, 도장면은 유해원소 용출 기준이 적용됩니다.",
+        "source_label": "제품안전정보센터 대상 품목 안내",
+        "source_url": "https://www.safetykorea.kr/policy/targetsSafetyCheck3",
+        "legal_basis": null,
+        "detail": {
+         "missing": "재질",
+         "asks_for": [
+          "materials"
+         ],
+         "unlocks": [
+          "hazard_rule"
+         ]
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "info_request",
+        "signal": "UNKNOWN",
+        "statement_ko": "[대상연령 확인 필요] 대상연령(또는 권장 사용연령) 표기를 확인해 주세요. 만 13세 이하이면 어린이제품 공통안전기준이 적용됩니다.",
+        "source_label": "제품안전정보센터 대상 품목 안내",
+        "source_url": "https://www.safetykorea.kr/policy/targetsSafetyCheck3",
+        "legal_basis": null,
+        "detail": {
+         "missing": "대상연령",
+         "asks_for": [
+          "target_age"
+         ],
+         "unlocks": [
+          "item_grade",
+          "hazard_rule"
+         ]
+        },
+        "checked_at": "2026-09-19"
+       }
+      ]
+     },
+     {
+      "group": "context",
+      "header": "참고 정보",
+      "findings": [
+       {
+        "kind": "kc_verified",
+        "signal": "GREEN",
+        "statement_ko": "인증번호 'YU102043-24001'이 조회되었습니다(인증상태: 적합). 등록 제품명: 전지",
+        "source_label": "국가기술표준원 안전인증정보 조회",
+        "source_url": "http://www.safetykorea.kr/search/searchPop?certNum=YU102043-24001",
+        "legal_basis": null,
+        "detail": {
+         "maker": "SHENZHEN WINTIDE TECHNOLOGY CO., LTD DONGGUAN BRANCH",
+         "maker_country": "중국",
+         "cert_state": "적합",
+         "cert_div": "전기용품 및 생활용품 안전관리법 대상>안전확인대상 전기용품",
+         "registered_model": "ICR18650-2S1P",
+         "registered_product": "전지",
+         "from_cache": false,
+         "fetched_at": null
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "recall_clear",
+        "signal": "GREEN",
+        "statement_ko": "리콜 공표 목록에서 모델명·인증번호가 일치하는 항목을 찾지 못했습니다. 리콜 대조 기준: 2026-09-14 공표분까지",
+        "source_label": "국가기술표준원 리콜정보",
+        "source_url": "https://www.safetykorea.kr/recall/recallBoard",
+        "legal_basis": null,
+        "detail": {
+         "recall_data_as_of": "20260914"
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "coverage_gap",
+        "signal": "UNKNOWN",
+        "statement_ko": "이 품목에는 유해물질 기준이 아니라 전기 안전기준(감전·발열·절연)이 적용됩니다. 그 기준은 실물 시험으로만 확인되며 상세페이지로는 판단할 수 없습니다. 안전인증 또는 안전확인 번호와 시험성적서를 공급처에 요청하세요.",
+        "source_label": "전기용품 안전기준",
+        "source_url": "https://www.law.go.kr/행정규칙/전기용품안전기준",
+        "legal_basis": null,
+        "detail": {},
+        "checked_at": "2026-09-19"
+       }
+      ]
+     }
+    ],
+    "meta": {
+     "extracted_by": "LLM(GPT · gpt-5.4-mini)",
+     "extraction_path": "llm",
+     "extractor_vendor": "gpt",
+     "extractor_model": "gpt-5.4-mini",
+     "extraction_reason": null,
+     "gov_lookup": {
+      "cert": "ok",
+      "recall": "ok",
+      "rf": "not_attempted"
+     },
+     "recall_data_as_of": "20260914"
+    },
+    "input_note": null,
+    "extraction_note": null,
+    "disclaimer": "본 결과는 공개된 정부 데이터에 기반한 참고 정보이며, 법적 판단이나 안전 인증을 대체하지 않습니다."
+   }
+  },
+  {
+   "cert_number": "B362R241-8002A",
+   "title": "12색블럭색연필/조립식색연필/어린이날선물사은품",
+   "text": "12색블럭색연필/조립식색연필/어린이날선물사은품 KC 인증번호 B362R241-8002A",
+   "result": {
+    "signal": "AMBER",
+    "headline": "확인 후 소싱 — 공급처에 아래 항목을 확인한 뒤 판단하세요.",
+    "score": 70,
+    "facts": {
+     "product_name": "12색블럭색연필/조립식색연필/어린이날선물사은품 KC 인증번호 B362R241-8002A",
+     "model_name": null,
+     "maker": null,
+     "materials": [],
+     "substances_mentioned": [],
+     "kc_numbers": [
+      "B362R241-8002A"
+     ],
+     "kc_numbers_from_image": [],
+     "rf_numbers": [],
+     "wireless_hints": [],
+     "target_age": null,
+     "legal_item_name": "색연필",
+     "category": "children_stationery",
+     "category_confidence": 0.88,
+     "source_page_url": null,
+     "raw_language": "ko"
+    },
+    "findings": [
+     {
+      "kind": "kc_expired",
+      "signal": "AMBER",
+      "statement_ko": "인증번호 'B362R241-8002A' 의 인증상태가 '기간만료' 로 조회되었습니다. 재인증되어 번호가 바뀌었을 수 있습니다. 공급처에 현재 유효한 인증번호를 확인해 주세요.",
+      "source_label": "국가기술표준원 안전인증정보 조회",
+      "source_url": "http://www.safetykorea.kr/search/searchPop?certNum=B362R241-8002A",
+      "legal_basis": null,
+      "detail": {
+       "maker": "QIEMENG PLASTIC",
+       "maker_country": "중국",
+       "cert_state": "기간만료",
+       "cert_div": "품질경영 및 공산품안전관리법 대상>자율안전확인 대상",
+       "registered_model": "트랜스시리즈",
+       "registered_product": "완구",
+       "from_cache": false,
+       "fetched_at": null
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "item_grade_matched",
+      "signal": "UNKNOWN",
+      "statement_ko": "세부품목 등급표에서 '학용품'은 안전확인 대상으로 조회됩니다. 안전확인 대상이면 안전확인신고번호가 반드시 있어야 합니다. 품목이 맞는지 확인하고, 공급처에 인증 구분을 요청하세요.",
+      "source_label": "어린이제품 안전 특별법 시행규칙 별표 2",
+      "source_url": "https://www.law.go.kr/법령/어린이제품안전특별법시행규칙",
+      "legal_basis": null,
+      "detail": {
+       "grade": "안전확인",
+       "candidates": [
+        {
+         "item": "학용품",
+         "grade": "안전확인",
+         "scope_note": "",
+         "matched_by": "alias",
+         "source": "어린이제품 안전 특별법 시행규칙 별표 2",
+         "source_url": "https://www.law.go.kr/법령/어린이제품안전특별법시행규칙"
+        }
+       ]
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "recall_clear",
+      "signal": "GREEN",
+      "statement_ko": "리콜 공표 목록에서 모델명·인증번호가 일치하는 항목을 찾지 못했습니다. 리콜 대조 기준: 2026-09-14 공표분까지",
+      "source_label": "국가기술표준원 리콜정보",
+      "source_url": "https://www.safetykorea.kr/recall/recallBoard",
+      "legal_basis": null,
+      "detail": {
+       "recall_data_as_of": "20260914"
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "info_request",
+      "signal": "UNKNOWN",
+      "statement_ko": "[재질 확인 필요] 재질(합성수지 종류, 도장·코팅 유무)을 확인해 주세요. 합성수지제는 프탈레이트 기준이, 도장면은 유해원소 용출 기준이 적용됩니다.",
+      "source_label": "제품안전정보센터 대상 품목 안내",
+      "source_url": "https://www.safetykorea.kr/policy/targetsSafetyCheck3",
+      "legal_basis": null,
+      "detail": {
+       "missing": "재질",
+       "asks_for": [
+        "materials"
+       ],
+       "unlocks": [
+        "hazard_rule"
+       ]
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "info_request",
+      "signal": "UNKNOWN",
+      "statement_ko": "[대상연령 확인 필요] 대상연령(또는 권장 사용연령) 표기를 확인해 주세요. 만 13세 이하이면 어린이제품 공통안전기준이 적용됩니다.",
+      "source_label": "제품안전정보센터 대상 품목 안내",
+      "source_url": "https://www.safetykorea.kr/policy/targetsSafetyCheck3",
+      "legal_basis": null,
+      "detail": {
+       "missing": "대상연령",
+       "asks_for": [
+        "target_age"
+       ],
+       "unlocks": [
+        "item_grade",
+        "hazard_rule"
+       ]
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "hazard_rule_applies",
+      "signal": "UNKNOWN",
+      "statement_ko": "이 품목에는 '안티모니' 공통안전기준 (60mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+      "source_label": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+      "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+      "legal_basis": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+      "detail": {
+       "rule_id": "KC-COMMON-3.1.1-SB",
+       "substance": "안티모니",
+       "limit_value": 60,
+       "unit": "mg/kg"
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "hazard_rule_applies",
+      "signal": "UNKNOWN",
+      "statement_ko": "이 품목에는 '비소' 공통안전기준 (25mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+      "source_label": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+      "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+      "legal_basis": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+      "detail": {
+       "rule_id": "KC-COMMON-3.1.1-AS",
+       "substance": "비소",
+       "limit_value": 25,
+       "unit": "mg/kg"
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "hazard_rule_applies",
+      "signal": "UNKNOWN",
+      "statement_ko": "이 품목에는 '바륨' 공통안전기준 (1000mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+      "source_label": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+      "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+      "legal_basis": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+      "detail": {
+       "rule_id": "KC-COMMON-3.1.1-BA",
+       "substance": "바륨",
+       "limit_value": 1000,
+       "unit": "mg/kg"
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "hazard_rule_applies",
+      "signal": "UNKNOWN",
+      "statement_ko": "이 품목에는 '카드뮴' 공통안전기준 (75mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+      "source_label": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+      "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+      "legal_basis": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+      "detail": {
+       "rule_id": "KC-COMMON-3.1.1-CD",
+       "substance": "카드뮴",
+       "limit_value": 75,
+       "unit": "mg/kg"
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "hazard_rule_applies",
+      "signal": "UNKNOWN",
+      "statement_ko": "이 품목에는 '크로뮴' 공통안전기준 (60mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+      "source_label": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+      "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+      "legal_basis": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+      "detail": {
+       "rule_id": "KC-COMMON-3.1.1-CR",
+       "substance": "크로뮴",
+       "limit_value": 60,
+       "unit": "mg/kg"
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "hazard_rule_applies",
+      "signal": "UNKNOWN",
+      "statement_ko": "이 품목에는 '납(용출)' 공통안전기준 (90mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+      "source_label": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+      "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+      "legal_basis": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+      "detail": {
+       "rule_id": "KC-COMMON-3.1.1-PB",
+       "substance": "납(용출)",
+       "limit_value": 90,
+       "unit": "mg/kg"
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "hazard_rule_applies",
+      "signal": "UNKNOWN",
+      "statement_ko": "이 품목에는 '수은' 공통안전기준 (60mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+      "source_label": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+      "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+      "legal_basis": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+      "detail": {
+       "rule_id": "KC-COMMON-3.1.1-HG",
+       "substance": "수은",
+       "limit_value": 60,
+       "unit": "mg/kg"
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "hazard_rule_applies",
+      "signal": "UNKNOWN",
+      "statement_ko": "이 품목에는 '셀레늄' 공통안전기준 (500mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+      "source_label": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+      "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+      "legal_basis": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+      "detail": {
+       "rule_id": "KC-COMMON-3.1.1-SE",
+       "substance": "셀레늄",
+       "limit_value": 500,
+       "unit": "mg/kg"
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "hazard_rule_applies",
+      "signal": "UNKNOWN",
+      "statement_ko": "이 품목에는 '총 납(함유량)' 공통안전기준 (100mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+      "source_label": "어린이제품 공통안전기준 3.1.2 (산업통상자원부고시 제2022-220호)",
+      "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+      "legal_basis": "어린이제품 공통안전기준 3.1.2 (산업통상자원부고시 제2022-220호)",
+      "detail": {
+       "rule_id": "KC-COMMON-3.1.2-PB",
+       "substance": "총 납(함유량)",
+       "limit_value": 100,
+       "unit": "mg/kg"
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "hazard_rule_applies",
+      "signal": "UNKNOWN",
+      "statement_ko": "이 품목에는 '총 카드뮴(함유량)' 공통안전기준 (75mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+      "source_label": "어린이제품 공통안전기준 3.1.2 (산업통상자원부고시 제2022-220호)",
+      "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+      "legal_basis": "어린이제품 공통안전기준 3.1.2 (산업통상자원부고시 제2022-220호)",
+      "detail": {
+       "rule_id": "KC-COMMON-3.1.2-CD",
+       "substance": "총 카드뮴(함유량)",
+       "limit_value": 75,
+       "unit": "mg/kg"
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "hazard_rule_applies",
+      "signal": "UNKNOWN",
+      "statement_ko": "이 품목에는 '프탈레이트계 가소제' 공통안전기준 (0.1%)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+      "source_label": "어린이제품 공통안전기준 3.1.3 (산업통상자원부고시 제2022-220호)",
+      "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+      "legal_basis": "어린이제품 공통안전기준 3.1.3 (산업통상자원부고시 제2022-220호)",
+      "detail": {
+       "rule_id": "KC-COMMON-3.1.3-PHT",
+       "substance": "프탈레이트계 가소제",
+       "limit_value": 0.1,
+       "unit": "%"
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "hazard_rule_applies",
+      "signal": "UNKNOWN",
+      "statement_ko": "이 품목에는 '니트로사민류' 공통안전기준 (0.01mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+      "source_label": "어린이제품 공통안전기준 3.1.4 (산업통상자원부고시 제2022-220호)",
+      "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+      "legal_basis": "어린이제품 공통안전기준 3.1.4 (산업통상자원부고시 제2022-220호)",
+      "detail": {
+       "rule_id": "KC-COMMON-3.1.4-NITROSAMINE",
+       "substance": "니트로사민류",
+       "limit_value": 0.01,
+       "unit": "mg/kg"
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "hazard_rule_applies",
+      "signal": "UNKNOWN",
+      "statement_ko": "이 품목에는 '니트로사민류 생성 가능물질' 공통안전기준 (0.1mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+      "source_label": "어린이제품 공통안전기준 3.1.4 (산업통상자원부고시 제2022-220호)",
+      "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+      "legal_basis": "어린이제품 공통안전기준 3.1.4 (산업통상자원부고시 제2022-220호)",
+      "detail": {
+       "rule_id": "KC-COMMON-3.1.4-NITROSATABLE",
+       "substance": "니트로사민류 생성 가능물질",
+       "limit_value": 0.1,
+       "unit": "mg/kg"
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "hazard_rule_applies",
+      "signal": "UNKNOWN",
+      "statement_ko": "이 품목에는 '석면' 공통안전기준이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+      "source_label": "어린이제품 공통안전기준 3.1.6 (산업통상자원부고시 제2022-220호)",
+      "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+      "legal_basis": "어린이제품 공통안전기준 3.1.6 (산업통상자원부고시 제2022-220호)",
+      "detail": {
+       "rule_id": "KC-COMMON-3.1.6-ASBESTOS",
+       "substance": "석면",
+       "limit_value": null,
+       "unit": null
+      },
+      "checked_at": "2026-09-19"
+     }
+    ],
+    "coverage_note": "이 품목에는 유해물질 기준이 적용됩니다. 실제 함유량은 시험성적서로만 확인되며, 인증번호 도용·상표권·수입요건은 확인 대상이 아닙니다.",
+    "recall_data_as_of": "20260914",
+    "watch_suggestion": {
+     "can_watch": true,
+     "reason": "공급처에 확인하는 동안 이 상품을 감시 목록에 넣어두면, 그 사이 리콜이 공표되어도 놓치지 않습니다."
+    },
+    "extracted": [
+     {
+      "label": "제품명",
+      "value": "12색블럭색연필/조립식색연필/어린이날선물사은품 KC 인증번호 B362R241-8002A",
+      "link": null
+     },
+     {
+      "label": "인증번호",
+      "value": "B362R241-8002A",
+      "link": "http://www.safetykorea.kr/search/searchPop?certNum=B362R241-8002A"
+     },
+     {
+      "label": "품목 구분",
+      "value": "학용품",
+      "link": null
+     }
+    ],
+    "axes": [
+     {
+      "key": "cert",
+      "name": "인증 조회",
+      "label": "조회함",
+      "done": true,
+      "note": ""
+     },
+     {
+      "key": "recall",
+      "name": "리콜 대조",
+      "label": "대조함",
+      "done": true,
+      "note": "2026-09-14 공표분까지 · 2026-09-18 12:53 갱신"
+     },
+     {
+      "key": "hazard",
+      "name": "유해물질",
+      "label": "수록됨",
+      "done": true,
+      "note": ""
+     }
+    ],
+    "grouped_findings": [
+     {
+      "group": "action",
+      "header": "소싱하려면 확인할 것",
+      "findings": [
+       {
+        "kind": "item_grade_matched",
+        "signal": "UNKNOWN",
+        "statement_ko": "세부품목 등급표에서 '학용품'은 안전확인 대상으로 조회됩니다. 안전확인 대상이면 안전확인신고번호가 반드시 있어야 합니다. 품목이 맞는지 확인하고, 공급처에 인증 구분을 요청하세요.",
+        "source_label": "어린이제품 안전 특별법 시행규칙 별표 2",
+        "source_url": "https://www.law.go.kr/법령/어린이제품안전특별법시행규칙",
+        "legal_basis": null,
+        "detail": {
+         "grade": "안전확인",
+         "candidates": [
+          {
+           "item": "학용품",
+           "grade": "안전확인",
+           "scope_note": "",
+           "matched_by": "alias",
+           "source": "어린이제품 안전 특별법 시행규칙 별표 2",
+           "source_url": "https://www.law.go.kr/법령/어린이제품안전특별법시행규칙"
+          }
+         ]
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "info_request",
+        "signal": "UNKNOWN",
+        "statement_ko": "[재질 확인 필요] 재질(합성수지 종류, 도장·코팅 유무)을 확인해 주세요. 합성수지제는 프탈레이트 기준이, 도장면은 유해원소 용출 기준이 적용됩니다.",
+        "source_label": "제품안전정보센터 대상 품목 안내",
+        "source_url": "https://www.safetykorea.kr/policy/targetsSafetyCheck3",
+        "legal_basis": null,
+        "detail": {
+         "missing": "재질",
+         "asks_for": [
+          "materials"
+         ],
+         "unlocks": [
+          "hazard_rule"
+         ]
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "info_request",
+        "signal": "UNKNOWN",
+        "statement_ko": "[대상연령 확인 필요] 대상연령(또는 권장 사용연령) 표기를 확인해 주세요. 만 13세 이하이면 어린이제품 공통안전기준이 적용됩니다.",
+        "source_label": "제품안전정보센터 대상 품목 안내",
+        "source_url": "https://www.safetykorea.kr/policy/targetsSafetyCheck3",
+        "legal_basis": null,
+        "detail": {
+         "missing": "대상연령",
+         "asks_for": [
+          "target_age"
+         ],
+         "unlocks": [
+          "item_grade",
+          "hazard_rule"
+         ]
+        },
+        "checked_at": "2026-09-19"
+       }
+      ]
+     },
+     {
+      "group": "finding",
+      "header": "확인된 문제",
+      "findings": [
+       {
+        "kind": "kc_expired",
+        "signal": "AMBER",
+        "statement_ko": "인증번호 'B362R241-8002A' 의 인증상태가 '기간만료' 로 조회되었습니다. 재인증되어 번호가 바뀌었을 수 있습니다. 공급처에 현재 유효한 인증번호를 확인해 주세요.",
+        "source_label": "국가기술표준원 안전인증정보 조회",
+        "source_url": "http://www.safetykorea.kr/search/searchPop?certNum=B362R241-8002A",
+        "legal_basis": null,
+        "detail": {
+         "maker": "QIEMENG PLASTIC",
+         "maker_country": "중국",
+         "cert_state": "기간만료",
+         "cert_div": "품질경영 및 공산품안전관리법 대상>자율안전확인 대상",
+         "registered_model": "트랜스시리즈",
+         "registered_product": "완구",
+         "from_cache": false,
+         "fetched_at": null
+        },
+        "checked_at": "2026-09-19"
+       }
+      ]
+     },
+     {
+      "group": "context",
+      "header": "참고 정보",
+      "findings": [
+       {
+        "kind": "recall_clear",
+        "signal": "GREEN",
+        "statement_ko": "리콜 공표 목록에서 모델명·인증번호가 일치하는 항목을 찾지 못했습니다. 리콜 대조 기준: 2026-09-14 공표분까지",
+        "source_label": "국가기술표준원 리콜정보",
+        "source_url": "https://www.safetykorea.kr/recall/recallBoard",
+        "legal_basis": null,
+        "detail": {
+         "recall_data_as_of": "20260914"
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "hazard_rule_applies",
+        "signal": "UNKNOWN",
+        "statement_ko": "이 품목에는 '안티모니' 공통안전기준 (60mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+        "source_label": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+        "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+        "legal_basis": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+        "detail": {
+         "rule_id": "KC-COMMON-3.1.1-SB",
+         "substance": "안티모니",
+         "limit_value": 60,
+         "unit": "mg/kg"
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "hazard_rule_applies",
+        "signal": "UNKNOWN",
+        "statement_ko": "이 품목에는 '비소' 공통안전기준 (25mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+        "source_label": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+        "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+        "legal_basis": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+        "detail": {
+         "rule_id": "KC-COMMON-3.1.1-AS",
+         "substance": "비소",
+         "limit_value": 25,
+         "unit": "mg/kg"
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "hazard_rule_applies",
+        "signal": "UNKNOWN",
+        "statement_ko": "이 품목에는 '바륨' 공통안전기준 (1000mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+        "source_label": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+        "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+        "legal_basis": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+        "detail": {
+         "rule_id": "KC-COMMON-3.1.1-BA",
+         "substance": "바륨",
+         "limit_value": 1000,
+         "unit": "mg/kg"
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "hazard_rule_applies",
+        "signal": "UNKNOWN",
+        "statement_ko": "이 품목에는 '카드뮴' 공통안전기준 (75mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+        "source_label": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+        "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+        "legal_basis": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+        "detail": {
+         "rule_id": "KC-COMMON-3.1.1-CD",
+         "substance": "카드뮴",
+         "limit_value": 75,
+         "unit": "mg/kg"
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "hazard_rule_applies",
+        "signal": "UNKNOWN",
+        "statement_ko": "이 품목에는 '크로뮴' 공통안전기준 (60mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+        "source_label": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+        "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+        "legal_basis": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+        "detail": {
+         "rule_id": "KC-COMMON-3.1.1-CR",
+         "substance": "크로뮴",
+         "limit_value": 60,
+         "unit": "mg/kg"
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "hazard_rule_applies",
+        "signal": "UNKNOWN",
+        "statement_ko": "이 품목에는 '납(용출)' 공통안전기준 (90mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+        "source_label": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+        "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+        "legal_basis": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+        "detail": {
+         "rule_id": "KC-COMMON-3.1.1-PB",
+         "substance": "납(용출)",
+         "limit_value": 90,
+         "unit": "mg/kg"
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "hazard_rule_applies",
+        "signal": "UNKNOWN",
+        "statement_ko": "이 품목에는 '수은' 공통안전기준 (60mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+        "source_label": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+        "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+        "legal_basis": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+        "detail": {
+         "rule_id": "KC-COMMON-3.1.1-HG",
+         "substance": "수은",
+         "limit_value": 60,
+         "unit": "mg/kg"
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "hazard_rule_applies",
+        "signal": "UNKNOWN",
+        "statement_ko": "이 품목에는 '셀레늄' 공통안전기준 (500mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+        "source_label": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+        "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+        "legal_basis": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+        "detail": {
+         "rule_id": "KC-COMMON-3.1.1-SE",
+         "substance": "셀레늄",
+         "limit_value": 500,
+         "unit": "mg/kg"
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "hazard_rule_applies",
+        "signal": "UNKNOWN",
+        "statement_ko": "이 품목에는 '총 납(함유량)' 공통안전기준 (100mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+        "source_label": "어린이제품 공통안전기준 3.1.2 (산업통상자원부고시 제2022-220호)",
+        "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+        "legal_basis": "어린이제품 공통안전기준 3.1.2 (산업통상자원부고시 제2022-220호)",
+        "detail": {
+         "rule_id": "KC-COMMON-3.1.2-PB",
+         "substance": "총 납(함유량)",
+         "limit_value": 100,
+         "unit": "mg/kg"
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "hazard_rule_applies",
+        "signal": "UNKNOWN",
+        "statement_ko": "이 품목에는 '총 카드뮴(함유량)' 공통안전기준 (75mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+        "source_label": "어린이제품 공통안전기준 3.1.2 (산업통상자원부고시 제2022-220호)",
+        "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+        "legal_basis": "어린이제품 공통안전기준 3.1.2 (산업통상자원부고시 제2022-220호)",
+        "detail": {
+         "rule_id": "KC-COMMON-3.1.2-CD",
+         "substance": "총 카드뮴(함유량)",
+         "limit_value": 75,
+         "unit": "mg/kg"
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "hazard_rule_applies",
+        "signal": "UNKNOWN",
+        "statement_ko": "이 품목에는 '프탈레이트계 가소제' 공통안전기준 (0.1%)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+        "source_label": "어린이제품 공통안전기준 3.1.3 (산업통상자원부고시 제2022-220호)",
+        "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+        "legal_basis": "어린이제품 공통안전기준 3.1.3 (산업통상자원부고시 제2022-220호)",
+        "detail": {
+         "rule_id": "KC-COMMON-3.1.3-PHT",
+         "substance": "프탈레이트계 가소제",
+         "limit_value": 0.1,
+         "unit": "%"
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "hazard_rule_applies",
+        "signal": "UNKNOWN",
+        "statement_ko": "이 품목에는 '니트로사민류' 공통안전기준 (0.01mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+        "source_label": "어린이제품 공통안전기준 3.1.4 (산업통상자원부고시 제2022-220호)",
+        "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+        "legal_basis": "어린이제품 공통안전기준 3.1.4 (산업통상자원부고시 제2022-220호)",
+        "detail": {
+         "rule_id": "KC-COMMON-3.1.4-NITROSAMINE",
+         "substance": "니트로사민류",
+         "limit_value": 0.01,
+         "unit": "mg/kg"
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "hazard_rule_applies",
+        "signal": "UNKNOWN",
+        "statement_ko": "이 품목에는 '니트로사민류 생성 가능물질' 공통안전기준 (0.1mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+        "source_label": "어린이제품 공통안전기준 3.1.4 (산업통상자원부고시 제2022-220호)",
+        "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+        "legal_basis": "어린이제품 공통안전기준 3.1.4 (산업통상자원부고시 제2022-220호)",
+        "detail": {
+         "rule_id": "KC-COMMON-3.1.4-NITROSATABLE",
+         "substance": "니트로사민류 생성 가능물질",
+         "limit_value": 0.1,
+         "unit": "mg/kg"
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "hazard_rule_applies",
+        "signal": "UNKNOWN",
+        "statement_ko": "이 품목에는 '석면' 공통안전기준이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+        "source_label": "어린이제품 공통안전기준 3.1.6 (산업통상자원부고시 제2022-220호)",
+        "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+        "legal_basis": "어린이제품 공통안전기준 3.1.6 (산업통상자원부고시 제2022-220호)",
+        "detail": {
+         "rule_id": "KC-COMMON-3.1.6-ASBESTOS",
+         "substance": "석면",
+         "limit_value": null,
+         "unit": null
+        },
+        "checked_at": "2026-09-19"
+       }
+      ]
+     }
+    ],
+    "meta": {
+     "extracted_by": "LLM(GPT · gpt-5.4-mini)",
+     "extraction_path": "llm",
+     "extractor_vendor": "gpt",
+     "extractor_model": "gpt-5.4-mini",
+     "extraction_reason": null,
+     "gov_lookup": {
+      "cert": "ok",
+      "recall": "ok",
+      "rf": "not_attempted"
+     },
+     "recall_data_as_of": "20260914"
+    },
+    "input_note": null,
+    "extraction_note": null,
+    "disclaimer": "본 결과는 공개된 정부 데이터에 기반한 참고 정보이며, 법적 판단이나 안전 인증을 대체하지 않습니다."
+   }
+  },
+  {
+   "cert_number": "CA011R017-7001",
+   "title": "플라밍고/이글/ 아동튜브/유아튜브/어린이 물놀이튜브",
+   "text": "플라밍고/이글/ 아동튜브/유아튜브/어린이 물놀이튜브 KC 인증번호 CA011R017-7001",
+   "result": {
+    "signal": "AMBER",
+    "headline": "확인 후 소싱 — 공급처에 아래 항목을 확인한 뒤 판단하세요.",
+    "score": 70,
+    "facts": {
+     "product_name": "플라밍고/이글/ 아동튜브/유아튜브/어린이 물놀이튜브",
+     "model_name": null,
+     "maker": null,
+     "materials": [],
+     "substances_mentioned": [],
+     "kc_numbers": [
+      "CA011R017-7001"
+     ],
+     "kc_numbers_from_image": [],
+     "rf_numbers": [],
+     "wireless_hints": [],
+     "target_age": null,
+     "legal_item_name": null,
+     "category": "children_toy",
+     "category_confidence": 0.78,
+     "source_page_url": null,
+     "raw_language": "ko"
+    },
+    "findings": [
+     {
+      "kind": "kc_expired",
+      "signal": "AMBER",
+      "statement_ko": "인증번호 'CA011R017-7001' 의 인증상태가 '기간만료' 로 조회되었습니다. 재인증되어 번호가 바뀌었을 수 있습니다. 공급처에 현재 유효한 인증번호를 확인해 주세요.",
+      "source_label": "국가기술표준원 안전인증정보 조회",
+      "source_url": "http://www.safetykorea.kr/search/searchPop?certNum=CA011R017-7001",
+      "legal_basis": null,
+      "detail": {
+       "maker": "ZHEJIANGMPMMODERNPLASTICCO.,LTD",
+       "maker_country": "중국",
+       "cert_state": "기간만료",
+       "cert_div": "어린이제품 특별법 대상>안전인증 대상",
+       "registered_model": "BYON-EAGLE",
+       "registered_product": "어린이용물놀이기구",
+       "from_cache": false,
+       "fetched_at": null
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "item_grade_matched",
+      "signal": "UNKNOWN",
+      "statement_ko": "세부품목 등급표에서 '공기주입물놀이기구'는 안전인증 대상으로 조회됩니다. 안전인증 대상이면 인증번호가 반드시 있어야 합니다. 품목이 맞는지 확인하고, 공급처에 인증 구분을 요청하세요.",
+      "source_label": "전기용품 및 생활용품 안전관리 운용요령 별표 4",
+      "source_url": "https://www.law.go.kr/행정규칙/전기용품및생활용품안전관리운용요령",
+      "legal_basis": null,
+      "detail": {
+       "grade": "안전인증",
+       "candidates": [
+        {
+         "item": "공기주입물놀이기구",
+         "grade": "안전인증",
+         "scope_note": "",
+         "matched_by": "alias",
+         "source": "전기용품 및 생활용품 안전관리 운용요령 별표 4",
+         "source_url": "https://www.law.go.kr/행정규칙/전기용품및생활용품안전관리운용요령"
+        }
+       ]
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "recall_clear",
+      "signal": "GREEN",
+      "statement_ko": "리콜 공표 목록에서 모델명·인증번호가 일치하는 항목을 찾지 못했습니다. 리콜 대조 기준: 2026-09-14 공표분까지",
+      "source_label": "국가기술표준원 리콜정보",
+      "source_url": "https://www.safetykorea.kr/recall/recallBoard",
+      "legal_basis": null,
+      "detail": {
+       "recall_data_as_of": "20260914"
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "info_request",
+      "signal": "UNKNOWN",
+      "statement_ko": "[재질 확인 필요] 재질(합성수지 종류, 도장·코팅 유무)을 확인해 주세요. 합성수지제는 프탈레이트 기준이, 도장면은 유해원소 용출 기준이 적용됩니다.",
+      "source_label": "제품안전정보센터 대상 품목 안내",
+      "source_url": "https://www.safetykorea.kr/policy/targetsSafetyCheck3",
+      "legal_basis": null,
+      "detail": {
+       "missing": "재질",
+       "asks_for": [
+        "materials"
+       ],
+       "unlocks": [
+        "hazard_rule"
+       ]
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "info_request",
+      "signal": "UNKNOWN",
+      "statement_ko": "[대상연령 확인 필요] 대상연령(또는 권장 사용연령) 표기를 확인해 주세요. 만 13세 이하이면 어린이제품 공통안전기준이 적용됩니다.",
+      "source_label": "제품안전정보센터 대상 품목 안내",
+      "source_url": "https://www.safetykorea.kr/policy/targetsSafetyCheck3",
+      "legal_basis": null,
+      "detail": {
+       "missing": "대상연령",
+       "asks_for": [
+        "target_age"
+       ],
+       "unlocks": [
+        "item_grade",
+        "hazard_rule"
+       ]
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "hazard_rule_applies",
+      "signal": "UNKNOWN",
+      "statement_ko": "이 품목에는 '안티모니' 공통안전기준 (60mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+      "source_label": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+      "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+      "legal_basis": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+      "detail": {
+       "rule_id": "KC-COMMON-3.1.1-SB",
+       "substance": "안티모니",
+       "limit_value": 60,
+       "unit": "mg/kg"
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "hazard_rule_applies",
+      "signal": "UNKNOWN",
+      "statement_ko": "이 품목에는 '비소' 공통안전기준 (25mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+      "source_label": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+      "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+      "legal_basis": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+      "detail": {
+       "rule_id": "KC-COMMON-3.1.1-AS",
+       "substance": "비소",
+       "limit_value": 25,
+       "unit": "mg/kg"
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "hazard_rule_applies",
+      "signal": "UNKNOWN",
+      "statement_ko": "이 품목에는 '바륨' 공통안전기준 (1000mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+      "source_label": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+      "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+      "legal_basis": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+      "detail": {
+       "rule_id": "KC-COMMON-3.1.1-BA",
+       "substance": "바륨",
+       "limit_value": 1000,
+       "unit": "mg/kg"
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "hazard_rule_applies",
+      "signal": "UNKNOWN",
+      "statement_ko": "이 품목에는 '카드뮴' 공통안전기준 (75mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+      "source_label": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+      "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+      "legal_basis": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+      "detail": {
+       "rule_id": "KC-COMMON-3.1.1-CD",
+       "substance": "카드뮴",
+       "limit_value": 75,
+       "unit": "mg/kg"
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "hazard_rule_applies",
+      "signal": "UNKNOWN",
+      "statement_ko": "이 품목에는 '크로뮴' 공통안전기준 (60mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+      "source_label": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+      "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+      "legal_basis": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+      "detail": {
+       "rule_id": "KC-COMMON-3.1.1-CR",
+       "substance": "크로뮴",
+       "limit_value": 60,
+       "unit": "mg/kg"
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "hazard_rule_applies",
+      "signal": "UNKNOWN",
+      "statement_ko": "이 품목에는 '납(용출)' 공통안전기준 (90mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+      "source_label": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+      "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+      "legal_basis": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+      "detail": {
+       "rule_id": "KC-COMMON-3.1.1-PB",
+       "substance": "납(용출)",
+       "limit_value": 90,
+       "unit": "mg/kg"
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "hazard_rule_applies",
+      "signal": "UNKNOWN",
+      "statement_ko": "이 품목에는 '수은' 공통안전기준 (60mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+      "source_label": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+      "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+      "legal_basis": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+      "detail": {
+       "rule_id": "KC-COMMON-3.1.1-HG",
+       "substance": "수은",
+       "limit_value": 60,
+       "unit": "mg/kg"
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "hazard_rule_applies",
+      "signal": "UNKNOWN",
+      "statement_ko": "이 품목에는 '셀레늄' 공통안전기준 (500mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+      "source_label": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+      "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+      "legal_basis": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+      "detail": {
+       "rule_id": "KC-COMMON-3.1.1-SE",
+       "substance": "셀레늄",
+       "limit_value": 500,
+       "unit": "mg/kg"
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "hazard_rule_applies",
+      "signal": "UNKNOWN",
+      "statement_ko": "이 품목에는 '총 납(함유량)' 공통안전기준 (100mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+      "source_label": "어린이제품 공통안전기준 3.1.2 (산업통상자원부고시 제2022-220호)",
+      "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+      "legal_basis": "어린이제품 공통안전기준 3.1.2 (산업통상자원부고시 제2022-220호)",
+      "detail": {
+       "rule_id": "KC-COMMON-3.1.2-PB",
+       "substance": "총 납(함유량)",
+       "limit_value": 100,
+       "unit": "mg/kg"
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "hazard_rule_applies",
+      "signal": "UNKNOWN",
+      "statement_ko": "이 품목에는 '총 카드뮴(함유량)' 공통안전기준 (75mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+      "source_label": "어린이제품 공통안전기준 3.1.2 (산업통상자원부고시 제2022-220호)",
+      "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+      "legal_basis": "어린이제품 공통안전기준 3.1.2 (산업통상자원부고시 제2022-220호)",
+      "detail": {
+       "rule_id": "KC-COMMON-3.1.2-CD",
+       "substance": "총 카드뮴(함유량)",
+       "limit_value": 75,
+       "unit": "mg/kg"
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "hazard_rule_applies",
+      "signal": "UNKNOWN",
+      "statement_ko": "이 품목에는 '프탈레이트계 가소제' 공통안전기준 (0.1%)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+      "source_label": "어린이제품 공통안전기준 3.1.3 (산업통상자원부고시 제2022-220호)",
+      "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+      "legal_basis": "어린이제품 공통안전기준 3.1.3 (산업통상자원부고시 제2022-220호)",
+      "detail": {
+       "rule_id": "KC-COMMON-3.1.3-PHT",
+       "substance": "프탈레이트계 가소제",
+       "limit_value": 0.1,
+       "unit": "%"
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "hazard_rule_applies",
+      "signal": "UNKNOWN",
+      "statement_ko": "이 품목에는 '니트로사민류' 공통안전기준 (0.01mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+      "source_label": "어린이제품 공통안전기준 3.1.4 (산업통상자원부고시 제2022-220호)",
+      "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+      "legal_basis": "어린이제품 공통안전기준 3.1.4 (산업통상자원부고시 제2022-220호)",
+      "detail": {
+       "rule_id": "KC-COMMON-3.1.4-NITROSAMINE",
+       "substance": "니트로사민류",
+       "limit_value": 0.01,
+       "unit": "mg/kg"
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "hazard_rule_applies",
+      "signal": "UNKNOWN",
+      "statement_ko": "이 품목에는 '니트로사민류 생성 가능물질' 공통안전기준 (0.1mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+      "source_label": "어린이제품 공통안전기준 3.1.4 (산업통상자원부고시 제2022-220호)",
+      "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+      "legal_basis": "어린이제품 공통안전기준 3.1.4 (산업통상자원부고시 제2022-220호)",
+      "detail": {
+       "rule_id": "KC-COMMON-3.1.4-NITROSATABLE",
+       "substance": "니트로사민류 생성 가능물질",
+       "limit_value": 0.1,
+       "unit": "mg/kg"
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "hazard_rule_applies",
+      "signal": "UNKNOWN",
+      "statement_ko": "이 품목에는 '석면' 공통안전기준이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+      "source_label": "어린이제품 공통안전기준 3.1.6 (산업통상자원부고시 제2022-220호)",
+      "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+      "legal_basis": "어린이제품 공통안전기준 3.1.6 (산업통상자원부고시 제2022-220호)",
+      "detail": {
+       "rule_id": "KC-COMMON-3.1.6-ASBESTOS",
+       "substance": "석면",
+       "limit_value": null,
+       "unit": null
+      },
+      "checked_at": "2026-09-19"
+     }
+    ],
+    "coverage_note": "이 품목에는 유해물질 기준이 적용됩니다. 실제 함유량은 시험성적서로만 확인되며, 인증번호 도용·상표권·수입요건은 확인 대상이 아닙니다.",
+    "recall_data_as_of": "20260914",
+    "watch_suggestion": {
+     "can_watch": true,
+     "reason": "공급처에 확인하는 동안 이 상품을 감시 목록에 넣어두면, 그 사이 리콜이 공표되어도 놓치지 않습니다."
+    },
+    "extracted": [
+     {
+      "label": "제품명",
+      "value": "플라밍고/이글/ 아동튜브/유아튜브/어린이 물놀이튜브",
+      "link": null
+     },
+     {
+      "label": "인증번호",
+      "value": "CA011R017-7001",
+      "link": "http://www.safetykorea.kr/search/searchPop?certNum=CA011R017-7001"
+     },
+     {
+      "label": "품목 구분",
+      "value": "완구",
+      "link": null
+     }
+    ],
+    "axes": [
+     {
+      "key": "cert",
+      "name": "인증 조회",
+      "label": "조회함",
+      "done": true,
+      "note": ""
+     },
+     {
+      "key": "recall",
+      "name": "리콜 대조",
+      "label": "대조함",
+      "done": true,
+      "note": "2026-09-14 공표분까지 · 2026-09-18 12:53 갱신"
+     },
+     {
+      "key": "hazard",
+      "name": "유해물질",
+      "label": "수록됨",
+      "done": true,
+      "note": ""
+     }
+    ],
+    "grouped_findings": [
+     {
+      "group": "action",
+      "header": "소싱하려면 확인할 것",
+      "findings": [
+       {
+        "kind": "item_grade_matched",
+        "signal": "UNKNOWN",
+        "statement_ko": "세부품목 등급표에서 '공기주입물놀이기구'는 안전인증 대상으로 조회됩니다. 안전인증 대상이면 인증번호가 반드시 있어야 합니다. 품목이 맞는지 확인하고, 공급처에 인증 구분을 요청하세요.",
+        "source_label": "전기용품 및 생활용품 안전관리 운용요령 별표 4",
+        "source_url": "https://www.law.go.kr/행정규칙/전기용품및생활용품안전관리운용요령",
+        "legal_basis": null,
+        "detail": {
+         "grade": "안전인증",
+         "candidates": [
+          {
+           "item": "공기주입물놀이기구",
+           "grade": "안전인증",
+           "scope_note": "",
+           "matched_by": "alias",
+           "source": "전기용품 및 생활용품 안전관리 운용요령 별표 4",
+           "source_url": "https://www.law.go.kr/행정규칙/전기용품및생활용품안전관리운용요령"
+          }
+         ]
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "info_request",
+        "signal": "UNKNOWN",
+        "statement_ko": "[재질 확인 필요] 재질(합성수지 종류, 도장·코팅 유무)을 확인해 주세요. 합성수지제는 프탈레이트 기준이, 도장면은 유해원소 용출 기준이 적용됩니다.",
+        "source_label": "제품안전정보센터 대상 품목 안내",
+        "source_url": "https://www.safetykorea.kr/policy/targetsSafetyCheck3",
+        "legal_basis": null,
+        "detail": {
+         "missing": "재질",
+         "asks_for": [
+          "materials"
+         ],
+         "unlocks": [
+          "hazard_rule"
+         ]
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "info_request",
+        "signal": "UNKNOWN",
+        "statement_ko": "[대상연령 확인 필요] 대상연령(또는 권장 사용연령) 표기를 확인해 주세요. 만 13세 이하이면 어린이제품 공통안전기준이 적용됩니다.",
+        "source_label": "제품안전정보센터 대상 품목 안내",
+        "source_url": "https://www.safetykorea.kr/policy/targetsSafetyCheck3",
+        "legal_basis": null,
+        "detail": {
+         "missing": "대상연령",
+         "asks_for": [
+          "target_age"
+         ],
+         "unlocks": [
+          "item_grade",
+          "hazard_rule"
+         ]
+        },
+        "checked_at": "2026-09-19"
+       }
+      ]
+     },
+     {
+      "group": "finding",
+      "header": "확인된 문제",
+      "findings": [
+       {
+        "kind": "kc_expired",
+        "signal": "AMBER",
+        "statement_ko": "인증번호 'CA011R017-7001' 의 인증상태가 '기간만료' 로 조회되었습니다. 재인증되어 번호가 바뀌었을 수 있습니다. 공급처에 현재 유효한 인증번호를 확인해 주세요.",
+        "source_label": "국가기술표준원 안전인증정보 조회",
+        "source_url": "http://www.safetykorea.kr/search/searchPop?certNum=CA011R017-7001",
+        "legal_basis": null,
+        "detail": {
+         "maker": "ZHEJIANGMPMMODERNPLASTICCO.,LTD",
+         "maker_country": "중국",
+         "cert_state": "기간만료",
+         "cert_div": "어린이제품 특별법 대상>안전인증 대상",
+         "registered_model": "BYON-EAGLE",
+         "registered_product": "어린이용물놀이기구",
+         "from_cache": false,
+         "fetched_at": null
+        },
+        "checked_at": "2026-09-19"
+       }
+      ]
+     },
+     {
+      "group": "context",
+      "header": "참고 정보",
+      "findings": [
+       {
+        "kind": "recall_clear",
+        "signal": "GREEN",
+        "statement_ko": "리콜 공표 목록에서 모델명·인증번호가 일치하는 항목을 찾지 못했습니다. 리콜 대조 기준: 2026-09-14 공표분까지",
+        "source_label": "국가기술표준원 리콜정보",
+        "source_url": "https://www.safetykorea.kr/recall/recallBoard",
+        "legal_basis": null,
+        "detail": {
+         "recall_data_as_of": "20260914"
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "hazard_rule_applies",
+        "signal": "UNKNOWN",
+        "statement_ko": "이 품목에는 '안티모니' 공통안전기준 (60mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+        "source_label": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+        "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+        "legal_basis": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+        "detail": {
+         "rule_id": "KC-COMMON-3.1.1-SB",
+         "substance": "안티모니",
+         "limit_value": 60,
+         "unit": "mg/kg"
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "hazard_rule_applies",
+        "signal": "UNKNOWN",
+        "statement_ko": "이 품목에는 '비소' 공통안전기준 (25mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+        "source_label": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+        "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+        "legal_basis": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+        "detail": {
+         "rule_id": "KC-COMMON-3.1.1-AS",
+         "substance": "비소",
+         "limit_value": 25,
+         "unit": "mg/kg"
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "hazard_rule_applies",
+        "signal": "UNKNOWN",
+        "statement_ko": "이 품목에는 '바륨' 공통안전기준 (1000mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+        "source_label": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+        "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+        "legal_basis": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+        "detail": {
+         "rule_id": "KC-COMMON-3.1.1-BA",
+         "substance": "바륨",
+         "limit_value": 1000,
+         "unit": "mg/kg"
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "hazard_rule_applies",
+        "signal": "UNKNOWN",
+        "statement_ko": "이 품목에는 '카드뮴' 공통안전기준 (75mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+        "source_label": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+        "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+        "legal_basis": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+        "detail": {
+         "rule_id": "KC-COMMON-3.1.1-CD",
+         "substance": "카드뮴",
+         "limit_value": 75,
+         "unit": "mg/kg"
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "hazard_rule_applies",
+        "signal": "UNKNOWN",
+        "statement_ko": "이 품목에는 '크로뮴' 공통안전기준 (60mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+        "source_label": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+        "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+        "legal_basis": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+        "detail": {
+         "rule_id": "KC-COMMON-3.1.1-CR",
+         "substance": "크로뮴",
+         "limit_value": 60,
+         "unit": "mg/kg"
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "hazard_rule_applies",
+        "signal": "UNKNOWN",
+        "statement_ko": "이 품목에는 '납(용출)' 공통안전기준 (90mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+        "source_label": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+        "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+        "legal_basis": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+        "detail": {
+         "rule_id": "KC-COMMON-3.1.1-PB",
+         "substance": "납(용출)",
+         "limit_value": 90,
+         "unit": "mg/kg"
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "hazard_rule_applies",
+        "signal": "UNKNOWN",
+        "statement_ko": "이 품목에는 '수은' 공통안전기준 (60mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+        "source_label": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+        "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+        "legal_basis": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+        "detail": {
+         "rule_id": "KC-COMMON-3.1.1-HG",
+         "substance": "수은",
+         "limit_value": 60,
+         "unit": "mg/kg"
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "hazard_rule_applies",
+        "signal": "UNKNOWN",
+        "statement_ko": "이 품목에는 '셀레늄' 공통안전기준 (500mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+        "source_label": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+        "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+        "legal_basis": "어린이제품 공통안전기준 3.1.1 (산업통상자원부고시 제2022-220호)",
+        "detail": {
+         "rule_id": "KC-COMMON-3.1.1-SE",
+         "substance": "셀레늄",
+         "limit_value": 500,
+         "unit": "mg/kg"
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "hazard_rule_applies",
+        "signal": "UNKNOWN",
+        "statement_ko": "이 품목에는 '총 납(함유량)' 공통안전기준 (100mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+        "source_label": "어린이제품 공통안전기준 3.1.2 (산업통상자원부고시 제2022-220호)",
+        "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+        "legal_basis": "어린이제품 공통안전기준 3.1.2 (산업통상자원부고시 제2022-220호)",
+        "detail": {
+         "rule_id": "KC-COMMON-3.1.2-PB",
+         "substance": "총 납(함유량)",
+         "limit_value": 100,
+         "unit": "mg/kg"
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "hazard_rule_applies",
+        "signal": "UNKNOWN",
+        "statement_ko": "이 품목에는 '총 카드뮴(함유량)' 공통안전기준 (75mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+        "source_label": "어린이제품 공통안전기준 3.1.2 (산업통상자원부고시 제2022-220호)",
+        "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+        "legal_basis": "어린이제품 공통안전기준 3.1.2 (산업통상자원부고시 제2022-220호)",
+        "detail": {
+         "rule_id": "KC-COMMON-3.1.2-CD",
+         "substance": "총 카드뮴(함유량)",
+         "limit_value": 75,
+         "unit": "mg/kg"
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "hazard_rule_applies",
+        "signal": "UNKNOWN",
+        "statement_ko": "이 품목에는 '프탈레이트계 가소제' 공통안전기준 (0.1%)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+        "source_label": "어린이제품 공통안전기준 3.1.3 (산업통상자원부고시 제2022-220호)",
+        "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+        "legal_basis": "어린이제품 공통안전기준 3.1.3 (산업통상자원부고시 제2022-220호)",
+        "detail": {
+         "rule_id": "KC-COMMON-3.1.3-PHT",
+         "substance": "프탈레이트계 가소제",
+         "limit_value": 0.1,
+         "unit": "%"
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "hazard_rule_applies",
+        "signal": "UNKNOWN",
+        "statement_ko": "이 품목에는 '니트로사민류' 공통안전기준 (0.01mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+        "source_label": "어린이제품 공통안전기준 3.1.4 (산업통상자원부고시 제2022-220호)",
+        "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+        "legal_basis": "어린이제품 공통안전기준 3.1.4 (산업통상자원부고시 제2022-220호)",
+        "detail": {
+         "rule_id": "KC-COMMON-3.1.4-NITROSAMINE",
+         "substance": "니트로사민류",
+         "limit_value": 0.01,
+         "unit": "mg/kg"
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "hazard_rule_applies",
+        "signal": "UNKNOWN",
+        "statement_ko": "이 품목에는 '니트로사민류 생성 가능물질' 공통안전기준 (0.1mg/kg)이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+        "source_label": "어린이제품 공통안전기준 3.1.4 (산업통상자원부고시 제2022-220호)",
+        "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+        "legal_basis": "어린이제품 공통안전기준 3.1.4 (산업통상자원부고시 제2022-220호)",
+        "detail": {
+         "rule_id": "KC-COMMON-3.1.4-NITROSATABLE",
+         "substance": "니트로사민류 생성 가능물질",
+         "limit_value": 0.1,
+         "unit": "mg/kg"
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "hazard_rule_applies",
+        "signal": "UNKNOWN",
+        "statement_ko": "이 품목에는 '석면' 공통안전기준이 적용됩니다. 품목별 부속서가 더 엄격한 값을 정하는 경우가 있어, 시험성적서로 확인이 필요합니다.",
+        "source_label": "어린이제품 공통안전기준 3.1.6 (산업통상자원부고시 제2022-220호)",
+        "source_url": "https://www.law.go.kr/행정규칙/어린이제품공통안전기준",
+        "legal_basis": "어린이제품 공통안전기준 3.1.6 (산업통상자원부고시 제2022-220호)",
+        "detail": {
+         "rule_id": "KC-COMMON-3.1.6-ASBESTOS",
+         "substance": "석면",
+         "limit_value": null,
+         "unit": null
+        },
+        "checked_at": "2026-09-19"
+       }
+      ]
+     }
+    ],
+    "meta": {
+     "extracted_by": "LLM(GPT · gpt-5.4-mini)",
+     "extraction_path": "llm",
+     "extractor_vendor": "gpt",
+     "extractor_model": "gpt-5.4-mini",
+     "extraction_reason": null,
+     "gov_lookup": {
+      "cert": "ok",
+      "recall": "ok",
+      "rf": "not_attempted"
+     },
+     "recall_data_as_of": "20260914"
+    },
+    "input_note": null,
+    "extraction_note": null,
+    "disclaimer": "본 결과는 공개된 정부 데이터에 기반한 참고 정보이며, 법적 판단이나 안전 인증을 대체하지 않습니다."
+   }
+  },
+  {
+   "cert_number": "SU071354-12001",
+   "title": "리빙센스 스텐 전기 무선포트 1.8L/커피포트/전기포트/전기주전자/선물세트/판촉물/사은품/답례품/행사용품",
+   "text": "리빙센스 스텐 전기 무선포트 1.8L/커피포트/전기포트/전기주전자/선물세트/판촉물/사은품/답례품/행사용품 KC 인증번호 SU071354-12001",
+   "result": {
+    "signal": "UNKNOWN",
+    "headline": "일부만 확인 — 인증·리콜은 대조했으나, 이 품목의 유해물질 기준은 아직 수록되지 않았습니다. 확인된 범위는 아래를 보세요.",
+    "score": 0,
+    "facts": {
+     "product_name": "리빙센스 스텐 전기 무선포트",
+     "model_name": null,
+     "maker": null,
+     "materials": [
+      "스텐"
+     ],
+     "substances_mentioned": [],
+     "kc_numbers": [
+      "SU071354-12001"
+     ],
+     "kc_numbers_from_image": [],
+     "rf_numbers": [],
+     "wireless_hints": [],
+     "target_age": null,
+     "legal_item_name": "전기주전자",
+     "category": "electrical",
+     "category_confidence": 0.98,
+     "source_page_url": null,
+     "raw_language": "ko"
+    },
+    "findings": [
+     {
+      "kind": "kc_expired",
+      "signal": "AMBER",
+      "statement_ko": "인증번호 'SU071354-12001ZZC' 의 인증상태가 '반납' 로 조회되었습니다. 재인증되어 번호가 바뀌었을 수 있습니다. 공급처에 현재 유효한 인증번호를 확인해 주세요.",
+      "source_label": "국가기술표준원 안전인증정보 조회",
+      "source_url": "http://www.safetykorea.kr/search/searchPop?certNum=SU071354-12001ZZC",
+      "legal_basis": null,
+      "detail": {
+       "maker": "Zhongshan City Xiaolan Town Feiying Electrical Appliance Factory",
+       "maker_country": "중국",
+       "cert_state": "반납",
+       "cert_div": "전기용품 및 생활용품 안전관리법 대상>안전인증대상 전기용품",
+       "registered_model": "HQ-909",
+       "registered_product": "전기주전자",
+       "from_cache": false,
+       "fetched_at": null
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "item_grade_matched",
+      "signal": "UNKNOWN",
+      "statement_ko": "세부품목 등급표에서 '전기주전자'는 안전인증 대상으로 조회됩니다. 안전인증 대상이면 인증번호가 반드시 있어야 합니다. 품목이 맞는지 확인하고, 공급처에 인증 구분을 요청하세요.",
+      "source_label": "전기용품 및 생활용품 안전관리 운용요령 별표 1",
+      "source_url": "https://www.law.go.kr/행정규칙/전기용품및생활용품안전관리운용요령",
+      "legal_basis": null,
+      "detail": {
+       "grade": "안전인증",
+       "candidates": [
+        {
+         "item": "전기주전자",
+         "grade": "안전인증",
+         "scope_note": "",
+         "matched_by": "alias",
+         "source": "전기용품 및 생활용품 안전관리 운용요령 별표 1",
+         "source_url": "https://www.law.go.kr/행정규칙/전기용품및생활용품안전관리운용요령"
+        }
+       ]
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "recall_clear",
+      "signal": "GREEN",
+      "statement_ko": "리콜 공표 목록에서 모델명·인증번호가 일치하는 항목을 찾지 못했습니다. 리콜 대조 기준: 2026-09-14 공표분까지",
+      "source_label": "국가기술표준원 리콜정보",
+      "source_url": "https://www.safetykorea.kr/recall/recallBoard",
+      "legal_basis": null,
+      "detail": {
+       "recall_data_as_of": "20260914"
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "info_request",
+      "signal": "UNKNOWN",
+      "statement_ko": "[대상연령 확인 필요] 대상연령(또는 권장 사용연령) 표기를 확인해 주세요. 만 13세 이하이면 어린이제품 공통안전기준이 적용됩니다.",
+      "source_label": "제품안전정보센터 대상 품목 안내",
+      "source_url": "https://www.safetykorea.kr/policy/targetsSafetyCheck3",
+      "legal_basis": null,
+      "detail": {
+       "missing": "대상연령",
+       "asks_for": [
+        "target_age"
+       ],
+       "unlocks": [
+        "item_grade",
+        "hazard_rule"
+       ]
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "coverage_gap",
+      "signal": "UNKNOWN",
+      "statement_ko": "이 품목에는 유해물질 기준이 아니라 전기 안전기준(감전·발열·절연)이 적용됩니다. 그 기준은 실물 시험으로만 확인되며 상세페이지로는 판단할 수 없습니다. 안전인증 또는 안전확인 번호와 시험성적서를 공급처에 요청하세요.",
+      "source_label": "전기용품 안전기준",
+      "source_url": "https://www.law.go.kr/행정규칙/전기용품안전기준",
+      "legal_basis": null,
+      "detail": {},
+      "checked_at": "2026-09-19"
+     }
+    ],
+    "coverage_note": "현재 규칙 DB는 이 품목(품목군 electrical)의 유해물질 기준을 아직 수록하지 않았습니다. 인증·리콜 조회 결과만 반영되었습니다.",
+    "recall_data_as_of": "20260914",
+    "watch_suggestion": {
+     "can_watch": true,
+     "reason": "판단에 필요한 정보가 부족합니다. 감시 목록에 넣으면 이후 리콜 공표 시 알려드립니다."
+    },
+    "extracted": [
+     {
+      "label": "제품명",
+      "value": "리빙센스 스텐 전기 무선포트",
+      "link": null
+     },
+     {
+      "label": "인증번호",
+      "value": "SU071354-12001",
+      "link": "http://www.safetykorea.kr/search/searchPop?certNum=SU071354-12001"
+     },
+     {
+      "label": "재질",
+      "value": "스텐",
+      "link": null
+     },
+     {
+      "label": "품목 구분",
+      "value": "전기용품",
+      "link": null
+     }
+    ],
+    "axes": [
+     {
+      "key": "cert",
+      "name": "인증 조회",
+      "label": "조회함",
+      "done": true,
+      "note": ""
+     },
+     {
+      "key": "recall",
+      "name": "리콜 대조",
+      "label": "대조함",
+      "done": true,
+      "note": "2026-09-14 공표분까지 · 2026-09-18 12:53 갱신"
+     },
+     {
+      "key": "hazard",
+      "name": "유해물질",
+      "label": "이 품목 미수록",
+      "done": false,
+      "note": ""
+     }
+    ],
+    "grouped_findings": [
+     {
+      "group": "action",
+      "header": "소싱하려면 확인할 것",
+      "findings": [
+       {
+        "kind": "item_grade_matched",
+        "signal": "UNKNOWN",
+        "statement_ko": "세부품목 등급표에서 '전기주전자'는 안전인증 대상으로 조회됩니다. 안전인증 대상이면 인증번호가 반드시 있어야 합니다. 품목이 맞는지 확인하고, 공급처에 인증 구분을 요청하세요.",
+        "source_label": "전기용품 및 생활용품 안전관리 운용요령 별표 1",
+        "source_url": "https://www.law.go.kr/행정규칙/전기용품및생활용품안전관리운용요령",
+        "legal_basis": null,
+        "detail": {
+         "grade": "안전인증",
+         "candidates": [
+          {
+           "item": "전기주전자",
+           "grade": "안전인증",
+           "scope_note": "",
+           "matched_by": "alias",
+           "source": "전기용품 및 생활용품 안전관리 운용요령 별표 1",
+           "source_url": "https://www.law.go.kr/행정규칙/전기용품및생활용품안전관리운용요령"
+          }
+         ]
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "info_request",
+        "signal": "UNKNOWN",
+        "statement_ko": "[대상연령 확인 필요] 대상연령(또는 권장 사용연령) 표기를 확인해 주세요. 만 13세 이하이면 어린이제품 공통안전기준이 적용됩니다.",
+        "source_label": "제품안전정보센터 대상 품목 안내",
+        "source_url": "https://www.safetykorea.kr/policy/targetsSafetyCheck3",
+        "legal_basis": null,
+        "detail": {
+         "missing": "대상연령",
+         "asks_for": [
+          "target_age"
+         ],
+         "unlocks": [
+          "item_grade",
+          "hazard_rule"
+         ]
+        },
+        "checked_at": "2026-09-19"
+       }
+      ]
+     },
+     {
+      "group": "finding",
+      "header": "확인된 문제",
+      "findings": [
+       {
+        "kind": "kc_expired",
+        "signal": "AMBER",
+        "statement_ko": "인증번호 'SU071354-12001ZZC' 의 인증상태가 '반납' 로 조회되었습니다. 재인증되어 번호가 바뀌었을 수 있습니다. 공급처에 현재 유효한 인증번호를 확인해 주세요.",
+        "source_label": "국가기술표준원 안전인증정보 조회",
+        "source_url": "http://www.safetykorea.kr/search/searchPop?certNum=SU071354-12001ZZC",
+        "legal_basis": null,
+        "detail": {
+         "maker": "Zhongshan City Xiaolan Town Feiying Electrical Appliance Factory",
+         "maker_country": "중국",
+         "cert_state": "반납",
+         "cert_div": "전기용품 및 생활용품 안전관리법 대상>안전인증대상 전기용품",
+         "registered_model": "HQ-909",
+         "registered_product": "전기주전자",
+         "from_cache": false,
+         "fetched_at": null
+        },
+        "checked_at": "2026-09-19"
+       }
+      ]
+     },
+     {
+      "group": "context",
+      "header": "참고 정보",
+      "findings": [
+       {
+        "kind": "recall_clear",
+        "signal": "GREEN",
+        "statement_ko": "리콜 공표 목록에서 모델명·인증번호가 일치하는 항목을 찾지 못했습니다. 리콜 대조 기준: 2026-09-14 공표분까지",
+        "source_label": "국가기술표준원 리콜정보",
+        "source_url": "https://www.safetykorea.kr/recall/recallBoard",
+        "legal_basis": null,
+        "detail": {
+         "recall_data_as_of": "20260914"
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "coverage_gap",
+        "signal": "UNKNOWN",
+        "statement_ko": "이 품목에는 유해물질 기준이 아니라 전기 안전기준(감전·발열·절연)이 적용됩니다. 그 기준은 실물 시험으로만 확인되며 상세페이지로는 판단할 수 없습니다. 안전인증 또는 안전확인 번호와 시험성적서를 공급처에 요청하세요.",
+        "source_label": "전기용품 안전기준",
+        "source_url": "https://www.law.go.kr/행정규칙/전기용품안전기준",
+        "legal_basis": null,
+        "detail": {},
+        "checked_at": "2026-09-19"
+       }
+      ]
+     }
+    ],
+    "meta": {
+     "extracted_by": "LLM(GPT · gpt-5.4-mini)",
+     "extraction_path": "llm",
+     "extractor_vendor": "gpt",
+     "extractor_model": "gpt-5.4-mini",
+     "extraction_reason": null,
+     "gov_lookup": {
+      "cert": "ok",
+      "recall": "ok",
+      "rf": "not_attempted"
+     },
+     "recall_data_as_of": "20260914"
+    },
+    "input_note": null,
+    "extraction_note": null,
+    "disclaimer": "본 결과는 공개된 정부 데이터에 기반한 참고 정보이며, 법적 판단이나 안전 인증을 대체하지 않습니다."
+   }
+  },
+  {
+   "cert_number": "CA011R021-4001",
+   "title": "프리미엄 클래식 파스텔 튜브 파도타기 물놀이 용품 성인용 튜브",
+   "text": "프리미엄 클래식 파스텔 튜브 파도타기 물놀이 용품 성인용 튜브 KC 인증번호 CA011R021-4001",
+   "result": {
+    "signal": "RED",
+    "headline": "소싱 보류 — 리콜 또는 인증 문제가 확인되었습니다. 아래 근거를 확인하세요.",
+    "score": 0,
+    "facts": {
+     "product_name": "프리미엄 클래식 파스텔 튜브 파도타기 물놀이 용품 성인용 튜브",
+     "model_name": null,
+     "maker": null,
+     "materials": [],
+     "substances_mentioned": [],
+     "kc_numbers": [
+      "CA011R021-4001"
+     ],
+     "kc_numbers_from_image": [],
+     "rf_numbers": [],
+     "wireless_hints": [],
+     "target_age": "성인용",
+     "legal_item_name": null,
+     "category": "unclassified",
+     "category_confidence": 0.62,
+     "source_page_url": null,
+     "raw_language": "ko"
+    },
+    "findings": [
+     {
+      "kind": "kc_revoked",
+      "signal": "RED",
+      "statement_ko": "인증번호 'CA011R021-4001' 의 인증상태가 '안전인증취소' 로 조회되었습니다. 이 인증번호로는 판매 표시를 유지할 수 없습니다. 공급처에 유효한 인증을 요청하세요.",
+      "source_label": "국가기술표준원 안전인증정보 조회",
+      "source_url": "http://www.safetykorea.kr/search/searchPop?certNum=CA011R021-4001",
+      "legal_basis": null,
+      "detail": {
+       "maker": "SHANGHAI CHUN HAN PLASTIC PRODUCTS CO., LTD.",
+       "maker_country": "중국",
+       "cert_state": "안전인증취소",
+       "cert_div": "어린이제품 특별법 대상>안전인증 대상",
+       "registered_model": "SWIM PLAYING 4",
+       "registered_product": "어린이용물놀이기구",
+       "from_cache": false,
+       "fetched_at": null
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "item_grade_matched",
+      "signal": "UNKNOWN",
+      "statement_ko": "세부품목 등급표에서 '공기주입물놀이기구'는 안전인증 대상으로 조회됩니다. 안전인증 대상이면 인증번호가 반드시 있어야 합니다. 품목이 맞는지 확인하고, 공급처에 인증 구분을 요청하세요.",
+      "source_label": "전기용품 및 생활용품 안전관리 운용요령 별표 4",
+      "source_url": "https://www.law.go.kr/행정규칙/전기용품및생활용품안전관리운용요령",
+      "legal_basis": null,
+      "detail": {
+       "grade": "안전인증",
+       "candidates": [
+        {
+         "item": "공기주입물놀이기구",
+         "grade": "안전인증",
+         "scope_note": "",
+         "matched_by": "alias",
+         "source": "전기용품 및 생활용품 안전관리 운용요령 별표 4",
+         "source_url": "https://www.law.go.kr/행정규칙/전기용품및생활용품안전관리운용요령"
+        }
+       ]
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "recall_match",
+      "signal": "RED",
+      "statement_ko": "인증번호 'CA011R021-4001'가 리콜 공표 목록과 정확 일치합니다 — 리콜된 제품은 '공기주입 물놀이기구(어린이용 물놀이기구)'(국내, 2026-07-23 공표), 리콜 쪽 모델명은 'SWIM PLAYING 4' 입니다. 원문 확인이 필요합니다.",
+      "source_label": "리콜 공표 원문",
+      "source_url": "https://www.safetykorea.kr/recall/ajax/recallBoard?recallUid=10022667",
+      "legal_basis": null,
+      "detail": {
+       "reason": "ㅇ 프탈레이트계 가소제 201.7배 초과\r\n- 부위: 손잡이 흰색 합성수지\r\n- 측정값: 총 합 20.177 % (DEHP 17.978 %, DINP 2.199 %)\r\n- 기준치: 총 합 0.1 % 이하\nㅇ 표시사항 미비\n- 체중범위(제품 표시), 사용상 주의사항(7.2.4), 치수(mm) 내경x외경 누락",
+       "model": "SWIM PLAYING 4",
+       "maker": "해시컴퍼니",
+       "match_strength": "exact",
+       "match_strength_ko": "정확 일치",
+       "matched_on": "kc_number",
+       "matched_on_ko": "인증번호",
+       "matched_value": "CA011R021-4001",
+       "recalled_product_name": "공기주입 물놀이기구(어린이용 물놀이기구)",
+       "matched_value_names_an_item": false,
+       "evidence_is_original": true
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "info_request",
+      "signal": "UNKNOWN",
+      "statement_ko": "[재질 확인 필요] 재질(합성수지 종류, 도장·코팅 유무)을 확인해 주세요. 합성수지제는 프탈레이트 기준이, 도장면은 유해원소 용출 기준이 적용됩니다.",
+      "source_label": "제품안전정보센터 대상 품목 안내",
+      "source_url": "https://www.safetykorea.kr/policy/targetsSafetyCheck3",
+      "legal_basis": null,
+      "detail": {
+       "missing": "재질",
+       "asks_for": [
+        "materials"
+       ],
+       "unlocks": [
+        "hazard_rule"
+       ]
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "info_request",
+      "signal": "UNKNOWN",
+      "statement_ko": "[품목 구분 확인 필요] 어떤 안전기준 품목에 해당하는지 확인해 주세요. 안전인증·안전확인·공급자적합성확인 중 어디인지에 따라 의무가 달라집니다.",
+      "source_label": "제품안전정보센터 대상 품목 안내",
+      "source_url": "https://www.safetykorea.kr/policy/targetsSafetyCheck3",
+      "legal_basis": null,
+      "detail": {
+       "missing": "품목 구분",
+       "asks_for": [
+        "legal_item_name"
+       ],
+       "unlocks": [
+        "item_grade"
+       ]
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "coverage_gap",
+      "signal": "UNKNOWN",
+      "statement_ko": "이 품목의 유해물질 기준은 아직 규칙 DB에 수록되지 않았습니다.",
+      "source_label": "규칙 DB 커버리지",
+      "source_url": "https://www.safetykorea.kr/policy/targetsSafetyCheck3",
+      "legal_basis": null,
+      "detail": {},
+      "checked_at": "2026-09-19"
+     }
+    ],
+    "coverage_note": "판정에 필요한 정보가 상세페이지에 없습니다. 공급처 확인 항목을 확인해 주세요.",
+    "recall_data_as_of": "20260914",
+    "watch_suggestion": {
+     "can_watch": true,
+     "reason": "이미 문제가 확인된 상품이지만, 감시 목록에 넣으면 이후 추가 리콜도 알려드립니다."
+    },
+    "extracted": [
+     {
+      "label": "제품명",
+      "value": "프리미엄 클래식 파스텔 튜브 파도타기 물놀이 용품 성인용 튜브",
+      "link": null
+     },
+     {
+      "label": "인증번호",
+      "value": "CA011R021-4001",
+      "link": "http://www.safetykorea.kr/search/searchPop?certNum=CA011R021-4001"
+     },
+     {
+      "label": "사용연령",
+      "value": "성인용",
+      "link": null
+     }
+    ],
+    "axes": [
+     {
+      "key": "cert",
+      "name": "인증 조회",
+      "label": "조회함",
+      "done": true,
+      "note": ""
+     },
+     {
+      "key": "recall",
+      "name": "리콜 대조",
+      "label": "일치 있음",
+      "done": true,
+      "note": "2026-09-14 공표분까지 · 2026-09-18 12:53 갱신"
+     },
+     {
+      "key": "hazard",
+      "name": "유해물질",
+      "label": "이 품목 미수록",
+      "done": false,
+      "note": ""
+     }
+    ],
+    "grouped_findings": [
+     {
+      "group": "action",
+      "header": "소싱하려면 확인할 것",
+      "findings": [
+       {
+        "kind": "item_grade_matched",
+        "signal": "UNKNOWN",
+        "statement_ko": "세부품목 등급표에서 '공기주입물놀이기구'는 안전인증 대상으로 조회됩니다. 안전인증 대상이면 인증번호가 반드시 있어야 합니다. 품목이 맞는지 확인하고, 공급처에 인증 구분을 요청하세요.",
+        "source_label": "전기용품 및 생활용품 안전관리 운용요령 별표 4",
+        "source_url": "https://www.law.go.kr/행정규칙/전기용품및생활용품안전관리운용요령",
+        "legal_basis": null,
+        "detail": {
+         "grade": "안전인증",
+         "candidates": [
+          {
+           "item": "공기주입물놀이기구",
+           "grade": "안전인증",
+           "scope_note": "",
+           "matched_by": "alias",
+           "source": "전기용품 및 생활용품 안전관리 운용요령 별표 4",
+           "source_url": "https://www.law.go.kr/행정규칙/전기용품및생활용품안전관리운용요령"
+          }
+         ]
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "info_request",
+        "signal": "UNKNOWN",
+        "statement_ko": "[재질 확인 필요] 재질(합성수지 종류, 도장·코팅 유무)을 확인해 주세요. 합성수지제는 프탈레이트 기준이, 도장면은 유해원소 용출 기준이 적용됩니다.",
+        "source_label": "제품안전정보센터 대상 품목 안내",
+        "source_url": "https://www.safetykorea.kr/policy/targetsSafetyCheck3",
+        "legal_basis": null,
+        "detail": {
+         "missing": "재질",
+         "asks_for": [
+          "materials"
+         ],
+         "unlocks": [
+          "hazard_rule"
+         ]
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "info_request",
+        "signal": "UNKNOWN",
+        "statement_ko": "[품목 구분 확인 필요] 어떤 안전기준 품목에 해당하는지 확인해 주세요. 안전인증·안전확인·공급자적합성확인 중 어디인지에 따라 의무가 달라집니다.",
+        "source_label": "제품안전정보센터 대상 품목 안내",
+        "source_url": "https://www.safetykorea.kr/policy/targetsSafetyCheck3",
+        "legal_basis": null,
+        "detail": {
+         "missing": "품목 구분",
+         "asks_for": [
+          "legal_item_name"
+         ],
+         "unlocks": [
+          "item_grade"
+         ]
+        },
+        "checked_at": "2026-09-19"
+       }
+      ]
+     },
+     {
+      "group": "finding",
+      "header": "확인된 문제",
+      "findings": [
+       {
+        "kind": "kc_revoked",
+        "signal": "RED",
+        "statement_ko": "인증번호 'CA011R021-4001' 의 인증상태가 '안전인증취소' 로 조회되었습니다. 이 인증번호로는 판매 표시를 유지할 수 없습니다. 공급처에 유효한 인증을 요청하세요.",
+        "source_label": "국가기술표준원 안전인증정보 조회",
+        "source_url": "http://www.safetykorea.kr/search/searchPop?certNum=CA011R021-4001",
+        "legal_basis": null,
+        "detail": {
+         "maker": "SHANGHAI CHUN HAN PLASTIC PRODUCTS CO., LTD.",
+         "maker_country": "중국",
+         "cert_state": "안전인증취소",
+         "cert_div": "어린이제품 특별법 대상>안전인증 대상",
+         "registered_model": "SWIM PLAYING 4",
+         "registered_product": "어린이용물놀이기구",
+         "from_cache": false,
+         "fetched_at": null
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "recall_match",
+        "signal": "RED",
+        "statement_ko": "인증번호 'CA011R021-4001'가 리콜 공표 목록과 정확 일치합니다 — 리콜된 제품은 '공기주입 물놀이기구(어린이용 물놀이기구)'(국내, 2026-07-23 공표), 리콜 쪽 모델명은 'SWIM PLAYING 4' 입니다. 원문 확인이 필요합니다.",
+        "source_label": "리콜 공표 원문",
+        "source_url": "https://www.safetykorea.kr/recall/ajax/recallBoard?recallUid=10022667",
+        "legal_basis": null,
+        "detail": {
+         "reason": "ㅇ 프탈레이트계 가소제 201.7배 초과\r\n- 부위: 손잡이 흰색 합성수지\r\n- 측정값: 총 합 20.177 % (DEHP 17.978 %, DINP 2.199 %)\r\n- 기준치: 총 합 0.1 % 이하\nㅇ 표시사항 미비\n- 체중범위(제품 표시), 사용상 주의사항(7.2.4), 치수(mm) 내경x외경 누락",
+         "model": "SWIM PLAYING 4",
+         "maker": "해시컴퍼니",
+         "match_strength": "exact",
+         "match_strength_ko": "정확 일치",
+         "matched_on": "kc_number",
+         "matched_on_ko": "인증번호",
+         "matched_value": "CA011R021-4001",
+         "recalled_product_name": "공기주입 물놀이기구(어린이용 물놀이기구)",
+         "matched_value_names_an_item": false,
+         "evidence_is_original": true
+        },
+        "checked_at": "2026-09-19"
+       }
+      ]
+     },
+     {
+      "group": "context",
+      "header": "참고 정보",
+      "findings": [
+       {
+        "kind": "coverage_gap",
+        "signal": "UNKNOWN",
+        "statement_ko": "이 품목의 유해물질 기준은 아직 규칙 DB에 수록되지 않았습니다.",
+        "source_label": "규칙 DB 커버리지",
+        "source_url": "https://www.safetykorea.kr/policy/targetsSafetyCheck3",
+        "legal_basis": null,
+        "detail": {},
+        "checked_at": "2026-09-19"
+       }
+      ]
+     }
+    ],
+    "meta": {
+     "extracted_by": "LLM(GPT · gpt-5.4-mini)",
+     "extraction_path": "llm",
+     "extractor_vendor": "gpt",
+     "extractor_model": "gpt-5.4-mini",
+     "extraction_reason": null,
+     "gov_lookup": {
+      "cert": "ok",
+      "recall": "ok",
+      "rf": "not_attempted"
+     },
+     "recall_data_as_of": "20260914"
+    },
+    "input_note": null,
+    "extraction_note": null,
+    "disclaimer": "본 결과는 공개된 정부 데이터에 기반한 참고 정보이며, 법적 판단이나 안전 인증을 대체하지 않습니다."
+   }
+  },
+  {
+   "cert_number": "HU072693-20003J",
+   "title": "그릴 후라이팬 고기 불판 와이드 전기 그릴 48cm 사은품 / 판촉물",
+   "text": "그릴 후라이팬 고기 불판 와이드 전기 그릴 48cm 사은품 / 판촉물 KC 인증번호 HU072693-20003J",
+   "result": {
+    "signal": "RED",
+    "headline": "소싱 보류 — 리콜 또는 인증 문제가 확인되었습니다. 아래 근거를 확인하세요.",
+    "score": 0,
+    "facts": {
+     "product_name": "그릴 후라이팬 고기 불판 와이드 전기 그릴",
+     "model_name": null,
+     "maker": null,
+     "materials": [],
+     "substances_mentioned": [],
+     "kc_numbers": [
+      "HU072693-20003J"
+     ],
+     "kc_numbers_from_image": [],
+     "rf_numbers": [],
+     "wireless_hints": [],
+     "target_age": null,
+     "legal_item_name": "전기그릴",
+     "category": "electrical",
+     "category_confidence": 0.86,
+     "source_page_url": null,
+     "raw_language": "ko"
+    },
+    "findings": [
+     {
+      "kind": "kc_revoked",
+      "signal": "RED",
+      "statement_ko": "인증번호 'HU072693-20003J' 의 인증상태가 '안전인증취소' 로 조회되었습니다. 이 인증번호로는 판매 표시를 유지할 수 없습니다. 공급처에 유효한 인증을 요청하세요.",
+      "source_label": "국가기술표준원 안전인증정보 조회",
+      "source_url": "http://www.safetykorea.kr/search/searchPop?certNum=HU072693-20003J",
+      "legal_basis": null,
+      "detail": {
+       "maker": "ZHEJIANG AORAN ELECTRIC APPLIANCE CO., LTD",
+       "maker_country": "중국",
+       "cert_state": "안전인증취소",
+       "cert_div": "전기용품 및 생활용품 안전관리법 대상>안전인증대상 전기용품",
+       "registered_model": "JP-002",
+       "registered_product": "전기휴대형그릴",
+       "from_cache": false,
+       "fetched_at": null
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "item_grade_matched",
+      "signal": "UNKNOWN",
+      "statement_ko": "세부품목 등급표에서 여러 품목으로 보이나 등급은 모두 같아 안전인증 대상으로 조회됩니다. 안전인증 대상이면 인증번호가 반드시 있어야 합니다. 품목이 맞는지 확인하고, 공급처에 인증 구분을 요청하세요.",
+      "source_label": "전기용품 및 생활용품 안전관리 운용요령 별표 1",
+      "source_url": "https://www.law.go.kr/행정규칙/전기용품및생활용품안전관리운용요령",
+      "legal_basis": null,
+      "detail": {
+       "grade": "안전인증",
+       "candidates": [
+        {
+         "item": "전기거치식그릴",
+         "grade": "안전인증",
+         "scope_note": "",
+         "matched_by": "alias",
+         "source": "전기용품 및 생활용품 안전관리 운용요령 별표 1",
+         "source_url": "https://www.law.go.kr/행정규칙/전기용품및생활용품안전관리운용요령"
+        },
+        {
+         "item": "전기휴대형그릴",
+         "grade": "안전인증",
+         "scope_note": "",
+         "matched_by": "alias",
+         "source": "전기용품 및 생활용품 안전관리 운용요령 별표 1",
+         "source_url": "https://www.law.go.kr/행정규칙/전기용품및생활용품안전관리운용요령"
+        }
+       ]
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "recall_clear",
+      "signal": "GREEN",
+      "statement_ko": "리콜 공표 목록에서 모델명·인증번호가 일치하는 항목을 찾지 못했습니다. 리콜 대조 기준: 2026-09-14 공표분까지",
+      "source_label": "국가기술표준원 리콜정보",
+      "source_url": "https://www.safetykorea.kr/recall/recallBoard",
+      "legal_basis": null,
+      "detail": {
+       "recall_data_as_of": "20260914"
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "info_request",
+      "signal": "UNKNOWN",
+      "statement_ko": "[재질 확인 필요] 재질(합성수지 종류, 도장·코팅 유무)을 확인해 주세요. 합성수지제는 프탈레이트 기준이, 도장면은 유해원소 용출 기준이 적용됩니다.",
+      "source_label": "제품안전정보센터 대상 품목 안내",
+      "source_url": "https://www.safetykorea.kr/policy/targetsSafetyCheck3",
+      "legal_basis": null,
+      "detail": {
+       "missing": "재질",
+       "asks_for": [
+        "materials"
+       ],
+       "unlocks": [
+        "hazard_rule"
+       ]
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "info_request",
+      "signal": "UNKNOWN",
+      "statement_ko": "[대상연령 확인 필요] 대상연령(또는 권장 사용연령) 표기를 확인해 주세요. 만 13세 이하이면 어린이제품 공통안전기준이 적용됩니다.",
+      "source_label": "제품안전정보센터 대상 품목 안내",
+      "source_url": "https://www.safetykorea.kr/policy/targetsSafetyCheck3",
+      "legal_basis": null,
+      "detail": {
+       "missing": "대상연령",
+       "asks_for": [
+        "target_age"
+       ],
+       "unlocks": [
+        "item_grade",
+        "hazard_rule"
+       ]
+      },
+      "checked_at": "2026-09-19"
+     },
+     {
+      "kind": "coverage_gap",
+      "signal": "UNKNOWN",
+      "statement_ko": "이 품목에는 유해물질 기준이 아니라 전기 안전기준(감전·발열·절연)이 적용됩니다. 그 기준은 실물 시험으로만 확인되며 상세페이지로는 판단할 수 없습니다. 안전인증 또는 안전확인 번호와 시험성적서를 공급처에 요청하세요.",
+      "source_label": "전기용품 안전기준",
+      "source_url": "https://www.law.go.kr/행정규칙/전기용품안전기준",
+      "legal_basis": null,
+      "detail": {},
+      "checked_at": "2026-09-19"
+     }
+    ],
+    "coverage_note": "현재 규칙 DB는 이 품목(품목군 electrical)의 유해물질 기준을 아직 수록하지 않았습니다. 인증·리콜 조회 결과만 반영되었습니다.",
+    "recall_data_as_of": "20260914",
+    "watch_suggestion": {
+     "can_watch": true,
+     "reason": "이미 문제가 확인된 상품이지만, 감시 목록에 넣으면 이후 추가 리콜도 알려드립니다."
+    },
+    "extracted": [
+     {
+      "label": "제품명",
+      "value": "그릴 후라이팬 고기 불판 와이드 전기 그릴",
+      "link": null
+     },
+     {
+      "label": "인증번호",
+      "value": "HU072693-20003J",
+      "link": "http://www.safetykorea.kr/search/searchPop?certNum=HU072693-20003J"
+     },
+     {
+      "label": "품목 구분",
+      "value": "전기용품",
+      "link": null
+     }
+    ],
+    "axes": [
+     {
+      "key": "cert",
+      "name": "인증 조회",
+      "label": "조회함",
+      "done": true,
+      "note": ""
+     },
+     {
+      "key": "recall",
+      "name": "리콜 대조",
+      "label": "대조함",
+      "done": true,
+      "note": "2026-09-14 공표분까지 · 2026-09-18 12:53 갱신"
+     },
+     {
+      "key": "hazard",
+      "name": "유해물질",
+      "label": "이 품목 미수록",
+      "done": false,
+      "note": ""
+     }
+    ],
+    "grouped_findings": [
+     {
+      "group": "action",
+      "header": "소싱하려면 확인할 것",
+      "findings": [
+       {
+        "kind": "item_grade_matched",
+        "signal": "UNKNOWN",
+        "statement_ko": "세부품목 등급표에서 여러 품목으로 보이나 등급은 모두 같아 안전인증 대상으로 조회됩니다. 안전인증 대상이면 인증번호가 반드시 있어야 합니다. 품목이 맞는지 확인하고, 공급처에 인증 구분을 요청하세요.",
+        "source_label": "전기용품 및 생활용품 안전관리 운용요령 별표 1",
+        "source_url": "https://www.law.go.kr/행정규칙/전기용품및생활용품안전관리운용요령",
+        "legal_basis": null,
+        "detail": {
+         "grade": "안전인증",
+         "candidates": [
+          {
+           "item": "전기거치식그릴",
+           "grade": "안전인증",
+           "scope_note": "",
+           "matched_by": "alias",
+           "source": "전기용품 및 생활용품 안전관리 운용요령 별표 1",
+           "source_url": "https://www.law.go.kr/행정규칙/전기용품및생활용품안전관리운용요령"
+          },
+          {
+           "item": "전기휴대형그릴",
+           "grade": "안전인증",
+           "scope_note": "",
+           "matched_by": "alias",
+           "source": "전기용품 및 생활용품 안전관리 운용요령 별표 1",
+           "source_url": "https://www.law.go.kr/행정규칙/전기용품및생활용품안전관리운용요령"
+          }
+         ]
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "info_request",
+        "signal": "UNKNOWN",
+        "statement_ko": "[재질 확인 필요] 재질(합성수지 종류, 도장·코팅 유무)을 확인해 주세요. 합성수지제는 프탈레이트 기준이, 도장면은 유해원소 용출 기준이 적용됩니다.",
+        "source_label": "제품안전정보센터 대상 품목 안내",
+        "source_url": "https://www.safetykorea.kr/policy/targetsSafetyCheck3",
+        "legal_basis": null,
+        "detail": {
+         "missing": "재질",
+         "asks_for": [
+          "materials"
+         ],
+         "unlocks": [
+          "hazard_rule"
+         ]
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "info_request",
+        "signal": "UNKNOWN",
+        "statement_ko": "[대상연령 확인 필요] 대상연령(또는 권장 사용연령) 표기를 확인해 주세요. 만 13세 이하이면 어린이제품 공통안전기준이 적용됩니다.",
+        "source_label": "제품안전정보센터 대상 품목 안내",
+        "source_url": "https://www.safetykorea.kr/policy/targetsSafetyCheck3",
+        "legal_basis": null,
+        "detail": {
+         "missing": "대상연령",
+         "asks_for": [
+          "target_age"
+         ],
+         "unlocks": [
+          "item_grade",
+          "hazard_rule"
+         ]
+        },
+        "checked_at": "2026-09-19"
+       }
+      ]
+     },
+     {
+      "group": "finding",
+      "header": "확인된 문제",
+      "findings": [
+       {
+        "kind": "kc_revoked",
+        "signal": "RED",
+        "statement_ko": "인증번호 'HU072693-20003J' 의 인증상태가 '안전인증취소' 로 조회되었습니다. 이 인증번호로는 판매 표시를 유지할 수 없습니다. 공급처에 유효한 인증을 요청하세요.",
+        "source_label": "국가기술표준원 안전인증정보 조회",
+        "source_url": "http://www.safetykorea.kr/search/searchPop?certNum=HU072693-20003J",
+        "legal_basis": null,
+        "detail": {
+         "maker": "ZHEJIANG AORAN ELECTRIC APPLIANCE CO., LTD",
+         "maker_country": "중국",
+         "cert_state": "안전인증취소",
+         "cert_div": "전기용품 및 생활용품 안전관리법 대상>안전인증대상 전기용품",
+         "registered_model": "JP-002",
+         "registered_product": "전기휴대형그릴",
+         "from_cache": false,
+         "fetched_at": null
+        },
+        "checked_at": "2026-09-19"
+       }
+      ]
+     },
+     {
+      "group": "context",
+      "header": "참고 정보",
+      "findings": [
+       {
+        "kind": "recall_clear",
+        "signal": "GREEN",
+        "statement_ko": "리콜 공표 목록에서 모델명·인증번호가 일치하는 항목을 찾지 못했습니다. 리콜 대조 기준: 2026-09-14 공표분까지",
+        "source_label": "국가기술표준원 리콜정보",
+        "source_url": "https://www.safetykorea.kr/recall/recallBoard",
+        "legal_basis": null,
+        "detail": {
+         "recall_data_as_of": "20260914"
+        },
+        "checked_at": "2026-09-19"
+       },
+       {
+        "kind": "coverage_gap",
+        "signal": "UNKNOWN",
+        "statement_ko": "이 품목에는 유해물질 기준이 아니라 전기 안전기준(감전·발열·절연)이 적용됩니다. 그 기준은 실물 시험으로만 확인되며 상세페이지로는 판단할 수 없습니다. 안전인증 또는 안전확인 번호와 시험성적서를 공급처에 요청하세요.",
+        "source_label": "전기용품 안전기준",
+        "source_url": "https://www.law.go.kr/행정규칙/전기용품안전기준",
+        "legal_basis": null,
+        "detail": {},
+        "checked_at": "2026-09-19"
+       }
+      ]
+     }
+    ],
+    "meta": {
+     "extracted_by": "LLM(GPT · gpt-5.4-mini)",
+     "extraction_path": "llm",
+     "extractor_vendor": "gpt",
+     "extractor_model": "gpt-5.4-mini",
+     "extraction_reason": null,
+     "gov_lookup": {
+      "cert": "ok",
+      "recall": "ok",
+      "rf": "not_attempted"
+     },
+     "recall_data_as_of": "20260914"
+    },
+    "input_note": null,
+    "extraction_note": null,
+    "disclaimer": "본 결과는 공개된 정부 데이터에 기반한 참고 정보이며, 법적 판단이나 안전 인증을 대체하지 않습니다."
+   }
+  }
+ ]
+}
