@@ -201,6 +201,18 @@ class ScanRequest(BaseModel):
         return self
 
 
+#: 벤더 → (키, 모델) 접근자. `/healthz` 가 **순서에 든 벤더만** 내보낸다.
+#:
+#: ⚠ 벤더를 늘리면 여기 한 줄이다. 두 곳에 적으면 한쪽만 고쳐진다 (§6).
+_VENDOR_KEY = {
+    "gpt": lambda: settings.gpt_api_key,
+    "claude": lambda: settings.anthropic_api_key,
+}
+_VENDOR_MODEL = {
+    "gpt": lambda: settings.gpt_model,
+    "claude": lambda: settings.extractor_model,
+}
+
 _STATIC = Path(__file__).parent / "static"
 
 #: `/static/…` 참조를 찾는다. 셋을 지켜야 한다.
@@ -423,14 +435,20 @@ def healthz() -> dict:
         "results": _result_stats.snapshot(),
         "extraction": {
             "order": list(settings.extractor_order),
-            "claude_key": bool(settings.anthropic_api_key),
-            "gpt_key": bool(settings.gpt_api_key),
+            # ⚠⚠ **순서에 없는 벤더의 준비 상태를 초록으로 적지 않는다.**
+            #   2026-09-20 까지 `claude_key: true` 를 냈는데, 그때 키는 있고
+            #   **잔액이 0** 이었고 순서에서도 빠져 있었다. `true` 가 "쓸 수
+            #   있다" 로 읽힌다 - 쓰지 않는 것의 준비 상태를 말하는 것은 §1-k 와
+            #   같은 자리의 거짓말이다 (§9).
+            #   그래서 **순서에 든 벤더만** 키·모델을 낸다.
+            **{f"{v}_key": bool(_VENDOR_KEY[v]()) for v in settings.extractor_order
+               if v in _VENDOR_KEY},
             # ⚠ **모델 이름을 노출한다. 키가 아니다.** 배포본 secret 의
             #   GPT_MODEL 실제 문자열을 밖에서 확인할 방법이 없어서, 발표
             #   숫자의 라벨("gpt-5.4-mini")이 배포본과 같은지 말할 수 없었다.
-            #   그 상태를 이 두 필드로 끝낸다. 화면도 이 값을 읽어 그린다.
-            "claude_model": settings.extractor_model,
-            "gpt_model": settings.gpt_model,
+            #   그 상태를 이 필드로 끝낸다. 화면도 이 값을 읽어 그린다.
+            **{f"{v}_model": _VENDOR_MODEL[v]() for v in settings.extractor_order
+               if v in _VENDOR_MODEL},
             **extraction_stats.snapshot(),
         },
     }

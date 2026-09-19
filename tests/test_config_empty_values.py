@@ -40,9 +40,17 @@ def _blank_in_example() -> list[str]:
 
 
 def test_an_empty_extractor_order_falls_back_to_the_documented_default(monkeypatch):
-    """`EXTRACTOR_ORDER=` 는 **기본값 gpt,claude** 다. 빈 순서가 아니다."""
+    """`EXTRACTOR_ORDER=` 는 **기본값**으로 떨어진다. 빈 순서가 아니다.
+
+    ⚠ 2026-09-20 에 기본값이 `gpt,claude` → `gpt` 로 바뀌었다 (R7 개정 ·
+      Anthropic 잔액 0). 이 검사가 지키는 것은 **어느 벤더인가**가 아니라
+      "빈 값이 빈 순서가 되지 않는다" 이고, 그 불변식은 아래
+      `test_a_blank_extractor_order_never_leaves_us_with_no_extractor` 가 폭넓게
+      본다. 여기서는 기본값이 실제로 무엇인지를 한 곳에 적어 둔다 - 바뀌면
+      이 검사가 먼저 깨져서 사람이 알게 된다.
+    """
     monkeypatch.setenv("EXTRACTOR_ORDER", "")
-    assert Settings.from_env().extractor_order == ("gpt", "claude")
+    assert Settings.from_env().extractor_order == ("gpt",)
 
 
 @pytest.mark.parametrize("raw", ["", "   ", ",", " , ,"])

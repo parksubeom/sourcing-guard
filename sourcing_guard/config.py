@@ -94,12 +94,17 @@ class Settings:
             #   추출은 짧은 입력·짧은 JSON 출력이라 mini 급으로 충분한지
             #   대조 측정으로 확인한다.
             gpt_model=os.getenv("GPT_MODEL", "gpt-5.4-mini"),
-            # ⚠⚠ **기준 추출기는 GPT 다 (2026-09-11 결정).** 발표 숫자가 GPT
-            #   기준이므로 기본값도 GPT 여야 한다 - 둘이 갈리면 "이 숫자가 어느
-            #   추출기 것인가" 를 말할 수 없다. CLAUDE.md R7 참조.
+            # ⚠⚠ **추출기는 GPT 한 벌이다 (2026-09-20 개정 · CLAUDE.md R7).**
+            #   2026-09-19 에 Anthropic 잔액이 0 이 되어 2순위가 다시 죽었다.
+            #   **죽은 2순위는 안전망이 아니라 문서의 거짓말**이라 목록에서 뺀다.
+            #   R7 이 지키려던 것은 벤더 수가 아니라 **떨어진 것을 화면이
+            #   말하는가** 였고, 그 관측은 그대로다 (`ScanMeta.extraction_path`
+            #   와 메타 푸터. 2026-09-20 실측으로 확인했다).
+            #   ⚠ `_call_claude` 코드는 지우지 않았다. 되살리려면 이 환경변수에
+            #     `gpt,claude` 한 줄 + 잔액이면 된다.
             #   ⚠ 빈 값도 기본값으로 떨어진다 - `_csv` 주석 참조. 전에는
             #     `EXTRACTOR_ORDER=` 가 **빈 순서**가 되어 추출기가 하나도 없었다.
-            extractor_order=_csv("EXTRACTOR_ORDER", "gpt,claude"),
+            extractor_order=_csv("EXTRACTOR_ORDER", "gpt"),
             kats_base_url=os.getenv("KATS_BASE_URL") or None,
             kats_service_key=os.getenv("KATS_SERVICE_KEY") or None,
             # 배포 시 반드시 영구 볼륨 경로를 지정한다. 컨테이너 기본 파일시스템에

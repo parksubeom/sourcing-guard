@@ -86,7 +86,10 @@ def test_llm_failure_degrades_to_heuristic_not_a_500(monkeypatch):
     # Settings 는 frozen dataclass 다. 필드를 바꾸지 말고 인스턴스를 갈아끼운다.
     monkeypatch.setattr(
         ex, "settings",
-        replace(ex.settings, mock_mode=False, anthropic_api_key="sk-test"),
+        # ⚠ 순서 명시 - 기본값이 `gpt` 한 벌이 됐다 (2026-09-20 · R7 개정).
+        #   Claude 경로 코드는 남아 있고 이 검사가 그 형식을 잠근다.
+        replace(ex.settings, mock_mode=False, anthropic_api_key="sk-test",
+                extractor_order=("claude",)),
     )
     monkeypatch.setitem(sys.modules, "anthropic", type("m", (), {"Anthropic": Boom}))
 
@@ -152,7 +155,10 @@ def test_llm_failure_is_counted_separately_from_a_deliberate_skip(monkeypatch):
     ex.stats.reset()
     monkeypatch.setattr(
         ex, "settings",
-        replace(ex.settings, mock_mode=False, anthropic_api_key="sk-test"),
+        # ⚠ 순서 명시 - 기본값이 `gpt` 한 벌이 됐다 (2026-09-20 · R7 개정).
+        #   Claude 경로 코드는 남아 있고 이 검사가 그 형식을 잠근다.
+        replace(ex.settings, mock_mode=False, anthropic_api_key="sk-test",
+                extractor_order=("claude",)),
     )
     monkeypatch.setitem(sys.modules, "anthropic", type("m", (), {"Anthropic": Boom}))
 

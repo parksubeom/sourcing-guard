@@ -76,7 +76,12 @@ from dataclasses import replace
 def _live(monkeypatch):
     import sourcing_guard.extractor as ex
 
-    live = replace(ex.settings, mock_mode=False, anthropic_api_key="sk-ant-test")
+    # ⚠ 순서를 **명시한다.** 2026-09-20 에 기본값이 `gpt` 한 벌이 되어
+    #   (R7 개정 · Anthropic 잔액 0) 이 검사가 Claude 경로를 아예 안 타게 됐다.
+    #   `_call_claude` 코드는 남겨 뒀고 본선에서 되살릴 수 있으므로 **호출
+    #   형식을 잠그는 이 검사도 남긴다** - 순서만 여기서 준다.
+    live = replace(ex.settings, mock_mode=False, anthropic_api_key="sk-ant-test",
+                   extractor_order=("claude",))
     monkeypatch.setattr(ex, "settings", live)
 
 
@@ -118,7 +123,8 @@ def test_image_only_input_without_llm_degrades_cleanly(monkeypatch):
     from dataclasses import replace
     import sourcing_guard.extractor as ex
 
-    no_key = replace(ex.settings, anthropic_api_key=None, mock_mode=False)
+    no_key = replace(ex.settings, anthropic_api_key=None, mock_mode=False,
+                     extractor_order=("claude",))
     monkeypatch.setattr(ex, "settings", no_key)
     facts = extract("", images=[{"media_type": "image/png", "data": "aGVsbG8="}])
     assert isinstance(facts, ProductFacts)

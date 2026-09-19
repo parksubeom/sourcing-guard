@@ -54,7 +54,10 @@ def _live(monkeypatch):
     import sourcing_guard.extractor as ex
 
     monkeypatch.setattr(
-        ex, "settings", replace(ex.settings, mock_mode=False, anthropic_api_key="sk-ant-test")
+        # ⚠ 순서 명시 - 기본값이 `gpt` 한 벌이 됐다 (2026-09-20 · R7 개정).
+        ex, "settings", replace(ex.settings, mock_mode=False,
+                                anthropic_api_key="sk-ant-test",
+                                extractor_order=("claude",))
     )
 
 

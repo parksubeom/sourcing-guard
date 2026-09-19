@@ -55,18 +55,41 @@ def _no_live_government_api(monkeypatch):
 
 # ── /healthz ────────────────────────────────────────────────────────
 def test_healthz_exposes_model_names_not_keys():
-    """이름은 낸다. 키는 절대 내지 않는다."""
+    """이름은 낸다. 키는 절대 내지 않는다.
+
+    ⚠ 벤더 이름을 손으로 적지 않는다. **순서에 든 것만** 나오는 것이 규칙이라
+      `settings.extractor_order` 에서 온다 - 손으로 적으면 순서가 바뀔 때
+      한쪽만 고쳐진다 (§6).
+    """
+    from sourcing_guard.config import settings
+
     body = client.get("/healthz").json()
     ex = body["extraction"]
 
-    assert ex["claude_model"], "claude 모델 이름이 없다"
-    assert ex["gpt_model"], "gpt 모델 이름이 없다"
-    # 키 유무는 불리언으로만. 값이 새면 안 된다.
-    assert isinstance(ex["claude_key"], bool)
-    assert isinstance(ex["gpt_key"], bool)
+    assert ex["order"] == list(settings.extractor_order)
+    for vendor in settings.extractor_order:
+        assert ex[f"{vendor}_model"], f"{vendor} 모델 이름이 없다"
+        # 키 유무는 불리언으로만. 값이 새면 안 된다.
+        assert isinstance(ex[f"{vendor}_key"], bool)
     blob = str(body)
     for secretish in ("sk-", "sk-ant-"):
         assert secretish not in blob, "키가 응답에 섞였다"
+
+
+def test_healthz_says_nothing_about_a_vendor_we_do_not_use():
+    """⚠⚠ **쓰지 않는 것의 준비 상태를 초록으로 적지 않는다** (§9).
+
+    2026-09-20 까지 `claude_key: true` 를 냈는데 그때 키는 있고 **잔액이 0** 이고
+    순서에서도 빠져 있었다. `true` 가 "쓸 수 있다" 로 읽힌다 - `/healthz` 를
+    여는 사람에게 없는 안전망을 있다고 말하는 것이다.
+    """
+    from sourcing_guard.config import settings
+
+    ex = client.get("/healthz").json()["extraction"]
+    unused = {"gpt", "claude"} - set(settings.extractor_order)
+    for vendor in unused:
+        assert f"{vendor}_key" not in ex, f"안 쓰는 {vendor} 의 키 상태를 내보낸다"
+        assert f"{vendor}_model" not in ex, f"안 쓰는 {vendor} 의 모델을 내보낸다"
 
 
 def test_healthz_exposes_the_latest_recall_publication_date():

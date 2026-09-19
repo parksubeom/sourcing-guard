@@ -158,6 +158,14 @@ def test_the_landing_reads_the_same_baseline(path: Path):
     assert path.exists()
 
 
+#: 런타임 벤더 이름이 제출문에 어떻게 적히는가.
+#:
+#: ⚠ **개발 도구와 가른다.** 그냥 "Claude" 로 보면 개발 도구 언급
+#:   ("Claude Code")에 걸려, 런타임에서 빠졌는데도 통과한다 - 2026-09-20 에
+#:   실제로 그랬다.
+_RUNTIME_NAME = {"gpt": "GPT", "claude": "Claude Sonnet"}
+
+
 def test_the_draft_names_the_extractors_we_actually_use():
     """⚠⚠ **제출문이 사실과 달랐다 (2026-09-14).**
 
@@ -180,7 +188,19 @@ def test_the_draft_names_the_extractors_we_actually_use():
             continue
         assert settings.gpt_model in body, (
             f"{label}: 기준 추출기 모델 {settings.gpt_model} 이 없다")
-        assert "Claude" in body, f"{label}: 2순위 벤더가 없다"
+        # ⚠⚠ **2026-09-20 에 같은 결함이 반대 방향으로 났다.** R7 이 개정돼
+        #   런타임 벤더가 GPT 한 벌이 됐는데 전에 있던 `"Claude" in body` 는
+        #   계속 **통과했다** - 개발 도구 언급("Claude Code")에 걸린 것이다.
+        #   제출문이 "두 벌" 이라 말하는 동안 코드는 한 벌이었는데 못 잡았다.
+        #   그래서 기대값을 `settings.extractor_order` 에서 얻고, 런타임 표기만
+        #   본다(개발 도구와 가르기 위해).
+        for vendor in set(settings.extractor_order):
+            assert _RUNTIME_NAME[vendor] in body, (
+                f"{label}: 쓰는 벤더 {_RUNTIME_NAME[vendor]} 가 없다")
+        for vendor in set(_RUNTIME_NAME) - set(settings.extractor_order):
+            assert _RUNTIME_NAME[vendor] not in body, (
+                f"{label}: 쓰지 않는 {_RUNTIME_NAME[vendor]} 를 쓴다고 적었다 - "
+                "심사위원이 /healthz 를 열면 바로 보인다 (§9)")
         assert BASELINE_EXTRACTOR.upper() in body, f"{label}: 어느 쪽이 기준인지 없다"
         # ⚠ **벤더 이름을 빼고 막는다.** "Claude 하나로 통일" 만 막으면
         #   "GPT 하나로 통일" 로 바꿔 적어도 통과한다 - 우리가 겪은 거짓은
@@ -189,14 +209,22 @@ def test_the_draft_names_the_extractors_we_actually_use():
             assert gone not in body, f"{label}: 사실과 다른 문장이 돌아왔다 {gone!r}"
 
 
-def test_the_draft_discloses_the_second_transfer_path():
-    """⚠ 벤더가 둘이면 **국외 전송 경로도 둘**이다 (R7).
+def test_the_draft_says_how_many_places_the_data_goes():
+    """⚠ 국외 전송 경로 수는 **벤더 수와 같아야** 한다 (R7).
 
-    B2B 납품 심사에서 답해야 하는 항목이라 이득만 적고 대가를 빼면 안 된다.
+    B2B 납품 심사에서 답해야 하는 항목이라 이득만 적고 대가를 빼면 안 되고,
+    **반대로 대가가 줄었는데 안 줄어든 것처럼 적어도 안 된다.** 2026-09-20 에
+    한 벌이 되면서 경로가 하나가 됐다.
     """
+    from sourcing_guard.config import settings
+
     joined = "\n".join(b for k, b in _answer_bodies().items() if "AI 도구" in k)
-    assert "경로가 둘" in joined, "전송 경로가 둘이라는 사실이 안 적혀 있다"
     assert "상세페이지 텍스트" in joined, "무엇을 보내는지 안 적혀 있다"
+    if len(settings.extractor_order) == 1:
+        assert "경로는 **하나**" in joined, "경로가 하나라는 사실이 안 적혀 있다"
+        assert "경로가 둘" not in joined, "경로가 둘이라고 적혀 있다 (벤더는 하나다)"
+    else:
+        assert "경로가 둘" in joined, "전송 경로가 둘이라는 사실이 안 적혀 있다"
 
 
 def _answer_bodies() -> dict[str, str]:
