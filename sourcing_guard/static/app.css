@@ -739,7 +739,14 @@ body.lv2{word-break:keep-all; overflow-wrap:break-word}
 .lv2-foot .row{display:flex; justify-content:space-between; gap:24px; font-size:15px; line-height:22px}
 
 @media (max-width:1000px){
-  .lv2-hero .hero-grid{grid-template-columns:1fr; gap:36px; min-height:0}
+  /* 주의(중요): `1fr` 이 아니라 `minmax(0,1fr)` 이다. `1fr` 은 `minmax(auto,1fr)`
+     이라 칸의 하한이 **글자의 min-content** 가 된다 - 320px 에서 칸이 314.828px
+     로 풀려 24px 여백과 합쳐 339 가 되고 페이지가 19px 밀렸다(실측).
+     글자를 줄이거나 픽셀을 깎는 것으로는 안 고쳐진다. 칸 폭이 글자에서 나오므로
+     그 수는 폰트·기계마다 다르고 방향까지 갈린다 (미완 §1-l).
+     하한을 0 으로 내리면 칸이 컨테이너 안에 갇힌다. 360px 이상에서는 가용 폭이
+     min-content 보다 넓어 **아무것도 안 바뀐다** - 재서 확인했다. */
+  .lv2-hero .hero-grid{grid-template-columns:minmax(0,1fr); gap:36px; min-height:0}
   .hero-art{min-height:0}
   .hero-art .blob{display:none}
   .lv2 .tiles,.lv2 .two,.lv2 .band,.lv2 .figs{grid-template-columns:1fr; gap:16px}
