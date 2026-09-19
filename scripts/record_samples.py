@@ -49,6 +49,7 @@ import httpx  # noqa: E402
 
 _ROOT = Path(__file__).resolve().parents[1]
 _OUT = _ROOT / "sourcing_guard" / "data" / "experience_samples.json"
+_COMPARE = _ROOT / "sourcing_guard" / "data" / "compare_cut.json"
 _SAMPLES = (
     _ROOT / "tests/fixtures/도매꾹_정제_2026-09-08/상세.json",
     _ROOT / "tests/fixtures/도매꾹_확장_2026-09-08/상세_확장.json",
@@ -115,11 +116,73 @@ def sample_text(title: str, cert_number: str) -> str:
     return f"{title} KC 인증번호 {cert_number}"
 
 
+def record_compare(base: str) -> int:
+    """랜딩의 **대비 한 컷** — "인증번호만 보면 vs 우리".
+
+    ⚠⚠ 두 칸이 **같은 한 번의 응답**에서 나와야 한다. 왼쪽은 우리 결과의 인증
+      축 줄이고 오른쪽은 리콜 축 줄이다. 따로 만들면 "왼쪽은 남의 서비스" 라는
+      뜻이 되는데 우리는 남의 서비스를 재 본 적이 없다 (R5).
+
+    빨강 데모(기차놀이)가 이 이야기 그 자체다 - 인증은 '적합' 인데 2026-07-23
+    에 리콜 공표됐다. 인증번호만 조회하는 셀러는 이것을 놓친다.
+    """
+    from sourcing_guard.demos import DEMOS
+
+    red = next((d for d in DEMOS if d["tone"] == "red"), None)
+    if red is None:
+        print("빨강 데모가 없다", file=sys.stderr)
+        return 2
+
+    with httpx.Client(timeout=120.0) as client:
+        r = client.post(base + "/api/v1/scan", json={"page_text": red["text"]})
+    if r.status_code != 200:
+        print(f"HTTP {r.status_code} {r.text[:200]}", file=sys.stderr)
+        return 1
+    body = r.json()
+
+    def pick(prefixes):
+        return next((f for f in body["findings"]
+                     if f["kind"].startswith(prefixes)), None)
+
+    cert = pick(("kc_verified", "kc_"))
+    recall = pick(("recall_match", "recall_"))
+    if not cert or not recall:
+        print("인증·리콜 줄을 못 찾았다 - 대비 컷을 만들지 않는다", file=sys.stderr)
+        return 2
+
+    payload = {
+        "_기록": (
+            "랜딩 대비 한 컷. scripts/record_samples.py --compare 가 실제 "
+            "/api/v1/scan 응답에서 두 줄을 그대로 옮긴다. 손으로 고치지 않는다."
+        ),
+        "recorded_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "signal": body["signal"],
+        "text": red["text"],
+        "cert": {k: cert.get(k) for k in
+                 ("kind", "signal", "statement_ko", "source_label", "source_url")},
+        "recall": {k: recall.get(k) for k in
+                   ("kind", "signal", "statement_ko", "source_label", "source_url")},
+        "recall_data_as_of": body.get("recall_data_as_of"),
+    }
+    with _COMPARE.open("w", encoding="utf-8", newline="") as fh:
+        fh.write(json.dumps(payload, ensure_ascii=False, indent=1) + "\n")
+    print(f'signal {body["signal"]}')
+    print(f'  인증  {cert["statement_ko"][:88]}')
+    print(f'  리콜  {recall["statement_ko"][:88]}')
+    print(f"→ {_COMPARE}")
+    return 0
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--base", default="http://127.0.0.1:8012")
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--compare", action="store_true",
+                    help="랜딩의 대비 한 컷만 기록한다 (빨강 데모 1회)")
     args = ap.parse_args()
+
+    if args.compare:
+        return record_compare(args.base)
 
     titles = _titles()
     seed = {r["cert_number"] for r in json.loads(

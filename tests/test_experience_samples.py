@@ -251,3 +251,59 @@ def test_the_recorded_results_are_whole_scan_responses():
         result = item["result"]
         for key in ("signal", "headline", "findings", "axes", "meta", "disclaimer"):
             assert key in result, f'{item["cert_number"]} 의 기록본에 {key} 가 없다'
+
+
+# ── 랜딩 대비 한 컷 ──────────────────────────────────────────────────
+def test_the_comparison_cut_comes_from_one_real_scan():
+    """⚠⚠ 두 칸이 **같은 한 번의 응답**에서 나와야 한다.
+
+    따로 만들면 왼쪽이 "남의 서비스" 라는 뜻이 되는데 우리는 남의 서비스를
+    재 본 적이 없다 (R5). 왼쪽은 우리 결과의 인증 축, 오른쪽은 리콜 축이다.
+    """
+    from sourcing_guard.samples import compare_cut
+
+    cut = compare_cut()
+    assert cut, "대비 컷이 없다"
+    assert cut["cert"]["kind"].startswith("kc_"), cut["cert"]["kind"]
+    assert cut["recall"]["kind"].startswith("recall"), cut["recall"]["kind"]
+    # 이야기가 성립하려면 인증은 초록이고 리콜이 빨강이어야 한다.
+    assert cut["cert"]["signal"] == "GREEN", cut["cert"]
+    assert cut["recall"]["signal"] == "RED", cut["recall"]
+    assert cut["signal"] == "RED"
+    for side in ("cert", "recall"):
+        assert cut[side]["statement_ko"], side
+        assert cut[side]["source_url"], f"{side} 에 원문 링크가 없다 (R2)"
+
+
+def test_the_landing_does_not_write_the_comparison_sentences():
+    """문구는 서버가 낸 문장 그대로다. 화면이 사본을 들면 갈린다."""
+    from sourcing_guard.samples import compare_cut
+
+    landing = (_STATIC / "landing.html").read_text(encoding="utf-8")
+    cut = compare_cut()
+    for side in ("cert", "recall"):
+        # 문장의 앞 12자만 봐도 충분하다 - 통째로 박으면 여기서 걸린다.
+        assert cut[side]["statement_ko"][:12] not in landing, (
+            f"landing.html 에 {side} 문장이 박혀 있다")
+
+
+def test_the_landing_never_calls_the_left_side_someone_else():
+    """⚠ 우리는 남의 서비스를 재 본 적이 없다. 그렇게 부르면 지어낸 비교가 된다."""
+    landing = (_STATIC / "landing.html").read_text(encoding="utf-8")
+    for banned in ("다른 서비스", "타 서비스", "경쟁", "일반 조회 서비스"):
+        assert banned not in landing, f"대비 컷이 남의 서비스를 가리킨다: {banned}"
+
+
+def test_the_comparison_section_is_hidden_without_data(monkeypatch, tmp_path):
+    """자료가 없으면 구역째 안 그린다. 빈 껍데기를 만들지 않는다 (R3)."""
+    import sourcing_guard.samples as s
+
+    s.compare_cut.cache_clear()
+    monkeypatch.setattr(s, "COMPARE_PATH", tmp_path / "없는파일.json")
+    try:
+        assert s.compare_cut() is None
+    finally:
+        s.compare_cut.cache_clear()
+
+    landing = (_STATIC / "landing.html").read_text(encoding="utf-8")
+    assert 'id="cmp-sec" hidden' in landing, "대비 구역이 기본 hidden 이 아니다"

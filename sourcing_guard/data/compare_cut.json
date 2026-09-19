@@ -1,0 +1,21 @@
+{
+ "_기록": "랜딩 대비 한 컷. scripts/record_samples.py --compare 가 실제 /api/v1/scan 응답에서 두 줄을 그대로 옮긴다. 손으로 고치지 않는다.",
+ "recorded_at": "2026-09-19T15:22:56+00:00",
+ "signal": "RED",
+ "text": "모형완구 기차놀이 제우스 완구 장난감 KC 인증번호 CB067R317-5002",
+ "cert": {
+  "kind": "kc_verified",
+  "signal": "GREEN",
+  "statement_ko": "인증번호 'CB067R317-5002'가 조회되었습니다(인증상태: 적합). 등록 제품명: 완구",
+  "source_label": "국가기술표준원 안전인증정보 조회",
+  "source_url": "http://www.safetykorea.kr/search/searchPop?certNum=CB067R317-5002"
+ },
+ "recall": {
+  "kind": "recall_match",
+  "signal": "RED",
+  "statement_ko": "인증번호 'CB067R317-5002'가 리콜 공표 목록과 정확 일치합니다 — 리콜된 제품은 '모형완구(완구)'(국내, 2026-07-23 공표), 리콜 쪽 모델명은 '기차놀이' 입니다. 원문 확인이 필요합니다.",
+  "source_label": "리콜 공표 원문",
+  "source_url": "https://www.safetykorea.kr/recall/ajax/recallBoard?recallUid=10022642"
+ },
+ "recall_data_as_of": "20260914"
+}

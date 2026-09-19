@@ -42,7 +42,7 @@ from .models import (
 from .scorer import KST, gov_lookup_state, has_specific_finding, score
 from .demos import DEMOS, DEMO_TEXTS
 from .demos import preview as demo_preview
-from .samples import payload as sample_payload
+from .samples import compare_cut, payload as sample_payload
 
 _log = logging.getLogger(__name__)
 from .ratelimit import RateLimiter, text_fingerprint
@@ -584,7 +584,9 @@ def demos() -> dict:
       부르면 방문마다 LLM 호출이 나가고 투표자가 첫 화면에서 429 를 본다.
       파일이 없으면 `null` 이고, 화면은 그러면 카드를 안 그린다 (R5).
     """
-    return {"items": DEMOS, "preview": demo_preview()}
+    # ⚠ 대비 한 컷도 여기서 보낸다. 랜딩이 이미 이 하나를 부르므로 왕복이
+    #   늘지 않는다 - 첫 화면의 요청 수가 곧 이탈이다.
+    return {"items": DEMOS, "preview": demo_preview(), "compare": compare_cut()}
 
 
 @app.get("/api/v1/samples", include_in_schema=False)

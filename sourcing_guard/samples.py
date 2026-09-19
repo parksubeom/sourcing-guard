@@ -30,6 +30,7 @@ from .baseline import BASELINE, BASELINE_EXTRACTOR
 _log = logging.getLogger(__name__)
 
 SAMPLES_PATH = Path(__file__).resolve().parent / "data" / "experience_samples.json"
+COMPARE_PATH = Path(__file__).resolve().parent / "data" / "compare_cut.json"
 
 #: 카드에 그리는 근거 줄. 인증 축 하나 · 리콜 축 하나면 카드가 말할 것을 다
 #: 말한다. 유해물질 줄은 **수만 적는다** - 열넷을 그대로 그리면 카드가 화면을
@@ -113,4 +114,31 @@ def payload() -> dict[str, Any]:
             "missed": base["missed"],
             "off_target": base["off_target"],
         },
+    }
+
+
+@lru_cache(maxsize=1)
+def compare_cut() -> dict[str, Any] | None:
+    """랜딩의 **대비 한 컷** — "인증번호만 보면 vs 우리".
+
+    ⚠⚠ 두 칸이 **같은 한 번의 응답**에서 나온다. 왼쪽은 우리 결과의 인증 축
+      줄이고 오른쪽은 리콜 축 줄이다. 남의 서비스를 재 본 적이 없으므로
+      왼쪽을 "다른 서비스" 라고 부르지 않는다 (R5) - 화면 문구는 "인증번호만
+      조회하면 여기까지" 다.
+
+    ⚠ 파일이 없으면 `None` 이고 화면은 그 구역을 안 그린다. 빈 껍데기를
+      만들지 않는다.
+    """
+    try:
+        raw = json.loads(COMPARE_PATH.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        _log.warning("대비 컷을 읽지 못했습니다: %s", exc)
+        return None
+    if not raw.get("cert") or not raw.get("recall"):
+        return None
+    return {
+        "signal": raw.get("signal"),
+        "recorded_at": raw.get("recorded_at"),
+        "cert": raw["cert"],
+        "recall": raw["recall"],
     }

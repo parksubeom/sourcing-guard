@@ -1093,3 +1093,23 @@ body{background:var(--bg-page)}
   .sx h1{font-size:24px; line-height:32px}
   .sx-list{grid-template-columns:minmax(0,1fr)}
 }
+
+/* == 대비 한 컷 (랜딩) ================================================
+   "인증번호만 보면 vs 우리". 두 칸 다 **같은 한 번의 응답**에서 온다.
+
+   주의(중요): 왼쪽을 붉게 칠하지 않는다. 왼쪽은 틀린 답이 아니라 **덜 본
+     답**이다 - 인증 축만 보면 초록이 맞다. 오른쪽에만 신호색을 준다. */
+.cmp{display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:16px; margin:20px 0 12px}
+.cmp-col{
+  padding:20px; border:1px solid var(--border-default); border-radius:var(--r-l);
+  background:var(--bg-canvas); min-width:0;
+}
+.cmp-ours{border-color:var(--signal-red); background:var(--signal-red-tint)}
+.cmp-k{font-size:14px; line-height:20px; font-weight:700; color:var(--fg-2); margin-bottom:10px}
+.cmp-ours .cmp-k{color:var(--signal-red-text)}
+.cmp-s{margin:0 0 10px; font-size:16px; line-height:26px; overflow-wrap:anywhere}
+.cmp-note{margin:0; font-size:14px; line-height:22px; color:var(--fg-3)}
+
+@media (max-width:640px){
+  .cmp{grid-template-columns:minmax(0,1fr)}
+}

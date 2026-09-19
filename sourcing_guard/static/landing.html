@@ -102,6 +102,31 @@
     </div>
   </section>
 
+  <!-- 대비 한 컷 — "인증번호만 보면 vs 우리".
+       주의(중요): 문구를 여기 적지 않는다. /api/v1/demos 의 `compare` 가
+         우리 서버가 실제로 낸 **같은 한 번의 응답**에서 두 줄을 준다.
+       주의(중요): 왼쪽을 남의 것이라고 부르지 않는다 - 우리는 남의 도구를 재
+         본 적이 없다. 왼쪽도 우리 결과이고, 다른 것은 **어디까지 보았는가** 다.
+         그래서 "인증번호만 조회하면 여기까지" 로 쓴다. -->
+  <section class="lv2-sec" id="cmp-sec" hidden>
+    <div class="container">
+      <h2>인증번호만 보면 통과합니다</h2>
+      <div class="cmp">
+        <div class="cmp-col">
+          <div class="cmp-k">인증번호만 조회하면</div>
+          <p class="cmp-s" id="cmp-cert"></p>
+          <a class="src" id="cmp-cert-src" target="_blank" rel="noopener"></a>
+        </div>
+        <div class="cmp-col cmp-ours">
+          <div class="cmp-k">저희는 여기까지 봅니다</div>
+          <p class="cmp-s" id="cmp-recall"></p>
+          <a class="src" id="cmp-recall-src" target="_blank" rel="noopener"></a>
+        </div>
+      </div>
+      <p class="cmp-note" id="cmp-note"></p>
+    </div>
+  </section>
+
   <!-- 숫자 하나 -->
   <section class="lv2-sec">
     <div class="container">
@@ -305,12 +330,30 @@
     box.hidden = false;
   }
 
+  /* 대비 한 컷. 두 줄 다 서버가 낸 문장 그대로다 - 여기서 만들지 않는다. */
+  function drawCompare(c) {
+    if (!c || !c.cert || !c.recall) return;      /* 없으면 구역째 안 그린다 */
+    document.getElementById("cmp-cert").textContent = c.cert.statement_ko;
+    document.getElementById("cmp-recall").textContent = c.recall.statement_ko;
+    [["cmp-cert-src", c.cert], ["cmp-recall-src", c.recall]].forEach(function (pair) {
+      var a = document.getElementById(pair[0]);
+      if (pair[1].source_url) {
+        a.href = pair[1].source_url;
+        a.textContent = "원문 · " + (pair[1].source_label || "근거");
+      } else { a.hidden = true; }
+    });
+    document.getElementById("cmp-note").textContent =
+      "같은 상품을 한 번 검사한 결과입니다. 왼쪽은 인증 축, 오른쪽은 리콜 축입니다.";
+    document.getElementById("cmp-sec").hidden = false;
+  }
+
   fetch("/api/v1/demos")
     .then(function (r) { return r.ok ? r.json() : null; })
     .then(function (data) {
       if (!data) return;
       drawDemos((data.items || data) || []);
       drawPreview(data.preview);
+      drawCompare(data.compare);
     })
     .catch(function () { /* 데모가 없어도 소개는 읽힌다 */ });
 
