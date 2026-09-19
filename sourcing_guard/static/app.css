@@ -957,6 +957,12 @@ body{background:var(--bg-page)}
 /* 공급처에 보낼 문안. 복사가 막힌 브라우저에서는 이 블록을 펼쳐 보여 주고
    셀러가 직접 고른다 - 우리가 선택을 대신 잡아 주지 않는다(잴 것이 생긴다). */
 .rv-ask{display:flex; flex-direction:column; gap:10px; padding:16px 0 0}
+/* 근거 원문 묶음. 요약이지 대체가 아니다 - 줄마다 붙은 개별 링크는 그대로 있다. */
+.rv-srcs{padding:16px 0 0; border-top:1px solid var(--border-default); margin-top:16px}
+.rv-srcs-h{font-size:13px; line-height:20px; font-weight:700; color:var(--fg-2); margin-bottom:8px}
+.rv-srcs ul{list-style:none; margin:0; padding:0; display:flex; flex-wrap:wrap; gap:6px 16px}
+.rv-srcs li{min-width:0}
+.rv-srcs a{font-size:13px; line-height:21px; overflow-wrap:anywhere}
 .rv-ask-text{
   margin:0; padding:14px 16px; border:1px solid var(--border-default);
   border-radius:var(--r-m); background:var(--bg-canvas);

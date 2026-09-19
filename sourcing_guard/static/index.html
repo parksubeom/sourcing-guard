@@ -895,6 +895,32 @@
             '<pre class="rv-ask-text" id="ask-text" hidden>' + esc(ask) + "</pre>" +
             "</div>";
 
+    // ⑤-c 근거 원문 묶음. 카드가 건드린 정부 문서를 한 자리에 모은다.
+    //
+    // 주의(중요): **요약이지 대체가 아니다.** 줄마다 붙은 개별 링크는 그대로
+    //   둔다 - 그 줄이 어느 근거에서 왔는지는 그 자리에 있어야 한다 (R2).
+    //   여기 묶음은 "정부 원문으로 확인한다" 를 한눈에 보여 주는 것이다.
+    //
+    // 주의(가장 중요): **목록을 손으로 짜지 않는다.** finding 의 `source_url`
+    //   에서 중복만 지운다. 손으로 적으면 근거가 늘 때 이 묶음만 낡고,
+    //   "정부 원문" 이라고 적힌 자리가 거짓이 된다.
+    var seen = {};
+    var srcs = [];
+    all.forEach(function (f) {
+      if (!f.source_url || seen[f.source_url]) return;
+      seen[f.source_url] = 1;
+      srcs.push({ url: f.source_url, label: f.source_label || "근거 원문" });
+    });
+    if (srcs.length) {
+      html += '<div class="rv-srcs"><div class="rv-srcs-h">근거 원문 ' +
+              srcs.length + "곳</div><ul>" +
+              srcs.map(function (s) {
+                return '<li><a href="' + esc(s.url) + '" target="_blank" ' +
+                       'rel="noopener noreferrer">' + esc(s.label) +
+                       ' ↗<span class="skip"> (새 창)</span></a></li>';
+              }).join("") + "</ul></div>";
+    }
+
     // ⑥ 메타 푸터 + §9 고정 문구 — **이 스캔이 어떻게 나왔는지**를 화면이 말한다.
     //
     // 주의: gov_lookup 의 세 값을 **그대로** 옮긴다. 실패를 ok 로 반올림하지

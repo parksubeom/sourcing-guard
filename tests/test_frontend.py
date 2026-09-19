@@ -939,3 +939,30 @@ def test_the_copy_fallback_needs_no_browser_api(html):
     assert "pre.hidden = false" in block, "실패해도 텍스트를 안 보여 준다"
     for api in ("getSelection", "createRange", "execCommand", "select()"):
         assert api not in block, f"선택을 대신 잡고 있다: {api}"
+
+
+def test_the_source_bundle_is_derived_not_written(html):
+    """⚠⚠ **목록을 손으로 짜지 않는다.**
+
+    근거가 늘 때 이 묶음만 낡으면 "정부 원문으로 확인합니다" 라고 적힌 자리가
+    거짓이 된다. finding 의 `source_url` 에서 중복만 지운다.
+    """
+    block = html[html.index("var seen = {};"):]
+    block = block[: block.index("// ⑥ 메타 푸터")]
+    assert "f.source_url" in block, "묶음이 응답에서 나오지 않는다"
+    assert "seen[f.source_url]" in block, "중복을 안 지운다"
+    # 링크를 하드코딩하지 않는다.
+    assert "https://" not in block and "http://" not in block, (
+        "묶음에 URL 이 박혀 있다 - 서버가 준 것만 쓴다")
+
+
+def test_the_source_bundle_does_not_replace_per_row_links(html):
+    """⚠ 요약이지 **대체가 아니다.** 줄마다 붙은 개별 링크는 그대로 둔다 (R2).
+
+    그 줄이 어느 근거에서 왔는지는 그 자리에 있어야 한다. 묶음만 남기면
+    셀러가 "이 문장의 근거" 를 찾으려면 아래까지 내려가 추측해야 한다.
+    """
+    row = html[html.index("function findingRow("):]
+    row = row[: row.index("\n  }")]
+    assert "srcLink(" in row or "source_url" in row, (
+        "근거 링크가 줄에서 사라졌다 - 묶음이 대체가 됐다")
