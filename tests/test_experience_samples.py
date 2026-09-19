@@ -362,10 +362,13 @@ def _no_comments(text: str) -> str:
 
     ⚠ 주석까지 검사하면 "이 낱말을 쓰지 마라" 라고 적은 주석이 그 검사에
       걸린다. 실제로 두 번 걸렸다.
+
+    ⚠ 오너는 `tests/srccheck.markup_only` 다 (2026-09-20). 여기서 정규식을
+      다시 쓰면 `https://` 를 지우는 함정을 각자 다시 만난다.
     """
-    text = re.sub(r"<!--.*?-->", " ", text, flags=re.S)
-    text = re.sub(r"/\*.*?\*/", " ", text, flags=re.S)
-    return re.sub(r"^\s*//.*$", " ", text, flags=re.M)
+    from tests.srccheck import markup_only
+
+    return markup_only(text)
 
 
 def test_the_misses_page_does_not_hardcode_numbers():

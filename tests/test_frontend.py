@@ -15,6 +15,8 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
+from tests.srccheck import markup_only
+
 STATIC = Path("sourcing_guard/static")
 # ⚠ landing.html 을 넣어야 이모지·h1·고지문·단정 표현 가드가 랜딩에도 걸린다.
 # ⚠ guide.html 도 넣는다 - 이모지·h1·고지문·단정 표현 가드가 새 화면에도
@@ -675,7 +677,7 @@ def test_the_scan_input_says_one_product_at_a_time():
       2개 이상 13건(4.1% · 상한) · 실제 KC 2개 이상 2건(0.6%). 0 이 아니다.
     """
     scan = (STATIC / "index.html").read_text(encoding="utf-8")
-    body = re.sub(r"<!--.*?-->", "", scan, flags=re.S)
+    body = markup_only(scan)
 
     assert "한 상품씩 넣어 주세요" in body, "입력부에 '한 상품씩' 안내가 없다"
     assert "한쪽 기준으로만 결과가 나옵니다" in body, (
@@ -840,8 +842,8 @@ def test_the_fold_label_has_one_owner(html):
     """
     assert "function foldLabel(" in html, "문구 오너가 없다"
     # 주석을 뺀 뒤 센다 - "이 문구를 두 곳에 적지 마라" 라고 적은 주석이
-    # 그 검사에 걸린다 (오늘 두 번 걸린 자리다).
-    code = re.sub(r"^\s*//.*$", " ", html, flags=re.M)
+    # 그 검사에 걸린다 (오늘 두 번 걸린 자리다). 오너는 srccheck 다.
+    code = markup_only(html)
     assert code.count("적용되는 기준 ") == 1, (
         "문구가 두 곳에 적혀 있다 - foldLabel 하나만 두고 두 곳이 부른다")
     # 두 자리가 모두 오너를 부른다.

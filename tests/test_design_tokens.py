@@ -31,8 +31,13 @@ def _strip_comments(text: str) -> str:
       ("app.css 의 `:root{ … }` 블록을 이 파일의 :root 블록으로 바꾼다").
       안 걷으면 첫 `:root{` 가 주석이라 변수를 0개로 센다 - 윈도우 세션이
       토큰을 대조할 때 겪은 것과 **같은 함정**이다(작업로그 09-13 §2.2).
+
+    ⚠ 오너는 `tests/srccheck.markup_only` 다 (2026-09-20). 파일마다 정규식을
+      새로 쓰면 **이 규칙 자체가 다섯 벌**이 된다 (§6).
     """
-    return re.sub(r"/\*.*?\*/", "", text, flags=re.S)
+    from tests.srccheck import markup_only
+
+    return markup_only(text)
 
 
 def _vars_in_root(text: str) -> dict[str, str]:

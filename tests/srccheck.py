@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import ast
 import io
+import re
 import textwrap
 import tokenize as tk
 
@@ -46,3 +47,38 @@ def code_only(src: str) -> str:
             continue
         out.append(tok.string)
     return " ".join(out)
+
+
+#: 마크업·JS 주석. **파이썬은 `code_only`, 마크업은 이것**이다.
+#:
+#: ⚠⚠ 왜 여기 모으나: 2026-09-20 에 같은 함정에 하루 세 번 걸렸는데, 그때마다
+#:   검사 파일 안에 정규식을 새로 썼다. 실측으로 **다섯 벌**이었다 -
+#:   `test_design_tokens` · `test_experience_samples` · `test_frontend` 셋.
+#:   규칙을 적은 주석이 그 규칙에 걸리는 것을 막는 규칙 자체가 다섯 벌이면
+#:   그것이 §6 위반이다.
+#:
+#: ⚠⚠ **`//` 를 줄 끝까지 지우면 `https://` 가 사라진다.** 그러면 금지어가 URL
+#:   뒤에 숨어 검사가 **조용히 통과**한다 - "Claude" 가 "Claude Code" 에 걸려
+#:   런타임 벤더 주장이 한 번도 안 잠겨 있던 것과 같은 모양이다.
+#:   그래서 **앞이 공백이거나 줄머리일 때만** 주석으로 본다.
+#:
+#: ⚠ `(?<![:/])` 만으로는 모자랐다(실측). `http://a//b` 의 **경로 안 `//`** 는
+#:   앞이 `a` 라 그 조건을 통과해, 그 뒤가 통째로 지워졌다 - 지우는 방향만
+#:   다를 뿐 같은 종류의 조용한 제거다.
+_BLOCK_COMMENT = re.compile(r"<!--.*?-->|/\*.*?\*/", re.S)
+_LINE_COMMENT = re.compile(r"(?:(?<=^)|(?<=\s))//[^\n]*", re.M)
+
+
+def markup_only(src: str) -> str:
+    """HTML·CSS·JS 에서 **주석을 뺀 것**. 화면에 실제로 나가는 것만 남는다.
+
+    금지 문자열·중복 검사는 이것을 통해서 본다. 주석까지 보면 "이 낱말을 쓰지
+    마라" 라고 적은 주석이 그 검사에 걸린다.
+
+    ⚠ 원본 간격과 줄 수를 **보존한다**(주석 자리를 공백으로 바꾸지 않고 지운다
+      것이 아니라 빈 문자열로 만든다). 줄 번호가 필요한 호출부는 없다.
+
+    ⚠ `https://` 는 살아남는다 - 위 `_LINE_COMMENT` 주석 참조. 그 보장이
+      `tests/test_srccheck.py` 에 잠겨 있다.
+    """
+    return _LINE_COMMENT.sub("", _BLOCK_COMMENT.sub("", src))
