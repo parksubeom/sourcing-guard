@@ -125,8 +125,52 @@ def main() -> int:
             problems.append(f"{basis[:40]} 에서 빠진 물질: {sorted(missing)}")
 
     # ④ 화면에 있는 §9 고정 문구가 들어 있는가.
+    #
+    # ⚠ 이 글은 우리 화면을 떠나 **공급처에게 간다.** 화면에서는 카드 아래
+    #   고정 문구가 있지만 복사본에는 안 따라간다 - 셀러의 주장으로 읽히는
+    #   글에서 빠지면 §9 가 막으려던 바로 그 자리다.
     if result.get("disclaimer") and result["disclaimer"] not in text:
         problems.append("§9 고정 문구가 문안에 없다")
+
+    # ⑤ **완전 검사** - 틀 문자열 말고 서버가 안 준 문장이 하나도 없는가.
+    #
+    # ⚠⚠ ①~③ 은 "인용한 줄이 진짜인가" 만 본다. 이것은 반대로 **모든 줄**을
+    #   분류해서, 어느 쪽에도 안 들어가는 줄이 있으면 실패한다. 우리가 문장을
+    #   지어내면 여기서 걸린다 - 그게 §3 설계의 전부다.
+    frame = {
+        "아래는 공개된 정부 데이터에서 확인한 내용입니다.",
+        "확인이 필요한 항목의 서류를 보내 주실 수 있을까요?",
+    }
+    bases = set(by_basis)
+    subs = set()
+    for v in by_basis.values():
+        subs |= v
+    for line in text.splitlines():
+        t = line.strip()
+        if not t or t in frame:
+            continue
+        if t.endswith("사입을 검토 중입니다."):          # 틀 - 상품명 + 고정 꼬리
+            continue
+        if t.startswith("- ") and (t[2:] in said or
+                                   t[2:].startswith("적용되는 유해물질 기준 ")):
+            continue
+        if t.startswith("근거:"):
+            continue
+        if t.startswith("· ") and t[2:] in bases:
+            continue
+        if all(x.strip() in subs for x in t.split(",") if x.strip()):
+            continue                                    # 물질 목록 줄
+        if t.startswith("(안심 소싱 돋보기 ") and t.endswith("검사)"):
+            continue
+        if t == (result.get("disclaimer") or ""):
+            continue
+        problems.append(f"어디서 왔는지 모르는 줄: {t[:70]}")
+
+    # ⑥ 물질이 **한 줄인가 열네 줄인가** - 길이를 줄일 자리가 있는지 (총괄 질문)
+    sub_lines = [ln for ln in text.splitlines()
+                 if ln.startswith("    ") and ln.strip()]
+    print(f"물질 줄 {len(sub_lines)}개 · 물질 {len(subs)}종 "
+          f"→ {'한 줄로 모임' if len(sub_lines) < len(subs) else '물질마다 한 줄'}")
 
     print(f"문안 {len(text.splitlines())}줄 · 인용된 문장 {quoted} / "
           f"응답 문장 {len(said)} · 근거 조항 {len(by_basis)}")
