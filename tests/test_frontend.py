@@ -1108,14 +1108,21 @@ def test_the_same_number_has_the_same_name_on_every_screen():
     assert "등급을 붙인 수" not in landing, "옛 라벨이 남아 있다"
 
 
-def test_the_guide_defines_matching_before_using_it():
-    """낱말을 피해 다니는 것보다 **한 번 정의하고 계속 쓰는** 쪽이 낫다."""
+def test_the_guide_needs_no_word_it_has_to_define():
+    """⚠⚠ 이 검사는 **뜻이 뒤집혔다** (2026-09-20 총괄).
+
+    전에는 "낱말을 피해 다니는 것보다 한 번 정의하고 계속 쓰는 쪽이 낫다" 며
+    「매칭」을 일곱 단락으로 정의했다. 그런데 **낱말 하나를 설명하려고 일곱
+    단락을 쓰는 페이지는 안 읽힌다** - 그게 그 화면의 제일 큰 문제였다.
+
+    표를 내리면서 그 낱말을 쓸 자리가 없어졌다. 이제는 **정의가 필요한 낱말을
+    아예 안 쓴다** - "저희가 찾은 품목" 으로 말한다. 그쪽이 더 강하다.
+    """
     guide = markup_only((STATIC / "guide.html").read_text(encoding="utf-8"))
-    assert "<dt>“매칭”</dt>" in guide, "「매칭」 정의가 없다"
-    assert "매칭은 판정이 아닙니다" in guide, "매칭이 판정이 아니라는 말이 없다"
-    assert guide.count("<dt>") == 7, f"「읽는 법」 항목이 7개가 아니다: {guide.count('<dt>')}"
-    for head in ("매칭된 수", "매칭된 품목", "그 품목의 등급", "근거 · 담당 부처"):
-        assert head in guide, f"표 머리말에 '{head}' 가 없다"
+    js = markup_only((STATIC / "guide.js").read_text(encoding="utf-8"))
+    assert "매칭" not in guide and "매칭" not in js, "정의가 필요한 낱말이 돌아왔다"
+    assert "<dt>" not in guide, "「읽는 법」 단락이 돌아왔다"
+    assert "찾은 품목" in js, "우리가 한 일을 쉬운 말로 안 적는다"
 
 
 def test_the_guide_drops_the_words_only_we_understand():
@@ -1416,7 +1423,10 @@ _HERO_CHIPS = {
     "unknown.html": "모름 안내",
     "samples.html": "기록본 · 기간만료·취소 포함",
     "misses.html": "사람이 전수 검수",
-    "guide.html": "상품명을 실제로 넣어 본 결과",
+    # ⚠ 2026-09-20 에 이 화면이 표에서 검색으로 바뀌면서 제목도 바뀌었다
+    #   (「카테고리 가이드」 → 「내 카테고리가 되나요?」). 칩은 내비 라벨과
+    #   같은 말이 됐다 - 어느 화면인지 말하는 자리라 그게 맞다.
+    "guide.html": "다루는 범위",
 }
 
 
@@ -1453,8 +1463,7 @@ def test_every_screen_starts_with_a_hero(pages):
 
     # ⚠ 칩이 **페이지 이름으로 되돌아가지 않는지**. 그렇게 되면 제목과 같아진다.
     for name, banned in (("samples.html", "체험 표본"),
-                         ("misses.html", "우리가 틀린 것"),
-                         ("guide.html", "카테고리 가이드")):
+                         ("misses.html", "우리가 틀린 것")):
         body = markup_only(pages[name])
         assert f'<span class="eyebrow">{banned}</span>' not in body, (
             f"{name}: 칩이 페이지 이름으로 되돌아갔다 - 제목과 같은 글자다")

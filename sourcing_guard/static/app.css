@@ -1147,8 +1147,8 @@ body{background:var(--bg-page)}
    기본이 inline + 밑줄이라 글자가 상자 위쪽에 붙고 밑줄이 남는다.
    실측: 저장소에서 `<a class="btn-t">` 는 samples.js 한 곳뿐이다 -
    **앵커에만** 건다. 버튼 쪽은 원래대로 둔다. */
-a.btn-t{display:inline-flex; align-items:center; justify-content:center;
-        text-decoration:none}
+a.btn-t, a.btn{display:inline-flex; align-items:center; justify-content:center;
+               text-decoration:none}
 
 .rv-ask{display:flex; flex-direction:column; gap:10px; padding:16px 0 0}
 /* 근거 원문 묶음. 요약이지 대체가 아니다 - 줄마다 붙은 개별 링크는 그대로 있다. */
@@ -1246,6 +1246,39 @@ a.btn-t{display:inline-flex; align-items:center; justify-content:center;
         background:var(--bg-subtle); border-radius:var(--r-l)}
 .uk-end p{margin:0; font-size:15px; line-height:24px; color:var(--fg-2)}
 .uk-cta{padding-top:6px}
+
+/* 다루는 범위 - 검색 하나, 답 하나 (2026-09-20).
+   주의(중요): 표를 내리면서 `.gd-tbl`·`.gd-sum`·`.gd-read` 규칙은 **남겨 뒀다.**
+     `/api/v1/guide` 와 TSV 가 그대로라 표를 다시 그릴 일이 생길 수 있고,
+     CSS 를 지우는 것은 되돌리기 비싼 쪽이다. */
+.gd-ask{display:flex; flex-direction:column; gap:8px; margin:24px 0 12px}
+.gd-ask input{
+  width:100%; padding:14px 16px; font:inherit; font-size:17px;
+  border:1.5px solid var(--border-default); border-radius:var(--r-l);
+  background:var(--bg-canvas); color:var(--fg-1);
+}
+.gd-ask input:focus{outline:2px solid var(--brand); outline-offset:2px}
+.gd-hint{margin:0 0 20px; display:flex; flex-wrap:wrap; gap:8px; align-items:center;
+         font-size:14px; color:var(--fg-3)}
+.gd-chip{
+  padding:6px 12px; border-radius:999px; border:1px solid var(--border-default);
+  background:var(--bg-canvas); color:var(--fg-2); font:inherit; font-size:14px;
+  cursor:pointer;
+}
+.gd-chip:hover{border-color:var(--brand); color:var(--brand)}
+.gd-a{padding:20px 22px; border-radius:var(--r-l); background:var(--bg-card);
+      border-left:3px solid var(--border-default); margin-bottom:12px}
+.gd-a.ok{border-left-color:var(--brand)}
+.gd-a h2{margin:0 0 8px; font-size:19px; line-height:28px; font-weight:600}
+.gd-a p{margin:0 0 8px; font-size:15px; line-height:24px; color:var(--fg-2)}
+.gd-go{margin:14px 0 0}
+.gd-also{margin:0 0 20px; padding:14px 18px; border-radius:var(--r-m);
+         background:var(--signal-amber-tint); color:var(--fg-1);
+         font-size:14px; line-height:22px}
+.gd-scope{margin-top:32px; padding:20px 22px; border-radius:var(--r-l);
+          background:var(--bg-subtle)}
+.gd-scope h2{margin:0 0 10px; font-size:16px; line-height:24px; font-weight:600}
+.gd-scope p{margin:0 0 6px; font-size:15px; line-height:24px; color:var(--fg-2)}
 
 /* 대량 검사 - 붙여넣기 칸과 가이드를 나란히 (시안 화면4). 좁아지면 한 단이
    되고 가이드가 아래로 내려간다 - 폰에서는 입력이 먼저 보여야 한다. */
