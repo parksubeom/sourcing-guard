@@ -88,9 +88,31 @@ v1 에서 뺐고(핸드오프 §3.4 - 투표자가 확장을 설치할 리 없�
   그래서 웹폰트·CDN 을 표에 넣지 않는다. 넣으면 `ensure_allowed` 가 서버에서
   그 호스트로 나가는 것을 허용하게 되고, 그건 우리가 원한 적이 없는 일이다.
 
-  ⚠ 대신 **브라우저가 받는 곳도 기록은 남긴다.** 지금은 둘이다:
+  ⚠ 대신 **브라우저가 받는 곳도 기록은 남긴다.** 지금은 셋이다:
 
-      fonts.googleapis.com · fonts.gstatic.com   Gowun Dodum · Noto Sans KR
+      fonts.googleapis.com · fonts.gstatic.com   Noto Sans KR (본문)
+      cdn.jsdelivr.net                           Pretendard Variable (제목)
+
+  ⚠⚠ `cdn.jsdelivr.net` 는 2026-09-20 에 늘렸다. **표를 먼저 고치고 코드를
+    고쳤다** (총괄 지시 순서). 고른 경로와 근거:
+
+        https://cdn.jsdelivr.net/npm/pretendard@1.3.9/dist/web/variable/
+          pretendardvariable-dynamic-subset.css
+
+        · **npm 경로**다. `gh` 경로의 같은 CSS 는 폰트를 `../../../packages/…`
+          로 가리켜 경로가 저장소 밖으로 나간다 - 둘 다 200 이지만 npm 쪽이
+          `./woff2-dynamic-subset/…` 로 곧다 (실측)
+        · **variable · dynamic subset** 이다. 정적판 CSS 는 613KB 인데
+          가변판은 56KB 이고, 쓰는 글자가 든 조각만 받는다 (실측)
+        · 버전을 **박는다**(`@1.3.9`). 안 박으면 최신이 바뀔 때 화면이
+          말없이 달라진다 (2026-09-20 확인: 1.3.9 가 최신)
+
+    글꼴 이름은 **`Pretendard Variable`** 이다. `Pretendard` 가 아니다 -
+    가변판 `@font-face` 가 그 이름으로 선언한다(실측).
+
+  ⚠ 같은 사실을 `design/README.md:70` 이 이미 적고 있다("Google Fonts 는
+    사용자 브라우저가 요청한다. 서버는 나가지 않으므로 R4 와 무관하다").
+    **두 곳에 있으므로 한쪽을 고칠 때 나머지를 같이 본다** (미완 §1-aa).
 
   새 호스트를 브라우저 쪽에 더할 때 물을 것 - **투표 기간에 그 호스트가
   죽으면 화면이 어떻게 보이나.** 폰트는 대체 글꼴로 떨어지므로 견딜 만하고,

@@ -100,15 +100,26 @@ def test_the_signal_colours_exist_and_unknown_stays_grey():
 
 @pytest.mark.parametrize("name", _SCREENS)
 def test_every_screen_links_the_fonts_and_favicon(name: str):
-    """네 화면이 같은 폰트·파비콘을 쓴다 (README 8-3)."""
+    """네 화면이 같은 폰트·파비콘을 쓴다 (README 8-3).
+
+    ⚠ 2026-09-20 에 제목 글꼴이 고운돋움 → Pretendard 로 바뀌었다. 본문은
+      Noto Sans KR 그대로다 - **둘 다** 걸려 있어야 한다.
+    """
     html = (_STATIC / name).read_text(encoding="utf-8")
-    assert "fonts.googleapis.com/css2?family=Gowun+Dodum" in html, f"{name}: 폰트 링크 없음"
+    assert "fonts.googleapis.com/css2?family=Noto+Sans+KR" in html, (
+        f"{name}: 본문 글꼴 링크 없음")
+    assert "cdn.jsdelivr.net/npm/pretendard@" in html, f"{name}: 제목 글꼴 링크 없음"
+    # ⚠ 버전을 박는다. 안 박으면 최신이 바뀔 때 화면이 말없이 달라진다.
+    import re as _re
+    assert _re.search(r"pretendard@\d+\.\d+\.\d+/", html), (
+        f"{name}: Pretendard 버전이 안 박혀 있다")
     assert 'href="/static/favicon.svg"' in html, f"{name}: 파비콘 없음"
     # ⚠ 폰트는 app.css 보다 **먼저** 요청돼야 한다 - 나중이면 첫 그림에서 기본
     #   서체로 한 번 그려졌다가 바뀐다.
-    assert html.index("fonts.googleapis.com") < html.index("app.css"), (
-        f"{name}: 폰트 링크가 app.css 뒤에 있다"
-    )
+    for host in ("fonts.googleapis.com", "cdn.jsdelivr.net"):
+        assert html.index(host) < html.index("app.css"), (
+            f"{name}: {host} 링크가 app.css 뒤에 있다"
+        )
 
 
 def test_the_favicon_is_actually_there():
@@ -290,7 +301,7 @@ def test_the_browser_side_hosts_are_written_down_in_r4():
     for f in sorted((root / "sourcing_guard/static").glob("*.html")):
         body = _strip_comments(f.read_text(encoding="utf-8"))
         hosts |= set(_re.findall(r'<link[^>]+href="https://([a-z0-9.-]+)', body))
-    assert hosts == {"fonts.googleapis.com", "fonts.gstatic.com"}, (
+    assert hosts == {"fonts.googleapis.com", "fonts.gstatic.com", "cdn.jsdelivr.net"}, (
         f"브라우저가 받는 곳이 늘었다: {sorted(hosts)} - CLAUDE.md R4 를 먼저 고치세요")
 
     rules = (root / "CLAUDE.md").read_text(encoding="utf-8")

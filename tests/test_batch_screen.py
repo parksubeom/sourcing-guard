@@ -218,7 +218,12 @@ def test_xlsx_is_explained_not_parsed():
     """
     js = _js()
     assert "xlsx" in js and "엑셀 파일은 열을 복사해" in js, "엑셀 안내가 없다"
-    for banned in ("jszip", "xlsx.full", "sheetjs", "cdn.", "unpkg", "jsdelivr"):
+    # ⚠ 막는 것은 **라이브러리**다. 2026-09-20 에 제목 글꼴을 CDN 에서 받으면서
+    #   `cdn.`·`jsdelivr` 를 넓게 막던 줄이 그 `<link>` 에 걸렸다 - 검사가
+    #   규칙보다 넓었다(같은 날 폰트 검사에서 겪은 것과 같은 모양이다).
+    #   스크립트가 밖에서 오는지는 `test_the_screen_still_loads_no_external_script`
+    #   가 `<script src>` 로 정확히 본다.
+    for banned in ("jszip", "xlsx.full", "sheetjs", "xlsx.js", "exceljs"):
         assert banned not in js.lower(), f"외부 라이브러리를 끌어온다: {banned}"
 
 

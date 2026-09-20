@@ -109,7 +109,18 @@
   --shadow-2:0 6px 20px rgba(30,25,50,.10);
 
   /* ── 글꼴 ── */
-  --font-display:"Gowun Dodum","Apple SD Gothic Neo","Malgun Gothic",sans-serif;   /* 제목 · 워드마크 */
+  /* 제목 · 워드마크. 2026-09-20 에 고운돋움 → Pretendard 700.
+     주의(중요): 이름이 **"Pretendard Variable"** 이다. 가변판
+       @font-face 가 그 이름으로 선언한다(실측) - "Pretendard" 만
+       적으면 CDN 글꼴이 안 걸리고 로컬에 깔린 사람만 본다.
+       뒤의 "Pretendard" 는 로컬 설치판용 폴백이다.
+     주의(중요): 고운돋움을 버린 이유 - 굵기가 400 하나뿐이라
+       시안의 굵은 제목이 안 나온다. 고운돋움을 고른 근거였던
+       "캐릭터와 같은 온도"(README:69)는 **마스코트를 112 → 225 로**
+       키우면서 그림이 직접 맡는다 - 온도를 잃는 것이 아니라
+       글꼴에서 캐릭터로 옮기는 것이다 (총괄 판정).
+     주의: 본문은 Noto Sans KR 그대로다. 바꾼 것은 제목뿐이다. */
+  --font-display:"Pretendard Variable","Pretendard","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
   --font-body:"Noto Sans KR",-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
   --font-mono:ui-monospace,Menlo,Consolas,monospace;
 
@@ -219,9 +230,21 @@ header.masthead{border-bottom:1px solid var(--border-default); background:var(--
 
 /* ── hero / intro ─────────────────────────────────────── */
 .intro{background:var(--bg-muted); padding:var(--s10) 0}
-.intro h2{margin:0 0 var(--s3); font-size:32px; line-height:1.3; letter-spacing:-.01em}
-.intro p{margin:0; font-size:19px; color:var(--fg-2); max-width:62ch}
-@media (max-width:640px){ .intro{padding:var(--s8) 0} .intro h2{font-size:24px} .intro p{font-size:17px} }
+/* 주의(가장 중요): **랜딩 히어로와 같은 눈금이다** (2026-09-20 총괄).
+   전에는 32px 이었고 랜딩은 60px 이라, 같은 제품이 두 벌로 보였다 -
+   주 버튼에서 이미 적어 둔 원칙인데(`.lv2 .btn-primary` 주석) 제목에는
+   적용을 안 했다. 시안을 재 보니 시안도 60px 이었다.
+   주의: 값을 여기서 새로 정하지 않았다. `.hero-say h1`(60/72) ·
+     `.hero-say .lead`(20/32)와 같은 수이고, 좁은 폭 분기도 같이 맞춘다
+     (`.hero-say h1` 40/48). 두 곳이 갈리면 §6 이다. */
+.intro h2{margin:0 0 var(--s3); font-family:var(--font-display); font-weight:700;
+          font-size:60px; line-height:72px; letter-spacing:-.015em}
+.intro p{margin:0; font-size:20px; line-height:32px; color:var(--fg-2); max-width:62ch}
+@media (max-width:640px){
+  .intro{padding:var(--s8) 0}
+  .intro h2{font-size:40px; line-height:48px}
+  .intro p{font-size:18px; line-height:30px}
+}
 
 main{padding:var(--s10) 0 var(--s16)}
 section+section{margin-top:var(--s10)}
@@ -671,7 +694,7 @@ body.lv2{word-break:keep-all; overflow-wrap:break-word}
   font-size:15px; line-height:20px; font-weight:700; color:var(--brand);
 }
 .hero-say h1{
-  margin:0; font-family:var(--font-display); font-weight:400;
+  margin:0; font-family:var(--font-display); font-weight:700;
   font-size:60px; line-height:72px; letter-spacing:-.015em;
 }
 /* 둘째 줄만 브랜드색 (시안 §1 의 큰 제목 처리). 색만 다르고 글자는 그대로다 -
@@ -961,7 +984,8 @@ body{background:var(--bg-page)}
              transparent 100%);
   padding:var(--s8) 0 var(--s6);
 }
-.intro h2{font-family:var(--font-display); font-weight:400}
+/* 주의: 굵기는 위 `.intro h2` 가 700 으로 정한다. 여기서 400 으로
+   되돌리면 뒤에 오는 이 규칙이 이겨서 제목이 얇아진다 - 실제로 그랬다. */
 .intro h2 .ask{color:var(--brand)}
 .intro-grid{display:grid; grid-template-columns:minmax(0,1fr) auto; gap:24px;
             align-items:center}
@@ -983,7 +1007,20 @@ body{background:var(--bg-page)}
      조용히 사라진다 - `test_no_old_variable_name_disappeared` 가 잡았다.
      기본이 `none` 이면 그림만 안 보이고 자리는 남는다. */
   --art:none;
-  width:132px; height:112px;
+  /* 주의(중요): 시안 실측 225px (이미지 154px × 1280/877 환산). 제목을
+     60px 두 줄로 같이 키워야 시안 §13 의 금지("캐릭터가 텍스트보다 크게
+     보이는 구성")에 안 걸린다 - 마스코트만 키우면 걸린다.
+     주의(가장 중요): §13 은 Hero 96~140px 을 권고한다. **넘기기로 정했고
+       그 사실을 여기 적는다** (R5-b ③ - 우리가 정한 것이지 시안 근거가
+       아니다). 근거는 시안 **이미지**가 문서를 넘는다는 것이고, 어느 쪽이
+       기준인지는 시피님 판단이다. */
+  /* 주의(가장 중요): **225 가 아니라 181 이다.** 총괄 지시는 225px 인데,
+     그 수는 시안의 **전신** 마스코트(세로로 긴 1:1.46)를 잰 것이고 우리
+     자산 `look.png` 는 112x113 의 거의 정사각이다. 칸을 180x225 로 잡으면
+     `contain` 이 180x181 로 그리고 **44px 이 빈 칸으로 남는다** - 코드가
+     안 그리는 크기를 적고 있는 셈이다. 그려지는 수를 적는다.
+     225 를 채우려면 **전신 원본이 필요하다** (미완 §1-ab). */
+  width:180px; height:181px;
   background:var(--art) center/contain no-repeat;
 }
 /* 말풍선. 꼬리는 테두리 없이 바탕색만 - 1px 테두리에 꼬리를 그리면 이음매가

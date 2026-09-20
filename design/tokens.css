@@ -89,7 +89,18 @@
   --shadow-2:0 6px 20px rgba(30,25,50,.10);
 
   /* ── 글꼴 ── */
-  --font-display:"Gowun Dodum","Apple SD Gothic Neo","Malgun Gothic",sans-serif;   /* 제목 · 워드마크 */
+  /* 제목 · 워드마크. 2026-09-20 에 고운돋움 → Pretendard 700.
+     주의(중요): 이름이 **"Pretendard Variable"** 이다. 가변판
+       @font-face 가 그 이름으로 선언한다(실측) - "Pretendard" 만
+       적으면 CDN 글꼴이 안 걸리고 로컬에 깔린 사람만 본다.
+       뒤의 "Pretendard" 는 로컬 설치판용 폴백이다.
+     주의(중요): 고운돋움을 버린 이유 - 굵기가 400 하나뿐이라
+       시안의 굵은 제목이 안 나온다. 고운돋움을 고른 근거였던
+       "캐릭터와 같은 온도"(README:69)는 **마스코트를 112 → 225 로**
+       키우면서 그림이 직접 맡는다 - 온도를 잃는 것이 아니라
+       글꼴에서 캐릭터로 옮기는 것이다 (총괄 판정).
+     주의: 본문은 Noto Sans KR 그대로다. 바꾼 것은 제목뿐이다. */
+  --font-display:"Pretendard Variable","Pretendard","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
   --font-body:"Noto Sans KR",-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
   --font-mono:ui-monospace,Menlo,Consolas,monospace;
 

@@ -106,10 +106,37 @@ def test_the_body_font_is_the_token_and_the_gov_design_font_is_gone():
     assert "font-family:var(--font-body)" in decls.replace(" ", ""), decls
 
     # 주석 안 언급까지 잡으면 근거 기록을 지우게 된다 - 코드에서만 센다.
+    #
+    # ⚠⚠ **막는 것은 `Pretendard GOV` 다. 맨 `Pretendard` 가 아니다**
+    #   (2026-09-20에 좁혔다). 규칙도 주석도 이 검사의 **이름까지** 전부
+    #   「GOV」·「공공 디자인 시스템 폰트」라고 적고 있는데, 단정 한 줄만
+    #   `"Pretendard"` 로 넓게 잡혀 있었다:
+    #
+    #       design/README.md:69   공공 디자인 시스템 폰트(Pretendard GOV)
+    #       app.css 머리 주석      정부 식별 요소 … 공공 디자인 시스템 폰트
+    #       이 함수 이름          ..._the_gov_design_font_is_gone
+    #
+    #   둘은 다른 글꼴이다 - 맨 Pretendard 는 SIL OFL 이고 한국 서비스의
+    #   기본 UI 글꼴이라 정부로 안 읽힌다. GOV 는 "공공 서비스 환경에 적합"
+    #   이라고 스스로 적는 별도 변형판이다.
+    #   우리가 막으려던 것은 **정부 식별 요소**이고 그건 GOV 판이다.
+    #
+    # ⚠ 넓은 쪽이 안전해 보여 되돌리고 싶어진다. 그러면 시안이 권하는
+    #   글꼴을 우리 규칙에 없는 이유로 못 쓰게 된다 - 실제로 그렇게 보고한
+    #   적이 있다.
+    gov = re.compile(r"pretendard[\s_-]*gov", re.I)
     for name in _SRC_FILES:
         text = (_STATIC_DIR / name).read_text(encoding="utf-8")
         code = re.sub(r"/\*.*?\*/|<!--.*?-->", "", text, flags=re.S)
-        assert "Pretendard" not in code, f"{name} 에 공공 디자인 시스템 폰트가 남아 있다"
+        hit = gov.search(code)
+        assert not hit, f"{name} 에 공공 디자인 시스템 폰트가 있다: {hit.group(0)}"
+
+    # ⚠ 반대 방향 - 좁힌 검사가 GOV 를 **여전히 막는지** 실제로 재 본다.
+    for shape in ("Pretendard GOV", "PretendardGOV", "pretendard-gov",
+                  'font-family:"Pretendard GOV"'):
+        assert gov.search(shape), f"좁히다가 GOV 를 놓쳤다: {shape}"
+    assert not gov.search('font-family:"Pretendard Variable"'), (
+        "맨 Pretendard 까지 막고 있다 - 좁힌 뜻이 없다")
 
 
 def test_the_body_font_token_actually_leads_with_the_webfont_we_download():
