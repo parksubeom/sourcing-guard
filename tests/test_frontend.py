@@ -1071,3 +1071,66 @@ def test_the_guide_drops_the_words_only_we_understand():
     guide = markup_only((STATIC / "guide.html").read_text(encoding="utf-8"))
     for jargon in ("선언된 경계", "전안법", "소관", "물품이"):
         assert jargon not in guide, f"어려운 말이 남아 있다: {jargon}"
+
+
+# ── 검사 항목 3칸 (2026-09-20) ─────────────────────────────────────
+def test_the_axis_cards_carry_no_signal_colour(html):
+    """⚠⚠ **카드가 됐어도 신호 색을 칠하지 않는다.**
+
+    `ResultAxis` 와 `app.css` 머리 주석이 같은 말을 한다 - `done` 은 "그 축을
+    했다" 지 **"그 축이 괜찮다" 가 아니다.** 카드 배경이나 값 글자에 초록을
+    주면 "확인함" 이 "괜찮음" 으로 읽히고, 그게 우리가 회색불을 택한 이유를
+    화면에서 뒤집는다.
+
+    ⚠ 시안이 정확히 그 선을 넘으려 했다(KC 인증에 초록 ✓, 값 글자를 초록·
+      파랑·주황으로). 카드 처리만 가져오고 색은 안 가져왔다.
+    """
+    # ⚠ **주석을 빼기 전에** 잘라야 한다. 구획 표식이 주석이라 `markup_only`
+    #   를 먼저 돌리면 경계가 사라진다 - 실제로 한 번 걸렸다.
+    raw = (STATIC / "app.css").read_text(encoding="utf-8")
+    block = markup_only(raw[raw.index(".rv-axes{"):raw.index(".rv-groups{")])
+    for banned in ("signal-green", "signal-amber", "signal-red", "signal-unknown"):
+        assert banned not in block, f"축 카드에 신호 색이 있다: {banned}"
+    # 값 글자 색은 본문색이어야 한다.
+    assert "--fg-1" in block, "값 글자가 본문색이 아니다"
+
+
+def test_the_axis_icons_are_not_verdict_marks(html):
+    """⚠ 체크·느낌표·방패는 판정 기호다. 축은 **종류**만 가리킨다.
+
+    ⚠ **반대 방향도 단정한다** - 아이콘이 아예 사라지면 카드가 밋밋해지고,
+      그때 다음 사람이 "체크라도 넣자" 가 된다.
+    """
+    index = markup_only((STATIC / "index.html").read_text(encoding="utf-8"))
+    block = index[index.index("var AXIS_ICON = {"):]
+    block = block[: block.index("function axisIcon(")]
+    for mark in ("✓", "✔", "✗", "⚠", "check", "shield", "exclam"):
+        assert mark not in block, f"판정 기호를 아이콘으로 쓰고 있다: {mark}"
+    assert block.count("<svg") == 3, "축 셋에 그림이 하나씩 있어야 한다"
+
+
+def test_the_axis_icon_is_chosen_by_the_server_key(html):
+    """⚠ 순서나 한국어 이름으로 고르면 서버가 바꿀 때 **그림만 조용히 어긋난다.**
+
+    `ResultAxis.key` 는 서버가 소유하는 안정된 값이다 (cert · recall · hazard).
+    """
+    index = markup_only((STATIC / "index.html").read_text(encoding="utf-8"))
+    assert "axisIcon(a.key)" in index, "축 그림이 key 로 안 골라진다"
+    for key in ("cert:", "recall:", "hazard:"):
+        assert key in index, f"AXIS_ICON 에 {key} 가 없다"
+    # 모르는 key 면 아무것도 안 그린다 - 틀린 그림보다 없는 편이 낫다.
+    assert 'AXIS_ICON[key] || ""' in index, "모르는 key 에 기본 그림을 준다"
+
+
+def test_every_axis_key_the_server_can_emit_has_an_icon():
+    """서버가 낼 수 있는 key 를 코드에서 읽어 대조한다. 손으로 적지 않는다."""
+    import re as _re
+
+    scorer = (Path("sourcing_guard") / "scorer.py").read_text(encoding="utf-8")
+    block = scorer[scorer.index("def _axes("):]
+    block = block[: block.index("\ndef ")]
+    keys = set(_re.findall(r'"key":\s*"(\w+)"', block))
+    assert keys, "scorer 에서 축 key 를 못 읽었다"
+    index = (STATIC / "index.html").read_text(encoding="utf-8")
+    for key in keys:
+        assert f"{key}:" in index, f"서버가 내는 축 key '{key}' 에 그림이 없다"

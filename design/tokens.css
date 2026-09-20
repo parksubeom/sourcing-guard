@@ -19,31 +19,40 @@
  */
 
 :root{
-  /* ── 따뜻한 중성색 (기존 --gray-* 이름 유지, 값만 갈색 계열로) ── */
-  --gray-5:#FFFCF8;  --gray-10:#FBF1E6; --gray-20:#F1E7DC; --gray-30:#EADFD4;
-  --gray-50:#8A7F78; --gray-60:#6F645D; --gray-80:#5C524C; --gray-100:#2A2320;
+  /* ── 중성색: 차가운 슬레이트 (기존 --gray-* 이름 유지) ──
+     `design/안심_소싱_돋보기_디자인_MD.md` §2 의 neutral-* 를 우리 눈금에 맞춘 것.
+     ⚠ 문서에 없는 두 단(--gray-50 · --gray-60)은 **대비를 재서** 정했다 -
+       fg-4 가 페이지 바탕(#FAF8FF) 위에서 4.5 를 넘어야 한다. */
+  --gray-5:#FCFBFF;  --gray-10:#F3F2FA; --gray-20:#EBEAF3; --gray-30:#E5E7EB;
+  --gray-50:#687284; --gray-60:#5C6579; --gray-80:#4B5568; --gray-100:#20243A;
 
-  /* ── 브랜드: 오키드 (기존 --primary-* 이름 유지) ── */
-  --primary-10:#F3EBFB; --primary-50:#8B4CCB; --primary-60:#6E37AB; --primary-70:#3B2A5E;
-  --secondary-10:#FBF1E6;
+  /* ── 브랜드: 바이올렛 (문서 brand-*) ── */
+  --primary-10:#F5F3FF; --primary-50:#8B5CF6; --primary-60:#7C3AED; --primary-70:#4C1D95;
+  --secondary-10:#F3F2FA;
   --brand:var(--primary-50); --brand-strong:var(--primary-60); --brand-tint:var(--primary-10);
 
-  /* ── 신호등: 화면이 유일하게 "판단" 을 색으로 말하는 자리 ── */
-  --success:#1F8A4C; --warning:#D97B00; --danger:#D63B3B; --info:var(--primary-60);
-  --signal-green:#1F8A4C;   --signal-green-tint:#E6F5EC;   --signal-green-text:#166B3A;   /* v2: 옅은 초록 위 5.8:1 (본색 #1F8A4C 는 3.9:1 로 AA 미달) */
-  --signal-amber:#D97B00;   --signal-amber-tint:#FFF1DE;   --signal-amber-text:#9A5600;
-  --signal-red:#D63B3B;     --signal-red-tint:#FDE8E8;     --signal-red-text:#B02A2A;
-  --signal-unknown:#8A7F78; --signal-unknown-tint:#F1ECE8; --signal-unknown-text:#5C524C;
+  /* ── 신호등: 화면이 유일하게 "판단" 을 색으로 말하는 자리 ──
+     ⚠ `-text` 는 문서의 600 을 그대로 쓰면 tint 위에서 AA 미달이라(주황 2.92)
+       **같은 색상에서 명도만 낮춰** 4.6 이상으로 맞춘 값이다. 눈으로 고르지
+       않았다 - `tests/test_design_tokens.py` 가 다시 잰다. */
+  --success:#16845B; --warning:#D97706; --danger:#DC3E4D; --info:var(--primary-60);
+  --signal-green:#16845B;   --signal-green-tint:#EAF8F1;   --signal-green-text:#157D56;
+  --signal-amber:#D97706;   --signal-amber-tint:#FFF4DF;   --signal-amber-text:#A75C05;
+  --signal-red:#DC3E4D;     --signal-red-tint:#FFF0F1;     --signal-red-text:#D22636;
+  --signal-unknown:#7F8794; --signal-unknown-tint:#F1F2F7; --signal-unknown-text:#666E7B;
+  /* ⚠ 문서의 neutral-500(#7A8496)은 R·G·B 폭이 28 이라 "회색불은 회색"
+     규칙(폭 24 이하)을 넘는다. **검사를 늦추지 않고 값을 회색 쪽으로**
+     옮겼다 - 회색불은 '모름' 이고 색을 주면 판정으로 읽힌다 (R3). */
 
-  /* ── 캐릭터 전용. UI 의미 없음 ── */
+  /* ── 캐릭터 전용. UI 의미 없음 — **팔레트가 바뀌어도 그대로 둔다** ── */
   --illust-body:#FFC29B; --illust-body-2:#F29B6B; --illust-ink:#3B2A5E;
-  --illust-blob:#FBEBDD;        /* 히어로 뒤 살구 원. 캐릭터 색의 옅은 판 — UI 의미 없음 */
-  --signal-amber-border:#EFC28A; /* 오른쪽에 결과가 그려진 예시 카드의 테두리 (랜딩 v2) */
+  --illust-blob:#F1EDFF;        /* 히어로 뒤 원. 배경이 라벤더로 바뀌어 여기만 맞춘다 */
+  --signal-amber-border:#F2C489; /* 오른쪽에 결과가 그려진 예시 카드의 테두리 (랜딩 v2) */
 
   /* ── 글 · 바탕 · 선 ── */
   --fg-1:var(--gray-100); --fg-2:var(--gray-80); --fg-3:var(--gray-60); --fg-4:var(--gray-50);
-  --bg-page:#FFF8F0;            /* 페이지 바탕 — body 에 쓴다 (새 이름) */
-  --bg-canvas:#FFFFFF;          /* 카드·입력 바탕 — 기존 컴포넌트가 이미 이 이름을 쓴다 */
+  --bg-page:#FAF8FF;            /* 페이지 바탕 — body 에 쓴다 (문서 page) */
+  --bg-canvas:#FFFFFF;          /* 카드·입력 바탕 (문서 surface) */
   --bg-card:var(--bg-canvas);
   --bg-subtle:var(--gray-10); --bg-muted:var(--secondary-10);
   --border-default:var(--gray-30); --border-focus:var(--primary-50);
@@ -60,8 +69,8 @@
   --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:20px; --s6:24px; --s8:32px; --s10:40px; --s12:48px; --s16:64px;
 
   /* ── 그림자: 떠 있어야 하는 것(툴팁·메뉴)만 ── */
-  --shadow-1:none;
-  --shadow-2:0 6px 20px rgba(42,35,32,.10);
+  --shadow-1:0 1px 2px rgba(30,25,50,.04), 0 8px 24px rgba(30,25,50,.05);
+  --shadow-2:0 6px 20px rgba(30,25,50,.10);
 
   /* ── 글꼴 ── */
   --font-display:"Gowun Dodum","Apple SD Gothic Neo","Malgun Gothic",sans-serif;   /* 제목 · 워드마크 */
@@ -76,32 +85,32 @@
  * 캐릭터 색(--illust-*)과 신호등 본색은 그대로. 옅은 배경(tint)만 투명도로 바꾼다.
  */
 [data-theme="dark"]{
-  --gray-5:#221D1A;  --gray-10:#2F2925; --gray-20:#352E2A; --gray-30:#3C342F;
-  --gray-50:#948880; --gray-60:#A89C93; --gray-80:#C9BDB4; --gray-100:#F5EDE6;
-  --primary-10:rgba(176,139,234,.18); --primary-50:#B08BEA; --primary-60:#C9ACF3; --primary-70:#D9C6F5;
-  --secondary-10:#2F2925;
-  --signal-green-tint:rgba(31,138,76,.22);   --signal-green-text:#7FD3A0;
+  --gray-5:#171A26;  --gray-10:#1F2333; --gray-20:#272C3F; --gray-30:#333952;
+  --gray-50:#7C88A8; --gray-60:#9AA5C0; --gray-80:#C2CADD; --gray-100:#EEF1FB;
+  --primary-10:rgba(146,116,255,.18); --primary-50:#9274FF; --primary-60:#B3A0FF; --primary-70:#CFC3FF;
+  --secondary-10:#1F2333;
+  --signal-green-tint:rgba(17,153,106,.22);  --signal-green-text:#6FD9AE;
   --signal-amber-tint:rgba(217,123,0,.22);   --signal-amber-text:#F2B36B;
-  --signal-red-tint:rgba(214,59,59,.22);     --signal-red-text:#F09595;
-  --signal-unknown-tint:rgba(138,127,120,.22); --signal-unknown-text:#C9BDB4;
-  --bg-page:#1D1917; --bg-canvas:#27221F;
+  --signal-red-tint:rgba(232,73,81,.22);     --signal-red-text:#FF9DA2;
+  --signal-unknown-tint:rgba(138,148,174,.22); --signal-unknown-text:#B6BFD6;
+  --bg-page:#12141F; --bg-canvas:#1A1E2D;
   --illust-blob:rgba(255,194,155,.10); --signal-amber-border:rgba(217,123,0,.45);
-  --shadow-2:0 6px 20px rgba(0,0,0,.35);
+  --shadow-2:0 6px 20px rgba(0,0,0,.45);
   color-scheme: dark;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
-    --gray-5:#221D1A;  --gray-10:#2F2925; --gray-20:#352E2A; --gray-30:#3C342F;
-    --gray-50:#948880; --gray-60:#A89C93; --gray-80:#C9BDB4; --gray-100:#F5EDE6;
-    --primary-10:rgba(176,139,234,.18); --primary-50:#B08BEA; --primary-60:#C9ACF3; --primary-70:#D9C6F5;
-    --secondary-10:#2F2925;
-    --signal-green-tint:rgba(31,138,76,.22);   --signal-green-text:#7FD3A0;
+    --gray-5:#171A26;  --gray-10:#1F2333; --gray-20:#272C3F; --gray-30:#333952;
+    --gray-50:#7C88A8; --gray-60:#9AA5C0; --gray-80:#C2CADD; --gray-100:#EEF1FB;
+    --primary-10:rgba(146,116,255,.18); --primary-50:#9274FF; --primary-60:#B3A0FF; --primary-70:#CFC3FF;
+    --secondary-10:#1F2333;
+    --signal-green-tint:rgba(17,153,106,.22);  --signal-green-text:#6FD9AE;
     --signal-amber-tint:rgba(217,123,0,.22);   --signal-amber-text:#F2B36B;
-    --signal-red-tint:rgba(214,59,59,.22);     --signal-red-text:#F09595;
-    --signal-unknown-tint:rgba(138,127,120,.22); --signal-unknown-text:#C9BDB4;
-    --bg-page:#1D1917; --bg-canvas:#27221F;
+    --signal-red-tint:rgba(232,73,81,.22);     --signal-red-text:#FF9DA2;
+    --signal-unknown-tint:rgba(138,148,174,.22); --signal-unknown-text:#B6BFD6;
+    --bg-page:#12141F; --bg-canvas:#1A1E2D;
     --illust-blob:rgba(255,194,155,.10); --signal-amber-border:rgba(217,123,0,.45);
-    --shadow-2:0 6px 20px rgba(0,0,0,.35);
+    --shadow-2:0 6px 20px rgba(0,0,0,.45);
     color-scheme: dark;
   }
 }

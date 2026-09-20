@@ -125,3 +125,102 @@ def test_the_page_background_and_card_are_different():
     assert "--bg-page" in v and "--bg-canvas" in v
     assert v["--bg-page"].lower() != v["--bg-canvas"].lower()
     assert "background:var(--bg-page)" in _APP.read_text(encoding="utf-8")
+
+
+# ── 대비 (2026-09-20) ──────────────────────────────────────────────
+#
+# ⚠⚠ **색은 눈으로 통과하고 숫자로 떨어진다.** 새 팔레트를 넣을 때 문서 값
+#   그대로는 `warning-600 on warning-50` 이 2.92 였다 - 보기엔 멀쩡했다.
+#   그래서 사람이 보는 대신 코드가 잰다.
+def _lum(hex_color: str) -> float:
+    h = hex_color.lstrip("#")
+    parts = [int(h[i:i + 2], 16) / 255 for i in (0, 2, 4)]
+    f = lambda c: c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4  # noqa: E731
+    r, g, b = (f(c) for c in parts)
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b
+
+
+def _contrast(a: str, b: str) -> float:
+    la, lb = _lum(a), _lum(b)
+    hi, lo = max(la, lb), min(la, lb)
+    return (hi + 0.05) / (lo + 0.05)
+
+
+def _resolve(v: dict, name: str) -> str:
+    """`var(--x)` 를 끝까지 따라간다. hex 가 아니면 None."""
+    seen = set()
+    while name in v and name not in seen:
+        seen.add(name)
+        val = v[name].strip()
+        m = re.fullmatch(r"var\((--[a-z0-9-]+)\)", val)
+        if not m:
+            return val if re.fullmatch(r"#[0-9A-Fa-f]{6}", val) else None
+        name = m.group(1)
+    return None
+
+
+#: 화면에서 실제로 겹치는 글자/바탕 쌍. **자리마다 왜 중요한지**를 적는다.
+_PAIRS = [
+    ("본문",            "--fg-1", "--bg-canvas"),
+    ("본문 · 페이지",    "--fg-1", "--bg-page"),
+    ("본문 보조",        "--fg-2", "--bg-canvas"),
+    ("설명",            "--fg-3", "--bg-canvas"),
+    ("가장 흐린 글자",    "--fg-4", "--bg-canvas"),
+    ("가장 흐린 글자 · 페이지", "--fg-4", "--bg-page"),
+    ("링크",            "--primary-60", "--bg-canvas"),
+    ("초록 글자 / 초록 바탕", "--signal-green-text", "--signal-green-tint"),
+    ("주황 글자 / 주황 바탕", "--signal-amber-text", "--signal-amber-tint"),
+    ("빨강 글자 / 빨강 바탕", "--signal-red-text", "--signal-red-tint"),
+    ("회색 글자 / 회색 바탕", "--signal-unknown-text", "--signal-unknown-tint"),
+]
+
+
+def test_every_text_pair_meets_aa():
+    """본문 대비 4.5:1 (WCAG AA). 큰 글자 예외를 쓰지 않는다.
+
+    ⚠ 예외를 열어 두면 "이건 큰 글자니까" 로 하나씩 내려간다. 우리 화면의
+      신호 글자는 16px 굵기라 애초에 큰 글자가 아니다.
+    """
+    v = _vars_in_root(_APP.read_text(encoding="utf-8"))
+    bad = []
+    for label, fg, bg in _PAIRS:
+        a, b = _resolve(v, fg), _resolve(v, bg)
+        assert a and b, f"{label}: 색을 못 읽었다 ({fg}={a} · {bg}={b})"
+        ratio = _contrast(a, b)
+        if ratio < 4.5:
+            bad.append(f"{label} {a} / {b} = {ratio:.2f}")
+    assert not bad, "대비 미달 (4.5 필요):\n  " + "\n  ".join(bad)
+
+
+def test_white_on_a_filled_chip_meets_aa():
+    """⚠ 꽉 찬 칩은 흰 글자다. **신호 본색에 얹으면 모자란다** - 실측으로
+    주황 3.19 · 빨강 4.34 였고 팔레트를 바꾸기 전에도 그랬다(주황 3.10).
+    그래서 어두운 변형(`-text`)을 바탕으로 쓴다.
+    """
+    v = _vars_in_root(_APP.read_text(encoding="utf-8"))
+    css = _strip_comments(_APP.read_text(encoding="utf-8"))
+    for signal in ("GREEN", "AMBER", "RED"):
+        m = re.search(rf"\.chip\.solid\.{signal}\{{background:var\((--[a-z0-9-]+)\)", css)
+        assert m, f"{signal} 꽉 찬 칩 규칙을 못 찾았다"
+        bg = _resolve(v, m.group(1))
+        ratio = _contrast("#FFFFFF", bg)
+        assert ratio >= 4.5, f"{signal} 칩: 흰 글자 / {bg} = {ratio:.2f}"
+
+
+def test_dark_mode_pairs_meet_aa():
+    """⚠ 다크도 같이 잰다. 라이트만 재면 다크가 조용히 떨어진다."""
+    raw = _APP.read_text(encoding="utf-8")
+    body = _strip_comments(raw)
+    i = body.index('[data-theme="dark"]{')
+    dark = dict(_VAR.findall(body[i:body.index("}", i)]))
+    light = _vars_in_root(raw)
+    merged = {**light, **{k: v.strip() for k, v in dark.items()}}
+    bad = []
+    for label, fg, bg in _PAIRS:
+        a, b = _resolve(merged, fg), _resolve(merged, bg)
+        if not a or not b:
+            continue            # tint 가 rgba 인 자리는 여기서 재지 않는다
+        ratio = _contrast(a, b)
+        if ratio < 4.5:
+            bad.append(f"{label} {a} / {b} = {ratio:.2f}")
+    assert not bad, "다크 대비 미달:\n  " + "\n  ".join(bad)

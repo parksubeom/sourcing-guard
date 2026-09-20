@@ -575,6 +575,35 @@
            '<div class="rv-b">' + say + grades + ip + confirm + rf + link + "</div></li>";
   }
 
+  // 축 **종류**를 가리키는 그림. 서류 · 목록 · 비커.
+  //
+  // 주의(가장 중요): **판정 기호가 아니다.** 체크·느낌표·방패를 쓰지 않는다.
+  //   `app.css` 와 `ResultAxis` 주석이 같은 말을 한다 - `done` 은 "그 축을
+  //   했다" 지 "그 축이 괜찮다" 가 아니고, 체크를 크게 쓰면 셀러가 초록불로
+  //   읽는다. 그게 우리가 회색불을 택한 이유다.
+  //
+  // 주의(중요): 서버가 주는 `key`(cert · recall · hazard)로 고른다. 순서나
+  //   한국어 이름으로 고르면 서버가 바꿀 때 **그림만 조용히 어긋난다.**
+  //   모르는 key 면 아무것도 안 그린다 - 틀린 그림보다 없는 편이 낫다.
+  var AXIS_ICON = {
+    // 서류 — 번호를 조회해 본다
+    cert: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" ' +
+          'stroke-linecap="round" stroke-linejoin="round">' +
+          '<path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4"/>' +
+          '<path d="M9 12h6"/><path d="M9 16h4"/></svg>',
+    // 목록 — 공표 목록과 맞춰 본다
+    recall: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" ' +
+            'stroke-linecap="round" stroke-linejoin="round">' +
+            '<path d="M4 6h3M4 12h3M4 18h3"/><path d="M10 6h10M10 12h10M10 18h10"/></svg>',
+    // 비커 — 시험으로 확인하는 것
+    hazard: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" ' +
+            'stroke-linecap="round" stroke-linejoin="round">' +
+            '<path d="M9 3h6"/><path d="M10 3v6L5 18a2 2 0 0 0 1.8 3h10.4A2 2 0 0 0 19 18l-5-9V3"/>' +
+            '<path d="M7.5 14h9"/></svg>'
+  };
+
+  function axisIcon(key) { return AXIS_ICON[key] || ""; }
+
   // ── 같은 종류가 넷 이상이면 한 줄로 접는다 (design/README §10-5) ──
   //
   // 슬라임 하나에 **같은 문장이 열네 줄** 반복되던 자리다(실측 · 목 모드).
@@ -837,6 +866,7 @@
     if ((data.axes || []).length) {
       html += '<div class="rv-axes">' + data.axes.map(function (a) {
         return '<div class="rv-ax">' +
+               '<span class="i" aria-hidden="true">' + axisIcon(a.key) + "</span>" +
                '<span class="n">' + esc(a.name) + "</span>" +
                '<span class="v">' + esc(a.label) + "</span>" +
                (a.note ? '<span class="m">' + esc(a.note) + "</span>" : "") +
