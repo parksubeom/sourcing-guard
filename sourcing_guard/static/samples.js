@@ -7,8 +7,7 @@
   "use strict";
 
   var list = document.getElementById("list");
-  var honestRecorded = document.getElementById("honest-recorded");
-  var honestBaseline = document.getElementById("honest-baseline");
+  var honest = document.getElementById("honest");
 
   function esc(s) {
     return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) {
@@ -102,21 +101,24 @@
         document.querySelector(".sx-lede").hidden = true;
         return;
       }
-      honestRecorded.textContent =
-        "이 결과는 저희가 " + day(data.recorded_at) +
-        " 에 실제로 검사한 것입니다. 카드마다 '지금 다시 검사' 로 지금 상태를 보실 수 있습니다.";
-
+      /* 주의(중요): 회색 상자 **하나**다. 둘로 나눠 두었더니 벽처럼 보이고
+         오른쪽에 넓은 공백이 남았다. 문장은 합치되 **숫자는 서버 것**이다 -
+         손으로 적으면 기준선이 움직일 때 한쪽만 고쳐진다. */
       var b = data.baseline;
+      var say = "검사한 날짜는 " + day(data.recorded_at) +
+                " 입니다. 카드마다 '지금 다시 검사' 로 지금 상태를 보실 수 있습니다.";
       if (b) {
         var pct = (b.ok / b.denominator * 100).toFixed(1);
-        honestBaseline.textContent =
-          "여기 있는 것은 저희가 맞힌 예입니다. 실상품 " + b.denominator +
-          "건 기준 품목 적중 " + b.ok + "건(" + pct + "%)이고, 틀린 " + b.wrong +
-          "건과 못 맞힌 " + b.missed + "건도 저장소에 공개돼 있습니다.";
+        say += " 여기 있는 " + data.items.length + "개는 저희가 맞힌 예입니다 — 실상품 " +
+               b.denominator + "건 중 " + b.ok + "건(" + pct + "%)을 맞혔고, 틀린 " +
+               b.wrong + "건과 못 맞힌 " + b.missed + "건도 공개해 두었습니다.";
+      }
+      honest.textContent = say;
+      if (b) {
         var link = document.createElement("a");
         link.href = "/misses";
         link.textContent = " 우리가 틀린 것 보기";
-        honestBaseline.appendChild(link);
+        honest.appendChild(link);
       }
 
       list.innerHTML = data.items.map(card).join("");

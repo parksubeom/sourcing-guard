@@ -116,3 +116,27 @@ def test_the_owner_is_documented_where_the_trap_is_listed():
     assert "markup_only" in head
     assert "code_only" in head
     assert re.search(r"https://", head), "URL 함정이 안 적혀 있다"
+
+
+def test_a_file_rewriting_script_checks_its_own_output():
+    """⚠⚠ 파일을 제자리에서 고쳐 쓰는 코드는 **쓴 뒤에 성한지 스스로 단정**한다.
+
+    2026-09-20 에 `s.index(":root{")` 가 머리 주석 안의 `:root{` 를 먼저 물어
+    `design/tokens.css` 와 `app.css` 의 머리를 부쉈다. 두 파일을 대조하는
+    검사가 있었지만 **둘이 똑같이 부서져서 통과했다.**
+
+    그래서 토큰 파일의 성함을 여기서 직접 본다 - 대조가 아니라 **모양**이다.
+    """
+    import re as _re
+
+    root = _TESTS.parent
+    for path in (root / "design/tokens.css", root / "sourcing_guard/static/app.css"):
+        src = path.read_text(encoding="utf-8")
+        assert src.lstrip().startswith("/*"), f"{path.name}: 머리 주석이 사라졌다"
+        opens = len(_re.findall(r"^:root\{", src, _re.M))
+        assert opens == 1, f"{path.name}: 줄머리 :root 블록이 {opens}개다 (1이어야 한다)"
+        body = markup_only(src)
+        i = _re.search(r"^:root\{", body, _re.M).end()
+        block = body[i:body.index("}", i)]
+        n = len(_re.findall(r"--[a-z0-9-]+\s*:", block))
+        assert n >= 50, f"{path.name}: :root 변수가 {n}개다 - 블록이 잘렸다"

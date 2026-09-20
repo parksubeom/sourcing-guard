@@ -986,6 +986,13 @@ body{background:var(--bg-page)}
 .rv-row.rv-nosignal{padding-left:24px}
 /* 공급처에 보낼 문안. 복사가 막힌 브라우저에서는 이 블록을 펼쳐 보여 주고
    셀러가 직접 고른다 - 우리가 선택을 대신 잡아 주지 않는다(잴 것이 생긴다). */
+/* 주의(중요): 「지금 다시 검사」가 <a> 에 <button> 클래스를 쓴다. 앵커는
+   기본이 inline + 밑줄이라 글자가 상자 위쪽에 붙고 밑줄이 남는다.
+   실측: 저장소에서 `<a class="btn-t">` 는 samples.js 한 곳뿐이다 -
+   **앵커에만** 건다. 버튼 쪽은 원래대로 둔다. */
+a.btn-t{display:inline-flex; align-items:center; justify-content:center;
+        text-decoration:none}
+
 .rv-ask{display:flex; flex-direction:column; gap:10px; padding:16px 0 0}
 /* 근거 원문 묶음. 요약이지 대체가 아니다 - 줄마다 붙은 개별 링크는 그대로 있다. */
 .rv-srcs{padding:16px 0 0; border-top:1px solid var(--border-default); margin-top:16px}
@@ -1120,8 +1127,11 @@ body{background:var(--bg-page)}
   background:var(--bg-card);
 }
 .sx-head{display:flex; flex-direction:column; gap:10px; min-width:0}
-.sx-head h2{margin:0; font-size:17px; line-height:26px; overflow-wrap:anywhere}
-.sx-headline{margin:0; font-size:15px; line-height:24px; color:var(--fg-2)}
+/* 주의(중요): 도매 상품명이 제목 자리를 먹는다. **무게만 뒤집는다** -
+   자르면 어떤 상품인지 못 알아본다. */
+.sx-head h2{margin:0; font-size:14px; line-height:21px; font-weight:500;
+            color:var(--fg-3); overflow-wrap:anywhere}
+.sx-headline{margin:0; font-size:17px; line-height:26px; color:var(--fg-1); font-weight:600}
 .sx-rows{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:10px}
 .sx-row{
   padding:12px 14px; border-radius:var(--r-m); background:var(--bg-canvas);
