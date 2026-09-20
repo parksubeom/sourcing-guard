@@ -968,3 +968,106 @@ def test_the_source_bundle_does_not_replace_per_row_links(html):
     row = row[: row.index("\n  }")]
     assert "srcLink(" in row or "source_url" in row, (
         "근거 링크가 줄에서 사라졌다 - 묶음이 대체가 됐다")
+
+
+# ── 화면 말 (2026-09-20) ───────────────────────────────────────────
+#: 화면 글을 담는 자산 전부. **`.js` 도 본다.**
+#:
+#: ⚠⚠ 2026-09-20 에 `.html` 본문만 뽑아 읽고 "화면 문구를 전부 봤다" 고
+#:   결론 냈다가 **JS 가 만드는 문자열 셋을 놓쳤다**(guide.js · samples.js ·
+#:   misses.js). 화면 글의 일부는 JS 가 만든다.
+_SCREEN_ASSETS = ["index.html", "landing.html", "watch.html", "guide.html",
+                  "batch.html", "misses.html", "samples.html",
+                  "guide.js", "samples.js", "misses.js", "owner.js"]
+
+
+def _screen_text() -> dict[str, str]:
+    """주석을 뺀 화면 자산. 오너는 `srccheck.markup_only` 다."""
+    out = {}
+    for name in _SCREEN_ASSETS:
+        path = STATIC / name
+        if path.exists():
+            out[name] = markup_only(path.read_text(encoding="utf-8"))
+    return out
+
+
+def test_matching_is_called_matching_not_attaching():
+    """⚠⚠ 「붙이다」가 두 가지로 쓰이고 있었다. **하나만** 바꾼다.
+
+        (A) 붙여넣다 = paste    "상세페이지를 붙여넣으세요"  → 그대로 둔다
+        (B) 붙이다 = 매칭       "품목을 붙이지 못했습니다"   → 「매칭」으로
+
+    (B)는 **우리 내부 용어가 새어 나온 것**이다. 셀러는 우리가 무엇을 "붙인다"
+    는 것인지 모른다. (A)는 누구나 아는 말이고 우리 용어가 아니다.
+
+    ⚠ 「매칭」이 「답」보다 낫다 - 「답」은 판정처럼 읽히는데, 이 표의 요지는
+      정확히 그 반대다(이름을 맞춰 봤을 뿐 이 상품이 어떻다고 말한 게 아니다).
+
+    ⚠⚠ **세 번째 뜻이 하나 있다.** 가이드의 "「물놀이용 신발」처럼 앞에 붙은
+      말이…" 는 (A)도 (B)도 아니고 **보통 한국어**다(접두된 말). 우리 용어가
+      아니므로 바꿀 이유가 없다. 아래 목록에 **그 한 구절만** 적어 두고,
+      새 (B) 용법은 그대로 실패시킨다 - 목록이 늘면 그때 다시 본다.
+    """
+    plain = ("앞에 붙은 말",)          # (A)도 (B)도 아닌 보통 한국어
+    found = []
+    for name, text in _screen_text().items():
+        for form in ("붙음", "붙은", "붙이지", "붙인"):
+            for m in re.finditer(form, text):
+                # ⚠ 「붙여넣」은 (A) 다. 세지 않는다.
+                if text[max(0, m.start() - 1):m.start() + 3].startswith("붙여넣"):
+                    continue
+                around = text[max(0, m.start() - 4):m.start() + 6]
+                if any(ph in around for ph in plain):
+                    continue
+                line = text[:m.start()].count("\n") + 1
+                found.append(f"{name}:{line} …{text[max(0, m.start()-22):m.start()+14]}…")
+    assert not found, (
+        "화면에 (B) 뜻의 「붙」이 남아 있습니다. 「매칭」으로 쓰세요:\n  "
+        + "\n  ".join(found))
+
+
+def test_paste_is_still_called_paste():
+    """⚠ **반대 방향.** (A)를 한꺼번에 지우는 사고를 이 줄이 막는다.
+
+    "붙여넣으세요" 는 셀러가 실제로 하는 동작이고 누구나 아는 말이다.
+    (B)를 지우다가 같이 지우면 입력 화면이 무엇을 하라는지 안 말하게 된다.
+    """
+    index = markup_only((STATIC / "index.html").read_text(encoding="utf-8"))
+    assert "붙여넣으세요" in index, "입력 안내에서 '붙여넣으세요' 가 사라졌다"
+    assert "붙여넣" in markup_only((STATIC / "landing.html").read_text(encoding="utf-8"))
+
+
+def test_the_same_number_has_the_same_name_on_every_screen():
+    """⚠⚠ 같은 숫자를 두 화면이 다르게 부르고 있었다.
+
+        랜딩            "대상이 아닌 상품에 등급을 붙인 수"
+        우리가 틀린 것    "없는 의무를 붙인 것"
+
+    ④ 비대상 부착 0 은 우리 최고 숫자인데 이름이 갈려 있으면 같은 것인 줄
+    모른다. 「없는 의무」로 맞춘다.
+
+    ⚠ 여기 「매칭」을 쓰지 않는다. 이 줄은 우리가 한 **동작**이 아니라
+      **피해**를 말하는 자리다 - "잘못 매칭한 수" 는 왜 중요한지를 지운다.
+    """
+    landing = markup_only((STATIC / "landing.html").read_text(encoding="utf-8"))
+    misses = markup_only((STATIC / "misses.js").read_text(encoding="utf-8"))
+    assert "없는 의무를 말한 횟수" in landing, "랜딩 라벨이 안 바뀌었다"
+    assert "없는 의무를 말한 것" in misses, "「우리가 틀린 것」 라벨이 안 바뀌었다"
+    assert "등급을 붙인 수" not in landing, "옛 라벨이 남아 있다"
+
+
+def test_the_guide_defines_matching_before_using_it():
+    """낱말을 피해 다니는 것보다 **한 번 정의하고 계속 쓰는** 쪽이 낫다."""
+    guide = markup_only((STATIC / "guide.html").read_text(encoding="utf-8"))
+    assert "<dt>“매칭”</dt>" in guide, "「매칭」 정의가 없다"
+    assert "매칭은 판정이 아닙니다" in guide, "매칭이 판정이 아니라는 말이 없다"
+    assert guide.count("<dt>") == 7, f"「읽는 법」 항목이 7개가 아니다: {guide.count('<dt>')}"
+    for head in ("매칭된 수", "매칭된 품목", "그 품목의 등급", "근거 · 담당 부처"):
+        assert head in guide, f"표 머리말에 '{head}' 가 없다"
+
+
+def test_the_guide_drops_the_words_only_we_understand():
+    """뜻은 좋은데 처음 보는 사람이 못 읽는 말들."""
+    guide = markup_only((STATIC / "guide.html").read_text(encoding="utf-8"))
+    for jargon in ("선언된 경계", "전안법", "소관", "물품이"):
+        assert jargon not in guide, f"어려운 말이 남아 있다: {jargon}"

@@ -36,7 +36,7 @@
       '<span class="gd-parent">' + esc(r.parent) + "</span></th>" +
       '<td class="gd-n">' + count + "</td>" +
       "<td>" + (pills(r.items, "gd-pill") ||
-        '<span class="gd-quiet-txt">이 표본에서는 붙은 품목이 없습니다</span>') + "</td>" +
+        '<span class="gd-quiet-txt">이 표본에서는 매칭된 품목이 없습니다</span>') + "</td>" +
       "<td>" + pills(r.grades, "gd-grade") + "</td>" +
       '<td class="gd-basis">' + (basis.join(" · ") || "") + "</td>" +
       "</tr>"

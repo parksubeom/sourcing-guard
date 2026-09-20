@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>카테고리 가이드 — 안심 소싱 돋보기</title>
-<meta name="description" content="도매 카테고리별로 이 도구가 실제로 무엇을 말할 수 있는지. 관찰된 등급·부속서·소관만 적었습니다.">
+<meta name="description" content="도매 카테고리별로 이 도구가 무엇까지 알려드릴 수 있는지. 실제 상품명을 넣어 보고 매칭된 것만 적었습니다.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Noto+Sans+KR:wght@400;500;700&display=swap">
@@ -44,9 +44,9 @@
 
 <main id="main" class="container gd">
   <h1>카테고리 가이드</h1>
-  <p class="gd-lede">도매 카테고리마다 <strong>이 도구가 실제로 무엇을 말할 수 있는지</strong> 적었습니다.
-    카테고리 이름으로 정한 것이 아니라, 그 카테고리의 상품명을 실제로 넣어 보고
-    <strong>붙은 것만</strong> 옮겼습니다.</p>
+  <p class="gd-lede">도매 카테고리마다 <strong>이 도구가 무엇까지 알려드릴 수 있는지</strong> 적었습니다.
+    카테고리 이름만 보고 짐작한 것이 아니라, 그 카테고리의 실제 상품명을 100개까지
+    넣어 보고 <strong>매칭된 것만</strong> 옮겼습니다.</p>
 
   <p class="gd-label" id="label" role="note"></p>
 
@@ -55,7 +55,7 @@
   <div class="gd-tools">
     <label class="gd-find" for="q">카테고리 찾기</label>
     <input id="q" type="search" placeholder="예: 유아동 · 가전 · 가방" autocomplete="off">
-    <label class="gd-only"><input type="checkbox" id="only"> 말할 수 있는 것만</label>
+    <label class="gd-only"><input type="checkbox" id="only"> 매칭된 카테고리만</label>
   </div>
 
   <div class="gd-wrap">
@@ -63,10 +63,10 @@
       <thead>
         <tr>
           <th scope="col">카테고리</th>
-          <th scope="col">표본에서 붙음</th>
-          <th scope="col">관찰된 품목</th>
-          <th scope="col">관찰된 등급</th>
-          <th scope="col">근거 · 소관</th>
+          <th scope="col">매칭된 수</th>
+          <th scope="col">매칭된 품목</th>
+          <th scope="col">그 품목의 등급</th>
+          <th scope="col">근거 · 담당 부처</th>
         </tr>
       </thead>
       <tbody id="body"></tbody>
@@ -78,23 +78,36 @@
   <section class="gd-read">
     <h2>읽는 법</h2>
     <dl>
-      <dt>“표본에서 붙음”</dt>
-      <dd>그 카테고리 상품명 표본 중 우리 등급표에 걸린 비율입니다.
-        <strong>맞힌 비율이 아닙니다</strong> — 사람이 검수하지 않았습니다.</dd>
-      <dt>붙음이 0인 카테고리</dt>
-      <dd>우리가 <strong>못 붙인 것</strong>이지, 의무가 없다는 뜻이 아닙니다.
-        안전관리 대상인지는 따로 확인이 필요합니다.</dd>
-      <dt>“관찰된 등급”</dt>
-      <dd>그 카테고리에서 실제로 붙은 품목의 등급입니다. 등급은 정부 등급표에서
-        그대로 읽었고, 링크로 원문을 확인하실 수 있습니다.</dd>
-      <dt>말하지 않는 카테고리</dt>
-      <dd>식품·화장품은 <strong>식약처 소관</strong>이고 여행·음반 등은 물품이
-        아닙니다. 이 도구가 다루는 것은 전기용품·생활용품·어린이제품이라,
-        그 밖의 카테고리가 비어 있는 것은 <strong>구멍이 아니라 선언된
-        경계</strong>입니다. 소관이 어디로 보이는지는 알려 드립니다.</dd>
-      <dt>“소관”</dt>
-      <dd>전안법 밖으로 보이는 표기가 표본에서 관찰된 경우입니다. 괄호 안이 관찰
-        건수이고, <strong>건수가 적으면 그 카테고리 전체가 그 소관이라는 뜻이 아닙니다.</strong></dd>
+      <dt>“매칭”</dt>
+      <dd>상품명을 정부 등급표의 품목 이름과 맞춰 보는 것입니다. 매칭이 되면 그
+        품목의 등급을 알려드릴 수 있고, 안 되면 아무 말도 못 합니다.
+        <strong>매칭은 판정이 아닙니다</strong> — 이름을 맞춘 것이지 이 상품이
+        어떻다고 말한 것이 아닙니다.</dd>
+      <dt>“매칭된 수”</dt>
+      <dd>그 카테고리의 상품명을 100개까지 실제로 넣어 보고, 매칭이 된 수입니다.
+        <strong>맞힌 비율이 아닙니다</strong> — 매칭된 것이 맞는지는 사람이
+        확인하지 않았습니다.</dd>
+      <dt>매칭이 0인 카테고리</dt>
+      <dd>저희가 <strong>매칭하지 못한 것</strong>이지, 그 카테고리에 의무가
+        없다는 뜻이 아닙니다. 안전관리 대상인지는 따로 확인이 필요합니다.</dd>
+      <dt>“매칭된 품목”</dt>
+      <dd>그 상품명들을 어떤 품목으로 매칭했는지입니다. 이 표는 <strong>상품명
+        글자만 보고</strong> 만들었습니다 — AI 를 쓰지 않습니다. 그래서 틀린 것이
+        섞여 있습니다: 「물놀이용 신발」처럼 앞에 붙은 말이 상품이 아니라 상황을
+        가리킬 때, 글자만으로는 갈라내지 못합니다. <strong>상품 하나를 검사하는
+        화면은 이 방식이 아닙니다.</strong></dd>
+      <dt>“그 품목의 등급”</dt>
+      <dd>그 품목이 정부 등급표에서 어느 등급인지입니다. 등급은 표에서 그대로
+        읽었고, 링크로 원문을 확인하실 수 있습니다.</dd>
+      <dt>비어 있는 카테고리</dt>
+      <dd>식품·화장품은 <strong>식약처 담당</strong>이고 여행·음반 등은 물건이
+        아닙니다. 이 도구가 다루는 것은 전기용품·생활용품·어린이제품이라, 그 밖의
+        카테고리가 비어 있는 것은 <strong>빠뜨린 것이 아니라 처음부터 다루지
+        않기로 한 범위</strong>입니다. 어디 담당으로 보이는지는 알려 드립니다.</dd>
+      <dt>“담당 부처”</dt>
+      <dd>전기용품·생활용품·어린이제품 밖으로 보이는 표기가 상품명에서 발견된
+        경우입니다. 괄호 안이 발견된 건수이고, <strong>건수가 적으면 그 카테고리
+        전체가 거기 담당이라는 뜻은 아닙니다.</strong></dd>
     </dl>
   </section>
 

@@ -14,6 +14,8 @@ import re
 from pathlib import Path
 
 import pytest
+
+from tests.srccheck import markup_only
 from fastapi.testclient import TestClient
 
 from sourcing_guard.category_guide import LABEL, rows, summary
@@ -74,7 +76,7 @@ def test_the_page_hardcodes_no_number_from_the_data():
     자료가 바뀌면 화면이 따라와야 하는데, HTML 에 적으면 한쪽만 낡는다.
     """
     s = summary()
-    body = re.sub(r"<!--.*?-->", "", _HTML, flags=re.S)   # 주석은 화면이 아니다
+    body = markup_only(_HTML)                              # 주석은 화면이 아니다
     for n in (s["categories"], s["observed"], s["silent"], s["titles"]):
         assert str(n) not in body, f"화면에 {n} 이 박혀 있다 - 서버에서 그려라"
         assert f"{n:,}" not in body, f"화면에 {n:,} 이 박혀 있다"
@@ -92,10 +94,14 @@ def test_the_page_never_calls_a_silent_category_out_of_scope():
 
     "비대상입니다"·"대상 아님" 을 화면에 쓰면 그 순간 판정이 된다.
     """
-    body = re.sub(r"<!--.*?-->", "", _HTML, flags=re.S)
+    body = markup_only(_HTML)
     for banned in ("비대상입니다", "대상이 아닙니다", "대상 아님", "해당 없음"):
         assert banned not in body, f"단정 표현 '{banned}' 가 있다"
-    assert "못 붙인 것" in body, "붙음 0 의 뜻을 화면이 설명하지 않는다"
+    # ⚠ 2026-09-20 에 낱말이 「매칭」으로 바뀌었다. **뜻이 바뀐 것이 아니다** -
+    #   "우리가 못 한 것" 과 "의무가 없다는 뜻이 아니다" 둘 다 있어야 한다.
+    assert "매칭하지 못한 것" in body, "매칭 0 의 뜻을 화면이 설명하지 않는다"
+    assert "의무가" in body and "없다는 뜻이 아닙니다" in body, (
+        "매칭 0 을 '의무 없음' 으로 읽을 수 있게 두었다 (R3)")
 
 
 def test_the_page_declares_its_boundary_not_a_hole():
@@ -104,15 +110,21 @@ def test_the_page_declares_its_boundary_not_a_hole():
     심사에서 "왜 비었나" 를 물었을 때 답이 있는 것과 없는 것은 다르다.
     README 의 "화장품·식품 등 식약처 소관 | 불가" 와 같은 말이어야 한다.
     """
-    body = re.sub(r"<!--.*?-->", "", _HTML, flags=re.S)
-    assert "식약처 소관" in body
-    assert "선언된" in body and "경계" in body
+    body = markup_only(_HTML)
+    # ⚠ 낱말이 쉬운 말로 바뀌었다 (2026-09-20). 「소관」·「선언된 경계」는
+    #   뜻은 좋은데 처음 보는 사람이 못 읽는다. **단정하는 것은 뜻이다** -
+    #   어디 담당인지 말하고, 빈 것이 빠뜨린 것이 아니라고 말하는가.
+    assert "식약처 담당" in body, "어디 담당인지 안 적혀 있다"
+    assert "빠뜨린 것이 아니라" in body, "빈 칸이 구멍이 아니라는 말이 없다"
+    assert "다루지" in body and "않기로 한 범위" in body
 
 
 def test_the_page_says_the_number_is_not_an_accuracy():
-    body = re.sub(r"<!--.*?-->", "", _HTML, flags=re.S)
+    body = markup_only(_HTML)
     assert "맞힌 비율이 아닙니다" in body
-    assert "검수하지 않았습니다" in body
+    # ⚠ 「검수」→「확인」 (2026-09-20). 사람이 안 봤다는 사실이 남아야 한다.
+    assert "사람이" in body and "확인하지 않았습니다" in body, (
+        "이 수가 검수된 값이 아니라는 말이 없다")
 
 
 # ── 3. 경로 ────────────────────────────────────────────────────
