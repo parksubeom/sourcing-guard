@@ -1400,20 +1400,24 @@ def test_the_block_coordinates_are_a_measured_thing(pages):
 
 
 # ── 히어로 (2026-09-20 총괄 §2) ──────────────────────────────────────
-#: 히어로 칩. **제목과 같은 화면에는 두지 않는다.**
+#: 히어로 칩. **여덟 화면 전부에 있고, 제목과 같은 글자는 쓰지 않는다.**
 #:
-#: ⚠⚠ 총괄 §2 가 준 칩 여섯 중 셋(`체험 표본` · `우리가 틀린 것` ·
+#: ⚠⚠ 총괄 §2 가 처음 준 칩 여섯 중 셋(`체험 표본` · `우리가 틀린 것` ·
 #:   `카테고리 가이드`)이 그 화면의 **제목과 같은 글자**였다. 같은 말을 20px
-#:   간격으로 두 번 쓰면 읽는 사람에게는 결함으로 보인다. 칩은 "여기가
-#:   어디인가" 이고 제목은 "여기서 뭘 하나" 인데, 그 셋은 둘이 같은 것이라
-#:   칩이 더할 말이 없다. 제목을 고치는 쪽은 §2 가 금지했다("제목·부제는
-#:   지금 것을 그대로 옮긴다").
+#:   간격으로 두 번 쓰면 읽는 사람에게는 결함으로 보인다.
+#:
+#: ⚠ 처음에 그 셋을 **뺐는데** 총괄이 물렸다 - 빼면 "여덟 화면이 한 서비스"
+#:   가 약해진다. 대신 칩이 **내용이 어떻게 만들어졌는지**를 말한다. 페이지
+#:   이름은 제목이 이미 하고 있으므로 칩은 한 겹 더 뒤를 말하는 것이 맞다.
+#:   셋 다 그 페이지에 이미 있는 사실이라 새 주장이 아니다.
 _HERO_CHIPS = {
     "batch.html": "대량 검사",
     "watch.html": "감시 목록",
     "unknown.html": "모름 안내",
+    "samples.html": "기록본 · 기간만료·취소 포함",
+    "misses.html": "사람이 전수 검수",
+    "guide.html": "상품명을 실제로 넣어 본 결과",
 }
-_NO_CHIP = ("samples.html", "misses.html", "guide.html")
 
 
 def test_every_screen_starts_with_a_hero(pages):
@@ -1426,6 +1430,7 @@ def test_every_screen_starts_with_a_hero(pages):
 
     for name in PAGES:
         body = markup_only(pages[name])
+        assert 'class="eyebrow"' in body, f"{name}: 히어로 칩이 없다"
         assert 'class="intro-art"' in body or 'class="hero-art"' in body, (
             f"{name}: 히어로 그림 자리가 없다")
 
@@ -1446,12 +1451,13 @@ def test_every_screen_starts_with_a_hero(pages):
         assert m.group(1).strip() != title, (
             f"{name}: 칩과 제목이 같은 글자다 ('{title}') - 칩을 빼거나 다르게 쓴다")
 
-    # 칩을 뺀 화면은 **왜 뺐는지**가 주석에 있어야 한다. 없으면 다음 사람이
-    # 빠뜨린 것으로 보고 되돌린다.
-    for name in _NO_CHIP:
-        src = (STATIC / name).read_text(encoding="utf-8")
-        assert 'class="eyebrow"' not in markup_only(src), f"{name}: 칩이 다시 들어갔다"
-        assert "제목과 같은 글자" in src, f"{name}: 칩을 뺀 이유가 주석에 없다"
+    # ⚠ 칩이 **페이지 이름으로 되돌아가지 않는지**. 그렇게 되면 제목과 같아진다.
+    for name, banned in (("samples.html", "체험 표본"),
+                         ("misses.html", "우리가 틀린 것"),
+                         ("guide.html", "카테고리 가이드")):
+        body = markup_only(pages[name])
+        assert f'<span class="eyebrow">{banned}</span>' not in body, (
+            f"{name}: 칩이 페이지 이름으로 되돌아갔다 - 제목과 같은 글자다")
 
 
 def test_no_hero_image_borrows_a_signal_id():
@@ -1512,6 +1518,6 @@ def test_the_hero_art_can_be_swapped_by_replacing_one_file():
 
 def test_the_hero_chips_say_nothing_we_cannot_stand_behind(pages):
     """칩 여섯은 **새로 쓴 문장**이다. §9 가 여기도 걸린다."""
-    chips = " ".join(_HERO_CHIPS.values())  # 뺀 셋은 화면에 안 나간다
+    chips = " ".join(_HERO_CHIPS.values())
     for banned in ("안전", "합법", "보증", "판정", "무료"):
         assert banned not in chips, f"칩에 못 쓸 말이 있다: {banned}"
