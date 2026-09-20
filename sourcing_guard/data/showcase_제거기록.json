@@ -11,7 +11,7 @@
  "우리가_덧붙인_필드": [
   "thumb_file",
   "cert_numbers",
-  "cert",
+  "certs",
   "facts",
   "page_text",
   "result"
@@ -22,8 +22,7 @@
   "seller"
  ],
  "건수": {
-  "thumb 원본 URL 제거": 30,
-  "상품": 30
+  "상품": 29
  },
  "잔존": []
 }

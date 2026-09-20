@@ -8,3 +8,8 @@ anthropic>=0.40
 openai>=1.40
 pytest>=8.2
 olefile>=0.47
+# scripts/build_showcase.py 가 도매꾹 썸네일을 200px webp 로 줄일 때만 쓴다.
+# 배포본 앱은 import 하지 않는다 - 줄여 둔 파일을 정적 자산으로 낼 뿐이다.
+# 여기 두는 이유는 CI 가 이 파일만 설치하고 `tests/test_showcase.py` 가 실제
+# 썸네일 크기를 재기 때문이다 (재지 않으면 원본이 리포에 들어와도 모른다).
+Pillow>=11.0

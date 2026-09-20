@@ -43,6 +43,7 @@ from .scorer import KST, gov_lookup_state, has_specific_finding, score
 from .demos import DEMOS, DEMO_TEXTS
 from .demos import preview as demo_preview
 from .samples import compare_cut, misses as sample_misses, payload as sample_payload
+from .showcase import payload as showcase_payload, result_of as showcase_result
 
 _log = logging.getLogger(__name__)
 from .ratelimit import RateLimiter, text_fingerprint
@@ -708,6 +709,29 @@ def misses() -> dict:
       어긋나면 파일을 만들지 않으므로 여기 오는 수는 언제나 발표 숫자다.
     """
     return sample_misses()
+
+
+@app.get("/api/v1/showcase", include_in_schema=False)
+def showcase() -> dict:
+    """도매꾹 상품 리스트 — **미리 조회해 둔 실상품 카드.**
+
+    ⚠ 이 경로는 LLM·정부 API 를 부르지 않는다. 배포본(도쿄)에서 국표원 조회가
+      막혀 있어도 **이 경로는 반드시 답이 나온다** (총괄 지시 [P4]).
+
+    ⚠⚠ **카드에 신호를 싣지 않는다.** 목록에 빨강·노랑이 늘어서면 그것이
+      판매자에 대한 평가로 읽힌다. 화면이 실수로 칠할 수 있는 값을 아예 주지
+      않는다 - 문구로 당부하는 것보다 강하다 (`showcase.py` 머리 주석).
+    """
+    return showcase_payload()
+
+
+@app.get("/api/v1/showcase/{no}", include_in_schema=False)
+def showcase_item(no: str) -> dict:
+    """상품 하나의 기록된 결과. 목록에 결과를 함께 실으면 1MB 가 넘는다."""
+    hit = showcase_result(no)
+    if hit is None:
+        raise HTTPException(status_code=404, detail="그 상품은 목록에 없습니다.")
+    return hit
 
 
 @app.get("/api/v1/samples", include_in_schema=False)

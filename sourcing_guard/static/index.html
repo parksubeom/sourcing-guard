@@ -79,6 +79,39 @@
       <p class="hint">실제 도매 상품 열 개를 저희가 검사한 결과는 <a href="/samples">체험 표본</a>에 있습니다. 기간만료·취소 사례를 함께 두었습니다.</p>
     </section>
 
+    <!--
+      도매꾹 상품 리스트 (P4 · 2026-09-20). **입력란 바로 위**다 - 별도 화면으로
+      빼면 안 들어가는 사람이 생긴다. 시피님 뜻이 "직접 치기보다 도매꾹 상품을
+      먼저 보여준다" 이다.
+
+      주의(가장 중요): **카드에 신호를 칠하지 않는다.** 서버가 카드 payload 에
+        신호를 아예 안 싣는다(/api/v1/showcase). 신호는 누른 뒤 아래 결과
+        화면에서 처음 나온다.
+
+      주의(중요): 문구와 숫자를 여기 적지 않는다. 기준일·출처 한 줄·결과 아래
+        고정 문장은 전부 서버가 준다 - 화면에 박으면 사본을 다시 만들 때
+        한쪽만 고쳐진다 (6절).
+
+      주의: 자료가 없으면 이 구역은 통째로 숨는다. 빈 껍데기를 그리지 않는다.
+    -->
+    <section class="dg" aria-labelledby="dg-h" id="dg-sec" hidden>
+      <h3 id="dg-h">도매꾹에서 파는 상품으로 먼저 보기</h3>
+      <!--
+        주의(중요): **직접 치러 온 셀러를 붙잡지 않는다.** 이 구역이 입력란
+        위에 있는 것은 "먼저 보여준다" 이지 "직접 치는 길을 멀게 한다" 가
+        아니다 (총괄 판정). 실측 - 이 구역이 생기면서 320px 화면의 입력란이
+        y=1,780 에서 y=2,878 로 내려갔다. 접기(8장)로 8,700 을 2,878 까지
+        줄였지만 그래도 멀다. 그래서 건너뛰는 길을 한 줄 둔다.
+      -->
+      <p class="hint" id="dg-lede"></p>
+      <p class="hint"><a href="#pt">내 상품을 직접 넣으려면 여기로</a></p>
+      <ul class="dg-list" id="dg-list"></ul>
+      <!-- 처음에는 몇 장만 편다. 29장을 다 펴면 폰에서 입력란이 8,700px
+           아래로 밀린다(실측 320px). 숫자는 서버가 준 목록 길이에서 나온다. -->
+      <button class="btn-t" id="dg-more" type="button" hidden></button>
+      <p class="dg-src" id="dg-src"></p>
+    </section>
+
     <section aria-labelledby="input-h">
       <!-- 바로 위가 "예시로 바로 확인하기" 다. 짝을 맞춰 **실제**임을 말한다
            (2026-09-20 총괄 §1). -->
@@ -144,6 +177,9 @@
     <section aria-labelledby="res-h" id="res-sec" hidden>
       <h3 id="res-h">검사 결과</h3>
       <p class="hint" id="demo-note" hidden>이 결과는 서버가 준비한 예시 문구를 검사한 것입니다. 내 상품은 위 입력란에 붙여넣어 확인하세요.</p>
+      <!-- 도매꾹 상품을 눌렀을 때. **기록본임을 밝히고** 원문으로 링크한다.
+           문장은 서버가 준다 (`showcase.RESULT_NOTE`). -->
+      <p class="hint" id="dg-note" hidden></p>
       <!-- 로딩 A안 (design/loading.html) — 스피너 대신 "지금 무엇을 보고 있는지".
            네 줄이 **전부 같은 상태**다. /api/v1/scan 은 한 번에 답하므로 프론트는
            어느 단계인지 모른다 - 시간을 재서 "끝" 으로 넘기는 코드를 쓰지 않는다.
@@ -443,9 +479,127 @@
       .catch(function () { /* 표본을 못 받으면 빈 입력란으로 둔다 */ });
   }
 
+  // ── 도매꾹 상품 리스트 (P4) ────────────────────────────────────────
+  //
+  // 셀러가 직접 타이핑하기 전에 **실제로 팔리고 있는 상품**을 보여 준다.
+  // 결과는 미리 조회해 둔 사본이라 정부 API 가 막힌 곳에서도 답이 나온다.
+  //
+  // 주의(가장 중요): **목록에 신호를 칠하지 않는다.** 서버가 카드 payload 에
+  //   신호를 아예 안 싣는다 - 칠할 값이 없는 것이 문구로 당부하는 것보다 강하다.
+  //   신호는 누른 뒤 아래 결과 화면에서 처음 나온다.
+  //
+  // 주의(중요): 날짜·출처·결과 아래 고정 문장은 **서버 값**이다. 여기서
+  //   날짜를 적으면 사본을 다시 만들 때 화면만 옛 날짜를 말한다 (6절).
+  //
+  // 주의: `/api/v1/scan` 을 부르지 않는다. 투표 18일 × 공개 접근 × 29개를
+  //   실시간으로 돌리면 뚜껑 없는 비용이고, 첫 화면에 6초 대기가 붙는다.
+  //   대신 입력란을 채워 두므로 셀러가 "검사 시작하기" 로 **지금 다시** 돌릴
+  //   수 있다 - 기록만 보여 준다는 의심에 대한 답이 화면 안에 있어야 한다.
+  var dgSec = $("dg-sec"), dgList = $("dg-list"), dgNote = $("dg-note");
+
+  //: 처음에 펴 두는 장수. 나머지는 "더 보기" 로 편다.
+  //
+  // 주의(중요): 29장을 한꺼번에 펴면 **폰에서 입력란이 화면 밖으로 밀린다** -
+  //   320px 실측에서 본문 높이가 12,008px 이었고 그중 8,700px 이 이 목록이다.
+  //   입력란 위에 두라는 지시는 "먼저 보이게" 이지 "입력을 못 하게" 가 아니다.
+  var DG_FOLD_AT = 8;
+
+  function dgMoney(v) {
+    return typeof v === "number" ? v.toLocaleString("ko-KR") + "원" : "";
+  }
+
+  fetch("/api/v1/showcase")
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (data) {
+      var items = (data && data.items) || [];
+      if (!items.length) return;        // 빈 껍데기를 그리지 않는다
+      dgList.innerHTML = items.map(function (it) {
+        var meta = [];
+        if (it.price != null) meta.push("<b>" + esc(dgMoney(it.price)) + "</b>");
+        if (it.unit_qty != null) meta.push(esc("최소 " + it.unit_qty + "개"));
+        return '<li><button class="dg-card" type="button" aria-pressed="false" ' +
+          'data-no="' + esc(it.no) + '">' +
+          (it.thumb ? '<img src="' + esc(it.thumb) + '" alt="" loading="lazy" ' +
+                      'width="200" height="200">' : "") +
+          '<span class="dg-t">' + esc(it.title) + "</span>" +
+          '<span class="dg-m">' + meta.join("<span aria-hidden=\"true\">·</span>") +
+          "</span></button></li>";
+      }).join("");
+      if (items.length > DG_FOLD_AT) {
+        Array.prototype.forEach.call(dgList.children, function (li, i) {
+          if (i >= DG_FOLD_AT) li.hidden = true;
+        });
+        var more = $("dg-more");
+        more.textContent = "상품 " + (items.length - DG_FOLD_AT) + "개 더 보기";
+        more.hidden = false;
+        more.addEventListener("click", function () {
+          Array.prototype.forEach.call(dgList.children, function (li) { li.hidden = false; });
+          more.hidden = true;
+        });
+      }
+      $("dg-lede").textContent =
+        (data.as_of || "") + " 기준 도매꾹에서 판매중인 상품입니다. " +
+        "누르면 저희가 미리 조회해 둔 검사 결과가 아래에 나옵니다.";
+      // 무엇을 훑어서 고른 것인지. **수는 서버가 준다** (R5).
+      $("dg-src").textContent =
+        "도매꾹 " + (data.categories || []).join(" · ") + " 카테고리 " +
+        (data.surveyed != null ? data.surveyed + "건" : "") +
+        "을 훑어 인증번호가 적혀 있던 상품입니다. 목록에 나온 뒤 판매가 끝났을 수 있으니 " +
+        "상품명을 누른 뒤 도매꾹 원문에서 확인해 주세요.";
+      dgSec.hidden = false;
+    })
+    .catch(function () { /* 리스트가 없어도 본 기능은 돈다 */ });
+
+  dgList.addEventListener("click", function (e) {
+    var btn = e.target.closest ? e.target.closest(".dg-card") : null;
+    if (!btn) return;
+    var no = btn.getAttribute("data-no");
+    Array.prototype.forEach.call(dgList.querySelectorAll(".dg-card"), function (b) {
+      b.setAttribute("aria-pressed", b === btn ? "true" : "false");
+    });
+    // 붙여둔 이미지를 비운다. 사본은 텍스트만 검사한 것이라 이미지가 섞이면
+    // 화면과 기록이 다른 것을 말한다 (데모 경로와 같은 이유).
+    shots.forEach(function (s2) { URL.revokeObjectURL(s2.url); });
+    shots = [];
+    renderShots();
+    clearHints();
+    fetch("/api/v1/showcase/" + encodeURIComponent(no))
+      .then(function (r) {
+        if (!r.ok) throw new Error("이 상품의 기록을 불러오지 못했습니다");
+        return r.json();
+      })
+      .then(function (data) {
+        pt.value = data.page_text || "";
+        updateCount();
+        lastText = pt.value;            // 오답 신고가 같은 문장을 보낸다
+        $("demo-note").hidden = true;
+        dgNote.innerHTML =
+          esc(data.result_note) + " " +
+          esc("아래 결과는 " + String(data.scanned_at || "").slice(0, 10) +
+              "에 미리 조회해 둔 것입니다. 지금 다시 검사하려면 위 ") +
+          "‘검사 시작하기’" + esc(" 를 누르세요.") +
+          (data.url ? ' <a href="' + esc(data.url) + '" target="_blank" ' +
+                      'rel="noopener noreferrer">도매꾹 원문 보기' +
+                      '<span class="skip"> (새 창)</span></a>' : "");
+        dgNote.hidden = false;
+        err.hidden = true;
+        resSec.hidden = false;
+        skel.hidden = true;
+        res.innerHTML = "";
+        render(data.result);
+        resSec.scrollIntoView({ behavior: "smooth", block: "start" });
+      })
+      .catch(function (ex) {
+        $("err-h").textContent = "검사를 완료하지 못했습니다";
+        errP.textContent = ex.message + ". 잠시 후 다시 시도해 주세요.";
+        err.hidden = false;
+      });
+  });
+
   pt.addEventListener("input", function () {
     updateCount();
     $("demo-note").hidden = true;   // 사용자가 손대면 더는 예시가 아니다
+    dgNote.hidden = true;           // 도매꾹 기록본도 같다
   });
   $("clear").addEventListener("click", function () {
     clearHints();
@@ -453,7 +607,11 @@
     shots.forEach(function (s) { URL.revokeObjectURL(s.url); });
     shots = [];
     renderShots();
-    resSec.hidden = true; err.hidden = true; pt.focus();
+    resSec.hidden = true; err.hidden = true; dgNote.hidden = true;
+    Array.prototype.forEach.call(dgList.querySelectorAll(".dg-card"), function (b) {
+      b.setAttribute("aria-pressed", "false");
+    });
+    pt.focus();
   });
   // 본문이 바뀌면 다른 상품일 수 있다. 이전 상품의 답을 물려주면 안 된다.
   pt.addEventListener("input", clearHints);

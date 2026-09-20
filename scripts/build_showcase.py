@@ -136,6 +136,27 @@ EXCLUDED_STATES: frozenset[CertState] = frozenset({CertState.REVOKED, CertState.
 
 
 # ── 작은 도구 ────────────────────────────────────────────────────────
+def write_note(path: Path, lines: list[str], must_contain: tuple[str, ...]) -> None:
+    """기록 파일을 쓰고 **쓴 것이 성한지 스스로 단정한다.**
+
+    ⚠⚠ 2026-09-20 에 이 스크립트가 바로 그 사고를 냈다. 블록을 고치면서
+      쓰는 코드를 같이 지웠는데, 함수가 `None` 을 돌려주고 `SystemExit(None)`
+      은 종료코드 0 이라 **화면 출력은 맞고 파일만 안 써진 채 성공으로 보였다.**
+      두 번을 그대로 넘겼다.
+
+      CLAUDE.md §6: "파일을 제자리에서 고쳐 쓰는 스크립트는 쓴 뒤에 그 파일이
+      아직 성한지 **스스로 단정**해야 한다." 여기가 그 한 줄이다.
+    """
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(chr(10).join(lines), encoding="utf-8", newline="")
+    back = path.read_text(encoding="utf-8")
+    missing = [t for t in must_contain if t not in back]
+    if missing:
+        raise RuntimeError(f"{path} 를 썼는데 내용이 없다: {missing}")
+    print(f"→ {path} ({path.stat().st_size:,} bytes)")
+
+
+
 def _as_int(raw: object) -> int | None:
     """숫자 문자열 → int. **문자열로 흘리지 않는다** (CLAUDE.md §6).
 
@@ -318,27 +339,42 @@ def collect(limit: int, *, dry_run: bool = False) -> int:
               file=sys.stderr)
         return 2
 
+    # ⚠⚠ **번호를 전부 조회한다. 첫 번호만 보면 안 된다** (2026-09-20 실측).
+    #
+    #   처음에 `nums[0]` 만 조회했는데, 상품 48182475 는 번호가 셋이고
+    #   **셋째가 '안전인증취소'** 였다. 첫 번호가 적합이라 미리 거르는 그물을
+    #   그대로 통과했고, 스캔에 가서야 RED 로 걸렸다 - LLM 한 번을 헛썼고,
+    #   무엇보다 사본의 `cert` 가 "이 상품의 인증상태" 인 것처럼 첫 번호만
+    #   적고 있었다. 하나라도 취소면 그 상품은 뺀다.
+    #
+    #   CLAUDE.md §6 "가드를 만들 때 반대 방향도 한 줄로 재라" 의 또 한 번이다 -
+    #   주석이 걱정한 것은 "취소를 화면에 올리는 것" 이었고, 실제 구멍은
+    #   **번호가 여러 개일 때 첫 번호만 봤다** 였다.
     t1 = time.time()
     lookups = 0
-    states: dict[str, dict] = {}
+    states: dict[str, list[dict]] = {}
     for no, nums in gov_cert.items():
-        num = nums[0]
-        try:
-            rec = kats.lookup_certification(num)
-            lookups += 1
-        except KatsApiError as exc:
-            print(f"    조회 실패 {num}: {exc}")
-            continue
-        states[no] = {
-            "number": num,
-            "found": rec is not None,
-            "state": rec.state.value if rec else None,
-            "status": rec.status if rec else None,
-            "detail_url": rec.detail_url if rec else None,
-        }
-    found = sum(1 for s in states.values() if s["found"])
-    tally = Counter(s["state"] for s in states.values() if s["found"])
-    print(f"국표원 {lookups}회 · 레코드 {found} · 없음 {lookups-found} · {time.time()-t1:.1f}s")
+        rows: list[dict] = []
+        for num in nums:
+            try:
+                rec = kats.lookup_certification(num)
+                lookups += 1
+            except KatsApiError as exc:
+                print(f"    조회 실패 {num}: {exc}")
+                continue
+            rows.append({
+                "number": num,
+                "found": rec is not None,
+                "state": rec.state.value if rec else None,
+                "status": rec.status if rec else None,
+                "detail_url": rec.detail_url if rec else None,
+            })
+        if rows:
+            states[no] = rows
+    found = sum(1 for rows in states.values() for r in rows if r["found"])
+    tally = Counter(r["state"] for rows in states.values() for r in rows if r["found"])
+    print(f"국표원 {lookups}회 (상품 {len(states)}건) · 레코드 {found} · "
+          f"없음 {lookups-found} · {time.time()-t1:.1f}s")
     for state, n in sorted(tally.items(), key=lambda kv: -kv[1]):
         print(f"    {state:12} {n:3}")
 
@@ -348,11 +384,13 @@ def collect(limit: int, *, dry_run: bool = False) -> int:
     # "블록 가게" 가 된다. 안에서는 도매꾹 랭킹순을 그대로 따른다.
     pool: dict[str, list[str]] = defaultdict(list)
     for no in sorted(states, key=lambda n: order_in_cat.get(n, 10**6)):
-        s = states[no]
-        if not s["found"]:
+        rows = states[no]
+        if not any(r["found"] for r in rows):
             continue
-        if CertState(s["state"]) in EXCLUDED_STATES:
-            drop_counts[f"인증상태 {s['state']} 제외"] += 1
+        bad = [r["state"] for r in rows if r["found"]
+               and CertState(r["state"]) in EXCLUDED_STATES]
+        if bad:
+            drop_counts[f"인증상태 {bad[0]} 제외"] += 1
             continue
         if not (listing[no].get("thumb") or "").strip():
             drop_counts["썸네일 없음 제외"] += 1
@@ -389,7 +427,7 @@ def collect(limit: int, *, dry_run: bool = False) -> int:
             record["price"] = _as_int(record.get("price"))
             record["unitQty"] = _as_int(record.get("unitQty"))
             record["cert_numbers"] = certs
-            record["cert"] = states[no]
+            record["certs"] = states[no]
             record["facts"] = {k: v for k, v in fact_dict.items() if v}
             record["page_text"] = page_text_of(fact_dict, certs)
             # ⚠ 개인정보 게이트를 **고르는 단계에서 먼저** 본다. 걸리는 줄을
@@ -425,6 +463,7 @@ def collect(limit: int, *, dry_run: bool = False) -> int:
         "items": records,
     }
     counts = write_sanitized(OUT, payload)
+    prune_thumbs(records)
     print(f"→ {OUT} ({OUT.stat().st_size:,} bytes)")
     print(f"   제거기록 {dict(sorted(counts.items()))}")
 
@@ -444,7 +483,7 @@ def _write_notes(details, listing, category_of, gov_cert, states, chosen,
     """
     out = NOTES_DIR / f"showcase_{date.today().isoformat()}"
     out.mkdir(parents=True, exist_ok=True)
-    tally = Counter(s["state"] for s in states.values() if s["found"])
+    tally = Counter(r["state"] for rows in states.values() for r in rows if r["found"])
     by_cat = Counter(category_of[no] for no in gov_cert)
     lines = [
         f"# showcase 수집 {date.today().isoformat()}",
@@ -453,7 +492,7 @@ def _write_notes(details, listing, category_of, gov_cert, states, chosen,
         "매칭률·정답률이 아니다.",
         "",
         f"    도매꾹 호출   {dome_calls}회",
-        f"    국표원 호출   {lookups}회",
+        f"    국표원 호출   {lookups}회 (번호 기준. 상품은 {len(states)}건)",
         f"    상세          {len(details)}건",
         f"    국표원 형식   {len(gov_cert)}건 "
         f"({100.0*len(gov_cert)/max(1,len(details)):.0f}%)",
@@ -463,7 +502,7 @@ def _write_notes(details, listing, category_of, gov_cert, states, chosen,
         "",
     ]
     lines += [f"    {name:8} {by_cat.get(name, 0):3}" for _c, name in CATEGORIES]
-    lines += ["", "## 인증상태", ""]
+    lines += ["", "## 인증상태 (**번호마다** 한 줄. 한 상품에 번호가 둘 이상일 수 있다)", ""]
     lines += [f"    {k:12} {v:3}" for k, v in sorted(tally.items(), key=lambda kv: -kv[1])]
     lines += [
         "",
@@ -476,8 +515,8 @@ def _write_notes(details, listing, category_of, gov_cert, states, chosen,
     ]
     lines += [f"    {k:24} {v:5}" for k, v in sorted(drop_counts.items())]
     lines.append("")
-    (out / "README.md").write_text("\n".join(lines), encoding="utf-8", newline="")
-    print(f"→ {out / 'README.md'}")
+    write_note(out / "README.md", lines,
+               (f"화면에 올림   {len(chosen)}건", f"국표원 형식   {len(gov_cert)}건"))
 
 
 # ── ② 스캔 ──────────────────────────────────────────────────────────
@@ -501,6 +540,7 @@ def scan(base: str, *, sleep: float = 6.0) -> int:
         return 2
 
     kept: list[dict] = []
+    red_rows: list[tuple[str, list[str], list[str]]] = []
     dropped_red = 0
     signals: Counter[str] = Counter()
     with httpx.Client(timeout=180.0) as client:
@@ -522,7 +562,11 @@ def scan(base: str, *, sleep: float = 6.0) -> int:
                   f'{(meta.get("gov_lookup") or {}).get("cert")}')
             if sig == "RED":
                 dropped_red += 1
-                print("      RED - 화면에서 뺍니다 (총괄 지시)")
+                red_rows.append((item["no"], item.get("cert_numbers") or [],
+                                 [f.get("kind") for f in body.get("findings") or []
+                                  if f.get("signal") == "RED"]))
+                print("      RED - 화면에서 뺍니다 (총괄 지시): "
+                      f"{red_rows[-1][2]}")
             else:
                 item["result"] = body
                 signals[sig] += 1
@@ -534,6 +578,8 @@ def scan(base: str, *, sleep: float = 6.0) -> int:
     payload["scanned_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
     payload["dropped_red"] = dropped_red
     counts = write_sanitized(OUT, payload)
+    prune_thumbs(kept)
+    _write_red_notes(red_rows)
     print(f"신호 {dict(signals)} · RED 로 뺀 것 {dropped_red}건")
     print(f"→ {OUT} ({OUT.stat().st_size:,} bytes)")
     print(f"   제거기록 {dict(sorted(counts.items()))}")
@@ -615,10 +661,87 @@ def screen_titles() -> int:
     for line in listed:
         print(line)
 
+    out = NOTES_DIR / f"showcase_{date.today().isoformat()}" / "품목붙음.md"
+    out.parent.mkdir(parents=True, exist_ok=True)
+    body = [
+        f"# 상품명만으로 품목이 붙는가 ({date.today().isoformat()} · LLM 0회)",
+        "",
+        "라벨: **도매꾹 랭킹순 상위 50 × 카테고리 8 · 배치 경로(상품명만).**",
+        "매칭률이지 정답률이 아니다 - 검수하지 않았다.",
+        "",
+        f"    상품명                  {len(titles)}건",
+        f"    품목이 붙음              {matched}건",
+        f"    「{_WATCH_WORD}」 계열이 붙음    {len(listed)}건",
+        f"      그중 카테고리가 물놀이용품  {in_water_cat}건",
+        "",
+        f"## 「{_WATCH_WORD}」 계열 품목이 붙은 줄 (전부)",
+        "",
+        "⚠ **카테고리로 거르지 않았다.** 총괄이 만든 검사가 \"카테고리가",
+        "  물놀이용품이 아닌데 「물놀이」가 붙으면 이상\" 으로 세어 실제",
+        "  오매칭을 놓쳤다 - 그 상품의 카테고리가 물놀이용품이었다 (미완 §1-u).",
+        "",
+        "⚠ 오매칭 여부는 **적지 않았다.** 상품을 봐야 아는 판단이라 총괄이 한다",
+        "  (R5-b ③).",
+        "",
+    ]
+    body += listed
+    body.append("")
+    write_note(out, body, (f"「{_WATCH_WORD}」 계열이 붙음    {len(listed)}건",
+                           f"품목이 붙음              {matched}건"))
+    return 0
+
+
 #: 미완 §1-u 가 이름을 찍은 낱말. **실측에서 나온 것 하나뿐이다** (R5 ·
 #: 크레파스 원칙). 늘릴 때는 어느 실측에서 나왔는지 함께 적는다 - 여기에
 #: 짐작으로 낱말을 더하면 그 목록 자체가 §1-u 가 경고한 그물이 된다.
 _WATCH_WORD = "물놀이"
+
+
+def prune_thumbs(records: list[dict]) -> int:
+    """사본이 안 쓰는 썸네일을 지운다. **버려진 파일이 리포에 남지 않게.**
+
+    ⚠ 실측에서 두 장이 남았다 (2026-09-20). collect 를 다시 돌리면 고른
+      상품이 달라지고, scan 이 RED 를 빼면 그 상품 썸네일도 주인을 잃는다.
+      공개 리포라 "왜 있는지 아무도 모르는 이미지" 를 두지 않는다.
+    """
+    if not THUMB_DIR.is_dir():
+        return 0
+    keep = {r["thumb_file"] for r in records if r.get("thumb_file")}
+    gone = 0
+    for path in THUMB_DIR.glob("*.webp"):
+        if path.name not in keep:
+            path.unlink()
+            gone += 1
+    if gone:
+        print(f"주인 없는 썸네일 {gone}장을 지웠습니다")
+    return gone
+
+
+def _write_red_notes(red_rows) -> None:
+    """화면에서 뺀 RED 를 **무엇 때문에 뺐는지**와 함께 남긴다.
+
+    ⚠⚠ 화면이 "빨간불 상품은 없습니다" 라고 말하는 순간 그것은 주장이 된다.
+      **무엇을 뺐는지 말할 수 없으면 그 주장은 감춘 것과 구별되지 않는다.**
+      상품번호와 걸린 근거 종류만 적는다 - 상품명·판매자는 적지 않는다.
+    """
+    out = NOTES_DIR / f"showcase_{date.today().isoformat()}" / "RED_제외.md"
+    out.parent.mkdir(parents=True, exist_ok=True)
+    lines = [
+        f"# 화면에서 뺀 RED ({date.today().isoformat()})",
+        "",
+        "총괄 지시 [P4]: 리스트에 RED 상품을 두지 않는다. 인증상태로는 미리",
+        "걸렀지만(`EXCLUDED_STATES`) **리콜 일치는 스캔해 봐야 안다.**",
+        "",
+        "⚠ 뺀 것은 감춘 것이 아니다 - 여기 남긴다. 화면이 \"RED 0건\" 이라고",
+        "  말하는 근거가 이 파일이다.",
+        "",
+        f"    뺀 건수  {len(red_rows)}건",
+        "",
+    ]
+    for no, certs, kinds in red_rows:
+        lines.append(f"    {no:>10}  {','.join(certs) or '-':24} {kinds}")
+    lines.append("")
+    write_note(out, lines, (f"뺀 건수  {len(red_rows)}건",))
 
 
 def main() -> int:
@@ -630,11 +753,17 @@ def main() -> int:
     ap.add_argument("--dry-run", action="store_true",
                     help="collect: 도매꾹만 부르고 국표원·썸네일은 건너뛴다")
     args = ap.parse_args()
-    if args.stage == "collect":
-        return collect(args.limit, dry_run=args.dry_run)
-    if args.stage == "screen":
-        return screen_titles()
-    return scan(args.base, sleep=args.sleep)
+    stages = {
+        "collect": lambda: collect(args.limit, dry_run=args.dry_run),
+        "screen": screen_titles,
+        "scan": lambda: scan(args.base, sleep=args.sleep),
+    }
+    code = stages[args.stage]()
+    # ⚠ `SystemExit(None)` 은 **종료코드 0** 이다. 단계가 실수로 아무것도
+    #   안 돌려주면 조용히 성공이 된다 - 실제로 그렇게 물렸다 (`write_note`).
+    if not isinstance(code, int):
+        raise RuntimeError(f"{args.stage} 단계가 종료코드를 안 돌려줬다: {code!r}")
+    return code
 
 
 if __name__ == "__main__":
