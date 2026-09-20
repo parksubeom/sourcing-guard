@@ -53,7 +53,8 @@
     <div class="container hero-grid">
       <div class="hero-say">
         <span class="eyebrow">셀러용 · 무료 · 로그인 없음</span>
-        <h1>이 상품,<br>사입해도 될까?</h1>
+        <!-- 둘째 줄만 브랜드색 (시안 §1). 글자는 안 바뀐다. -->
+        <h1>이 상품,<br><span class="ask">사입해도 될까?</span></h1>
         <p class="lead">상세페이지를 붙여넣으세요.<br>KC 인증 · 리콜 · 유해물질 기준을 정부 원문으로 확인합니다.</p>
 
         <div class="cta-row">
@@ -307,7 +308,15 @@
       var c = el("div", "rc-ax");
       c.appendChild(el("span", "n", a.name));
       c.appendChild(el("span", "v", a.label));
-      if (a.note) c.appendChild(el("span", "m", a.note));
+      // 날짜만 안 꺾이게 감싼다 - 글자는 그대로 두고 꺾일 자리만 막는다.
+      if (a.note) {
+        var m = el("span", "m");
+        a.note.split(/(\d{4}-\d{2}-\d{2})/).forEach(function (t, i) {
+          if (!t) return;
+          m.appendChild(i % 2 ? el("span", "nb", t) : document.createTextNode(t));
+        });
+        c.appendChild(m);
+      }
       ax.appendChild(c);
     });
     box.appendChild(ax);

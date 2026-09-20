@@ -561,3 +561,36 @@ def test_with_particle_is_not_the_mirror_of_the_others():
             object_particle("완구"), with_particle("완구")) == ("가", "는", "를", "와")
     assert (subject_particle("가방"), topic_particle("가방"),
             object_particle("가방"), with_particle("가방")) == ("이", "은", "을", "과")
+
+
+def test_the_empty_list_does_not_offer_a_sweep_button():
+    """⚠⚠ 대조할 것이 없는데 「지금 대조하기」가 먼저 보이면 **단추가 거짓말**을 한다.
+
+    2026-09-20 캡처에서 순서가 이랬다:
+
+        감시 중인 상품            ← 제목
+        [지금 대조하기]           ← 단추
+        감시 중인 상품이 없습니다.  ← 빈 상태
+
+    눌러도 할 일이 없다. 같은 날 「복사가 막혔는데 아무 일도 안 하는 단추」를
+    잡은 것과 같은 종류다 (미완 §1-y).
+
+    ⚠ 반대 방향도 단정한다 - 목록이 있으면 다시 보여야 한다. 감추기만 하고
+      켜는 쪽을 빼면 감시 중인 셀러가 대조를 못 한다.
+    """
+    from pathlib import Path
+
+    from tests.srccheck import markup_only
+
+    src = (Path(__file__).resolve().parents[1]
+           / "sourcing_guard" / "static" / "watch.html").read_text(encoding="utf-8")
+    body = markup_only(src)
+
+    # 기본이 감춤이다 - 스크립트가 켜기 전에는 안 보인다.
+    assert '<h3 id="list-h" hidden>' in body, "제목이 기본으로 감춰져 있지 않다"
+    assert '<div class="watchbar" id="watchbar" hidden>' in body, "단추 줄이 감춰져 있지 않다"
+
+    # 켜고 끄는 판단은 한 곳이다.
+    assert body.count("function showListChrome(") == 1, "여닫는 함수가 하나가 아니다"
+    assert "showListChrome(false)" in body, "빈 목록에서 감추지 않는다"
+    assert "showListChrome(true)" in body, "목록이 있을 때 다시 안 보여 준다"

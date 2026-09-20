@@ -39,6 +39,22 @@
   --signal-green:#16845B;   --signal-green-tint:#EAF8F1;   --signal-green-text:#157D56;
   --signal-amber:#D97706;   --signal-amber-tint:#FFF4DF;   --signal-amber-text:#A75C05;
   --signal-red:#DC3E4D;     --signal-red-tint:#FFF0F1;     --signal-red-text:#D22636;
+  /* 꽉 찬 신호 알약. **바탕과 그 위 글자를 한 쌍으로** 둔다 (2026-09-20).
+     전에는 바탕만 `-text`(어둡게만 내린 값)를 썼는데, 주황이 그렇게 내려가면
+     흙빛으로 읽혀 같은 화면의 옅은 알약과 다른 색으로 보였다. 실측:
+
+         본색 위 흰 글자    초록 4.68 · 주황 3.19 · 빨강 4.34
+         본색 위 어두운 글자  초록 3.26 · 주황 4.79 · 빨강 3.52
+
+     주황만 답이 반대다. 그래서 **바탕은 본색으로 통일하고 글자를 각자 고른다** -
+     눈이 읽는 것은 색조이고, 색조가 같으면 같은 신호로 읽힌다.
+     빨강은 본색(#DC3E4D)이 흰 글자로 4.34 라 3% 어둡게 한 값이다. */
+  --signal-green-fill:#16845B;  --signal-green-on-fill:#FFFFFF;   /* 4.68 */
+  --signal-amber-fill:#D97706;  --signal-amber-on-fill:#20243A;   /* 4.79 */
+  --signal-red-fill:#DB3746;    --signal-red-on-fill:#FFFFFF;     /* 4.52 */
+  /* 회색불도 꽉 찬 칩이 된다. 본색(#7F8794)에 흰 글자는 **3.62** 로 미달이라
+     한 단계 어둡게 쓴다. RGB 폭 20 이라 '회색불은 회색' 은 그대로다. */
+  --signal-unknown-fill:#646B78; --signal-unknown-on-fill:#FFFFFF; /* 5.36 */
   --signal-unknown:#7F8794; --signal-unknown-tint:#F1F2F7; --signal-unknown-text:#666E7B;
   /* ⚠ 문서의 neutral-500(#7A8496)은 R·G·B 폭이 28 이라 "회색불은 회색"
      규칙(폭 24 이하)을 넘는다. **검사를 늦추지 않고 값을 회색 쪽으로**
@@ -92,6 +108,13 @@
   --signal-green-tint:rgba(17,153,106,.22);  --signal-green-text:#6FD9AE;
   --signal-amber-tint:rgba(217,123,0,.22);   --signal-amber-text:#F2B36B;
   --signal-red-tint:rgba(232,73,81,.22);     --signal-red-text:#FF9DA2;
+  /* 다크에서는 밝은 바탕 + 어두운 글자다. ⚠⚠ 2026-09-20 까지 **흰 글자**
+     였고 실측 1.72 · 1.84 · 1.98 로 전부 AA 미달이었다 - 라이트만 재는
+     검사였고 다크는 아무도 안 봤다. */
+  --signal-green-fill:#6FD9AE;  --signal-green-on-fill:#20243A;   /* 8.88 */
+  --signal-amber-fill:#F2B36B;  --signal-amber-on-fill:#20243A;   /* 8.32 */
+  --signal-red-fill:#FF9DA2;    --signal-red-on-fill:#20243A;     /* 7.71 */
+  --signal-unknown-fill:#B6BCC7; --signal-unknown-on-fill:#20243A; /* 8.01 */
   --signal-unknown-tint:rgba(138,148,174,.22); --signal-unknown-text:#B6BFD6;
   --bg-page:#12141F; --bg-canvas:#1A1E2D;
   --illust-blob:rgba(255,194,155,.10); --signal-amber-border:rgba(217,123,0,.45);
@@ -107,6 +130,13 @@
     --signal-green-tint:rgba(17,153,106,.22);  --signal-green-text:#6FD9AE;
     --signal-amber-tint:rgba(217,123,0,.22);   --signal-amber-text:#F2B36B;
     --signal-red-tint:rgba(232,73,81,.22);     --signal-red-text:#FF9DA2;
+    /* 다크에서는 밝은 바탕 + 어두운 글자다. ⚠⚠ 2026-09-20 까지 **흰 글자**
+       였고 실측 1.72 · 1.84 · 1.98 로 전부 AA 미달이었다 - 라이트만 재는
+       검사였고 다크는 아무도 안 봤다. */
+    --signal-green-fill:#6FD9AE;  --signal-green-on-fill:#20243A;   /* 8.88 */
+    --signal-amber-fill:#F2B36B;  --signal-amber-on-fill:#20243A;   /* 8.32 */
+    --signal-red-fill:#FF9DA2;    --signal-red-on-fill:#20243A;     /* 7.71 */
+    --signal-unknown-fill:#B6BCC7; --signal-unknown-on-fill:#20243A; /* 8.01 */
     --signal-unknown-tint:rgba(138,148,174,.22); --signal-unknown-text:#B6BFD6;
     --bg-page:#12141F; --bg-canvas:#1A1E2D;
     --illust-blob:rgba(255,194,155,.10); --signal-amber-border:rgba(217,123,0,.45);

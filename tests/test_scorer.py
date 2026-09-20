@@ -637,10 +637,10 @@ def test_axes_carry_the_recall_as_of_date():
     from sourcing_guard.scorer import _axes
 
     got = {a["key"]: a for a in _axes([f(FindingKind.RECALL_CLEAR, Signal.GREEN)], "20260906")}
-    # ⚠ 이 검사가 가진 것은 **날짜 표기**다. 뒤에 붙는 "· 일치 항목 없음" 의
+    # ⚠ 이 검사가 가진 것은 **날짜 표기**다. 앞에 붙는 "일치 항목 없음 · " 의
     #   소유자는 `test_recall_axis_says_no_match_only_when_it_compared` 다 -
     #   여기에 다시 적으면 한쪽만 고쳐질 때 나머지가 낡는다 (§6).
-    assert got["recall"]["note"].startswith("2026-09-06 공표분까지")
+    assert got["recall"]["note"].endswith("2026-09-06 공표분까지")
     # 대조를 못 했으면 기준일을 적지 않는다 - 안 한 일에 날짜를 붙이면 거짓말이다.
     none = {a["key"]: a for a in _axes([], "20260906")}
     assert none["recall"]["note"] == ""
@@ -712,47 +712,64 @@ def test_recall_axis_says_no_match_only_when_it_compared():
         a["key"]: a
         for a in _axes([f(FindingKind.RECALL_MATCH, Signal.RED)], "20260914")
     }
-    assert clear["recall"]["note"] == "2026-09-14 공표분까지 · 일치 항목 없음"
+    # 순서가 곧 중요도다 - **찾은 것이 앞, 출처가 뒤** (2026-09-20 총괄).
+    assert clear["recall"]["note"] == "일치 항목 없음 · 2026-09-14 공표분까지"
     assert hit["recall"]["label"] == "일치 있음"
     assert "일치 항목 없음" not in hit["recall"]["note"], "일치했는데 없다고 말한다"
 
 
-def test_axis_note_shows_both_publish_date_and_sync_time():
+def _synced(when: str, today) -> str:
+    """갱신 시각 문구. **오너는 `ScanResult.recall_synced_label` 이다.**
+
+    ⚠⚠ 2026-09-20 에 축 메모에서 메타 푸터로 **옮겼다.** 축이 세 절이 되면
+      폰에서 제일 중요한 절("일치 항목 없음")이 줄 끝으로 밀려서다.
+      옮긴 것이지 버린 것이 아니다 - 버리면 아래 오해가 다시 돌아온다.
+    """
+    return score(
+        toy(),
+        [f(FindingKind.KC_VERIFIED, Signal.GREEN),
+         f(FindingKind.RECALL_CLEAR, Signal.GREEN)],
+        recall_data_as_of="20260904",
+        recall_synced_at=when,
+        today=today,
+    ).recall_synced_label
+
+
+def test_the_screen_says_when_we_last_fetched_not_only_the_publish_date():
     """공표일만 적으면 셀러가 "3일 전 데이터" 로 읽는다.
 
     주말·공휴일에는 정부 공표가 없어서 공표일이 며칠 전인 것이 정상이다.
-    우리가 오늘 돌았다는 사실을 함께 적어야 그 오해가 안 생긴다.
-    /healthz 가 이미 last_sync_at 을 준다 - 없는 값을 만드는 것이 아니다.
+    우리가 오늘 받아 왔다는 사실을 함께 적어야 그 오해가 안 생긴다.
+    /healthz 가 이미 last_sync_ok_at 을 준다 - 없는 값을 만드는 것이 아니다.
     """
+    assert _synced("2026-09-07T10:10:52+00:00", date(2026, 9, 7)) == "오늘 19:10 갱신"
+
+    # ⚠ 반대 방향 - 축에는 더 이상 없어야 한다. 두 곳에 적히면 한쪽만 낡는다.
     from sourcing_guard.scorer import _axes
 
-    got = {
-        a["key"]: a
-        for a in _axes(
-            [f(FindingKind.RECALL_CLEAR, Signal.GREEN)],
-            "20260904",
-            "2026-09-07T10:10:52+00:00",
-            date(2026, 9, 7),
-        )
-    }
-    assert got["recall"]["note"].startswith("2026-09-04 공표분까지 · 오늘 19:10 갱신")
+    got = {a["key"]: a for a in _axes(
+        [f(FindingKind.RECALL_CLEAR, Signal.GREEN)], "20260904",
+        "2026-09-07T10:10:52+00:00", date(2026, 9, 7))}
+    assert "갱신" not in got["recall"]["note"], "축 메모에 갱신 시각이 남아 있다"
 
 
-def test_axis_note_dates_an_older_sync_explicitly():
+def test_the_sync_label_dates_an_older_sync_explicitly():
     """어제 갱신이면 "오늘" 이라고 쓰지 않는다."""
-    from sourcing_guard.scorer import _axes
+    assert _synced("2026-09-05T23:00:00+00:00", date(2026, 9, 7)) == "2026-09-06 08:00 갱신"
 
-    got = {
-        a["key"]: a
-        for a in _axes(
-            [f(FindingKind.RECALL_CLEAR, Signal.GREEN)],
-            "20260904",
-            "2026-09-05T23:00:00+00:00",
-            date(2026, 9, 7),
-        )
-    }
-    assert got["recall"]["note"].startswith(
-        "2026-09-04 공표분까지 · 2026-09-06 08:00 갱신")
+
+def test_the_sync_label_reaches_the_screen():
+    """⚠⚠ 옮겼으면 **옮긴 자리에 실제로 그려지는지**를 단정한다.
+
+    안 그리면 "축에서 뺐다" 가 곧 "화면에서 없앴다" 가 되고, 위 오해가
+    조용히 돌아온다. 2026-09-20 에 이 값을 화면에 내보내는 유일한 통로가
+    축 메모였다 - 그래서 옮기면서 푸터에 붙였다.
+    """
+    from pathlib import Path as _P
+
+    index = (_P(__file__).resolve().parents[1]
+             / "sourcing_guard/static/index.html").read_text(encoding="utf-8")
+    assert "data.recall_synced_label" in index, "메타 푸터가 갱신 시각을 안 그린다"
 
 
 #: ⚠⚠ **시각은 KST 로 적는다. 저장값은 UTC 다** (2026-09-18).
@@ -780,13 +797,8 @@ def test_scorer_never_reads_the_clock_itself():
     for banned in ("date.today()", "datetime.now()", "datetime.utcnow()"):
         assert banned not in src, f"scorer 가 시계를 읽는다: {banned}"
 
-    from sourcing_guard.scorer import _axes
-
-    got = {a["key"]: a for a in _axes(
-        [f(FindingKind.RECALL_CLEAR, Signal.GREEN)], "20260904",
-        "2026-09-07T10:10:52+00:00", None)}
-    assert got["recall"]["note"].startswith(
-        "2026-09-04 공표분까지 · 2026-09-07 19:10 갱신")
+    # today 를 안 주면 "오늘" 이라고 쓸 수 없으므로 절대 날짜로 적는다.
+    assert _synced("2026-09-07T10:10:52+00:00", None) == "2026-09-07 19:10 갱신"
 
 
 def test_electrical_coverage_gap_names_the_reason_not_our_laziness():

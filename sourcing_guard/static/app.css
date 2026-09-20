@@ -59,6 +59,22 @@
   --signal-green:#16845B;   --signal-green-tint:#EAF8F1;   --signal-green-text:#157D56;
   --signal-amber:#D97706;   --signal-amber-tint:#FFF4DF;   --signal-amber-text:#A75C05;
   --signal-red:#DC3E4D;     --signal-red-tint:#FFF0F1;     --signal-red-text:#D22636;
+  /* 꽉 찬 신호 알약. **바탕과 그 위 글자를 한 쌍으로** 둔다 (2026-09-20).
+     전에는 바탕만 `-text`(어둡게만 내린 값)를 썼는데, 주황이 그렇게 내려가면
+     흙빛으로 읽혀 같은 화면의 옅은 알약과 다른 색으로 보였다. 실측:
+
+         본색 위 흰 글자    초록 4.68 · 주황 3.19 · 빨강 4.34
+         본색 위 어두운 글자  초록 3.26 · 주황 4.79 · 빨강 3.52
+
+     주황만 답이 반대다. 그래서 **바탕은 본색으로 통일하고 글자를 각자 고른다** -
+     눈이 읽는 것은 색조이고, 색조가 같으면 같은 신호로 읽힌다.
+     빨강은 본색(#DC3E4D)이 흰 글자로 4.34 라 3% 어둡게 한 값이다. */
+  --signal-green-fill:#16845B;  --signal-green-on-fill:#FFFFFF;   /* 4.68 */
+  --signal-amber-fill:#D97706;  --signal-amber-on-fill:#20243A;   /* 4.79 */
+  --signal-red-fill:#DB3746;    --signal-red-on-fill:#FFFFFF;     /* 4.52 */
+  /* 회색불도 꽉 찬 칩이 된다. 본색(#7F8794)에 흰 글자는 **3.62** 로 미달이라
+     한 단계 어둡게 쓴다. RGB 폭 20 이라 '회색불은 회색' 은 그대로다. */
+  --signal-unknown-fill:#646B78; --signal-unknown-on-fill:#FFFFFF; /* 5.36 */
   --signal-unknown:#7F8794; --signal-unknown-tint:#F1F2F7; --signal-unknown-text:#666E7B;
   /* 주의(중요): 문서의 neutral-500(#7A8496)은 R·G·B 폭이 28 이라 "회색불은 회색"
      규칙(폭 24 이하)을 넘는다. **검사를 늦추지 않고 값을 회색 쪽으로**
@@ -112,6 +128,13 @@
   --signal-green-tint:rgba(17,153,106,.22);  --signal-green-text:#6FD9AE;
   --signal-amber-tint:rgba(217,123,0,.22);   --signal-amber-text:#F2B36B;
   --signal-red-tint:rgba(232,73,81,.22);     --signal-red-text:#FF9DA2;
+  /* 다크에서는 밝은 바탕 + 어두운 글자다. 주의(가장 중요): 2026-09-20 까지 **흰 글자**
+     였고 실측 1.72 · 1.84 · 1.98 로 전부 AA 미달이었다 - 라이트만 재는
+     검사였고 다크는 아무도 안 봤다. */
+  --signal-green-fill:#6FD9AE;  --signal-green-on-fill:#20243A;   /* 8.88 */
+  --signal-amber-fill:#F2B36B;  --signal-amber-on-fill:#20243A;   /* 8.32 */
+  --signal-red-fill:#FF9DA2;    --signal-red-on-fill:#20243A;     /* 7.71 */
+  --signal-unknown-fill:#B6BCC7; --signal-unknown-on-fill:#20243A; /* 8.01 */
   --signal-unknown-tint:rgba(138,148,174,.22); --signal-unknown-text:#B6BFD6;
   --bg-page:#12141F; --bg-canvas:#1A1E2D;
   --illust-blob:rgba(255,194,155,.10); --signal-amber-border:rgba(217,123,0,.45);
@@ -127,6 +150,13 @@
     --signal-green-tint:rgba(17,153,106,.22);  --signal-green-text:#6FD9AE;
     --signal-amber-tint:rgba(217,123,0,.22);   --signal-amber-text:#F2B36B;
     --signal-red-tint:rgba(232,73,81,.22);     --signal-red-text:#FF9DA2;
+    /* 다크에서는 밝은 바탕 + 어두운 글자다. 주의(가장 중요): 2026-09-20 까지 **흰 글자**
+       였고 실측 1.72 · 1.84 · 1.98 로 전부 AA 미달이었다 - 라이트만 재는
+       검사였고 다크는 아무도 안 봤다. */
+    --signal-green-fill:#6FD9AE;  --signal-green-on-fill:#20243A;   /* 8.88 */
+    --signal-amber-fill:#F2B36B;  --signal-amber-on-fill:#20243A;   /* 8.32 */
+    --signal-red-fill:#FF9DA2;    --signal-red-on-fill:#20243A;     /* 7.71 */
+    --signal-unknown-fill:#B6BCC7; --signal-unknown-on-fill:#20243A; /* 8.01 */
     --signal-unknown-tint:rgba(138,148,174,.22); --signal-unknown-text:#B6BFD6;
     --bg-page:#12141F; --bg-canvas:#1A1E2D;
     --illust-blob:rgba(255,194,155,.10); --signal-amber-border:rgba(217,123,0,.45);
@@ -594,7 +624,15 @@ nav.pages a[aria-current="page"]{
 body.lv2{word-break:keep-all; overflow-wrap:break-word}
 
 /* 히어로 — 1440×900 안에서 끝난다 (헤더 72 + 828). */
-.lv2-hero{border-bottom:1px solid var(--gray-20)}
+/* 그라데이션 띠. **토큰으로만** 만든다 - 새 색을 여기서 짓지 않는다.
+   위쪽 라벤더에서 페이지 바탕으로 풀리는 아주 얕은 띠이고, 다크에서는
+   `--brand-tint` 가 반투명이라 어두운 바탕 위에서 알아서 약해진다. */
+.lv2-hero{
+  border-bottom:1px solid var(--gray-20);
+  background:linear-gradient(180deg, var(--brand-tint) 0%,
+                             color-mix(in srgb, var(--brand-tint) 35%, transparent) 42%,
+                             transparent 100%);
+}
 /* 주의: 히어로는 **1440x900 안에서 끝나야 한다**(헤더 72 + 828). 처음에
    `min-height:828 + padding-block:48` 로 뒀더니 안쪽 내용이 828 을 넘어
    934px 에서 끝났다 - min-height 는 하한이지 상한이 아니다. 측정이 잡았다.
@@ -604,15 +642,20 @@ body.lv2{word-break:keep-all; overflow-wrap:break-word}
   align-items:center; min-height:788px; padding-block:20px;
 }
 .hero-say{display:flex; flex-direction:column; gap:24px}
+/* 칩. 띠 위에 얹히므로 흰 상자가 아니라 **브랜드 알약**이다. 대비는
+   `--primary-70` / `--bg-canvas` 쌍을 이미 검사가 재고 있다. */
 .hero-say .eyebrow{
-  align-self:flex-start; padding:8px 14px; border-radius:999px;
-  background:var(--bg-canvas); border:1px solid var(--gray-20);
-  font-size:15px; line-height:20px; font-weight:700; color:var(--fg-2);
+  align-self:flex-start; padding:8px 16px; border-radius:999px;
+  background:var(--bg-canvas); border:1px solid var(--brand);
+  font-size:15px; line-height:20px; font-weight:700; color:var(--brand);
 }
 .hero-say h1{
   margin:0; font-family:var(--font-display); font-weight:400;
   font-size:60px; line-height:72px; letter-spacing:-.015em;
 }
+/* 둘째 줄만 브랜드색 (시안 §1 의 큰 제목 처리). 색만 다르고 글자는 그대로다 -
+   질문의 **뒷절**이 우리가 답하는 자리라서 거기에 색이 온다. */
+.hero-say h1 .ask{color:var(--brand)}
 .hero-say .lead{margin:0; font-size:20px; line-height:32px; color:var(--fg-2); max-width:560px}
 
 .lv2 .cta-row{display:flex; align-items:center; gap:16px; flex-wrap:wrap}
@@ -642,7 +685,10 @@ body.lv2{word-break:keep-all; overflow-wrap:break-word}
 
 /* 예시 결과 카드 — 문구는 전부 서버 것. */
 .hero-art{position:relative; min-height:520px}
-.hero-art .blob{position:absolute; border-radius:50%; z-index:0}
+/* 주의: 흐림을 준다. 다크에서 이 원들이 **딱딱한 조각**으로 보였다 - 카드
+   가장자리 밖으로 나온 부분만 밝아서 잘린 원처럼 읽혔다 (미완 §1-z).
+   라이트에서는 원래 거의 안 보였으므로 달라지는 것이 없다. */
+.hero-art .blob{position:absolute; border-radius:50%; z-index:0; filter:blur(36px)}
 .hero-art .blob-a{right:-8px; top:0; width:340px; height:340px; background:var(--illust-blob)}
 .hero-art .blob-b{left:-12px; bottom:12px; width:190px; height:190px; background:var(--brand-tint)}
 .rcard{
@@ -654,19 +700,28 @@ body.lv2{word-break:keep-all; overflow-wrap:break-word}
 .rc-head.GREEN{background:var(--signal-green-tint)}
 .rc-head.AMBER{background:var(--signal-amber-tint)}
 .rc-head.RED{background:var(--signal-red-tint)}
-.rc-face{width:88px; height:88px; flex:none}
+/* 마스코트는 히어로에서 크게 (시안). 카드가 1440x900 을 넘지 않는지는
+   `scripts/measure_widths.py` 로 잰다. */
+.rc-face{width:104px; height:104px; flex:none}
 .rc-say{display:flex; flex-direction:column; gap:8px; flex:1; min-width:0}
-.rc-top{display:flex; align-items:center; gap:12px}
-/* 머리 칩은 진한 바탕에 흰 글자 — 신호가 멀리서도 보여야 한다 (시피님 비평). */
-.chip.solid{color:#fff; font-size:16px}
-.chip.solid .dot{background:#fff}
-/* 주의(가장 중요): 꽉 찬 칩은 **어두운 변형**(`-text`)을 바탕으로 쓴다. 신호 본색(문서의
-   600)에 흰 글자를 얹으면 대비가 모자란다 - 실측 주황 3.19 · 빨강 4.34 로
-   둘 다 AA 미달이었고, **이건 팔레트를 바꾸기 전에도 그랬다**(주황 3.10).
-   16px 굵은 글자는 WCAG 의 '큰 글자'(18.66px 굵게)가 아니라 4.5 가 필요하다. */
-.chip.solid.GREEN{background:var(--signal-green-text)}
-.chip.solid.AMBER{background:var(--signal-amber-text)}
-.chip.solid.RED{background:var(--signal-red-text)}
+/* 주의: 폰 390 에서 "확인 / 필요" · "예시 / 결과" 로 **낱말 안에서** 꺾였다
+   (미완 §1-w). 줄은 넘기되 낱말은 안 쪼갠다. */
+.rc-top{display:flex; align-items:center; gap:12px; flex-wrap:wrap}
+.rc-lab, .rc-tag{white-space:nowrap}
+/* 머리 칩은 꽉 찬 바탕 — 신호가 멀리서도 보여야 한다 (시피님 비평). */
+.chip.solid{font-size:16px}
+/* 점은 글자색을 따라간다. 흰색으로 못 박으면 주황 칩에서 안 보인다. */
+.chip.solid .dot{background:currentColor}
+/* 주의(가장 중요): 바탕과 글자는 **한 쌍으로 움직인다** (`-fill` / `-on-fill`).
+   전에는 바탕만 `-text` 로 어둡게 내렸는데, 주황이 그렇게 내려가면 흙빛이라
+   같은 화면의 옅은 알약과 다른 색으로 보였다. 지금은 **바탕이 본색**이고
+   글자를 각자 고른다 - 눈이 읽는 것은 색조다.
+   16px 굵은 글자는 WCAG 의 '큰 글자'(18.66px 굵게)가 아니라 4.5 가 필요하다.
+   주의(가장 중요): 다크가 2026-09-20 까지 흰 글자였고 실측 1.72~1.98 로 전부 미달이었다.
+      검사가 라이트만 재고 있었다 - 이제 양쪽을 잰다. */
+.chip.solid.GREEN{background:var(--signal-green-fill); color:var(--signal-green-on-fill)}
+.chip.solid.AMBER{background:var(--signal-amber-fill); color:var(--signal-amber-on-fill)}
+.chip.solid.RED{background:var(--signal-red-fill); color:var(--signal-red-on-fill)}
 .rc-lab{font-size:15px; line-height:20px; font-weight:700; color:var(--fg-2)}
 .rc-tag{margin-left:auto; font-size:14px; line-height:20px; font-weight:700; color:var(--fg-2)}
 .rc-h{font-family:var(--font-display); font-weight:400; font-size:26px; line-height:34px}
@@ -678,7 +733,13 @@ body.lv2{word-break:keep-all; overflow-wrap:break-word}
 .rc-ax:last-child{border-right:0}
 .rc-ax .n{font-size:14px; line-height:20px; font-weight:700; color:var(--fg-2)}
 .rc-ax .v{font-size:18px; line-height:26px; font-weight:700}
+/* 주의(중요): 좁은 칸에서 **날짜 한가운데**가 꺾여 "2026-" / "09-08" 로
+   보였다 - CSS 는 하이픈 뒤를 꺾을 자리로 본다. **날짜만** 묶는다.
+   주의(가장 중요): 처음에는 절을 통짜로 묶었는데(`.m > span{nowrap}`) 절이
+     하나뿐인 유해물질 메모("함유량은 시험성적서로 확인합니다")가 안 꺾여
+     카드 밖으로 **잘려 나갔다.** 캡처가 잡았다. 묶는 범위는 좁을수록 옳다. */
 .rc-ax .m{font-size:14px; line-height:20px; color:var(--fg-2)}
+.rc-ax .m .nb, .rv-ax .m .nb{white-space:nowrap}
 .rc-rows{display:flex; flex-direction:column; padding:0 26px}
 .rc-row{display:flex; gap:14px; padding:16px 0; border-bottom:1px solid var(--gray-20)}
 .rc-row .dot{width:10px; height:10px; border-radius:50%; flex:none; margin-top:8px}
@@ -690,7 +751,8 @@ body.lv2{word-break:keep-all; overflow-wrap:break-word}
 .rc-t{font-size:16px; line-height:26px}
 .lv2 .src{font-size:15px; line-height:22px; font-weight:500; color:var(--brand); text-decoration:underline; text-underline-offset:3px}
 .rc-foot{display:flex; align-items:center; justify-content:space-between; gap:12px; padding:16px 0 18px}
-.rc-foot .more{font-size:16px; line-height:24px; font-weight:700; color:var(--brand)}
+.rc-foot .more{font-size:16px; line-height:24px; font-weight:700; color:var(--brand);
+               white-space:nowrap}
 .rc-foot .hint{font-size:14px; line-height:20px; color:var(--fg-2)}
 
 /* ── 절 ─────────────────────────────────────────────────────────── */
@@ -742,6 +804,11 @@ body.lv2{word-break:keep-all; overflow-wrap:break-word}
 
 .lv2-sec .end{display:flex; flex-direction:column; align-items:center; gap:24px; text-align:center}
 .lv2-sec .end h2{margin:0}
+/* 주의: 폰에서 단추와 링크가 **왼쪽에 붙었다.** `.cta-row` 가 줄바꿈하면서
+   폭을 다 차지해, 바깥의 `align-items:center` 가 아무 일도 안 한다 -
+   제목만 가운데이고 나머지는 왼쪽인 화면이 됐다 (미완 §1-w).
+   넓은 화면에서는 줄이 안 넘쳐 보이는 것이 안 바뀐다. */
+.lv2-sec .end .cta-row{justify-content:center}
 
 .lv2-foot{border-top:1px solid var(--gray-20); padding-block:36px 48px; font-size:16px; line-height:26px; color:var(--fg-2)}
 /* 주의: 공용 `footer p` 가 여기까지 온다. 그 줄은 §9 고정 문구이고 **화면에서
@@ -887,17 +954,11 @@ body{background:var(--bg-page)}
 .rv-face{width:88px; height:88px; flex:none; overflow:visible}
 .rv-say{display:flex; flex-direction:column; gap:8px; flex:1; min-width:0}
 .rv-sig{display:flex; align-items:center; gap:12px; flex-wrap:wrap}
-/* 진한 바탕 흰 글자. 옅은 칩은 목록에서 쓰고 머리에서는 꽉 채운다. */
-.chip.solid{font-size:16px; color:#fff}
-.chip.solid .dot{background:#fff}
-/* 주의(가장 중요): 꽉 찬 칩은 **어두운 변형**(`-text`)을 바탕으로 쓴다. 신호 본색(문서의
-   600)에 흰 글자를 얹으면 대비가 모자란다 - 실측 주황 3.19 · 빨강 4.34 로
-   둘 다 AA 미달이었고, **이건 팔레트를 바꾸기 전에도 그랬다**(주황 3.10).
-   16px 굵은 글자는 WCAG 의 '큰 글자'(18.66px 굵게)가 아니라 4.5 가 필요하다. */
-.chip.solid.GREEN{background:var(--signal-green-text)}
-.chip.solid.AMBER{background:var(--signal-amber-text)}
-.chip.solid.RED{background:var(--signal-red-text)}
-.chip.solid.UNKNOWN{background:var(--signal-unknown)}
+/* 주의(가장 중요): **꽉 찬 칩 규칙은 위 히어로 절(`.chip.solid…`)에 하나만 둔다.**
+   여기 한 벌이 더 있었고, 나중 규칙이 이겨서 **앞엣것이 죽어 있었다** -
+   2026-09-20 에 앞 블록만 고쳤더니 화면이 안 바뀌어 드러났다. 같은 판단을
+   두 곳에 적지 말 것 (§6). 회색만 여기 남긴다 - 히어로에는 회색 칩이 없다. */
+.chip.solid.UNKNOWN{background:var(--signal-unknown-fill); color:var(--signal-unknown-on-fill)}
 .rv-lab{font-size:15px; line-height:20px; font-weight:700}
 .rv-head.GREEN .rv-lab{color:var(--signal-green-text)}
 .rv-head.AMBER .rv-lab{color:var(--signal-amber-text)}

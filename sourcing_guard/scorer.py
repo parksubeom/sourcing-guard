@@ -476,6 +476,8 @@ def score(
         grouped_findings=_grouped_findings(findings),
         axes=_axes(findings, recall_data_as_of, recall_synced_at, today),
         recall_data_as_of=recall_data_as_of,
+        # 축에서 뺀 갱신 시각. 메타 푸터가 받는다 - models.ScanResult 주석 참조.
+        recall_synced_label=_sync_label(recall_synced_at, today),
         # ⚠ 판정에 쓰지 않는다. `_signal_for` 도 `_HEADLINE` 도 meta 를 보지
         #   않는다 - 추출 경로가 신호를 바꾸면 "휴리스틱이면 더 위험" 같은
         #   판정을 하게 되고, 그것은 R1 위반이다.
@@ -912,19 +914,25 @@ def _axes(
 
     # 두 값을 함께 적는다. 공표일만 적으면 "3일 전 데이터" 로 읽히는데,
     # 주말·공휴일에는 정부 공표가 없어서 공표일이 며칠 전인 것이 정상이다.
-    note = ""
-    if recall[1] and recall_as_of and len(recall_as_of) == 8 and recall_as_of.isdigit():
-        note = f"{recall_as_of[:4]}-{recall_as_of[4:6]}-{recall_as_of[6:]} 공표분까지"
-        synced = _sync_label(recall_synced_at, today)
-        if synced:
-            note = f"{note} · {synced}"
-    as_of = note
-
-    # ⚠⚠ **"일치 항목 없음" 은 `RECALL_CLEAR` 일 때만** 붙인다. 위 분기에서
+    # 순서가 곧 중요도다 - **찾은 것이 앞, 출처가 뒤** (2026-09-20 총괄).
+    #
+    # ⚠⚠ "일치 항목 없음" 은 `RECALL_CLEAR` 일 때만 적는다. 위 분기에서
     #   "일치 있음"·"대조 못 함" 도 `recall[1]` 을 만들 수 있고, 거기에 이 말을
     #   붙이면 **정반대**가 된다. 조건을 다시 적지 않고 kinds 를 직접 본다.
-    if FindingKind.RECALL_CLEAR in kinds and as_of:
-        as_of = f"{as_of} · 일치 항목 없음"
+    parts: list[str] = []
+    if FindingKind.RECALL_CLEAR in kinds:
+        parts.append("일치 항목 없음")
+    if recall[1] and recall_as_of and len(recall_as_of) == 8 and recall_as_of.isdigit():
+        parts.append(f"{recall_as_of[:4]}-{recall_as_of[4:6]}-{recall_as_of[6:]} 공표분까지")
+
+    # ⚠ 갱신 시각은 **여기서 뺐다.** 세 절이 되면 폰에서 두 줄이 되고, 제일
+    #   중요한 절이 끝으로 밀린다. 같은 값을 아래 근거 줄이 이미 들고 있다
+    #   (`recall_clear` 의 statement_ko) - 축은 요약이지 사본이 아니다.
+    #
+    #   `recall_synced_at`·`today` 는 그래서 지금 안 쓴다. 인자를 지우지 않는
+    #   것은 `_sync_label` 이 "주말엔 공표가 없어서 공표일이 며칠 전인 것이
+    #   정상" 이라는 판단을 들고 있고, 그 판단을 잃지 않기 위해서다.
+    as_of = " · ".join(parts)
 
     # ⚠ 인증 상태는 **정부 DB 가 적은 값을 그대로** 옮긴다. 우리가 "적합" 을
     #   판정하는 것이 아니다 (R1) - 그래서 따옴표 없이 값만 적고, 값이 없으면

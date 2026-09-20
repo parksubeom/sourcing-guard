@@ -58,8 +58,13 @@
     </div>
 
     <section aria-labelledby="list-h">
-      <h3 id="list-h">감시 중인 상품</h3>
-      <div class="watchbar">
+      <!-- 주의(중요): 목록이 비면 제목과 「지금 대조하기」를 **감춘다**.
+           대조할 것이 없는데 대조 단추가 먼저 보이면, 눌러도 아무 일이
+           없어서 단추가 거짓말을 한다 (2026-09-20 · 미완 §1-y).
+           `hidden` 으로만 여닫는다 - 자바스크립트가 켜기 전까지는 빈 상태가
+           기본이고, 그게 맞다. -->
+      <h3 id="list-h" hidden>감시 중인 상품</h3>
+      <div class="watchbar" id="watchbar" hidden>
         <button class="btn-t" id="sweep" type="button">지금 대조하기</button>
         <span class="counter" id="meta"></span>
       </div>
@@ -175,7 +180,17 @@
     return html + "</li>";
   }
 
+  //: 목록이 있을 때만 보이는 것들. 비었을 때 감추는 자리가 두 곳이라
+  //  한 함수로 묶는다 - 한쪽만 고치면 나머지가 남는다 (§6).
+  function showListChrome(on) {
+    var h = document.getElementById("list-h");
+    var bar = document.getElementById("watchbar");
+    if (h) h.hidden = !on;
+    if (bar) bar.hidden = !on;
+  }
+
   function renderEmpty() {
+    showListChrome(false);
     list.innerHTML =
       '<div class="empty">' +
       // 방패는 "보호" 의 기호다 - 우리는 보증하지 않는다 (design 9절).
@@ -189,6 +204,7 @@
 
   function render(items, sweep) {
     if (!items.length) { renderEmpty(); return; }
+    showListChrome(true);
     // [C-화면] 머리에 **언제까지 확인했나**. 이것이 이 화면의 약속이다 -
     //   "마지막 대조" 가 없으면 셀러는 감시가 도는지 알 수 없다 (기획서 3.3).
     //

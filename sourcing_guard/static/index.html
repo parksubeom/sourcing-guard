@@ -825,6 +825,13 @@
     ["cert_div", "인증 구분"]
   ];
 
+  // 축 메모의 **날짜만** 안 꺾이게 감싼다. 글자는 그대로다 - 서버 문장을
+  // 한 글자도 안 바꾸고 꺾일 자리만 막는다.
+  function noteParts(note) {
+    return esc(note).replace(/\d{4}-\d{2}-\d{2}/g,
+                             function (d) { return '<span class="nb">' + d + "</span>"; });
+  }
+
   function summaryCard(list) {
     var src = null;
     for (var i = 0; i < list.length; i++) {
@@ -905,7 +912,7 @@
                '<span class="i" aria-hidden="true">' + axisIcon(a.key) + "</span>" +
                '<span class="n">' + esc(a.name) + "</span>" +
                '<span class="v">' + esc(a.label) + "</span>" +
-               (a.note ? '<span class="m">' + esc(a.note) + "</span>" : "") +
+               (a.note ? '<span class="m">' + noteParts(a.note) + "</span>" : "") +
                "</div>";
       }).join("") + "</div>";
     }
@@ -1031,6 +1038,12 @@
     // 리콜 대조 기준일. 값이 없으면 **숨기지 않고 못 했다고 적는다** - 이 줄은
     // "언제까지의 리콜과 대조했나" 라서 없는 것이 곧 한계다 (R3).
     bits.push(asOfLabel(data.recall_data_as_of));
+    // 주의(중요): **공표일과 갱신 시각은 다른 것이다.** 공표일만 있으면 셀러가
+    //   "3일 전 데이터" 로 읽는데, 주말·공휴일엔 정부 공표가 없어 공표일이
+    //   며칠 전인 것이 정상이다. 축 메모에서 여기로 옮겼다 - 축은 "일치 항목
+    //   없음 · 공표분까지" 두 절이면 충분하고, 셋이 되면 폰에서 제일 중요한
+    //   절이 줄 끝으로 밀렸다 (models.ScanResult.recall_synced_label).
+    if (data.recall_synced_label) bits.push(esc(data.recall_synced_label));
     if (bits.length || data.disclaimer) {
       html += '<div class="rv-foot"><span>' + bits.join(" · ") + "</span>" +
               (data.disclaimer ? "<span>" + esc(data.disclaimer) + "</span>" : "") +

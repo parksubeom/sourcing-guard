@@ -192,19 +192,64 @@ def test_every_text_pair_meets_aa():
     assert not bad, "대비 미달 (4.5 필요):\n  " + "\n  ".join(bad)
 
 
-def test_white_on_a_filled_chip_meets_aa():
-    """⚠ 꽉 찬 칩은 흰 글자다. **신호 본색에 얹으면 모자란다** - 실측으로
-    주황 3.19 · 빨강 4.34 였고 팔레트를 바꾸기 전에도 그랬다(주황 3.10).
-    그래서 어두운 변형(`-text`)을 바탕으로 쓴다.
+def _theme_vars(mode: str) -> dict:
+    """`light` 또는 `dark` 에서 실제로 쓰이는 변수 표."""
+    raw = _APP.read_text(encoding="utf-8")
+    light = _vars_in_root(raw)
+    if mode == "light":
+        return light
+    body = _strip_comments(raw)
+    i = body.index('[data-theme="dark"]{')
+    dark = dict(_VAR.findall(body[i:body.index("}", i)]))
+    return {**light, **{k: v.strip() for k, v in dark.items()}}
+
+
+def test_a_filled_chip_meets_aa_in_both_themes():
+    """꽉 찬 칩은 **바탕과 글자를 한 쌍으로** 읽어 잰다.
+
+    ⚠⚠ 2026-09-20 까지 이 검사가 "흰 글자" 를 **박아 두고 라이트만** 쟀다.
+      그래서 다크가 아무도 안 본 채로 흰 글자 / 밝은 파스텔 바탕이었다 -
+      실측 초록 1.72 · 주황 1.84 · 빨강 1.98 · 회색 3.62. 전부 미달이다.
+      기대값을 코드에서 끌어오지 않고 적어 두면 이렇게 된다 (§6).
+
+    ⚠ 주황만 답이 반대다 - 본색 위에서 흰 글자 3.19, 어두운 글자 4.79.
+      그래서 **바탕은 본색으로 통일하고 글자를 각자 고른다.** 눈이 읽는 것은
+      색조이고, 색조가 같으면 같은 신호로 읽힌다.
     """
-    v = _vars_in_root(_APP.read_text(encoding="utf-8"))
     css = _strip_comments(_APP.read_text(encoding="utf-8"))
-    for signal in ("GREEN", "AMBER", "RED"):
-        m = re.search(rf"\.chip\.solid\.{signal}\{{background:var\((--[a-z0-9-]+)\)", css)
-        assert m, f"{signal} 꽉 찬 칩 규칙을 못 찾았다"
-        bg = _resolve(v, m.group(1))
-        ratio = _contrast("#FFFFFF", bg)
-        assert ratio >= 4.5, f"{signal} 칩: 흰 글자 / {bg} = {ratio:.2f}"
+    bad = []
+    for mode in ("light", "dark"):
+        v = _theme_vars(mode)
+        for signal in ("GREEN", "AMBER", "RED", "UNKNOWN"):
+            m = re.search(
+                rf"\.chip\.solid\.{signal}\{{background:var\((--[a-z0-9-]+)\);\s*"
+                rf"color:var\((--[a-z0-9-]+)\)\}}", css)
+            assert m, f"{signal} 꽉 찬 칩이 바탕·글자를 한 쌍으로 안 적었다"
+            bg, fg = _resolve(v, m.group(1)), _resolve(v, m.group(2))
+            assert bg and fg, f"{mode}/{signal}: 색을 못 읽었다 ({bg} · {fg})"
+            ratio = _contrast(fg, bg)
+            if ratio < 4.5:
+                bad.append(f"{mode} {signal}: {fg} / {bg} = {ratio:.2f}")
+    if bad:
+        joined = chr(10).join("  " + b for b in bad)
+        raise AssertionError("꽉 찬 칩 대비 미달 (4.5 필요):" + chr(10) + joined)
+
+
+def test_a_filled_chip_never_hardcodes_its_colours():
+    """⚠ 반대 방향 - `color:#fff` 처럼 박으면 위 검사가 못 본다.
+
+    2026-09-20 에 `.chip.solid{color:#fff}` 한 줄이 네 신호를 **전부** 흰
+    글자로 만들고 있었고, 검사는 바탕만 보고 있어서 통과했다.
+    """
+    css = _strip_comments(_APP.read_text(encoding="utf-8"))
+    block = re.search(r"\.chip\.solid\{([^}]*)\}", css)
+    assert block, ".chip.solid 기본 규칙을 못 찾았다"
+    assert "color:" not in block.group(1), (
+        ".chip.solid 가 글자색을 박고 있다 - 신호마다 --signal-*-on-fill 을 쓴다")
+
+    # 점도 마찬가지다. 흰색으로 박으면 주황 칩(어두운 글자)에서 안 보인다.
+    dot = re.search(r"\.chip\.solid \.dot\{([^}]*)\}", css)
+    assert dot and "currentColor" in dot.group(1), "칩의 점이 글자색을 안 따라간다"
 
 
 def test_dark_mode_pairs_meet_aa():

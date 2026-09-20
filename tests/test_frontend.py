@@ -1224,3 +1224,31 @@ def test_the_summary_card_only_shows_what_the_lookup_returned(pages):
 
     # 브랜드명은 안 쓴다 - 시드 29건에서 값이 있는 것이 1건뿐이었다.
     assert "brand" not in fn, "브랜드명은 거의 비어 있다 (실측 1/29)"
+
+
+def test_the_axis_note_never_breaks_a_date_in_half(pages):
+    """축 메모에 날짜가 들어간다 - "일치 항목 없음 · 2026-09-08 공표분까지".
+
+    ⚠⚠ 좁은 칸에서 **날짜 한가운데**가 꺾여 "2026-" / "09-08" 로 보였다.
+      CSS 는 하이픈 뒤를 꺾을 자리로 보기 때문이고 `word-break` 로는 안 막힌다.
+      그래서 **날짜만** `.nb` 로 감싼다.
+
+    ⚠⚠ 처음에는 **절을 통짜로** 묶었다(`.m > span{nowrap}`). 그랬더니 절이
+      하나뿐인 유해물질 메모("함유량은 시험성적서로 확인합니다")가 안 꺾여
+      **카드 밖으로 잘렸다** - 캡처가 잡았다. 묶는 범위는 좁을수록 옳다.
+
+    ⚠ 같은 판단이 두 파일에 있다 (`index.html` · `landing.html`). 랜딩은
+      `owner.js` 를 싣지 않아 공용 함수를 못 쓴다 - 그래서 **검사가 양쪽을
+      함께** 본다. 한쪽만 고치면 여기서 걸린다 (§6).
+    """
+    for name in ("index.html", "landing.html"):
+        src = markup_only(pages[name])
+        assert "d{4}-" in src and "d{2}-" in src, f"{name}: 날짜를 따로 안 묶는다"
+        assert "nb" in src, f"{name}: .nb 를 안 붙인다"
+
+    css = markup_only((STATIC / "app.css").read_text(encoding="utf-8"))
+    assert ".rc-ax .m .nb, .rv-ax .m .nb{white-space:nowrap}" in css, (
+        "날짜를 안 꺾는 규칙이 없다")
+    # 반대 방향 - 절 전체를 묶으면 한 절짜리 메모가 잘린다.
+    assert ".rc-ax .m > span" not in css, (
+        "절을 통짜로 묶고 있다 - 유해물질 메모가 카드 밖으로 잘린다")
