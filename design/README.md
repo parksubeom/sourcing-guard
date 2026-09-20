@@ -170,6 +170,7 @@ design/
 
 1. `app.css` 의 `:root{ … }` 블록을 `tokens.css` 의 `:root` 블록으로 바꾼다(다크 블록·`.t-*`·`.chip`·`.btn-*` 도 함께 붙인다). 변수 이름이 같으므로 나머지 규칙은 그대로 새 값으로 그려진다. 바뀐 이름 없음, 새 이름만 추가.
 2. `body{background:var(--bg-page)}` 한 줄 — 페이지는 크림, 카드는 흰색(`--bg-canvas`)으로 갈린다. `body` 의 `font-family` 를 `var(--font-body)` 로, `h1·h2·.wordmark·.intro h2` 를 `font-family:var(--font-display); font-weight:400` 으로.
+   - ⚠⚠ **`font-weight:400` 부분은 2026-09-20 에 뺐다.** 그 규칙의 선택자에 `.intro h2` 가 같이 들어 있어 `.intro h2{font-weight:700}`(C안 히어로)과 **명시도가 같았고**(둘 다 0-1-1), 같으면 뒤가 이긴다 — 소스는 700 인데 화면은 400 이었다. 지금 공용 규칙은 **서체만** 준다. 굵기는 각 제목 규칙이 정한다. 400 이던 원래 이유(한 굵기짜리 서체의 합성 방지)도 가변 글꼴로 바뀌면서 사라졌다. computed 로 재는 것은 `scripts/measure_weights.py` · `tests/test_heading_weight.py` 다.
 3. `<head>` 에 Google Fonts `<link>` 와 `<link rel="icon" type="image/svg+xml" href="/static/favicon.svg">`. 네 화면 공통.
 4. 헤더의 렌즈+체크 `<svg class="mark">` 를 지우고 `mark.svg`(또는 스프라이트 `#mungchi-calm`) 32px 로. 렌즈 안의 체크는 "확인됐다"는 판정의 기호라 초록불이 보증이 아니라는 전제(§3.2)와 어긋난다.
 5. `mascot.svg` · `mascot/` · `favicon.svg` 를 `sourcing_guard/static/` 에 둔다. 결과 카드 헤더에 표정(§4 표), `index.html` 의 `#skel` 을 `loading.html` A 안으로.
