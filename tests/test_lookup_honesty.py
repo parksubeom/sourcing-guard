@@ -118,3 +118,64 @@ def test_the_operator_fault_message_still_says_what_we_know():
     """
     for code in ("4000", "4001", "4005"):
         assert "설정을 점검하고 있습니다" in _say(0, code), code
+
+
+# --- 축 카드도 본다 -------------------------------------------------------
+#
+# 주의(가장 중요): 위 검사들은 **문장만** 봤다. 그래서 2026-09-20 에 P2 를 하고도
+#   `scorer._axes()` 의 인증 축 note 가 "잠시 후 다시 시도해 주세요" 인 채로
+#   배포됐다 - 같은 화면에서 문장은 원인을 안 말하고 바로 옆 카드는 "잠시" 라고
+#   단정했다. §6 "화면 검사는 틀이 아니라 틀에 붓는 값을 본다" 의 그 모양이다.
+
+def _axis_notes():
+    """축 카드 note 를 **갈래마다 한 번씩** 만든다. (이름, note) 를 돌려준다."""
+    from datetime import date as _date
+
+    from sourcing_guard.models import Finding, FindingKind, Signal
+
+    src = {"source_label": "국가기술표준원", "source_url": "https://safetykorea.kr/"}
+
+    def mk(kind, signal=Signal.UNKNOWN, detail=None):
+        fd = Finding(kind=kind, signal=signal, statement_ko="조회 결과입니다.",
+                     checked_at=_date(2026, 1, 1), **src)
+        if detail:
+            fd.detail = detail
+        return fd
+
+    from sourcing_guard.scorer import _axes
+
+    cases = {
+        "빈 입력": [],
+        "조회 실패": [mk(FindingKind.LOOKUP_FAILED, detail={"scope": "인증"})],
+        "번호 없음(부재 정상)": [mk(FindingKind.KC_ABSENCE_EXPECTED)],
+        "번호 없음(그 외)": [mk(FindingKind.COVERAGE_GAP)],
+        "인증 조회됨": [mk(FindingKind.KC_VERIFIED, Signal.GREEN,
+                        detail={"cert_state": "적합"})],
+        "인증 취소": [mk(FindingKind.KC_REVOKED, Signal.RED,
+                       detail={"cert_state": "안전인증취소"})],
+        "리콜 대조함": [mk(FindingKind.RECALL_CLEAR, Signal.GREEN)],
+        "리콜 일치": [mk(FindingKind.RECALL_MATCH, Signal.RED)],
+    }
+    out = []
+    for name, findings in cases.items():
+        for a in _axes(findings, "20260914"):
+            out.append((f"{name}/{a['key']}", a.get("note") or ""))
+    return out
+
+
+def test_no_axis_card_guesses_the_cause_either():
+    """⚠ **본 칸 수를 같이 적는다** (§6). 0칸을 보고 통과하면 검사가 아니다."""
+    notes = _axis_notes()
+    assert len(notes) == 8 * 3 == 24, f"본 칸이 {len(notes)}개다 - 축이나 갈래가 바뀌었다"
+    for where, note in notes:
+        for w in _CAUSE_WORDS:
+            assert w not in note, f"{where}: 축 카드가 원인을 단정한다 ('{w}')\n  {note}"
+
+
+def test_the_failed_axis_still_tells_the_seller_what_to_do():
+    """⚠ 반대 방향 - 원인을 빼다가 **다음 걸음까지** 빼면 빈 칸이 된다."""
+    got = dict(_axis_notes())["조회 실패/cert"]
+    assert got, "조회 실패 축이 아무 말도 안 한다"
+    assert "직접 조회하실 수 있습니다" in got, got
+    # 셀러에게 없는 번호를 받아 오라고 하면 안 된다 - 우리 쪽 사정이다.
+    assert "받으면" not in got, got

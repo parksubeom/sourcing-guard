@@ -718,7 +718,12 @@ def test_the_cert_axis_says_what_to_do_when_there_is_no_number():
     fail = f(FindingKind.LOOKUP_FAILED, Signal.UNKNOWN)
     fail.detail = {"scope": "인증"}
     got = {a["key"]: a for a in _axes([fail], None)}["cert"]
-    assert got["label"] == "조회 실패" and got["note"] == "잠시 후 다시 시도해 주세요"
+    # ⚠ 2026-09-20 에 **정당하게 바뀐 값**이다 (P2). 전에는 "잠시 후 다시
+    #   시도해 주세요" 였고, 그것은 우리가 모르는 것을 단정한 말이었다. 옛 값을
+    #   그대로 적어 둔 이 줄이 **버그를 지키고 있었다** (§6).
+    assert got["label"] == "조회 실패"
+    assert got["note"] == "근거 링크에서 직접 조회하실 수 있습니다"
+    assert "잠시" not in got["note"], "원인을 단정한다"
 
     # 번호가 있고 문제가 있으면 finding 이 말한다 - 축은 상태만 옮긴다.
     bad = f(FindingKind.KC_REVOKED, Signal.RED)
