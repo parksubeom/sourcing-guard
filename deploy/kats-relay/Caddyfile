@@ -1,0 +1,45 @@
+# 국표원 조회 경유지 — 하는 일은 **하나**다.
+#
+# 받은 요청을 www.safetykorea.kr 로 넘기고 답을 돌려준다. 그게 전부다.
+# 저장하는 것 없음 · 볼륨 없음 · 공개 IP 없음.
+#
+# 왜 있나: 도쿄(nrt)에서 safetykorea 로 TCP 연결이 안 된다. 같은 이미지로 잰
+#   fly 세 리전 중 sin 만 붙었다 (sin connect 0.24s · nrt 20초 타임아웃 ·
+#   syd DNS 실패 · 2026-09-20). 앱은 nrt 에 그대로 두고 조회만 지나가게 한다.
+
+{
+	admin off
+	auto_https off
+
+	# 런타임 오류만 남긴다. 요청 단위 기록은 아래에서 끈다.
+	log {
+		output stderr
+		level ERROR
+	}
+}
+
+:8080 {
+	# 접근 로그를 끈다.
+	#
+	# 국표원 인증은 헤더 AuthKey 이고 (kats_client.py `_AUTH_HEADER`) 그
+	# 헤더가 이 경유지를 **통과한다.** Caddy 가 기본으로 요청 헤더를 찍지는
+	# 않지만, 찍을 수 있는 자리를 아예 두지 않는다.
+	log {
+		output discard
+	}
+
+	# 국표원 Open API 경로만 지나간다. 사설망 안이라도 **범용 프록시로 두지
+	# 않는다** - 열어 두면 다음 사람이 다른 것을 태우고, 그 순간 이것은
+	# "조회 경유지" 가 아니게 된다.
+	@api path /openapi/api/*
+	handle @api {
+		reverse_proxy https://www.safetykorea.kr {
+			# 상류가 가상호스팅이라 Host 를 원본 이름으로 바꿔 준다.
+			header_up Host www.safetykorea.kr
+		}
+	}
+
+	handle {
+		respond "이 호스트는 국표원 조회 경유지입니다. /openapi/api/ 만 지나갑니다." 404
+	}
+}

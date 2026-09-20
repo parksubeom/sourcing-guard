@@ -16,7 +16,8 @@ from __future__ import annotations
 
 from urllib.parse import urlsplit
 
-# R4 표의 호스트. 전부 정부 도메인이거나 셀러 자신의 소싱처 공개 API 다.
+# R4 표의 호스트. 마지막 한 줄(경유지)을 빼면 전부 정부 도메인이거나
+# 셀러 자신의 소싱처 공개 API 다.
 #
 #   safetykorea.kr   KC 인증 조회 · 리콜 공표 (Open API)      kats_client.py
 #   emsit.go.kr      전파인증 번호 조회 (Open API)             예정 rra_client.py
@@ -25,6 +26,24 @@ from urllib.parse import urlsplit
 #   domeggook.com    도매꾹·도매매 상품 (공개 Open API 전용)    domeggook_client.py
 #   openapi.foodsafetykorea.go.kr
 #                    식약처 회수·판매중지 (I0490)              **scripts/ 전용**
+#   sgkatsrelay.internal
+#                    국표원 조회 경유지 (sin · fly 사설망)      kats_client.py
+#
+# ⚠⚠ `sgkatsrelay.internal` 은 **나가는 곳이 아니라 지나가는 곳**이다
+#   (2026-09-20 · P7). fly 사설망(6PN) 주소라 공개 인터넷에 없고, 같은 조직의
+#   우리 앱만 부를 수 있다. 경유지가 밖으로 내보내는 곳은 www.safetykorea.kr
+#   하나이므로 **서버가 닿는 공개 호스트 집합은 이 줄을 더해도 안 늘어난다.**
+#
+#   도쿄(nrt)에서만 safetykorea 로 TCP 연결이 안 된다 - 같은 이미지로 잰
+#   세 리전 중 sin 만 붙었다(실측: sin connect 0.24s · nrt 20초 타임아웃 ·
+#   syd DNS 실패). 리전을 옮기는 대신 조회만 sin 을 지나가게 했다.
+#
+#   ⚠ 켜는 것은 `KATS_BASE_URL` secret 한 줄이고, 끄는 것은 unset 한 줄이다.
+#     끄면 매핑 기본값(safetykorea 직결)로 돌아가므로 safetykorea.kr 도
+#     목록에 그대로 남는다.
+#
+#   ⚠⚠ 국표원 키는 헤더 `AuthKey` 라 **경유지를 통과한다.** 경유지는 키를
+#     저장하지 않고 접근 로그를 끈다 (deploy/kats-relay/Caddyfile).
 #
 # ⚠ 상거래 사이트 무단 크롤링을 막는 것이 R4 의 목적이다. domeggook.com 은
 #   **공개 Open API 만** 쓴다 - HTML 스크래핑은 금지다.
@@ -42,6 +61,7 @@ ALLOWED_HOSTS: frozenset[str] = frozenset({
     "law.go.kr",
     "domeggook.com",
     "openapi.foodsafetykorea.go.kr",
+    "sgkatsrelay.internal",
 })
 
 
