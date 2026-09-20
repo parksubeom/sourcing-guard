@@ -1,0 +1,29 @@
+{
+ "대상": "showcase.json",
+ "남긴_필드": [
+  "no",
+  "title",
+  "thumb",
+  "url",
+  "price",
+  "unitQty"
+ ],
+ "우리가_덧붙인_필드": [
+  "thumb_file",
+  "cert_numbers",
+  "cert",
+  "facts",
+  "page_text",
+  "result"
+ ],
+ "이름_찍어_버린_필드": [
+  "id",
+  "nick",
+  "seller"
+ ],
+ "건수": {
+  "thumb 원본 URL 제거": 30,
+  "상품": 30
+ },
+ "잔존": []
+}

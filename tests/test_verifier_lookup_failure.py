@@ -90,20 +90,37 @@ def test_lookup_failure_yields_unknown_signal():
     assert result.score == 0
 
 
-def test_wording_splits_our_fault_from_a_transient_outage():
-    """키 무효·IP 미등록에 '다시 시도해 주세요' 는 거짓말이다.
+def test_wording_splits_our_fault_from_someone_elses():
+    """우리 설정 문제와 남의 장애는 **다른 말**이어야 한다.
 
-    우리가 고치기 전엔 계속 실패한다. 그건 로그로 올리고 화면엔 확인이
-    완료되지 않았다는 사실만 말한다.
+    ⚠⚠ 2026-09-20 에 갈리는 **방향이 바뀌었다** (P2). 전에는
+
+        우리 잘못  "다시 시도" 를 안 한다
+        남의 장애  "잠시 후 다시 시도해 주세요"
+
+    였는데 남의 장애 쪽이 **원인 단정**이었다. 우리는 그것이 잠시인지 모른다 -
+    P1 이 `network.connect` 까지 좁혔지만 도쿄만인지 국외 전반인지는 안 쟀고,
+    9/18 에 스스로 풀린 기록도 있다. 지금은 이렇게 갈린다:
+
+        우리 잘못  "조회 서비스 설정을 점검하고 있습니다"   아는 것은 말한다
+        남의 장애  아무 원인도 안 말한다                  모르는 것은 안 말한다
+
+    문구 전체의 소유자는 `tests/test_lookup_honesty.py` 다 - 여기서는
+    **갈린다는 것**만 본다 (§6).
     """
     ours = verify(FACTS, FailingClient("4001"), RuleBook(), EmptyRecallIndex())
     ours_text = next(f.statement_ko for f in ours if f.kind is FindingKind.LOOKUP_FAILED)
+    assert "설정을 점검하고 있습니다" in ours_text
     assert "다시 시도" not in ours_text
 
     health.record_success()
     theirs = verify(FACTS, FailingClient("5000"), RuleBook(), EmptyRecallIndex())
     theirs_text = next(f.statement_ko for f in theirs if f.kind is FindingKind.LOOKUP_FAILED)
-    assert "다시 시도해 주세요" in theirs_text
+    assert "설정을 점검" not in theirs_text, "남의 장애를 우리 설정 문제로 말한다"
+    assert "일시적" not in theirs_text and "잠시 후" not in theirs_text, "원인을 단정한다"
+    # 반대 방향 - 갈라 놓고 둘 다 빈 말이 되면 안 된다.
+    for text in (ours_text, theirs_text):
+        assert "연결하지 못했습니다" in text and "직접 조회하실 수 있습니다" in text
 
 
 def test_every_lookup_failure_finding_carries_a_source():

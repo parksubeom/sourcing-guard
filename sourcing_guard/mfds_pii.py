@@ -162,6 +162,33 @@ _ADDR = re.compile(
 )
 
 
+#: 셋을 한 줄에 재는 자리. **패턴의 소유자는 이 모듈이다** (CLAUDE.md §6).
+#:
+#: ⚠ 여기 있는 이유는 "식약처 것" 이라서가 아니라 **실측으로 반증된 이력이
+#:   위 주석에 붙어 있어서**다 - 376건이 `황색포도상구균` 을 주소로 읽게 했고
+#:   그 기록이 그물을 좁힌 근거다. 다른 모듈(`showcase_pii`)이 같은 판단을
+#:   쓸 때는 정규식을 다시 쓰지 말고 `text_residual` 을 부른다.
+_PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = (
+    (_PHONE, "전화"),
+    (_EMAIL, "이메일"),
+    (_ADDR, "주소"),
+)
+
+
+def text_residual(value: object) -> str | None:
+    """문자열 하나에 남은 개인정보 패턴의 이름. 없으면 `None`.
+
+    ⚠ 문자열이 아니면 `None` 이다 - 숫자·불리언을 문자열로 바꿔 재면
+      바코드 13자리가 전화번호로 읽힌다 (`_TEXT_FIELDS` 주석 참조).
+    """
+    if not isinstance(value, str):
+        return None
+    for rx, name in _PATTERNS:
+        if rx.search(value):
+            return name
+    return None
+
+
 def sanitize_row(row: dict, counts: dict[str, int]) -> dict:
     """행 하나. 남길 목록만 남긴 **새 dict** 를 돌려준다."""
     out = {k: row[k] for k in KEEP_FIELDS if k in row}
@@ -240,13 +267,9 @@ def residual(clean: dict) -> list[str]:
             if k not in KEEP_FIELDS:
                 found.append(f"행[{i}].{k} (남길 목록 밖)")
         for k in _TEXT_FIELDS & set(row):
-            v = row[k]
-            if not isinstance(v, str):
-                continue
-            for rx, name in ((_PHONE, "전화"), (_EMAIL, "이메일"), (_ADDR, "주소")):
-                if rx.search(v):
-                    found.append(f"행[{i}].{k} ({name})")
-                    break
+            name = text_residual(row[k])
+            if name:
+                found.append(f"행[{i}].{k} ({name})")
     return sorted(set(found))
 
 

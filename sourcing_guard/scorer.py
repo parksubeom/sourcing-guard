@@ -271,7 +271,14 @@ _UNKNOWN_HEADLINE: list[UnknownReason] = [
         key="lookup_failed",
         kind=FindingKind.LOOKUP_FAILED,
         title="확인 미완료",
-        body="정부 조회 서비스에 연결하지 못했습니다. 잠시 후 다시 시도해 주세요.",
+        # ⚠⚠ **"잠시 후" 를 뺐다** (2026-09-20 P2). 우리는 그것이 잠시인지
+        #   모른다 - P1 이 `network.connect` 까지 좁혔지만 도쿄만인지 국외
+        #   전반인지는 안 쟀고, 2026-09-18 에 스스로 풀린 기록도 있다.
+        #   원인 추정도 R3 다. 본문(`verifier._lookup_failed`)과 **같은 말**을
+        #   해야 하므로 둘을 같이 고쳤다 - 한쪽만 고치면 헤드라인과 본문이
+        #   갈린다 (§6 · 굵기 건에서 방금 겪은 모양).
+        body="정부 조회 서비스에 연결하지 못했습니다. 근거 링크에서 번호를 "
+             "직접 조회하실 수 있습니다.",
         # 우리 쪽 사정이라 셀러가 답할 것은 없지만, **다시 하면 열린다.**
         unlocks=("cert", "recall"),
         resolution="retry",
