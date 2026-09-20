@@ -269,3 +269,30 @@ def test_dark_mode_pairs_meet_aa():
         if ratio < 4.5:
             bad.append(f"{label} {a} / {b} = {ratio:.2f}")
     assert not bad, "다크 대비 미달:\n  " + "\n  ".join(bad)
+
+
+def test_the_browser_side_hosts_are_written_down_in_r4():
+    """⚠⚠ **브라우저가 받아 오는 곳도 기록이 있어야 한다.**
+
+    `ALLOWED_HOSTS` 는 서버가 나가는 곳이라 웹폰트는 거기 안 들어간다
+    (2026-09-20 실측 · R4 절 참조). 그러면 브라우저가 받는 곳은 아무 검사도
+    안 받는 상태가 되므로, R4 에 적어 두고 그 목록과 실제를 대조한다.
+
+    ⚠ 늘리려면 R4 를 먼저 고친다 - 순서를 어기면 목록이 실제보다 늦는다.
+    """
+    import re as _re
+    from pathlib import Path as _P
+
+    root = _P(__file__).resolve().parents[1]
+
+    # 받아 오는 곳은 지금 둘뿐이고, 늘리려면 R4 를 먼저 고친다.
+    hosts = set()
+    for f in sorted((root / "sourcing_guard/static").glob("*.html")):
+        body = _strip_comments(f.read_text(encoding="utf-8"))
+        hosts |= set(_re.findall(r'<link[^>]+href="https://([a-z0-9.-]+)', body))
+    assert hosts == {"fonts.googleapis.com", "fonts.gstatic.com"}, (
+        f"브라우저가 받는 곳이 늘었다: {sorted(hosts)} - CLAUDE.md R4 를 먼저 고치세요")
+
+    rules = (root / "CLAUDE.md").read_text(encoding="utf-8")
+    for h in hosts:
+        assert h in rules, f"R4 에 안 적힌 브라우저 호스트: {h}"
