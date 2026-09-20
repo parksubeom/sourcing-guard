@@ -71,6 +71,12 @@ def _reasons() -> dict[tuple[str, str], tuple[str, str]]:
     """검수 파일의 `(상품명, 붙은 품목) → (유형, 왜 틀렸나)`.
 
     ⚠ 사람이 적은 설명이다. 여기서 문장을 만들지 않는다 (R5).
+
+    ⚠⚠ **이 칸은 셀러가 읽는다.** 검수하며 적은 규칙 번호·경고 기호가 그대로
+      화면에 나간 적이 있다 (2026-09-20 · 한 줄). 여기서 걸러 내지 않는 것은
+      일부러다 - 거르면 화면과 검수 원문이 갈린다. 대신
+      `tests/test_experience_samples.test_the_reason_text_carries_no_house_vocabulary`
+      가 **내보내지기 전에** 잡는다. 오답 표에 적을 때 우리 말로 적지 않는다.
     """
     out: dict[tuple[str, str], tuple[str, str]] = {}
     for line in _AUDIT.read_text(encoding="utf-8").splitlines():

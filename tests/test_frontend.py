@@ -15,14 +15,21 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
-from tests.srccheck import markup_only
+from tests.srccheck import emoji_chars, markup_only
 
 STATIC = Path("sourcing_guard/static")
 # ⚠ landing.html 을 넣어야 이모지·h1·고지문·단정 표현 가드가 랜딩에도 걸린다.
 # ⚠ guide.html 도 넣는다 - 이모지·h1·고지문·단정 표현 가드가 새 화면에도
 #   걸려야 한다. 화면을 늘리면서 가드 목록을 안 늘리면 새 화면만 무방비다.
-PAGES = ["index.html", "watch.html", "landing.html", "guide.html"]
-ASSETS = PAGES + ["app.css", "owner.js"]
+#
+# ⚠⚠ **그 경고를 적어 놓고 그대로 했다** (2026-09-20). `batch` · `samples` ·
+#   `misses` 세 화면과 `guide.js` · `samples.js` · `misses.js` 를 만들면서
+#   여기에 안 넣어, 그 여섯 파일은 이모지·단정 표현 가드 밖에 있었다.
+#   실측으로는 셋 다 깨끗했지만 **검사가 봐준 것이 아니라 안 본 것**이다.
+#   화면·스크립트를 새로 만들면 여기부터 늘린다.
+PAGES = ["index.html", "watch.html", "landing.html", "guide.html",
+         "batch.html", "samples.html", "misses.html"]
+ASSETS = PAGES + ["app.css", "owner.js", "guide.js", "samples.js", "misses.js"]
 
 
 @pytest.fixture(scope="module")
@@ -68,8 +75,12 @@ def test_both_pages_use_the_same_stylesheet(pages):
 
 
 def test_no_emoji_anywhere(html):
-    """이모지는 어떤 자리에도 쓰지 않는다. 상태는 색·아이콘·텍스트로 전달한다."""
-    found = [c for c in html if 0x1F300 <= ord(c) <= 0x1FAFF or 0x2600 <= ord(c) <= 0x27BF]
+    """이모지는 어떤 자리에도 쓰지 않는다. 상태는 색·아이콘·텍스트로 전달한다.
+
+    ⚠ 구간의 오너는 `tests/srccheck.emoji_chars` 다 (2026-09-20). 여기에 숫자를
+      다시 적으면 `misses.json` 설명글을 재는 검사와 갈린다 (§6).
+    """
+    found = emoji_chars(html)
     assert not found, f"이모지가 있습니다: {found}"
 
 
@@ -94,10 +105,11 @@ def test_body_does_not_use_h1(html):
     for name in PAGES:
         body = (STATIC / name).read_text(encoding="utf-8")
         found = re.findall(r"<h1[\s>]", body, re.I)
-        # ⚠ **문서 화면**은 제목이 하나 있어야 한다. 도구 화면(스캔·감시)은
-        #   머리말이 곧 제목이라 h1 을 두지 않지만, 랜딩과 가이드는 읽는 글이고
-        #   h1 이 없으면 스크린리더가 문서 제목을 못 읽는다. 둘 다 **하나만**.
-        if _Path(name).stem in ("landing", "guide"):
+        # ⚠ **문서 화면**은 제목이 하나 있어야 한다. 도구 화면(스캔·감시·대량)은
+        #   머리말이 곧 제목이라 h1 을 두지 않지만, 랜딩·가이드·체험 표본·
+        #   「우리가 틀린 것」은 읽는 글이고 h1 이 없으면 스크린리더가 문서
+        #   제목을 못 읽는다. 전부 **하나만**.
+        if _Path(name).stem in ("landing", "guide", "samples", "misses"):
             assert len(found) <= 1, f"{name}: h1 이 {len(found)}개 - 하나만 둔다"
             continue
         assert not found, f"{name}: 도구 화면은 h2 이하로 운영한다"

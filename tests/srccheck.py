@@ -69,6 +69,24 @@ _BLOCK_COMMENT = re.compile(r"<!--.*?-->|/\*.*?\*/", re.S)
 _LINE_COMMENT = re.compile(r"(?:(?<=^)|(?<=\s))//[^\n]*", re.M)
 
 
+#: 이모지·기호 구간. **화면 어디에도 쓰지 않는다** - 상태는 색·아이콘·글자로
+#: 말한다.
+#:
+#: ⚠⚠ 판단이 세 곳에 있었다 - `test_no_emoji_anywhere` 가 구간을 적고,
+#:   `test_watch_autosweep` 이 `⚠` 하나만 따로 적고, 2026-09-20 에
+#:   `misses.json` 의 설명글을 재려다 네 번째를 쓸 뻔했다. 오너는 여기다 (§6).
+#:
+#: ⚠ `⚠`(U+26A0)는 `0x2600-0x27BF` 안에 있다. 구간을 좁히면 우리가 주석에 제일
+#:   많이 쓰는 그 기호가 화면에 나가도 안 걸린다.
+_EMOJI_RANGES = ((0x1F300, 0x1FAFF), (0x2600, 0x27BF))
+
+
+def emoji_chars(text: str) -> list[str]:
+    """`text` 안의 이모지·기호를 **찾은 순서대로** 돌려준다. 없으면 빈 목록."""
+    return [c for c in text
+            if any(lo <= ord(c) <= hi for lo, hi in _EMOJI_RANGES)]
+
+
 def markup_only(src: str) -> str:
     """HTML·CSS·JS 에서 **주석을 뺀 것**. 화면에 실제로 나가는 것만 남는다.
 

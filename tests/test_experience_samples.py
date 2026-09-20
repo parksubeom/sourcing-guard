@@ -344,6 +344,44 @@ def test_every_wrong_row_says_why():
         assert row["said"], f'{row["name"]} 에 우리가 말한 품목이 없다'
 
 
+def test_the_reason_text_carries_no_house_vocabulary():
+    """⚠⚠ **가드가 틀만 보고 있었다.** 이 화면의 검사 네 개는 `misses.html` 과
+    `misses.js` 를 읽는데, 셀러가 실제로 읽는 문장은 `misses.json` 의 `why` 다.
+    틀은 깨끗했고 값은 아니었다 - 2026-09-20 캡처에서 한 줄이 이렇게 떠 있었다:
+
+        … 상품명만으로는 고르지 못한다 (R3). ⚠ 우리가 정한 선이다: …
+
+    `R3` · `R5-b` 는 CLAUDE.md 의 규칙 번호이고 `⚠` 는 우리 주석 기호다. 셋 다
+    셀러에게는 아무 뜻이 없다 - 「붙이다」를 「매칭」으로 바꾼 것과 같은 자리이고,
+    그때는 화면 파일만 훑어서 이 줄을 못 봤다.
+
+    ⚠ `name` 과 `said` 는 재지 않는다. 공급사가 붙인 제목과 우리 품목표의 이름
+      이라 **우리가 쓴 문장이 아니다.** 여기서 재는 것은 우리가 지어 적은 설명뿐.
+    """
+    from tests.srccheck import emoji_chars
+
+    from sourcing_guard.samples import misses
+
+    house = re.compile(r"\bR\d+(?:-[a-z])?\b|CLAUDE\.md|§\d|미완 목록")
+    m = misses()
+    for bucket in ("wrong", "vague", "missed"):
+        for row in m[bucket]:
+            for field in ("why", "kind"):
+                text = row.get(field) or ""
+                bad = emoji_chars(text)
+                assert not bad, f'{bucket}/{row["name"][:20]} {field} 에 기호: {bad}'
+                hit = house.search(text)
+                assert not hit, (
+                    f'{bucket}/{row["name"][:20]} {field} 에 우리 용어가 남았다: '
+                    f'"{hit.group(0)}" - 셀러가 읽는 줄입니다')
+
+    # ⚠ 반대 방향. 못 잡으면 위의 통과는 "깨끗하다" 가 아니라 "안 본다" 다.
+    assert house.search("상품명만으로는 고르지 못한다 (R3)"), "규칙 번호를 못 잡는다"
+    assert house.search("고시는 사용 연령으로 가르는데(R5-b)"), "가지 번호를 못 잡는다"
+    assert emoji_chars("⚠ 우리가 정한 선이다"), "경고 기호를 못 잡는다"
+    assert not house.search("부속서 15 · 별표 7 · 제2022-220호"), "고시 표기를 잡으면 안 된다"
+
+
 def test_no_shop_name_survives_in_the_misses_list():
     """⚠ 이 목록은 공급사가 붙인 제목을 그대로 옮기는 자리다. 상호가 가운데·
     끝에도 들어온다 - 실측에서 `…[효정무역]` 이 끝에 있었다. 괄호 묶음을 전부 뗀다.
