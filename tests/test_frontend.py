@@ -522,9 +522,15 @@ def test_watch_reason_comes_from_the_server(pages):
 
 
 def test_green_watch_suggestion_is_emphasised(pages):
-    """GREEN 은 가장 약한 신호다. 셀러가 '안전'으로 읽으면 우리가 가장 크게 빗나간다."""
-    index = pages["index.html"]
-    assert 'sig === "GREEN"' in index
+    """GREEN 은 가장 약한 신호다. 셀러가 '안전'으로 읽으면 우리가 가장 크게 빗나간다.
+
+    ⚠ **강조는 GREEN 에만** 남았다 (2026-09-20). 전에는 UNKNOWN 도 강조했고
+      근거가 "감시가 유일한 확정적 가치" 였는데, 공급처 문안이 그 전제를
+      깼다 - 회색불에서 먼저 할 일은 묻는 것이다.
+    """
+    index = markup_only(pages["index.html"])
+    assert 'var lead = canWatch && sig === "GREEN" ? " lead" : "";' in index, (
+        "강조 조건이 GREEN 하나가 아니다")
     assert "watch-cta.lead" in (STATIC / "app.css").read_text(encoding="utf-8")
 
 
@@ -594,11 +600,17 @@ def test_unknown_badge_agrees_with_the_subtitle():
     assert 'UNKNOWN:"모름"' not in html
 
 
-def test_watch_cta_sits_right_after_the_findings():
-    """감시 버튼이 확인 항목 바로 뒤에 온다.
+def test_the_watch_cta_is_drawn_once_and_stays_inside_the_card():
+    """감시 버튼은 **한 자리에서 한 번**, 그리고 카드 안에 있어야 한다.
 
-    "모름" 화면에서 셀러에게 줄 수 있는 확정적 가치가 감시 하나뿐이다
-    (기획서 §3.3). 맨 끝으로 밀리면 스크롤 밖으로 나가 없는 것과 같아진다.
+    ⚠⚠ 전에는 "확인 항목 바로 뒤" 였고 근거가 "모름 화면에서 줄 수 있는
+      확정적 가치가 감시 하나뿐" 이었다 (기획서 §3.3). 2026-09-20 에 공급처
+      문안이 들어오면서 **그 전제가 깨졌고**, 자리는
+      `test_the_card_follows_what_the_seller_does_next` 가 가진다.
+      여기 남는 것은 "한 번만 그린다" 와 "푸터 위에 있다" 다.
+
+    ⚠ 맨 끝으로 밀려 스크롤 밖으로 나가면 없는 것과 같아진다 - 그래서 푸터
+      보다 위인지는 여기서 계속 본다.
 
     ⚠ **v2 에서 조건 분기가 없어졌다.** 전에는 유해물질 아코디언이 카드 맨
       아래에 있어서 "UNKNOWN 이면 그 위로 올린다" 로 피했고, 그래서 같은
@@ -611,10 +623,13 @@ def test_watch_cta_sits_right_after_the_findings():
     body = html[html.index("function render(data)"):]
     assert html.count('id="cta"') == 1
     assert html.count('id="watch"') == 1
-    assert body.index('class="watch-cta') > body.index("rowsHtml(g.findings")
-    assert body.index('class="watch-cta') < body.index('class="rv-foot"')
-    # UNKNOWN 도 GREEN 처럼 강조한다.
-    assert 'sig === "GREEN" || sig === "UNKNOWN"' in html
+    assert body.index('class="watch-cta') > body.index("rowsHtml(g.findings"), (
+        "감시 CTA 가 확인 항목보다 위다")
+    assert body.index('class="watch-cta') < body.index('class="rv-foot"'), (
+        "감시 CTA 가 푸터 아래로 밀렸다 - 스크롤 밖이면 없는 것과 같다")
+    # ⚠ 강조 조건의 소유자는 `test_green_watch_suggestion_is_emphasised` 다.
+    #   전에는 여기도 "UNKNOWN 도 GREEN 처럼 강조한다" 를 적고 있었는데, 같은
+    #   판단이 두 곳에 있으면 한쪽만 고쳐질 때 나머지가 낡는다 (§6).
 
 
 # ---------------------------------------------------------------------------
@@ -939,13 +954,31 @@ def test_the_supplier_message_never_misattributes_a_legal_basis(html):
     assert "legal_basis" in src, "조항으로 안 나눈다"
 
 
-def test_the_supplier_message_block_sits_below_the_watch_cta(html):
-    """⚠ 감시 CTA 가 밀려 내려가면 안 된다.
+def test_the_card_follows_what_the_seller_does_next(html):
+    """결과 카드 아래 세 블록은 **셀러가 하는 순서**다 (2026-09-20 총괄).
 
-    UNKNOWN 에서 우리가 주는 **유일한 확정적 가치**가 그 버튼이다.
+        물어보고(ask) · 근거를 보고(srcs) · 그 사이 감시에 넣는다(cta)
+
+    ⚠⚠ 전에는 cta 가 맨 위였고 근거가 "UNKNOWN 에서 우리가 주는 **유일한
+      확정적 가치**가 그 버튼" 이었다. 어젯밤 들어온 공급처 문안이 그 전제를
+      깼다 - 회색불에서 셀러가 바로 할 수 있는 일이 생겼고, 그것이 먼저다.
+
+    ⚠ 자리를 되돌리려면 저 전제부터 다시 보라. 이 검사와 `index.html` 의
+      ⑤ 주석이 같은 말을 들고 있다.
     """
-    assert html.index('id="cta"') < html.index('class="rv-ask"'), (
-        "문안 블록이 감시 CTA 위에 있다 - CTA 가 접힘 아래로 밀린다")
+    ask, srcs, cta = (html.index(x) for x in
+                      ('class="rv-ask"', 'class="rv-srcs"', 'id="cta"'))
+    assert ask < srcs < cta, (
+        f"블록 순서가 ask → srcs → cta 가 아니다 "
+        f"(ask {ask} · srcs {srcs} · cta {cta})")
+
+    # ⚠ 주석이 **새 근거**를 들고 있어야 한다. 자리만 옮기고 주석을 안 고치면
+    #   다음 사람이 옛 근거를 읽고 되돌린다 - 총괄이 그 위험을 먼저 짚었다.
+    src = (STATIC / "index.html").read_text(encoding="utf-8")
+    i = src.index("// ⑤ 공급처에 보낼 문안")
+    note = src[i:i + 900]
+    assert "전제가 깨졌다" in note, "자리를 옮긴 근거가 주석에 없다"
+    assert "되돌리려면" in note, "되돌릴 사람에게 남기는 말이 없다"
 
 
 def test_the_copy_fallback_needs_no_browser_api(html):
@@ -1350,3 +1383,17 @@ def test_an_error_is_not_wiped_by_a_sibling_that_succeeded(pages):
     assert "function beginBatch()" in index, "시도 시작에서 지우는 자리가 없다"
     assert index.count("beginBatch();") == 3, (
         "고르기·붙여넣기·떨어뜨리기 셋 다에서 시작을 알려야 한다")
+
+
+def test_the_block_coordinates_are_a_measured_thing(pages):
+    """⚠ 총괄이 화면이 아니라 **좌표 숫자**로 이 자리의 문제를 알아챘다.
+
+    그래서 `scratchpad/probe_order.py` 가 재는 것을 여기서도 소스로 잠근다 -
+    세 블록이 각각 **한 번씩만** 그려져야 좌표가 뜻을 가진다. 두 자리에서
+    그리면 어느 쪽 좌표인지 알 수 없고 id 도 겹친다.
+    """
+    index = markup_only(pages["index.html"])
+    for sel, name in (('class="rv-ask"', "공급처 문안"),
+                      ('class="rv-srcs"', "근거 원문 묶음"),
+                      ('id="cta"', "감시 CTA")):
+        assert index.count(sel) == 1, f"{name} 을 {index.count(sel)}곳에서 그린다"
