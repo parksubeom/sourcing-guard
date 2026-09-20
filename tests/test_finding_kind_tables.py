@@ -50,6 +50,8 @@ import ast
 import inspect
 from pathlib import Path
 
+import dataclasses
+
 import pytest
 
 from sourcing_guard import scorer, verifier
@@ -130,6 +132,12 @@ def _kinds_in(obj) -> set[str]:
             out.add(x.value)
         elif isinstance(x, (tuple, list, set, frozenset)):
             stack.extend(x)
+        elif dataclasses.is_dataclass(x) and not isinstance(x, type):
+            # ⚠ 2026-09-20 에 `_UNKNOWN_HEADLINE` 이 `(kind, str)` 튜플에서
+            #   `UnknownReason` 데이터클래스로 바뀌자 이 검사가 **빈 집합**을
+            #   봤다. 바뀐 것을 알아채라고 있는 검사가 모양이 바뀌었다고
+            #   못 보면 안 된다 - 담는 그릇이 아니라 **안에 든 kind** 를 센다.
+            stack.extend(getattr(x, f.name) for f in dataclasses.fields(x))
     return out
 
 

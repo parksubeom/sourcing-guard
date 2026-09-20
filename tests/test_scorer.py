@@ -569,7 +569,8 @@ def test_lookup_failure_is_the_lowest_priority_reason():
     """
     from sourcing_guard.scorer import _UNKNOWN_HEADLINE
 
-    kinds = [k for k, _ in _UNKNOWN_HEADLINE]
+    # 상수가 `UnknownReason` 으로 바뀌었다 (2026-09-20). 순서의 뜻은 같다.
+    kinds = [r.kind for r in _UNKNOWN_HEADLINE]
     assert kinds[-1] is FindingKind.LOOKUP_FAILED
 
 
@@ -691,9 +692,38 @@ def test_cert_axis_note_quotes_the_government_status():
     assert _with("-")["cert"]["note"] == ""
     assert _with("")["cert"]["note"] == ""
 
-    # 번호 자체가 없으면 조회를 안 했으므로 상태도 없다.
-    empty = {a["key"]: a for a in _axes([f(FindingKind.COVERAGE_GAP, Signal.UNKNOWN)], None)}
-    assert empty["cert"]["label"] == "번호 없음" and empty["cert"]["note"] == ""
+
+def test_the_cert_axis_says_what_to_do_when_there_is_no_number():
+    """⚠⚠ 「번호 없음」이 **막다른 곳**이었다 (2026-09-20 총괄 §5).
+
+    유해물질 칸은 다음 행동을 말하는데 인증 칸만 빈 문자열이었다.
+
+    ⚠⚠ 그런데 **부재가 정상인 품목에 "받으세요" 는 틀린 안내다.** 안전기준
+      준수·공급자적합성확인 대상은 조회 DB 에 번호가 없는 것이 정상이고
+      (R3-b), 우산을 든 셀러에게 없는 번호를 받아 오라고 하면 그 자리에서
+      막힌다. 갈라서 말한다 - 이 검사의 요지가 그 갈래다.
+    """
+    from sourcing_guard.scorer import _axes
+
+    def _note(*kinds):
+        return {a["key"]: a for a in _axes(
+            [f(k, Signal.UNKNOWN) for k in kinds], None)}["cert"]["note"]
+
+    assert _note(FindingKind.COVERAGE_GAP) == "공급처에 인증번호를 받으면 여기서 조회합니다"
+    assert _note(FindingKind.KC_ABSENCE_EXPECTED) == "이 품목은 번호가 없는 것이 정상입니다"
+    assert "받으면" not in _note(FindingKind.KC_ABSENCE_EXPECTED), (
+        "부재가 정상인 품목에 없는 번호를 받아 오라고 한다")
+
+    # 조회 실패는 우리 쪽 사정이다 - 셀러에게 번호를 받아 오라고 하면 안 된다.
+    fail = f(FindingKind.LOOKUP_FAILED, Signal.UNKNOWN)
+    fail.detail = {"scope": "인증"}
+    got = {a["key"]: a for a in _axes([fail], None)}["cert"]
+    assert got["label"] == "조회 실패" and got["note"] == "잠시 후 다시 시도해 주세요"
+
+    # 번호가 있고 문제가 있으면 finding 이 말한다 - 축은 상태만 옮긴다.
+    bad = f(FindingKind.KC_REVOKED, Signal.RED)
+    bad.detail = {"cert_state": "안전인증취소"}
+    assert {a["key"]: a for a in _axes([bad], None)}["cert"]["note"] == "인증상태: 안전인증취소"
 
 
 def test_recall_axis_says_no_match_only_when_it_compared():

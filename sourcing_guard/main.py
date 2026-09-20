@@ -388,6 +388,22 @@ def misses_page() -> HTMLResponse:
     return _page("misses.html")
 
 
+@app.api_route("/unknown", methods=_PAGE_METHODS, response_class=HTMLResponse,
+               include_in_schema=False)
+def unknown_page() -> HTMLResponse:
+    """「왜 "모름" 이 나왔나」.
+
+    실측 135건 중 19건(14.1%)이 회색불이다. 심사·투표에서 나올 첫 질문이
+    "모른다고만 하는 서비스 아니냐" 이고, 그 답이 코드 안에는 있는데 화면 한
+    장에 모여 있지 않았다.
+
+    ⚠ 전역 내비에 안 넣는다 - `/samples` 와 같은 이유다(320px 내비 넘침,
+      미완 §1-l). 질문이 실제로 생기는 세 곳에서 건다: 회색불 결과 카드 ·
+      랜딩의 "판정은 하지 않습니다" · `/misses` 의 "아무 말도 못 한 것".
+    """
+    return _page("unknown.html")
+
+
 @app.api_route("/guide", methods=_PAGE_METHODS, response_class=HTMLResponse, include_in_schema=False)
 def guide_page() -> HTMLResponse:
     """[M-5] 카테고리 가이드 — **안내 축이다. 아무것도 판정하지 않는다.**
@@ -604,6 +620,36 @@ def trigger_sync(
     return run_sync(
         _kats, _store, force_initial=force_initial, on_updated=_on_recalls_updated
     ).to_dict()
+
+
+@app.get("/api/v1/unknown-reasons", include_in_schema=False)
+def unknown_reasons_data() -> dict:
+    """회색불 사유 전부. `/unknown` 화면의 **유일한 출처**다.
+
+    ⚠⚠ 화면이 문장을 짓지 않게 하려고 있는 경로다. 사유 문구는 이미
+      `scorer` 가 헤드라인으로 쓰고 있고, 여기서 새로 적으면 같은 말이 두
+      벌이 된다 - 한쪽만 고쳐질 때 화면이 낡은 말을 한다 (§6).
+
+    ⚠ `unlocks` 는 축 키이고 `unlocks_ko` 가 셀러의 말로 옮긴다. 화면이
+      영문 키를 번역하지 않는다.
+    """
+    from .scorer import unknown_reasons, unlocks_ko
+
+    return {
+        "reasons": [
+            {
+                "key": r.key,
+                "title": r.title,
+                "body": r.body,
+                # 판정 문구도 서버가 준다. 화면이 "열립니다 / 판단했습니다" 를
+                # 스스로 고르면 갈래가 늘 때 한쪽만 낡는다 (§6).
+                "resolution": r.resolution,
+                "verdict": r.verdict_ko,
+                "unlocks": list(unlocks_ko(r.unlocks)),
+            }
+            for r in unknown_reasons()
+        ]
+    }
 
 
 @app.get("/api/v1/guide", include_in_schema=False)

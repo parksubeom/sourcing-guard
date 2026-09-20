@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import re
 import unicodedata
+from dataclasses import dataclass
 from datetime import date, datetime, timedelta, timezone
 
 from .models import SPECIFIC_FINDING_KINDS, Finding, FindingKind, ProductFacts, ScanMeta, ScanResult, Signal, ItemCategory, WatchSuggestion, ExtractedField, FindingGroup
@@ -171,37 +172,182 @@ _HEADLINE: dict[Signal, str] = {
 # "우리 소관이 아니다" · "연령 기준으로 대상이 아니다" 는 품목 자체에 대한
 # 확정된 판단이라 무엇보다 먼저 말한다. 그 뒤에 "번호 부재가 정상" 이 오고,
 # 우리 수록 범위(COVERAGE_GAP)·조회 실패는 그다음이다.
-_UNKNOWN_HEADLINE_FIRST: list[tuple[FindingKind, str]] = [
-    (
-        FindingKind.OUT_OF_SCOPE,
-        "본 서비스 범위 밖 — 식품·화장품 등은 식약처 등 다른 부처 소관입니다. "
-        "해당 기준으로 확인하세요.",
+@dataclass(frozen=True)
+class UnknownReason:
+    """회색불 사유 하나. **제목과 본문이 나뉘어 있을 뿐 같은 문장**이다.
+
+    ⚠⚠ 전에는 `"제목 — 본문"` 한 문자열이었다. `/unknown` 화면이 제목을 따로
+      써야 해서 쪼갰는데, **쪼갠 것을 다시 합치면 한 글자도 달라지지 않아야
+      한다** - `tests/test_unknown_reasons.py` 가 옛 다섯 문자열을 통째로 들고
+      대조한다. 그 검사가 없으면 리팩터가 조용히 문구를 바꾼다.
+
+    필드
+        key       화면·API 가 쓰는 안정된 이름. 문구가 바뀌어도 안 바뀐다
+        kind      이 사유를 만드는 finding. 없으면 계산·입력 쪽 사유다
+        title     "본 서비스 범위 밖"
+        body      "식품·화장품 등은 … 확인하세요."
+        unlocks   **답하면 열리는 축.** 비어 있으면 "답해도 안 열린다" 가
+                  아니라 **우리가 이미 판단한 것**이라는 뜻이다
+    """
+
+    key: str
+    kind: "FindingKind | None"
+    title: str
+    body: str
+    unlocks: tuple[str, ...] = ()
+    resolution: str = "settled"
+
+    @property
+    def headline(self) -> str:
+        """옛 한 문자열. 헤드라인을 만드는 **유일한 자리**다."""
+        return f"{self.title} — {self.body}"
+
+    @property
+    def verdict_ko(self) -> str:
+        return _RESOLUTION_KO[self.resolution]
+
+
+#: 회색불이 **어떻게 풀리는가.** 넷이고, 넷 다 다른 말이다.
+#:
+#: ⚠⚠ 처음에 "열린다 / 이미 판단했다" 둘로만 갈랐더니 `coverage_gap` 이
+#:   "이미 판단한 것입니다" 가 됐다. **그건 거짓이다** - 그 사유는 우리가
+#:   규칙 DB 에 아직 안 넣은 것이라 판단한 것도 아니고 셀러가 답할 것도
+#:   없다. 갈래가 모자라면 화면이 없는 말을 하게 된다.
+#:
+#: ⚠ `pending` 을 감추고 싶은 유혹이 생긴다. 감추면 이 페이지가 하는 약속
+#:   ("사유를 전부 적었다")이 깨진다.
+_RESOLUTION_KO: dict[str, str] = {
+    "answer": "답하시면 열립니다",
+    "retry": "다시 시도하면 열립니다",
+    "settled": "이미 판단한 것입니다",
+    "pending": "저희가 채워야 합니다",
+}
+
+
+#: 축 이름을 셀러의 말로. **화면이 짓지 않게** 여기서 준다.
+_UNLOCK_KO: dict[str, str] = {
+    "cert": "인증 조회",
+    "recall": "리콜 대조",
+    "hazard_rule": "유해물질 기준",
+    "item_grade": "품목 등급",
+}
+
+
+def unlocks_ko(unlocks: tuple[str, ...]) -> tuple[str, ...]:
+    """모르는 축 이름은 **버린다.** 화면에 영문 키가 새는 것보다 낫다."""
+    return tuple(_UNLOCK_KO[u] for u in unlocks if u in _UNLOCK_KO)
+
+
+_UNKNOWN_HEADLINE_FIRST: list[UnknownReason] = [
+    UnknownReason(
+        key="out_of_scope",
+        kind=FindingKind.OUT_OF_SCOPE,
+        title="본 서비스 범위 밖",
+        body="식품·화장품 등은 식약처 등 다른 부처 소관입니다. "
+             "해당 기준으로 확인하세요.",
     ),
-    (
-        FindingKind.AGE_OUT_OF_CHILD_RANGE,
-        "대상 아님 — 표기된 사용연령 기준으로는 어린이제품 안전기준 대상이 "
-        "아닙니다. 실사용 연령이 13세 이하이면 대상이 될 수 있으니 표기 근거를 확인하세요.",
+    UnknownReason(
+        key="age_out_of_range",
+        kind=FindingKind.AGE_OUT_OF_CHILD_RANGE,
+        title="대상 아님",
+        body="표기된 사용연령 기준으로는 어린이제품 안전기준 대상이 "
+             "아닙니다. 실사용 연령이 13세 이하이면 대상이 될 수 있으니 표기 근거를 확인하세요.",
     ),
 ]
 
-_UNKNOWN_HEADLINE: list[tuple[FindingKind, str]] = [
-    (
-        FindingKind.COVERAGE_GAP,
-        "일부만 확인 — 인증·리콜은 대조했으나, 이 품목의 유해물질 기준은 아직 "
-        "수록되지 않았습니다. 확인된 범위는 아래를 보세요.",
+_UNKNOWN_HEADLINE: list[UnknownReason] = [
+    UnknownReason(
+        key="coverage_gap",
+        kind=FindingKind.COVERAGE_GAP,
+        title="일부만 확인",
+        body="인증·리콜은 대조했으나, 이 품목의 유해물질 기준은 아직 "
+             "수록되지 않았습니다. 확인된 범위는 아래를 보세요.",
+        # 셀러가 답할 것이 없고 우리가 판단한 것도 아니다 - **우리 일이 남았다.**
+        resolution="pending",
     ),
     # 조회 실패는 맨 뒤다. 축 하나가 빠진 것이지 품목 판단 자체를 못 한 것이
     # 아니라서, "대상 아님" 같이 확정된 판단이 있으면 그쪽을 먼저 말해야 한다.
-    (
-        FindingKind.LOOKUP_FAILED,
-        "확인 미완료 — 정부 조회 서비스에 연결하지 못했습니다. 잠시 후 다시 시도해 주세요.",
+    UnknownReason(
+        key="lookup_failed",
+        kind=FindingKind.LOOKUP_FAILED,
+        title="확인 미완료",
+        body="정부 조회 서비스에 연결하지 못했습니다. 잠시 후 다시 시도해 주세요.",
+        # 우리 쪽 사정이라 셀러가 답할 것은 없지만, **다시 하면 열린다.**
+        unlocks=("cert", "recall"),
+        resolution="retry",
     ),
 ]
 
-_UNKNOWN_NO_INPUT = (
-    "입력 확인 — 상품 정보를 읽지 못했습니다. 상품 상세페이지의 '상품정보' 표를 "
-    "붙여넣으면 확인해 드립니다."
+_UNKNOWN_NO_INPUT_REASON = UnknownReason(
+    key="no_input",
+    kind=None,
+    title="입력 확인",
+    body="상품 정보를 읽지 못했습니다. 상품 상세페이지의 '상품정보' 표를 "
+         "붙여넣으면 확인해 드립니다.",
+    # 표를 붙여넣으면 세 축이 다 열린다. 이 화면에서 제일 쉬운 해결이다.
+    unlocks=("cert", "recall", "hazard_rule"),
+    resolution="answer",
 )
+
+_UNKNOWN_NO_INPUT = _UNKNOWN_NO_INPUT_REASON.headline
+
+#: 번호 부재가 정상인 품목. 헤드라인은 계산값(`_absence_expected_headline`)이라
+#: 상수로 못 옮긴다 - `/unknown` 화면용 설명만 여기 둔다.
+#:
+#: ⚠⚠ **면제 표현을 쓰지 않는다.** "인증이 필요 없다" 는 틀리다 - 제조·수입자
+#:   에게 스스로 시험해 확인할 의무가 있다. 그 한 줄을 빼면 이 칸이 셀러에게
+#:   "안 해도 된다" 로 읽힌다.
+_ABSENCE_EXPECTED_REASON = UnknownReason(
+    key="absence_expected",
+    kind=FindingKind.KC_ABSENCE_EXPECTED,
+    title="인증번호가 없는 것이 정상인 품목입니다",
+    body="안전기준준수·공급자적합성확인 대상은 정부 조회 DB 에 번호가 없는 것이 "
+         "정상입니다. 인증번호 대신 시험성적서를 요청하세요. "
+         "'인증이 필요 없다' 는 뜻이 아닙니다 - 제조·수입자에게 스스로 시험해 "
+         "확인할 의무가 있습니다.",
+)
+
+
+def unknown_reasons() -> list[UnknownReason]:
+    """회색불이 나오는 사유 전부. **`/unknown` 화면의 유일한 출처**다.
+
+    ⚠ 화면이 문장을 짓지 않게 하려고 만든 함수다. 여기에 없는 줄이 화면에
+      있으면 그것은 우리가 검수하지 않은 말이다 (R5).
+
+    순서는 `_unknown_headline` 의 우선순위와 같다 - 확정된 판단이 먼저,
+    셀러가 답하면 열리는 것이 뒤. 그래야 화면이 "모름은 입구다" 로 끝난다.
+    """
+    from .models import ItemCategory
+    from .scoping import missing_inputs
+
+    gaps = {g.label: g for g in missing_inputs(
+        materials=[], target_age=None, category=ItemCategory.UNCLASSIFIED)}
+
+    # 품목 구분이 먼저다 - 실측 19/135 가 이 사유이고, 품목이 정해지면
+    # 등급과 유해물질 기준이 함께 열린다.
+    order = ["품목 구분", "재질", "대상연령"]
+    asked = [
+        UnknownReason(
+            key=f"missing:{g.asks_for[0] if g.asks_for else g.label}",
+            kind=FindingKind.INFO_REQUEST,
+            # 사유 화면의 제목은 **무엇이 없는가** 다. `ask` 는 공급처에 물을
+            # 말이라 그대로 제목으로 쓰면 명령문이 된다.
+            title=f"{g.label} 표기를 찾지 못했습니다",
+            body=g.ask,
+            unlocks=tuple(g.unlocks),
+            resolution="answer",
+        )
+        for label in order
+        if (g := gaps.get(label)) is not None
+    ]
+
+    return [
+        *_UNKNOWN_HEADLINE_FIRST,
+        _ABSENCE_EXPECTED_REASON,
+        *asked,
+        *_UNKNOWN_HEADLINE,
+        _UNKNOWN_NO_INPUT_REASON,
+    ]
 
 
 def _absence_expected_headline(kinds: set[FindingKind], grade: str) -> str:
@@ -250,14 +396,14 @@ def _unknown_headline(
     # 그 둘이 아니면 "번호 부재가 정상" 이 먼저다 - 셀러의 즉각적인 걱정이
     # "번호가 없는데 팔아도 되나" 이고, 우리 수록 범위(COVERAGE_GAP)보다
     # 그 답이 급하다. 수록 범위는 같은 헤드라인 안에 덧붙인다.
-    for kind, text in _UNKNOWN_HEADLINE_FIRST:
-        if kind in kinds:
-            return text
+    for reason in _UNKNOWN_HEADLINE_FIRST:
+        if reason.kind in kinds:
+            return reason.headline
     if absence_grade and FindingKind.KC_ABSENCE_EXPECTED in kinds:
         return _absence_expected_headline(kinds, absence_grade)
-    for kind, text in _UNKNOWN_HEADLINE:
-        if kind in kinds:
-            return text
+    for reason in _UNKNOWN_HEADLINE:
+        if reason.kind in kinds:
+            return reason.headline
     return _HEADLINE[Signal.UNKNOWN]
 
 
@@ -949,6 +1095,17 @@ def _axes(
         )
         if state and state != "-":
             cert_note = f"인증상태: {state}"
+    elif cert[0] == "조회 실패":
+        cert_note = "잠시 후 다시 시도해 주세요"
+    elif cert[0] == "번호 없음":
+        # 주의(가장 중요): **부재가 정상인 품목에 "받으세요" 는 틀린 안내다.**
+        #   안전기준준수·공급자적합성확인 대상은 조회 DB 에 번호가 없는 것이
+        #   정상이고(R3-b), 우산을 든 셀러에게 없는 번호를 받아 오라고 하면
+        #   그 자리에서 막힌다. 서버가 갈라서 말한다.
+        if FindingKind.KC_ABSENCE_EXPECTED in kinds:
+            cert_note = "이 품목은 번호가 없는 것이 정상입니다"
+        else:
+            cert_note = "공급처에 인증번호를 받으면 여기서 조회합니다"
 
     return [
         {"key": "cert", "name": "인증 조회", "label": cert[0], "done": cert[1],

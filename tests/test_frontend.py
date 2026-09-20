@@ -28,8 +28,9 @@ STATIC = Path("sourcing_guard/static")
 #   실측으로는 셋 다 깨끗했지만 **검사가 봐준 것이 아니라 안 본 것**이다.
 #   화면·스크립트를 새로 만들면 여기부터 늘린다.
 PAGES = ["index.html", "watch.html", "landing.html", "guide.html",
-         "batch.html", "samples.html", "misses.html"]
-ASSETS = PAGES + ["app.css", "owner.js", "guide.js", "samples.js", "misses.js"]
+         "batch.html", "samples.html", "misses.html", "unknown.html"]
+ASSETS = PAGES + ["app.css", "owner.js", "guide.js", "samples.js", "misses.js",
+                  "unknown.js"]
 
 
 @pytest.fixture(scope="module")
@@ -109,7 +110,7 @@ def test_body_does_not_use_h1(html):
         #   머리말이 곧 제목이라 h1 을 두지 않지만, 랜딩·가이드·체험 표본·
         #   「우리가 틀린 것」은 읽는 글이고 h1 이 없으면 스크린리더가 문서
         #   제목을 못 읽는다. 전부 **하나만**.
-        if _Path(name).stem in ("landing", "guide", "samples", "misses"):
+        if _Path(name).stem in ("landing", "guide", "samples", "misses", "unknown"):
             assert len(found) <= 1, f"{name}: h1 이 {len(found)}개 - 하나만 둔다"
             continue
         assert not found, f"{name}: 도구 화면은 h2 이하로 운영한다"

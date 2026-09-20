@@ -1191,6 +1191,45 @@ a.btn-t{display:inline-flex; align-items:center; justify-content:center;
 .rv-foot b{font-weight:700; color:var(--fg-1)}
 @media (max-width:640px){ .rv-foot{padding:14px 20px} }
 
+/* 회색불 결과에서 사유 화면으로. 머리 안에 있으므로 배경을 안 준다 -
+   신호 틴트 위에 상자를 겹치면 칩과 경쟁한다. */
+.rv-why{margin:2px 0 0; font-size:14px; line-height:20px}
+.rv-why a{color:var(--brand); font-weight:600}
+
+/* ── 왜 "모름" 이 나왔나 (2026-09-20) ────────────────────────────
+   주의(중요): 갈래가 둘이고 **색으로 갈리지 않는다.** 열리는 쪽에 초록을
+     칠하면 "열림 = 좋음" 으로 읽히는데, 열리지 않는 셋은 나쁜 것이 아니라
+     우리가 판단을 한 것이다. 왼쪽 선의 **굵기와 글자**로만 가른다. */
+.uk-wrap{display:flex; flex-direction:column; gap:24px; padding-block:40px 64px}
+.uk-wrap h1{margin:0; font-family:var(--font-display); font-weight:400;
+            font-size:36px; line-height:46px}
+.uk-lede{margin:0; font-size:17px; line-height:28px; color:var(--fg-2); max-width:62ch}
+/* 주의(가장 중요): `minmax(320px,1fr)` 은 **320px 화면에서 페이지를 민다.**
+   칸의 하한이 320 이라 좌우 여백과 합쳐 화면을 넘는다 - 실측 가로 넘침 True.
+   같은 함정을 랜딩 격자에서 2026-09-18 에 이미 겪었다(미완 §1-l).
+   하한을 `min(320px, 100%)` 로 두면 좁은 화면에서 칸이 화면 안에 갇힌다. */
+.uk-list{display:grid; gap:14px;
+         grid-template-columns:repeat(auto-fill,minmax(min(320px,100%),1fr))}
+.uk-card{
+  display:flex; flex-direction:column; gap:10px; padding:20px 22px;
+  background:var(--bg-card); border-radius:var(--r-l);
+  border-left:3px solid var(--border-default);
+}
+.uk-card.answer, .uk-card.retry{border-left-color:var(--brand)}
+.uk-card h2{margin:0; font-size:16px; line-height:24px; font-weight:600; color:var(--fg-1)}
+.uk-card p{margin:0; font-size:14px; line-height:22px; color:var(--fg-2)}
+.uk-v{margin-top:auto; padding-top:8px; display:flex; flex-wrap:wrap;
+      align-items:center; gap:8px; font-size:13px; line-height:20px}
+.uk-v b{color:var(--fg-3)}
+.uk-card.answer .uk-v b, .uk-card.retry .uk-v b{color:var(--brand)}
+.uk-axes{display:flex; flex-wrap:wrap; gap:6px}
+.uk-ax{padding:2px 8px; border-radius:999px; background:var(--brand-tint);
+       color:var(--primary-70); font-size:12px; line-height:18px}
+.uk-end{display:flex; flex-direction:column; gap:8px; padding:20px 22px;
+        background:var(--bg-subtle); border-radius:var(--r-l)}
+.uk-end p{margin:0; font-size:15px; line-height:24px; color:var(--fg-2)}
+.uk-cta{padding-top:6px}
+
 /* 대량 검사 - 붙여넣기 칸과 가이드를 나란히 (시안 화면4). 좁아지면 한 단이
    되고 가이드가 아래로 내려간다 - 폰에서는 입력이 먼저 보여야 한다. */
 .bt-grid{display:grid; grid-template-columns:minmax(0,1fr) 300px; gap:16px;
