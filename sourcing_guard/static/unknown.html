@@ -45,12 +45,26 @@
   </div>
 </header>
 
-<main id="main">
-  <div class="container uk-wrap">
-    <h1>왜 "모름" 이 나왔나</h1>
-    <p class="uk-lede">회색불은 저희가 <strong>확인하지 못한 것</strong>이거나,
+<div class="intro">
+  <div class="container intro-grid">
+    <div class="intro-say">
+      <span class="eyebrow">모름 안내</span>
+      <h1>왜 "모름" 이 나왔나</h1>
+      <p class="uk-lede">회색불은 저희가 <strong>확인하지 못한 것</strong>이거나,
       확인해 보니 <strong>대상이 아니었던 것</strong>입니다. 어느 쪽인지 사유마다
       적어 두었습니다.</p>
+    </div>
+    <!-- 마스코트. 장식이므로 스크린리더에서 뺀다.
+         주의(가장 중요): **신호 스프라이트를 쓰지 않는다.** `ansimi-GREEN` 을
+           히어로에 쓰면 「우리가 틀린 것」 화면에 초록 얼굴이 뜬다 - id 가 곧
+           신호라서 생기는 사고다. 히어로는 `ansimi-look`(신호 없음)이나
+           `/static/hero/*.png` 만 쓴다. 검사가 그것을 단정한다. -->
+    <div class="intro-art" aria-hidden="true"><svg class="intro-face" viewBox="0 0 120 120"><use href="/static/mascot.svg#ansimi-look"/></svg></div>
+  </div>
+</div>
+
+<main id="main">
+  <div class="container uk-wrap">
 
     <div class="uk-list" id="list" aria-live="polite"></div>
 

@@ -48,11 +48,30 @@
   </div>
 </header>
 
-<main id="main" class="container sx">
-  <h1>체험 표본</h1>
-  <p class="sx-lede">도매 실상품 열 개를 <strong>저희가 실제로 검사한 결과 그대로</strong>입니다.
+<div class="intro">
+  <div class="container intro-grid">
+    <div class="intro-say">
+    <!-- 주의(가장 중요): 칩이 없다. 총괄 §2 가 준 칩("체험 표본")이 이 화면의
+         **제목과 같은 글자**였다 - 같은 말을 20px 간격으로 두 번 쓰면
+         읽는 사람에게는 결함으로 보인다. 칩은 "여기가 어디인가" 이고
+         제목은 "여기서 뭘 하나" 인데, 이 화면들은 그 둘이 같은 것이라
+         칩이 더할 말이 없다. 제목은 그대로 두고 칩만 뺐다.
+         검사가 "칩이 제목과 같으면 안 된다" 를 양쪽으로 단정한다. -->
+      <h1>체험 표본</h1>
+      <p class="sx-lede">도매 실상품 열 개를 <strong>저희가 실제로 검사한 결과 그대로</strong>입니다.
     인증번호가 상세페이지에 적혀 있는 상품만 골랐고, 그중에는
     <strong>인증이 기간만료되었거나 취소된 것</strong>도 있습니다.</p>
+    </div>
+    <!-- 마스코트. 장식이므로 스크린리더에서 뺀다.
+         주의(가장 중요): **신호 스프라이트를 쓰지 않는다.** `ansimi-GREEN` 을
+           히어로에 쓰면 「우리가 틀린 것」 화면에 초록 얼굴이 뜬다 - id 가 곧
+           신호라서 생기는 사고다. 히어로는 `ansimi-look`(신호 없음)이나
+           `/static/hero/*.png` 만 쓴다. 검사가 그것을 단정한다. -->
+    <div class="intro-art" aria-hidden="true"><svg class="intro-face" viewBox="0 0 120 120"><use href="/static/mascot.svg#ansimi-look"/></svg></div>
+  </div>
+</div>
+
+<main id="main" class="container sx">
 
   <p class="sx-honest" id="honest"></p>
 

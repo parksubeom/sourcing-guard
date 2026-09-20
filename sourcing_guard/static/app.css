@@ -341,6 +341,10 @@ textarea:focus{border-color:var(--primary-50); outline:2px solid var(--border-fo
 /* ── alert ────────────────────────────────────────────── */
 .alert{display:flex; gap:var(--s3); padding:14px var(--s4); border-radius:var(--r-m); border:1px solid; margin-top:var(--s4)}
 .alert.danger{border-color:var(--danger); background:#FCECEC}
+/* 안내(경고 아님). 끌어다 놓은 파일을 **왜 안 넣었는지** 적는 자리다 -
+   실패가 아니라 우리가 고르지 않기로 한 것이라 주황을 쓴다. */
+.alert.warn{display:block; border-color:var(--signal-amber-border,var(--signal-amber)); background:var(--signal-amber-tint);
+            color:var(--fg-1); font-size:15px; line-height:23px}
 .alert h4{margin:0 0 2px; font-size:15px}
 .alert p{margin:0; font-size:15px; color:var(--fg-2)}
 .alert svg{flex:none; color:var(--danger)}
@@ -969,6 +973,19 @@ body{background:var(--bg-page)}
 }
 .intro-art{position:relative; display:flex; align-items:center; gap:12px}
 .intro-face{width:112px; height:112px; flex:none}
+/* 그림 자산 히어로. `--art` 에 파일 경로만 넣으면 되고, 원본(512px·SVG)이
+   오면 **파일만** 갈아 끼운다 - 마크업도 CSS 도 안 바뀐다.
+   주의: 가로세로 비가 그림마다 달라 `contain` 으로 맞춘다. 늘리면 얼굴이
+     찌그러지고, 그건 마스코트에서 제일 눈에 띄는 오류다. */
+.intro-face.art{
+  /* 주의(중요): `--art` 의 **기본값을 여기 둔다.** 인라인 style 이 빠지면
+     CSS 는 정의 안 된 `var()` 가 든 선언을 통째로 무효로 만들어, 배경이
+     조용히 사라진다 - `test_no_old_variable_name_disappeared` 가 잡았다.
+     기본이 `none` 이면 그림만 안 보이고 자리는 남는다. */
+  --art:none;
+  width:132px; height:112px;
+  background:var(--art) center/contain no-repeat;
+}
 /* 말풍선. 꼬리는 테두리 없이 바탕색만 - 1px 테두리에 꼬리를 그리면 이음매가
    보인다. 장식이라 그 정도면 된다. */
 .bubble{

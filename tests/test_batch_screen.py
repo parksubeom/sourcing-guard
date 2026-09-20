@@ -163,3 +163,68 @@ def test_the_screen_offers_no_feature_we_do_not_have():
     body = markup_only(src())
     for absent in ("샘플 파일", "파일 선택", ".xlsx", ".xls", "드래그"):
         assert absent not in body, f"없는 기능이 화면에 있다: {absent}"
+
+
+# ── 끌어다 놓기 (2026-09-20 총괄 §3) ────────────────────────────────
+def _js() -> str:
+    from tests.srccheck import markup_only
+
+    return markup_only(src())
+
+
+def test_a_dropped_file_never_navigates_away():
+    """막지 않으면 브라우저가 그 파일로 이동해 **붙여넣어 둔 줄이 사라진다.**"""
+    js = _js()
+    assert 'document.addEventListener("drop"' in js, "떨어뜨리기를 안 받는다"
+    assert '"dragover"' in js, "dragover 를 안 막으면 drop 이 아예 안 온다"
+    drop = js[js.index('document.addEventListener("drop"'):]
+    assert "e.preventDefault()" in drop[: drop.index("\n  });")], "기본 동작을 안 막는다"
+
+
+def test_a_multi_column_file_is_not_filled_in():
+    """⚠⚠ **이게 이 기능의 요지다.** 열이 여럿이면 채우지 않는다.
+
+    우리가 어느 열이 상품명인지 고르면 **틀린 열을 조용히 검사**하고, 셀러는
+    검사됐다고 믿는다 - 이 파일 머리말 ①이 막으려던 바로 그것이다.
+
+    ⚠ 반대 방향 - 안 채우고 **끝나면** 셀러는 왜 안 됐는지 모른다. 왜 안
+      넣었는지 적는 자리(`#drop-note`)가 있어야 한다.
+    """
+    js, html = _js(), src()
+    assert "function columnCount(" in js, "열 수를 안 센다"
+    assert 'id="drop-note"' in html, "왜 안 넣었는지 적는 자리가 없다"
+    assert "넣지 않았습니다" in js, "안 넣었다는 말을 안 한다"
+    assert "고르면 틀릴 수" in js, "왜 안 넣었는지를 안 말한다"
+
+
+def test_the_comma_count_needs_every_row_to_agree():
+    """⚠ 콤마는 **상품명 안에도** 있다 ("우산, 양산, 자동우산").
+
+    한 줄만 보고 정하면 그 상품명을 세 열로 읽고, 한 열짜리 파일이 거부된다.
+    모든 줄이 같은 수일 때만 열로 본다.
+    """
+    js = _js()
+    fn = js[js.index("function columnCount("):]
+    fn = fn[: fn.index("\n  }")]
+    assert "every(" in fn, "모든 줄이 같은 수인지 안 본다"
+    assert "slice(0, 20)" in fn, "줄 수를 제한하지 않는다 - 500줄이면 느리다"
+
+
+def test_xlsx_is_explained_not_parsed():
+    """`.xlsx` 는 zip 이다. 파서도 업로드 엔드포인트도 만들지 않는다.
+
+    ⚠ 저장소에 외부 JS 가 **0건**이고 그 상태를 깨지 않는다. 열 선택 UI 가
+      먼저이고 파서는 그다음이다 (미완 §1).
+    """
+    js = _js()
+    assert "xlsx" in js and "엑셀 파일은 열을 복사해" in js, "엑셀 안내가 없다"
+    for banned in ("jszip", "xlsx.full", "sheetjs", "cdn.", "unpkg", "jsdelivr"):
+        assert banned not in js.lower(), f"외부 라이브러리를 끌어온다: {banned}"
+
+
+def test_the_screen_still_loads_no_external_script():
+    """저장소에 외부 JS 0건 - 이 화면이 그것을 깨지 않는다."""
+    import re as _re
+
+    for m in _re.finditer(r'<script[^>]*src="([^"]+)"', src()):
+        assert m.group(1).startswith("/static/"), f"외부 스크립트: {m.group(1)}"

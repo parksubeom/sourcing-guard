@@ -1397,3 +1397,121 @@ def test_the_block_coordinates_are_a_measured_thing(pages):
                       ('class="rv-srcs"', "근거 원문 묶음"),
                       ('id="cta"', "감시 CTA")):
         assert index.count(sel) == 1, f"{name} 을 {index.count(sel)}곳에서 그린다"
+
+
+# ── 히어로 (2026-09-20 총괄 §2) ──────────────────────────────────────
+#: 히어로 칩. **제목과 같은 화면에는 두지 않는다.**
+#:
+#: ⚠⚠ 총괄 §2 가 준 칩 여섯 중 셋(`체험 표본` · `우리가 틀린 것` ·
+#:   `카테고리 가이드`)이 그 화면의 **제목과 같은 글자**였다. 같은 말을 20px
+#:   간격으로 두 번 쓰면 읽는 사람에게는 결함으로 보인다. 칩은 "여기가
+#:   어디인가" 이고 제목은 "여기서 뭘 하나" 인데, 그 셋은 둘이 같은 것이라
+#:   칩이 더할 말이 없다. 제목을 고치는 쪽은 §2 가 금지했다("제목·부제는
+#:   지금 것을 그대로 옮긴다").
+_HERO_CHIPS = {
+    "batch.html": "대량 검사",
+    "watch.html": "감시 목록",
+    "unknown.html": "모름 안내",
+}
+_NO_CHIP = ("samples.html", "misses.html", "guide.html")
+
+
+def test_every_screen_starts_with_a_hero(pages):
+    """여덟 화면이 같은 서비스로 보여야 한다.
+
+    ⚠ 반대 방향 - 칩이 빠지거나 다른 말을 하면 실패한다. 칩은 "여기가
+      어디인가" 이고 제목은 "여기서 뭘 하나" 다. 겹치면 둘 중 하나가 낭비다.
+    """
+    import re as _re
+
+    for name in PAGES:
+        body = markup_only(pages[name])
+        assert 'class="intro-art"' in body or 'class="hero-art"' in body, (
+            f"{name}: 히어로 그림 자리가 없다")
+
+    for name, chip in _HERO_CHIPS.items():
+        body = markup_only(pages[name])
+        assert f'<span class="eyebrow">{chip}</span>' in body, (
+            f"{name}: 칩이 '{chip}' 이 아니다")
+
+    # ⚠⚠ 반대 방향 - **칩이 제목과 같으면 안 된다.** 같으면 같은 말을 두 번
+    #   쓰는 것이고, 그건 읽는 사람에게 결함으로 보인다.
+    for name in PAGES:
+        body = markup_only(pages[name])
+        m = _re.search(r'<span class="eyebrow">([^<]+)</span>', body)
+        t = _re.search(r"<h[12][^>]*>(.*?)</h[12]>", body, _re.S)
+        if not (m and t):
+            continue
+        title = _re.sub(r"<[^>]+>", "", t.group(1)).strip()
+        assert m.group(1).strip() != title, (
+            f"{name}: 칩과 제목이 같은 글자다 ('{title}') - 칩을 빼거나 다르게 쓴다")
+
+    # 칩을 뺀 화면은 **왜 뺐는지**가 주석에 있어야 한다. 없으면 다음 사람이
+    # 빠뜨린 것으로 보고 되돌린다.
+    for name in _NO_CHIP:
+        src = (STATIC / name).read_text(encoding="utf-8")
+        assert 'class="eyebrow"' not in markup_only(src), f"{name}: 칩이 다시 들어갔다"
+        assert "제목과 같은 글자" in src, f"{name}: 칩을 뺀 이유가 주석에 없다"
+
+
+def test_no_hero_image_borrows_a_signal_id():
+    """⚠⚠ **이게 핵심 가드다** (총괄 §2).
+
+    `mascot.svg` 의 id 가 곧 신호다. 히어로에 `ansimi-GREEN` 을 쓰면
+    「우리가 틀린 것」 화면에 **초록 얼굴**이 뜬다 - 그 페이지가 하는 말과
+    정반대다. 히어로는 `ansimi-look`(신호 없음)이나 `/static/hero/*.png` 만
+    쓴다.
+
+    ⚠ 결과 카드 안 마스코트는 **신호를 따라가야 한다.** 거기는 판정 자리다 -
+      아래에서 따로 단정한다.
+    """
+    import re as _re
+
+    signals = ("GREEN", "AMBER", "RED", "UNKNOWN")
+    for name in PAGES:
+        src = markup_only((STATIC / name).read_text(encoding="utf-8"))
+        for m in _re.finditer(r'class="intro-art"[^>]*>(.*?)</div>', src, _re.S):
+            for sig in signals:
+                assert f"ansimi-{sig}" not in m.group(1), (
+                    f"{name}: 히어로가 신호 id `ansimi-{sig}` 를 쓴다")
+
+
+def test_the_result_card_mascot_still_follows_the_signal(pages):
+    """반대 방향 - 판정 자리의 마스코트는 신호를 따라가야 한다.
+
+    히어로에서 신호 id 를 걷어내면서 여기까지 같이 걷어내면, 결과 카드가
+    빨강·노랑을 얼굴로 말하지 못하게 된다.
+    """
+    index = markup_only(pages["index.html"])
+    assert 'mascot.svg#ansimi-' in index, "결과 카드 마스코트가 사라졌다"
+    assert 'esc(sig || "UNKNOWN")' in index, "결과 카드 얼굴이 신호를 안 따라간다"
+
+
+def test_the_hero_art_can_be_swapped_by_replacing_one_file():
+    """⚠ 원본(512px·SVG)이 오면 **파일만** 갈아 끼울 수 있어야 한다.
+
+    경로가 마크업 한 곳에만 있고 CSS 가 그것을 그린다 - `<img>` 로 바꾸거나
+    크기를 인라인으로 박으면 교체가 코드 변경이 된다 (미완 §1).
+    """
+    import re as _re
+
+    used = set()
+    for name in PAGES:
+        src = markup_only((STATIC / name).read_text(encoding="utf-8"))
+        used |= set(_re.findall(r"url\(/static/hero/([a-z]+\.png)\)", src))
+    assert used, "그림 자산 히어로가 하나도 없다"
+
+    root = Path(__file__).resolve().parents[1]
+    for f in sorted(used):
+        assert (root / "sourcing_guard/static/hero" / f).exists(), f"hero/{f} 가 없다"
+
+    css = markup_only((STATIC / "app.css").read_text(encoding="utf-8"))
+    assert ".intro-face.art{" in css, "그림 히어로 규칙이 CSS 에 없다"
+    assert "background:var(--art)" in css, "경로를 CSS 변수로 안 받는다"
+
+
+def test_the_hero_chips_say_nothing_we_cannot_stand_behind(pages):
+    """칩 여섯은 **새로 쓴 문장**이다. §9 가 여기도 걸린다."""
+    chips = " ".join(_HERO_CHIPS.values())  # 뺀 셋은 화면에 안 나간다
+    for banned in ("안전", "합법", "보증", "판정", "무료"):
+        assert banned not in chips, f"칩에 못 쓸 말이 있다: {banned}"

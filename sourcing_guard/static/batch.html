@@ -32,13 +32,19 @@
 </header>
 
 <div class="intro">
-  <div class="container">
+  <div class="container intro-grid">
+    <div class="intro-say">
+      <span class="eyebrow">대량 검사</span>
     <h2>어느 상품부터 봐야 하는지 가려 드립니다</h2>
     <!-- 주의(중요): 500 은 batch.MAX_ROWS 다. 손으로 고치면 화면이 서버가
          안 받는 수를 약속한다 - tests/test_batch_screen.py 가 대조한다. -->
     <p>최대 500개까지 한 번에 봅니다. 엑셀의 상품명 열을 복사해 붙여넣으세요.</p>
     <p>상품명만 보므로 1차 선별입니다. 걸러진 상품은 단건 검사로 다시
        확인하세요.</p>
+    </div>
+    <!-- 마스코트. 신호 스프라이트를 쓰지 않는다 - 히어로는
+         `ansimi-look` 이나 `/static/hero/*.png` 만 쓴다. -->
+    <div class="intro-art" aria-hidden="true"><span class="intro-face art" style="--art:url(/static/hero/batch.png)"></span></div>
   </div>
 </div>
 
@@ -50,10 +56,14 @@
     <section class="card">
       <h3>상품명 붙여넣기</h3>
       <p class="scope">한 줄에 하나씩. 엑셀에서 열을 복사하면 그대로 붙습니다.
+         <b>CSV·TXT 파일을 끌어다 놓아도 됩니다.</b>
          열 머리글(<code>상품명</code>)이 섞여도 알아서 걸러냅니다.</p>
       <textarea id="bt" rows="10"
         placeholder="탁상용 선풍기 미니 무선&#10;우산 양산 양우산 자동우산&#10;보조배터리 10000mAh C타입"></textarea>
       <p class="scope" id="cnt">0줄</p>
+      <!-- 끌어다 놓기 안내. 열이 여럿이면 **채우지 않고** 왜 안 채웠는지
+           여기에 적는다 - 우리가 열을 고르면 틀린 열을 조용히 검사한다. -->
+      <p class="alert warn" id="drop-note" hidden></p>
       <p class="actions">
         <button class="btn" id="go" type="button">대량 검사 시작하기</button>
         <button class="btn-t" id="clear" type="button">지우기</button>
@@ -111,8 +121,83 @@
     $("cnt").textContent = n + "줄";
   }
   bt.addEventListener("input", countLines);
+
+  // ── 끌어다 놓기 ──────────────────────────────────────────────────
+  //
+  // 주의(가장 중요): **열이 여럿이면 채우지 않는다.** 우리가 어느 열이
+  //   상품명인지 고르면 틀린 열을 **조용히** 검사하고, 셀러는 검사됐다고
+  //   믿는다. 이 파일 머리말 ①이 막으려던 바로 그것이다.
+  //
+  // 주의(중요): `.xlsx` 는 파싱하지 않는다. zip 이라 외부 라이브러리나 서버
+  //   업로드가 필요하고, 저장소에 외부 JS 는 **0건**이다. 그 상태를 깨지 않는다.
+  //   열 선택 UI 가 먼저이고 파서는 그다음이다 (미완 §1).
+  //
+  // 주의: 막지 않으면 브라우저가 그 파일로 **이동해** 붙여넣어 둔 줄이 전부
+  //   사라진다. 단건 화면에서 같은 것을 고쳤다.
+  var dropNote = $("drop-note");
+
+  function say(msg) {
+    dropNote.textContent = msg;
+    dropNote.hidden = !msg;
+  }
+
+  // 구분자를 **세어서** 고른다. 탭이 있으면 엑셀에서 온 것이다.
+  function columnCount(text) {
+    var line = text.split(/\r?\n/).filter(function (t) { return t.trim(); })[0] || "";
+    var tabs = line.split("\t").length;
+    if (tabs > 1) return tabs;
+    // 주의: 콤마는 상품명 안에도 있다. 그래서 **모든 줄이 같은 수**일 때만
+    //   열로 본다 - 한 줄만 보고 정하면 "우산, 양산" 을 두 열로 읽는다.
+    var rows = text.split(/\r?\n/).filter(function (t) { return t.trim(); }).slice(0, 20);
+    var counts = rows.map(function (t) { return t.split(",").length; });
+    var first = counts[0];
+    var same = counts.every(function (c) { return c === first; });
+    return same && first > 1 ? first : 1;
+  }
+
+  function takeFile(file) {
+    var name = (file.name || "").toLowerCase();
+    if (/\.(xlsx|xls)$/.test(name)) {
+      say("엑셀 파일은 열을 복사해 붙여넣어 주세요. 저희가 어느 열인지 고르면 틀릴 수 있습니다.");
+      return;
+    }
+    if (!/\.(csv|txt)$/.test(name)) {
+      say("CSV·TXT 파일만 읽습니다. 그 밖의 형식은 열을 복사해 붙여넣어 주세요.");
+      return;
+    }
+    var fr = new FileReader();
+    fr.onload = function () {
+      var text = String(fr.result || "");
+      var cols = columnCount(text);
+      if (cols > 1) {
+        say("열이 " + cols + "개입니다. 어느 열이 상품명인지 저희가 고르면 틀릴 수 " +
+            "있어서 넣지 않았습니다 — 그 열만 복사해 붙여넣어 주세요.");
+        return;
+      }
+      say("");
+      bt.value = text;
+      countLines();
+    };
+    fr.onerror = function () { say("파일을 읽지 못했습니다. 열을 복사해 붙여넣어 주세요."); };
+    fr.readAsText(file, "utf-8");
+  }
+
+  ["dragenter", "dragover"].forEach(function (ev) {
+    document.addEventListener(ev, function (e) {
+      if (!e.dataTransfer || !e.dataTransfer.types) return;
+      if (Array.prototype.indexOf.call(e.dataTransfer.types, "Files") < 0) return;
+      e.preventDefault();
+    });
+  });
+  document.addEventListener("drop", function (e) {
+    var files = (e.dataTransfer && e.dataTransfer.files) || [];
+    if (!files.length) return;
+    e.preventDefault();
+    takeFile(files[0]);
+  });
   $("clear").addEventListener("click", function () {
     bt.value = ""; countLines(); out.hidden = true; out.innerHTML = ""; last = null;
+    say("");
   });
 
   // 잘림 안내. **조용히 버리면 셀러가 검사됐다고 믿는다.**
