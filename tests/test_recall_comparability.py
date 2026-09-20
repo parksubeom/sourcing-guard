@@ -194,6 +194,18 @@ def test_the_batch_path_never_claims_a_recall_comparison():
         assert word not in blob, f"배치 응답이 '{word}' 를 말한다"
 
     # 화면도 마찬가지다.
-    html = (Path(__file__).resolve().parents[1]
-            / "sourcing_guard/static/batch.html").read_text(encoding="utf-8")
+    #
+    # ⚠ 주석은 뺀다. "여기서 리콜을 말하지 마라" 라고 적은 주석이 이 검사에
+    #   걸린다 - 오너는 `tests/srccheck.markup_only` 다 (§6). 2026-09-20 에
+    #   머리 배지 주석으로 실제로 걸렸다.
+    from tests.srccheck import markup_only
+
+    html = markup_only((Path(__file__).resolve().parents[1]
+                        / "sourcing_guard/static/batch.html").read_text(encoding="utf-8"))
     assert "리콜" not in html, "배치 화면이 리콜을 말한다 - 배치는 대조하지 않는다"
+
+    # ⚠⚠ 머리의 "리콜 공표 기준일" 배지도 여기 오면 안 된다. 배치는 상품명만
+    #   보고 리콜을 **대조하지 않는데**, 기준일이 머리에 붙어 있으면 대조한
+    #   것처럼 읽힌다. 자리(`data-asof`)가 없으면 서버가 아무것도 안 넣는다.
+    assert "data-asof" not in html, (
+        "배치 머리에 리콜 기준일 배지가 있다 - 배치는 리콜을 대조하지 않는다")

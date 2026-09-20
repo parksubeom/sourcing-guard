@@ -1252,3 +1252,23 @@ def test_the_axis_note_never_breaks_a_date_in_half(pages):
     # 반대 방향 - 절 전체를 묶으면 한 절짜리 메모가 잘린다.
     assert ".rc-ax .m > span" not in css, (
         "절을 통짜로 묶고 있다 - 유해물질 메모가 카드 밖으로 잘린다")
+
+def test_the_example_card_shows_the_number_it_will_scan(pages):
+    """예시 카드 셋째 줄은 **무엇을 넣어 보는가** 다 (시안 §1).
+
+    ⚠⚠ 보여 주는 번호가 실제로 검사되는 글에 없으면, 셀러가 그 번호를 보고
+      눌렀는데 **다른 것이 검사된다.** 그래서 `example` 은 `text` 안에 있어야
+      하고, 그 대조는 서버 자료에서 한다 (아래).
+    """
+    index = markup_only(pages["index.html"])
+    assert "d.example" in index, "셋째 줄을 안 그린다"
+    assert "예) " in index, "무엇을 넣어 보는지 안 적는다"
+
+    from sourcing_guard.demos import DEMOS
+
+    for d in DEMOS:
+        assert d.get("example"), f'{d["tone"]}: 예시 번호가 없다'
+        # "CB061R2170-3018 + PVC" 처럼 꼬리가 붙는다. 번호 부분만 대조한다.
+        number = d["example"].split(" ")[0]
+        assert number in d["text"], (
+            f'{d["tone"]}: 화면이 내미는 번호 {number} 가 실제 검사 글에 없다')

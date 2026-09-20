@@ -259,6 +259,20 @@ async def _cache_headers(request: Request, call_next):
     return response
 
 
+#: 머리 배지 자리. HTML 이 `<span class="asof" data-asof></span>` 를 두면
+#: 서버가 날짜를 넣고, 모르면 요소째 지운다.
+_ASOF_SLOT = re.compile(r'<span class="asof" data-asof>.*?</span>', re.S)
+
+
+def _fill_as_of(html: str) -> str:
+    raw = getattr(_recalls, "as_of", None) or ""
+    if not (len(raw) == 8 and raw.isdigit()):
+        return _ASOF_SLOT.sub("", html)
+    shown = f"{raw[:4]}-{raw[4:6]}-{raw[6:]} 기준"
+    return _ASOF_SLOT.sub(
+        f'<span class="asof" title="리콜 공표 기준일">{shown}</span>', html)
+
+
 def _page(name: str) -> HTMLResponse:
     """HTML 을 내면서 정적 자산 참조에 `?v=<build.commit>` 를 박는다.
 
@@ -273,6 +287,18 @@ def _page(name: str) -> HTMLResponse:
       바뀌지 않는 한 영원히 옛 자산이 남는다 (R5).
     """
     html = (_STATIC / name).read_text(encoding="utf-8")
+
+    # 머리 오른쪽의 "2026-09-19 기준". **리콜 공표 기준일**이고 모든 화면에
+    # 같은 값이어야 한다 (시안 §6).
+    #
+    # ⚠⚠ 화면마다 fetch 를 붙이지 않는다. 일곱 파일이 각자 물어보면 같은
+    #   판단이 일곱 벌이 되고, 한 곳만 고쳐질 때 나머지가 낡은 날짜를 말한다
+    #   (§6). 서버가 낼 때 한 곳에서 박는다 - `?v=` 해시와 같은 자리다.
+    #
+    # ⚠ 값이 없으면 **자리를 통째로 지운다.** 빈 배지를 남기거나 오늘 날짜로
+    #   메우면 화면이 없는 사실을 말한다 (R3·R5).
+    html = _fill_as_of(html)
+
     commit = build_snapshot()["commit"]
     if commit:
         html = _STATIC_REF.sub(

@@ -21,6 +21,9 @@ from .scorer import _axes
 
 _SLIME = "완구 매직액체 슬라임 장난감 KC 인증번호 CB061R2170-3018 대상연령 3세 이상"
 
+#: ⚠ `example` 는 **카드에 보여 줄 인증번호**다. `text` 안에 실제로 들어
+#:   있어야 한다 - 화면이 없는 번호를 예시로 내밀면 눌렀을 때 다른 것이
+#:   검사된다. `tests/test_demos.py` 가 대조한다 (R5).
 DEMOS: list[dict[str, str]] = [
     {
         "tone": "green",
@@ -29,6 +32,7 @@ DEMOS: list[dict[str, str]] = [
         #   대조할 수 없다 - `_axes` docstring 이 같은 말을 적고 있다 (§9).
         "title": "인증 조회됨 · 리콜 일치 없음",
         "note": "상세페이지에 인증번호가 적혀 있는 상품입니다.",
+        "example": "CB061R2170-3018",
         "text": _SLIME,
     },
     {
@@ -37,6 +41,7 @@ DEMOS: list[dict[str, str]] = [
         # ⚠ "신호가 바뀝니다" 는 우리 화면의 사정이고, 셀러에게 값이 있는
         #   것은 **적용 기준이 달라진다** 는 사실이다 (총괄 §1).
         "note": '"PVC 재질" 한 줄이 더해지면 적용 기준이 달라집니다.',
+        "example": "CB061R2170-3018 + PVC",
         "text": _SLIME + " 재질 PVC",
     },
     {
@@ -46,6 +51,7 @@ DEMOS: list[dict[str, str]] = [
         #   (R3-b).
         "title": "인증은 적합인데 리콜된 상품",
         "note": "인증은 적합하지만 리콜 이력이 있는지 확인해보세요.",
+        "example": "CB067R317-5002",
         "text": "모형완구 기차놀이 제우스 완구 장난감 KC 인증번호 CB067R317-5002",
     },
 ]

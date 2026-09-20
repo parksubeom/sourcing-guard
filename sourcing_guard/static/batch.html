@@ -44,6 +44,9 @@
 
 <main id="main">
   <div class="container">
+    <!-- 시안은 붙여넣기 칸 옆에 가이드를 세운다. 넓은 화면에서만 두 단이고,
+         좁아지면 가이드가 아래로 내려간다 - 폰에서는 입력이 먼저다. -->
+    <div class="bt-grid">
     <section class="card">
       <h3>상품명 붙여넣기</h3>
       <p class="scope">한 줄에 하나씩. 엑셀에서 열을 복사하면 그대로 붙습니다.
@@ -57,9 +60,8 @@
       </p>
     </section>
 
-    <!-- 세 걸음. 시안의 오른쪽 가이드를 우리 한 단 레이아웃에 맞춰 카드로
-         둔다 - 새 격자를 들이지 않는다. 내용은 실제 경로 그대로다. -->
-    <section class="card" aria-labelledby="how-h">
+    <!-- 세 걸음. 넓은 화면에서 입력 칸 오른쪽에 선다 (시안 화면4). -->
+    <section class="card how-card" aria-labelledby="how-h">
       <h3 id="how-h">이렇게 쓰세요</h3>
       <ol class="how">
         <li><b>엑셀에서 상품명 열 복사</b><span>상품명이 있는 열을 그대로 복사합니다.</span></li>
@@ -67,6 +69,8 @@
         <li><b>결과를 엑셀로 복사</b><span>검사 결과를 표로 복사해 엑셀에 붙여넣을 수 있습니다.</span></li>
       </ol>
     </section>
+
+    </div>
 
     <section id="out" hidden></section>
   </div>
