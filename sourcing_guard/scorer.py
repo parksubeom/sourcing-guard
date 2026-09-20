@@ -897,8 +897,16 @@ def _axes(
         recall = ("대조 못 함", False)
 
     # ③ 유해물질
-    if FindingKind.HAZARD_RULE_APPLIES in kinds:
-        hazard = ("수록됨", True)
+    #
+    # 주의(중요): **"수록됨" 이 아니라 "기준 N건" 이다** (2026-09-20 총괄 §3).
+    #   "수록됨" 은 우리 규칙 DB 의 사정이지 셀러가 할 일이 아니다. 셀러가
+    #   알아야 하는 것은 **몇 건이 걸리는가** 이고, 그 수가 곧 공급처에
+    #   요청할 시험성적서의 범위다.
+    #
+    # ⚠ 수는 findings 에서 센다. 화면이 세면 접힌 줄과 축이 갈린다 (§6).
+    hazard_n = sum(1 for f in findings if f.kind is FindingKind.HAZARD_RULE_APPLIES)
+    if hazard_n:
+        hazard = (f"기준 {hazard_n}건", True)
     else:
         hazard = ("이 품목 미수록", False)
 
@@ -912,12 +920,35 @@ def _axes(
             note = f"{note} · {synced}"
     as_of = note
 
+    # ⚠⚠ **"일치 항목 없음" 은 `RECALL_CLEAR` 일 때만** 붙인다. 위 분기에서
+    #   "일치 있음"·"대조 못 함" 도 `recall[1]` 을 만들 수 있고, 거기에 이 말을
+    #   붙이면 **정반대**가 된다. 조건을 다시 적지 않고 kinds 를 직접 본다.
+    if FindingKind.RECALL_CLEAR in kinds and as_of:
+        as_of = f"{as_of} · 일치 항목 없음"
+
+    # ⚠ 인증 상태는 **정부 DB 가 적은 값을 그대로** 옮긴다. 우리가 "적합" 을
+    #   판정하는 것이 아니다 (R1) - 그래서 따옴표 없이 값만 적고, 값이 없으면
+    #   줄을 만들지 않는다 (R3).
+    cert_note = ""
+    if cert[1]:
+        state = next(
+            (
+                str((f.detail or {}).get("cert_state") or "").strip()
+                for f in findings
+                if (f.detail or {}).get("cert_state")
+            ),
+            "",
+        )
+        if state and state != "-":
+            cert_note = f"인증상태: {state}"
+
     return [
-        {"key": "cert", "name": "인증 조회", "label": cert[0], "done": cert[1], "note": ""},
+        {"key": "cert", "name": "인증 조회", "label": cert[0], "done": cert[1],
+         "note": cert_note},
         {"key": "recall", "name": "리콜 대조", "label": recall[0], "done": recall[1],
          "note": as_of},
         {"key": "hazard", "name": "유해물질", "label": hazard[0], "done": hazard[1],
-         "note": ""},
+         "note": "함유량은 시험성적서로 확인합니다" if hazard[1] else ""},
     ]
 
 

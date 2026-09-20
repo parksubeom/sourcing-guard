@@ -16,25 +16,36 @@ import json
 from functools import lru_cache
 from pathlib import Path
 
+from .models import Finding
+from .scorer import _axes
+
 _SLIME = "완구 매직액체 슬라임 장난감 KC 인증번호 CB061R2170-3018 대상연령 3세 이상"
 
 DEMOS: list[dict[str, str]] = [
     {
         "tone": "green",
-        "title": "인증 조회됨 · 리콜 없음",
-        "note": "도매꾹 슬라임 (CB061R2170-3018)",
+        # ⚠ "리콜 없음" 이 아니라 **"리콜 일치 없음"** 이다 (2026-09-20 총괄 §1).
+        #   우리가 한 것은 공표 목록과의 대조이고, 공표되지 않은 결함은
+        #   대조할 수 없다 - `_axes` docstring 이 같은 말을 적고 있다 (§9).
+        "title": "인증 조회됨 · 리콜 일치 없음",
+        "note": "상세페이지에 인증번호가 적혀 있는 상품입니다.",
         "text": _SLIME,
     },
     {
         "tone": "amber",
         "title": "같은 상품에 재질 한 줄 추가",
-        "note": '"PVC 재질" 표기가 더해지면 신호가 바뀝니다',
+        # ⚠ "신호가 바뀝니다" 는 우리 화면의 사정이고, 셀러에게 값이 있는
+        #   것은 **적용 기준이 달라진다** 는 사실이다 (총괄 §1).
+        "note": '"PVC 재질" 한 줄이 더해지면 적용 기준이 달라집니다.',
         "text": _SLIME + " 재질 PVC",
     },
     {
         "tone": "red",
+        # ⚠ 위험만은 "적합" 을 그대로 쓴다 - 정부 DB 가 인증상태를 그렇게
+        #   적어 두었고, 그런데도 리콜된 상품이라는 것이 이 예시의 전부다
+        #   (R3-b).
         "title": "인증은 적합인데 리콜된 상품",
-        "note": "모형완구 기차놀이 (CB067R317-5002)",
+        "note": "인증은 적합하지만 리콜 이력이 있는지 확인해보세요.",
         "text": "모형완구 기차놀이 제우스 완구 장난감 KC 인증번호 CB067R317-5002",
     },
 ]
@@ -82,12 +93,22 @@ def preview() -> dict | None:
     grade = by_kind.get("item_grade_matched") or by_kind.get("item_grade_split")
     return {
         "signal": raw["signal"],
-        # ⚠ 리콜 축 주석에서 **시각에 매인 절**을 뗀다. `_axes` 는
-        #   "2026-09-08 공표분까지 · 오늘 12:33 갱신" 처럼 쓰는데, 이 카드는
-        #   얼어 있으므로 "오늘 … 갱신" 은 **내일이면 거짓**이다. 앞 절(무엇과
-        #   대조했나)만 남긴다 - 그것은 그 실측이 실제로 대조한 범위다.
-        "axes": [{**a, "note": (a.get("note") or "").split(" · ")[0]}
-                 for a in raw["axes"]],
+        # ⚠⚠ **축은 파일에서 읽지 않고 다시 계산한다** (2026-09-20).
+        #
+        #   파일에 적힌 `axes` 는 그날 `_axes` 가 낸 문자열이라, 축 문구가
+        #   바뀌면 **랜딩만 옛말을 한다.** 실제로 그렇게 됐다 - "수록됨" 이
+        #   "기준 14건" 으로 바뀌었는데 이 카드는 "수록됨" 을 들고 있었다.
+        #   `_axes` 는 순수 함수이고 입력(findings)은 그 실측 그대로이므로,
+        #   다시 부르는 것은 **지어내는 것이 아니라 같은 계산**이다 (§6 오너 하나).
+        #
+        # ⚠ `recall_synced_at` 은 넘기지 않는다. "오늘 12:33 갱신" 은 얼어 있는
+        #   카드에서 **내일이면 거짓**이다 - 전에는 문자열을 " · " 로 잘라
+        #   떼어냈는데, 그 자르기가 뒤에 붙는 다른 절("일치 항목 없음")까지
+        #   같이 잘랐다. 애초에 안 만드는 것이 맞다.
+        "axes": _axes(
+            [Finding.model_validate(f) for f in raw.get("findings", [])],
+            raw.get("recall_data_as_of"),
+        ),
         # 화면이 " — " 에서 두 줄로 나눈다. **문장은 안 바꾼다.**
         "headline": raw["headline"],
         "product_name": raw["product_name"],

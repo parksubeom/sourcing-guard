@@ -955,6 +955,18 @@ body{background:var(--bg-page)}
 
 }
 
+/* 상품 요약 - 국가기술표준원 등록 원부. 축 카드와 같은 바탕에 두되 신호색은
+   쓰지 않는다. 이것은 **조회 결과의 사실**이지 판정이 아니다. */
+.rv-summary{margin:12px 0 0; padding:16px 20px; border-radius:var(--r-l);
+            background:var(--bg-card); display:grid; gap:8px}
+.sm-h{font-size:13px; font-weight:500; color:var(--fg-3)}
+.sm-row{display:grid; grid-template-columns:84px 1fr; gap:12px; align-items:baseline}
+.sm-k{font-size:13px; color:var(--fg-3)}
+.sm-v{font-size:14px; color:var(--fg-1); overflow-wrap:anywhere}
+@media (max-width:480px){
+  .sm-row{grid-template-columns:1fr; gap:2px}
+}
+
 /* ── 그룹과 근거 줄 ── */
 
 /* ── 그룹과 근거 줄 ── */
@@ -1050,6 +1062,18 @@ a.btn-t{display:inline-flex; align-items:center; justify-content:center;
 .rv-foot span{font-size:14px; line-height:20px; color:var(--fg-2)}
 .rv-foot b{font-weight:700; color:var(--fg-1)}
 @media (max-width:640px){ .rv-foot{padding:14px 20px} }
+
+/* 대량 검사 - 세 걸음. 새 격자를 들이지 않고 카드 안에서만 쓴다. */
+.how{list-style:none; margin:0; padding:var(--s5) var(--s6) var(--s6); display:flex;
+     flex-direction:column; gap:var(--s4); counter-reset:how}
+.how li{display:grid; grid-template-columns:24px 1fr; gap:var(--s2) var(--s4);
+        align-items:baseline}
+.how li::before{counter-increment:how; content:counter(how); grid-row:span 2;
+                width:24px; height:24px; border-radius:999px; display:grid;
+                place-items:center; font-size:13px; font-weight:600;
+                background:var(--brand-tint); color:var(--primary-70)}
+.how li b{font-weight:600; color:var(--fg-1)}
+.how li span{grid-column:2; font-size:14px; color:var(--fg-2)}
 
 /* ── [M-5] 카테고리 가이드 ────────────────────────────────────────
    주의(중요): 화면 글자는 15px 이상이다. 이 절에 14px 이하를 두지 않는다.

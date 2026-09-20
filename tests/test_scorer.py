@@ -637,7 +637,10 @@ def test_axes_carry_the_recall_as_of_date():
     from sourcing_guard.scorer import _axes
 
     got = {a["key"]: a for a in _axes([f(FindingKind.RECALL_CLEAR, Signal.GREEN)], "20260906")}
-    assert got["recall"]["note"] == "2026-09-06 공표분까지"
+    # ⚠ 이 검사가 가진 것은 **날짜 표기**다. 뒤에 붙는 "· 일치 항목 없음" 의
+    #   소유자는 `test_recall_axis_says_no_match_only_when_it_compared` 다 -
+    #   여기에 다시 적으면 한쪽만 고쳐질 때 나머지가 낡는다 (§6).
+    assert got["recall"]["note"].startswith("2026-09-06 공표분까지")
     # 대조를 못 했으면 기준일을 적지 않는다 - 안 한 일에 날짜를 붙이면 거짓말이다.
     none = {a["key"]: a for a in _axes([], "20260906")}
     assert none["recall"]["note"] == ""
@@ -645,16 +648,73 @@ def test_axes_carry_the_recall_as_of_date():
 
 
 def test_hazard_axis_says_coverage_not_safety():
-    """유해물질 축은 "수록됨/미수록" 이다. "검출 없음" 이 아니다.
+    """유해물질 축은 **걸리는 기준의 수**다. "검출 없음" 이 아니다.
 
     우리는 상세페이지 텍스트를 읽고 단속은 실물을 수거해 시험한다.
+
+    ⚠ 2026-09-20 에 "수록됨" → "기준 N건" 으로 바뀌었다 (총괄 §3). "수록됨" 은
+      우리 규칙 DB 의 사정이고, 셀러가 쓸 수 있는 것은 **몇 건이 걸리는가** 다 -
+      그 수가 곧 공급처에 요청할 시험성적서의 범위다.
     """
     from sourcing_guard.scorer import _axes
 
-    on = {a["key"]: a for a in _axes([f(FindingKind.HAZARD_RULE_APPLIES, Signal.UNKNOWN)], None)}
+    one = {a["key"]: a for a in _axes([f(FindingKind.HAZARD_RULE_APPLIES, Signal.UNKNOWN)], None)}
+    many = {
+        a["key"]: a
+        for a in _axes([f(FindingKind.HAZARD_RULE_APPLIES, Signal.UNKNOWN)] * 14, None)
+    }
     off = {a["key"]: a for a in _axes([f(FindingKind.COVERAGE_GAP, Signal.UNKNOWN)], None)}
-    assert on["hazard"]["label"] == "수록됨"
+    assert one["hazard"]["label"] == "기준 1건"
+    assert many["hazard"]["label"] == "기준 14건", "수를 세지 않고 붙박이 문구를 쓴다"
     assert off["hazard"]["label"] == "이 품목 미수록"
+
+    # 셀러가 다음에 할 일. 수만 적으면 "14건이 걸린다" 로 끝난다.
+    assert one["hazard"]["note"] == "함유량은 시험성적서로 확인합니다"
+    assert off["hazard"]["note"] == "", "미수록인데 시험성적서를 요구하면 안 된다"
+
+
+def test_cert_axis_note_quotes_the_government_status():
+    """인증 축 메모는 **정부 DB 가 적은 값**이다. 우리가 정하는 것이 아니다.
+
+    ⚠ 반대 방향 - 값이 없거나 `-` 면 줄을 만들지 않는다. 비어 있는 것을
+      "적합" 으로 메우면 그 순간 화면이 값을 짓는다 (R3·R5).
+    """
+    from sourcing_guard.scorer import _axes
+
+    def _with(state):
+        g = f(FindingKind.KC_VERIFIED, Signal.GREEN)
+        g.detail = {"cert_state": state}
+        return {a["key"]: a for a in _axes([g], None)}
+
+    assert _with("적합")["cert"]["note"] == "인증상태: 적합"
+    assert _with("기간만료")["cert"]["note"] == "인증상태: 기간만료"
+    assert _with("-")["cert"]["note"] == ""
+    assert _with("")["cert"]["note"] == ""
+
+    # 번호 자체가 없으면 조회를 안 했으므로 상태도 없다.
+    empty = {a["key"]: a for a in _axes([f(FindingKind.COVERAGE_GAP, Signal.UNKNOWN)], None)}
+    assert empty["cert"]["label"] == "번호 없음" and empty["cert"]["note"] == ""
+
+
+def test_recall_axis_says_no_match_only_when_it_compared():
+    """"일치 항목 없음" 은 `RECALL_CLEAR` 일 때만.
+
+    ⚠⚠ 반대 방향이 비싸다 - 리콜이 **일치했는데** 같은 자리에 "일치 항목
+      없음" 이 붙으면 화면이 정반대를 말한다.
+    """
+    from sourcing_guard.scorer import _axes
+
+    clear = {
+        a["key"]: a
+        for a in _axes([f(FindingKind.RECALL_CLEAR, Signal.GREEN)], "20260914")
+    }
+    hit = {
+        a["key"]: a
+        for a in _axes([f(FindingKind.RECALL_MATCH, Signal.RED)], "20260914")
+    }
+    assert clear["recall"]["note"] == "2026-09-14 공표분까지 · 일치 항목 없음"
+    assert hit["recall"]["label"] == "일치 있음"
+    assert "일치 항목 없음" not in hit["recall"]["note"], "일치했는데 없다고 말한다"
 
 
 def test_axis_note_shows_both_publish_date_and_sync_time():
@@ -675,7 +735,7 @@ def test_axis_note_shows_both_publish_date_and_sync_time():
             date(2026, 9, 7),
         )
     }
-    assert got["recall"]["note"] == "2026-09-04 공표분까지 · 오늘 19:10 갱신"
+    assert got["recall"]["note"].startswith("2026-09-04 공표분까지 · 오늘 19:10 갱신")
 
 
 def test_axis_note_dates_an_older_sync_explicitly():
@@ -691,7 +751,8 @@ def test_axis_note_dates_an_older_sync_explicitly():
             date(2026, 9, 7),
         )
     }
-    assert got["recall"]["note"] == "2026-09-04 공표분까지 · 2026-09-06 08:00 갱신"
+    assert got["recall"]["note"].startswith(
+        "2026-09-04 공표분까지 · 2026-09-06 08:00 갱신")
 
 
 #: ⚠⚠ **시각은 KST 로 적는다. 저장값은 UTC 다** (2026-09-18).
@@ -724,7 +785,8 @@ def test_scorer_never_reads_the_clock_itself():
     got = {a["key"]: a for a in _axes(
         [f(FindingKind.RECALL_CLEAR, Signal.GREEN)], "20260904",
         "2026-09-07T10:10:52+00:00", None)}
-    assert got["recall"]["note"] == "2026-09-04 공표분까지 · 2026-09-07 19:10 갱신"
+    assert got["recall"]["note"].startswith(
+        "2026-09-04 공표분까지 · 2026-09-07 19:10 갱신")
 
 
 def test_electrical_coverage_gap_names_the_reason_not_our_laziness():

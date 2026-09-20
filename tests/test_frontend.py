@@ -871,11 +871,17 @@ def test_the_hazard_fold_says_what_to_do_next(html):
 
     ⚠ 이 줄은 우리가 못 본 것이 아니라 **상세페이지로는 알 수 없는 것**이다.
       둘을 가려 적는다 (R3 · §9).
+
+    ⚠ **오너를 따라간다** (2026-09-20). 문장이 `owner.js` 의 `SG.hazardSummary`
+      로 옮겨졌다 - 체험 표본 카드가 같은 말을 해야 해서다. 검사도 거기를
+      본다(`test_the_hazard_sentence_has_one_owner` 가 접힌 줄이 오너를
+      부르는지를 따로 단정한다).
     """
-    fold = html[html.index("function hazardFold("):]
-    fold = fold[: fold.index("\n  }")]
-    assert "상세페이지로 알 수 없습니다" in fold
-    assert "공급처에 시험성적서를 요청하세요" in fold
+    owner = (STATIC / "owner.js").read_text(encoding="utf-8")
+    body = owner[owner.index("hazardSummary: function"):]
+    body = body[: body.index("\n    }")]
+    assert "상세페이지로 알 수 없습니다" in body
+    assert "공급처에 시험성적서를 요청하세요" in body
 
 
 # ── 공급처에 보낼 문안 (2026-09-20) ────────────────────────────────
@@ -1146,3 +1152,75 @@ def test_every_axis_key_the_server_can_emit_has_an_icon():
     index = (STATIC / "index.html").read_text(encoding="utf-8")
     for key in keys:
         assert f"{key}:" in index, f"서버가 내는 축 key '{key}' 에 그림이 없다"
+
+
+# ── 시안 문구 개정 (2026-09-20 총괄) ────────────────────────────────
+def test_no_screen_claims_we_tested_the_product(html):
+    """⚠⚠ **"검출되지 않았습니다" 가 시안에서 제일 위험한 한 줄이었다.**
+
+    우리는 검출을 하지 않는다 - 상세페이지 글을 읽을 뿐이고, 단속은 실물을
+    수거해 시험한다. 같은 모양의 주장 몇 가지를 함께 막는다 (§9).
+
+    ⚠ "안전"·"적합"·"없음" 을 통째로 막지 않는다. 정부 용어가 그것으로 돼
+      있다 - `안전인증` · `안전성조사`(국표원 보도자료 제목) · `인증상태: 적합`
+      (조회 응답 원문) · `공급자적합성확인`(전안법 등급) · `리콜 일치 없음`.
+      **낱말이 아니라 주장 꼴을 막는다.**
+    """
+    for banned in ("검출", "안전성 검사", "안전성을 확인", "이상 없음",
+                   "리콜 이력이 없", "리콜 없음", "문제없습니다", "안전합니다"):
+        assert banned not in html, f"우리가 하지 않은 일을 말하고 있다: '{banned}'"
+
+    # 반대 방향 - 정부 용어는 살아 있어야 한다. 위 목록이 넓어지면 여기서 걸린다.
+    assert "안전인증" in html, "정부 용어까지 지웠다"
+
+
+def test_the_image_cap_is_the_same_number_in_three_places():
+    """화면 글 · 브라우저 검사 · 서버 스키마가 같은 수를 말해야 한다.
+
+    ⚠ 화면이 크게 약속하면 다섯 장째가 **서버에서** 거절돼 셀러는 이유를
+      모른다. 작게 약속하면 쓸 수 있는 것을 못 쓴다.
+    """
+    import re as _re
+
+    from sourcing_guard.main import ScanRequest
+
+    server = ScanRequest.model_fields["images"].metadata
+    cap = next(m.max_length for m in server if hasattr(m, "max_length"))
+
+    index = (STATIC / "index.html").read_text(encoding="utf-8")
+    js = _re.search(r"var MAX_SHOTS = (\d+);", index)
+    assert js and int(js.group(1)) == cap, f"MAX_SHOTS 가 서버 상한({cap})과 다르다"
+
+    shown = {int(n) for n in _re.findall(r"최대 (\d+)장", markup_only(index))}
+    assert shown == {cap}, f"화면이 말하는 장수 {sorted(shown)} != 서버 상한 {cap}"
+
+
+def test_the_summary_card_only_shows_what_the_lookup_returned(pages):
+    """상품 요약은 **국가기술표준원 조회 응답**에서만 온다 (총괄 §3).
+
+    ⚠⚠ 셀러가 붙여넣은 글에서 만들면 이 카드가 하는 일이 사라진다. 이 카드가
+      답하는 질문은 "그 인증번호가 무슨 물건으로 등록돼 있나" 이고, 값이
+      상세페이지와 다르면 **그 차이가 신호**다. 상세페이지에서 베껴 오면 늘
+      같아 보여 그 신호가 없어진다.
+
+    ⚠ 반대 방향 - 조회가 실패하면 카드가 아예 안 뜬다. 빈 칸을 남기면 없는
+      것을 있는 것처럼 그리는 자리다 (R3).
+    """
+    index = pages["index.html"]
+    body = markup_only(index)
+    fn = body[body.index("function summaryCard("):]
+    fn = fn[: fn.index("\n  }")]
+
+    # 값의 출처는 finding.detail 하나뿐이다.
+    assert "list[i].detail" in fn, "detail 이 아닌 곳에서 값을 가져온다"
+    for forbidden in ("data.facts", "data.extracted", "page_text", "statement_ko"):
+        assert forbidden not in fn, f"조회 응답이 아닌 곳을 읽는다: {forbidden}"
+
+    # 없으면 안 그린다. 빈 문자열 반환이 두 군데 있어야 한다(자료 없음·칸 없음).
+    assert fn.count('return "";') >= 2, "값이 없을 때 빈 카드를 그린다"
+
+    # 빈 값·'-' 는 칸을 만들지 않는다.
+    assert 'v === "-"' in fn, "'-' 를 값처럼 그린다"
+
+    # 브랜드명은 안 쓴다 - 시드 29건에서 값이 있는 것이 1건뿐이었다.
+    assert "brand" not in fn, "브랜드명은 거의 비어 있다 (실측 1/29)"

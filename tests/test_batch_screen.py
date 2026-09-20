@@ -114,3 +114,52 @@ def test_the_export_carries_the_split_candidates_too():
     """갈린 행을 엑셀로 가져갈 때 대표 하나만 나가면 화면과 어긋난다."""
     body = src()
     assert 'r.matched_item || (r.matched_items || []).join(" | ")' in body
+
+
+def test_the_screen_promises_the_number_the_server_accepts():
+    """⚠⚠ 화면이 약속한 상한과 서버가 받는 상한은 **같은 수**여야 한다.
+
+    다르면 둘 중 하나다 - 셀러가 넣은 줄이 조용히 잘리거나(화면이 크게
+    약속), 쓸 수 있는데 안 쓰거나(화면이 작게 약속). 앞엣것은 "검사됐다고
+    믿는" 자리라 이 파일 머리말 ①이 막으려던 바로 그것이다.
+
+    ⚠ 반대 방향 - 화면에 수가 아예 없어도 실패한다. 없으면 셀러가 몇 줄까지
+      되는지 모른 채 붙여넣는다.
+    """
+    body = src()
+    assert f"최대 {MAX_ROWS}개" in body, (
+        f"화면이 상한을 안 적었거나 {MAX_ROWS} 가 아니다 (batch.MAX_ROWS)")
+
+    # 다른 수를 약속하고 있지 않은가. 주석은 빼고 본다.
+    from tests.srccheck import markup_only
+
+    import re as _re
+    shown = {int(n) for n in _re.findall(r"최대 (\d+)개", markup_only(body))}
+    assert shown == {MAX_ROWS}, f"화면이 여러 상한을 말한다: {sorted(shown)}"
+
+
+def test_the_screen_says_it_is_a_first_pass():
+    """⚠⚠ 이 한 줄이 빠지면 셀러가 **배치 결과를 판정으로 읽는다.**
+
+    상품명만 보는 경로라 인증번호도 리콜 모델명도 없다. 단건으로 다시 봐야
+    한다는 말이 화면에 없으면, 우리가 "1차 선별" 이라고 부르는 것을 셀러는
+    "검사했다" 로 받는다 (총괄 §4).
+    """
+    from tests.srccheck import markup_only
+
+    body = markup_only(src())
+    assert "1차 선별" in body
+    assert "단건 검사로 다시" in body
+
+
+def test_the_screen_offers_no_feature_we_do_not_have():
+    """그릇은 시안대로 쓰되 **없는 기능의 단추는 만들지 않는다** (총괄 §5).
+
+    엑셀 파일 업로드·샘플 파일 내려받기는 우리에게 없다. 그려 두면 눌러도
+    아무 일이 없고, 그것은 단추가 거짓말을 하는 것이다.
+    """
+    from tests.srccheck import markup_only
+
+    body = markup_only(src())
+    for absent in ("샘플 파일", "파일 선택", ".xlsx", ".xls", "드래그"):
+        assert absent not in body, f"없는 기능이 화면에 있다: {absent}"

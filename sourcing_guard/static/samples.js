@@ -47,8 +47,8 @@
        검사 화면이 FOLD_AT 으로 접는 것과 같은 이유다. */
     if (s.hazard_count) {
       rows +=
-        '<li class="sx-row UNKNOWN"><p>이 품목에는 유해물질 기준 <b>' +
-        esc(s.hazard_count) + "개</b>가 적용됩니다. 시험성적서로 확인이 필요합니다.</p>" +
+        '<li class="sx-row UNKNOWN"><p>' +
+        SG.hazardSummary(esc(s.hazard_count), "b") + "</p>" +
         (s.hazard_source_url
           ? '<a href="' + esc(s.hazard_source_url) + '" target="_blank" rel="noopener">고시 원문</a>'
           : "") +

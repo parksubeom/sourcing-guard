@@ -458,3 +458,30 @@ def test_the_misses_page_is_served():
         assert c.get("/misses").status_code == 200
         body = c.get("/api/v1/misses").json()
         assert body["counts"]["ok"] == BASELINE[BASELINE_EXTRACTOR]["ok"]
+
+
+def test_the_hazard_sentence_has_one_owner():
+    """유해물질 한 줄은 **검사 결과와 체험 표본이 같은 말**을 해야 한다.
+
+    ⚠⚠ 2026-09-20 까지 갈라져 있었다:
+
+        index.html   실제 함유량은 상세페이지로 알 수 없습니다 — 공급처에 …
+        samples.js   시험성적서로 확인이 필요합니다
+
+    같은 사실인데 한쪽만 셀러가 **할 일**을 적었다. 오너는
+    `static/owner.js` 의 `SG.hazardSummary` 이고, 두 화면은 그것을 부른다.
+
+    ⚠ 반대 방향도 단정한다 - 어느 쪽이든 자기 문장을 다시 적으면 실패한다.
+    """
+    owner = (_STATIC / "owner.js").read_text(encoding="utf-8")
+    assert "hazardSummary" in owner, "오너가 사라졌다"
+
+    for name in ("index.html", "samples.js"):
+        src = _no_comments((_STATIC / name).read_text(encoding="utf-8"))
+        assert "SG.hazardSummary(" in src, f"{name} 이 오너를 안 부른다"
+        assert "적용됩니다" not in src, (
+            f"{name} 이 유해물질 문장을 다시 적고 있다 - SG.hazardSummary 를 쓰세요")
+
+    # 오너를 실어야 부를 수 있다. 안 실으면 카드가 통째로 안 그려진다.
+    html = (_STATIC / "samples.html").read_text(encoding="utf-8")
+    assert "/static/owner.js" in html, "samples.html 이 owner.js 를 안 싣는다"

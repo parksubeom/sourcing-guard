@@ -52,7 +52,9 @@
     </section>
 
     <section aria-labelledby="input-h">
-      <h3 id="input-h">상세페이지 내용 붙여넣기</h3>
+      <!-- 바로 위가 "예시로 바로 확인하기" 다. 짝을 맞춰 **실제**임을 말한다
+           (2026-09-20 총괄 §1). -->
+      <h3 id="input-h">실제 정보로 검사하기</h3>
       <!--
         주의(중요): "한 상품씩" 은 **알리는 것이지 막는 것이 아니다** (§1-j).
         감지·차단 코드를 넣지 않았다 - 오탐은 코드가 막을 때만 생기고, 문구는
@@ -95,7 +97,7 @@
       <ul class="shots" id="shots" aria-live="polite" aria-label="붙여넣은 이미지"></ul>
 
       <div class="actions">
-        <button class="btn" id="go" type="button">검사</button>
+        <button class="btn" id="go" type="button">검사 시작하기</button>
         <button class="btn-t" id="clear" type="button">지우기</button>
         <span class="counter" id="count">0자</span>
       </div>
@@ -668,9 +670,10 @@
     // 안 그러면 이 줄만 왼쪽으로 튀어나온다.
     return '<li class="rv-row rv-nosignal">' +
       '<div class="rv-b">' +
-        '<div class="rv-line"><span class="rv-t">이 품목에는 유해물질 공통안전기준 <b>' +
-          run.length + "</b>건이 적용됩니다. 실제 함유량은 상세페이지로 알 수 없습니다 — " +
-          "공급처에 시험성적서를 요청하세요.</span>" +
+        // 주의(중요): 문장의 오너는 `SG.hazardSummary` 다 (owner.js). 체험
+        //   표본 카드가 같은 말을 해야 하는데 2026-09-20 까지 갈라져 있었다.
+        '<div class="rv-line"><span class="rv-t">' + SG.hazardSummary(run.length, "b") +
+          "</span>" +
           '<button class="rv-more" type="button" aria-expanded="false" aria-controls="' + id + '">' +
             foldLabel(run.length) +
             '<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" ' +
@@ -811,6 +814,39 @@
   // **검사에 실제로 보낸 텍스트**를 따로 기억한다.
   var lastText = "";
 
+  //: 상품 요약 카드에 그리는 칸. **조회 응답의 필드 이름 → 화면 이름**이다.
+  //  순서가 곧 셀러가 읽는 순서다 - 무슨 물건인지, 어느 모델인지, 어디서
+  //  만들었는지, 어떤 등급으로 받은 인증인지.
+  var SUMMARY_FIELDS = [
+    ["registered_product", "등록 제품명"],
+    ["registered_model", "모델명"],
+    ["maker_country", "제조국"],
+    ["maker", "제조사"],
+    ["cert_div", "인증 구분"]
+  ];
+
+  function summaryCard(list) {
+    var src = null;
+    for (var i = 0; i < list.length; i++) {
+      var d = list[i].detail;
+      if (d && (d.registered_product || d.registered_model || d.maker_country)) {
+        src = d; break;
+      }
+    }
+    if (!src) return "";
+    var rows = SUMMARY_FIELDS.map(function (f) {
+      var v = src[f[0]];
+      if (v == null) return "";
+      v = String(v).trim();
+      if (!v || v === "-") return "";          // 빈 값은 칸을 만들지 않는다
+      return '<div class="sm-row"><span class="sm-k">' + esc(f[1]) + "</span>" +
+             '<span class="sm-v">' + esc(v) + "</span></div>";
+    }).join("");
+    if (!rows) return "";
+    return '<div class="rv-summary"><div class="sm-h">국가기술표준원에 이렇게 ' +
+           "등록돼 있습니다</div>" + rows + "</div>";
+  }
+
   function render(data) {
     lastFacts = data.facts || null;
     var all = data.findings || [];
@@ -873,6 +909,20 @@
                "</div>";
       }).join("") + "</div>";
     }
+
+    // ③-b 상품 요약. **국가기술표준원 조회 응답에서만** 온다 (총괄 §3).
+    //
+    // 주의(가장 중요): 셀러가 붙여넣은 글에서 만들지 않는다. 이 카드가 답하는
+    //   질문은 "우리가 조회한 그 인증번호가 **무슨 물건**으로 등록돼 있나" 이고,
+    //   그래서 값이 상세페이지와 다르면 그 자체가 신호다 - 상세페이지에서
+    //   베껴 오면 늘 같아 보여서 그 신호가 사라진다 (R5).
+    //
+    // 주의: 조회가 실패하면 detail 이 없고 **카드가 안 뜬다.** 빈 칸을 만들어
+    //   두지 않는다 - 없는 것을 있는 것처럼 그리는 자리다 (R3).
+    //
+    // 주의: 브랜드명은 안 넣는다. 시드 29건 실측에서 값이 있는 것이 **1건**
+    //   이라 거의 빈 줄이 된다. 값이 채워지는 것을 확인하면 그때 넣는다.
+    html += summaryCard(all);
 
     if (data.extraction_note) html += '<p class="scope">' + esc(data.extraction_note) + "</p>";
     if (data.coverage_note) html += '<p class="scope">' + esc(data.coverage_note) + "</p>";

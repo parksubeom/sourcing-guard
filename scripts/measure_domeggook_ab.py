@@ -109,10 +109,15 @@ class Pacer:
         self._last = 0.0
 
     def wait(self) -> None:
-        if self._last:
+        # ⚠ `time.sleep` 한 번으로는 모자랄 수 있다. 실측으로 0.2 를 재웠는데
+        #   0.187 만 지난 적이 있다(부하가 걸린 전체 검사에서 1회, 윈도우).
+        #   몇 ms 이지만 이 간격이 지키는 것은 **분당 180회 한도**라, 짧게
+        #   끝나면 한도를 넘겨 429 를 맞는다. 지날 때까지 돈다.
+        while self._last:
             left = self._gap - (time.monotonic() - self._last)
-            if left > 0:
-                time.sleep(left)
+            if left <= 0:
+                break
+            time.sleep(left)
         self._last = time.monotonic()
 
 
