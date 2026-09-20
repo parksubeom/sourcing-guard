@@ -172,6 +172,48 @@ def main() -> int:
     print(f"물질 줄 {len(sub_lines)}개 · 물질 {len(subs)}종 "
           f"→ {'한 줄로 모임' if len(sub_lines) < len(subs) else '물질마다 한 줄'}")
 
+    # ⑦ **복사가 막혔을 때 텍스트가 실제로 뜨는가.**
+    #
+    # ⚠⚠ 이것은 "잴 것이 없는 설계" 가 아니다. 두 가지가 섞여 있었다:
+    #     (가) iOS 사파리가 readonly 를 프로그램으로 선택해 주는가
+    #          → 우리가 선택을 안 하기로 해서 **질문 자체가 없어졌다**
+    #     (나) 클립보드가 없을 때 텍스트가 뜨는가
+    #          → 이건 그냥 **안 재 본 것**이다. 헤드리스에서 잰다
+    #
+    # ⚠ 안 재면 이런 화면이 가능하다 - 버튼을 눌렀는데 아무 일도 안 일어나고
+    #   문안도 안 뜬다. **버튼이 거짓말을 하는 것**이다.
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch()
+        page = browser.new_page(viewport={"width": 1280, "height": 1200})
+        page.add_init_script(
+            "Object.defineProperty(navigator, 'clipboard', {value: undefined});")
+        page.route("**/api/v1/scan", lambda route: route.fulfill(
+            status=200, content_type="application/json",
+            body=json.dumps(result, ensure_ascii=False)))
+        page.goto(args.base + "/scan", wait_until="networkidle")
+        page.fill("#pt", item["text"])
+        page.click("#go")
+        page.wait_for_selector("#ask-copy", timeout=60000)
+        had_api = page.evaluate("() => !!(navigator.clipboard && navigator.clipboard.writeText)")
+        page.click("#ask-copy")
+        page.wait_for_timeout(300)
+        shown = page.eval_on_selector("#ask-text", "e => e.offsetParent !== null")
+        hint = page.eval_on_selector("#ask-hint", "e => e.offsetParent !== null")
+        label = page.eval_on_selector("#ask-copy", "e => e.textContent.trim()")
+        body = page.eval_on_selector("#ask-text", "e => e.textContent")
+        browser.close()
+
+    print(f"클립보드 없음 상태  API 있음 {had_api} · 문안 보임 {shown} · "
+          f"안내 보임 {hint} · 버튼 '{label}'")
+    if had_api:
+        problems.append("클립보드를 못 없앴다 - 이 확인은 무효다")
+    if not shown:
+        problems.append("복사가 막혔는데 문안이 안 뜬다 - 버튼이 아무 일도 안 한다")
+    if not hint:
+        problems.append("복사가 막혔는데 안내가 안 뜬다")
+    if body.strip() != text.strip():
+        problems.append("펼친 문안이 복사 대상과 다르다")
+
     print(f"문안 {len(text.splitlines())}줄 · 인용된 문장 {quoted} / "
           f"응답 문장 {len(said)} · 근거 조항 {len(by_basis)}")
     if problems:
