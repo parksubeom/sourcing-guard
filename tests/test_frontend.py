@@ -1272,3 +1272,80 @@ def test_the_example_card_shows_the_number_it_will_scan(pages):
         number = d["example"].split(" ")[0]
         assert number in d["text"], (
             f'{d["tone"]}: 화면이 내미는 번호 {number} 가 실제 검사 글에 없다')
+
+
+# ── 이미지 올리기 (2026-09-20 · 시피님 요청) ────────────────────────
+def test_the_capture_box_opens_a_file_picker(pages):
+    """「캡처를 올려 주세요」를 누르면 **파일 선택기가 열려야 한다.**
+
+    ⚠ 총괄 §1 은 시안의 "드래그 앤 드롭 또는 클릭" 을 뺐는데, 그 이유는
+      **그 기능이 없어서**(눌러도 아무 일이 없어서)였다. 이제 실제로 동작하므로
+      그 이유가 사라졌다 - 죽은 단추가 아니라 살아 있는 단추다.
+
+    ⚠ 붙여넣기는 문서 수준에서 계속 받는다. 누르는 것이 붙여넣기를 막지 않는다.
+    """
+    index = markup_only(pages["index.html"])
+    assert 'type="file"' in index and 'id="pick"' in index, "파일 입력이 없다"
+    assert "multiple" in index, "여러 장을 못 고른다"
+    assert "picker.click()" in index, "단추가 파일 선택기를 안 연다"
+    assert 'document.addEventListener("paste"' in index, "붙여넣기 경로가 사라졌다"
+
+    # 고를 수 있는 형식과 스크립트가 받는 형식은 **같은 목록**이어야 한다.
+    accept = re.search(r'accept="([^"]+)"', index).group(1).split(",")
+    allowed = re.search(r"var ALLOWED = \[(.+?)\]", index).group(1)
+    allowed = re.findall(r'"([^"]+)"', allowed)
+    assert sorted(accept) == sorted(allowed), (
+        f"선택기 형식과 검사 형식이 다르다\n  accept {sorted(accept)}\n  ALLOWED {sorted(allowed)}")
+
+    # 같은 파일을 두 번 고를 수 있어야 한다 - 안 비우면 change 가 안 뜬다.
+    assert 'picker.value = ""' in index, "고른 뒤 입력을 안 비운다"
+
+
+def test_a_dropped_file_never_navigates_away(pages):
+    """⚠⚠ 끌어다 놓기를 막지 않으면 **브라우저가 그 파일로 이동한다.**
+
+    그러면 셀러가 붙여넣어 둔 상세페이지 본문이 통째로 사라진다. 파일
+    선택기를 달면 끌어다 놓는 사람이 늘어나므로 같이 막았고, 막는 김에
+    받는다 - 떨어뜨린 이미지는 붙여넣은 것과 같은 길로 간다.
+    """
+    index = markup_only(pages["index.html"])
+    assert 'document.addEventListener("drop"' in index, "떨어뜨리기를 안 받는다"
+    assert '"dragover"' in index, "dragover 를 안 막으면 drop 이 아예 안 온다"
+    drop = index[index.index('document.addEventListener("drop"'):]
+    drop = drop[: drop.index("\n  });")]
+    assert "e.preventDefault()" in drop, "기본 동작을 안 막는다 - 본문이 날아간다"
+
+
+def test_the_image_cap_survives_two_files_at_once(pages):
+    """⚠⚠ `FileReader` 가 비동기다. 한 번에 두 장을 주면 둘 다 `shots.length` 를
+    **푸시 전에** 읽어 상한 검사를 같이 통과한다.
+
+    실측: 3장 있는 상태에서 2장을 더 고르니 **5장**이 됐다. 서버는 4장까지만
+    받으므로(`ScanRequest.images`) 그대로 보내면 422 가 나고 셀러는 이유를
+    모른다. 붙여넣기 경로에도 있던 결함이고, 파일 선택기를 달면서 드러났다.
+
+    자리를 **읽기 전에** 잡는다.
+    """
+    index = markup_only(pages["index.html"])
+    add = index[index.index("function addImage(file) {"):]
+    add = add[: add.index("\n  }")]
+    assert "shots.length + pending >= MAX_SHOTS" in add, (
+        "읽는 중인 장수를 안 세고 상한을 잰다")
+    assert "pending += 1" in add, "자리를 미리 안 잡는다"
+    assert add.count("pending -= 1") == 2, "성공·실패 양쪽에서 자리를 돌려줘야 한다"
+
+
+def test_an_error_is_not_wiped_by_a_sibling_that_succeeded(pages):
+    """⚠⚠ 오류를 **한 장 읽기에 성공할 때마다** 지우면, 두 장 중 한 장이
+    상한에 걸렸을 때 그 줄이 떴다가 **성공한 쪽이 곧바로 지운다.**
+
+    실측으로 4장이 된 채 오류가 안 보였다 - 셀러는 한 장이 빠진 줄도 모른다.
+    지우는 것은 **새 시도**의 몫이다.
+    """
+    index = markup_only(pages["index.html"])
+    add = index[index.index("function addImage(file) {"):]
+    add = add[: add.index("\n  }")]
+    assert "err.hidden = true" not in add, "성공한 읽기가 남의 오류를 지운다"
+    assert "function beginBatch()" in index, "시도 시작에서 지우는 자리가 없다"
+    assert index.count("beginBatch();") == 3, (
+        "고르기·붙여넣기·떨어뜨리기 셋 다에서 시작을 알려야 한다")
