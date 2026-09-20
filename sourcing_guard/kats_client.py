@@ -77,6 +77,23 @@ _log = logging.getLogger(__name__)
 OPERATOR_FAULT_CODES = frozenset({"4000", "4001", "4005"})
 
 
+def _network_code(exc: BaseException) -> str:
+    """`network` 을 셋으로 가른다. **원인이 다르면 할 일이 다르다.**
+
+    ⚠ `ConnectTimeout` 은 `TimeoutException` 의 하위이므로 **먼저** 본다.
+      순서를 바꾸면 전부 `network.read` 가 된다.
+
+    ⚠ 모르는 예외는 `network` 그대로 둔다 - 없는 구분을 만들지 않는다 (R3).
+    """
+    if isinstance(exc, (httpx.ConnectTimeout, httpx.ConnectError)):
+        return "network.connect"
+    if isinstance(exc, (httpx.ReadTimeout, httpx.ReadError, httpx.WriteTimeout)):
+        return "network.read"
+    if isinstance(exc, httpx.PoolTimeout):
+        return "network.pool"
+    return "network"
+
+
 #: 파싱 실패 시 응답 본문을 남긴다. **다음 장애가 픽스처가 되게.**
 #:
 #: ⚠⚠ 2026-09-11 에 safetykorea.kr 가 죽었을 때 **응답 본문을 못 잡았다.**
@@ -516,6 +533,8 @@ class KatsClient:
         service_key: str | None,
         mock: bool = False,
         timeout: float = 8.0,
+        connect_timeout: float | None = None,
+        read_timeout: float | None = None,
     ) -> None:
         self._map: dict[str, Any] = (
             yaml.safe_load(_MAP_PATH.read_text(encoding="utf-8")) or {}
@@ -527,7 +546,17 @@ class KatsClient:
         self._key = service_key
         self._mock = mock or not (self._base and service_key)
         self._cert_cache = CertCache()
-        self._client = httpx.Client(timeout=timeout)
+        # 주의(가장 중요): connect 와 read 를 **나눠서** 건다 (2026-09-20 P1).
+        #   한 값이면 실패했을 때 "연결이 안 된 것" 과 "응답이 느린 것" 을
+        #   가를 수 없고, 그 구분이 플랫폼을 옮길지 말지를 정한다.
+        #   안 주면 `timeout` 하나로 넷 다 채운다 - **지금과 같은 동작**이다.
+        self._timeout = httpx.Timeout(
+            connect=connect_timeout if connect_timeout is not None else timeout,
+            read=read_timeout if read_timeout is not None else timeout,
+            write=timeout,
+            pool=timeout,
+        )
+        self._client = httpx.Client(timeout=self._timeout)
 
     # -- public ------------------------------------------------------------
     def lookup_certification(self, kc_number: str) -> CertRecord | None:
@@ -739,11 +768,19 @@ class KatsClient:
             health.record_failure(code, f"HTTP {exc.response.status_code}")
             raise KatsApiError(code, f"HTTP {exc.response.status_code}") from exc
         except (httpx.HTTPError, ValueError) as exc:
-            health.record_failure("network", type(exc).__name__)
+            # 주의(가장 중요): 실패 **원인을 가른다** (2026-09-20 P1).
+            #   전에는 `ConnectTimeout` 과 `ReadTimeout` 이 둘 다 `network`
+            #   하나로 뭉개져, "연결이 안 된다" 와 "응답이 느리다" 를 구분할 수
+            #   없었다. 그 구분이 P1 의 답 자체다:
+            #       network.connect  시간을 늘려도 소용없다. 경로 문제다
+            #       network.read     시간을 늘리면 된다
+            #   주의: 재시도가 아니다. 추가하는 것은 **관측**뿐이다(133행 주석).
+            code = _network_code(exc)
+            health.record_failure(code, type(exc).__name__)
             # ValueError 는 `resp.json()` 의 파싱 실패다 - 본문을 남긴다.
             if isinstance(exc, ValueError):
                 _log_unreadable_body(op, locals().get("resp"))
-            raise KatsApiError("network", str(exc)) from exc
+            raise KatsApiError(code, str(exc)) from exc
 
         # 설계서 p.19: HTTP 200 이어도 resultCode 로 실패를 알린다. 이걸 안 보면
         # 인증 실패(4000)나 IP 미등록(4001)을 "조회 결과 없음"으로 착각하고,

@@ -115,7 +115,15 @@ app.mount(
     name="static",
 )
 
-_kats = KatsClient(settings.kats_base_url, settings.kats_service_key, mock=settings.mock_mode)
+_kats = KatsClient(
+    settings.kats_base_url,
+    settings.kats_service_key,
+    mock=settings.mock_mode,
+    # 주의: 전에는 안 넘겨서 기본 8.0 이 **고정**이었다. 이제 설정으로
+    #   바꿀 수 있고, 아무것도 안 주면 여전히 8.0 이다.
+    connect_timeout=settings.kats_connect_timeout,
+    read_timeout=settings.kats_read_timeout,
+)
 # 시작 전에는 비어 있다. `_lifespan` 이 채운다 - 0 으로 두면 "아직 안 얹었다" 와
 # "얹었는데 0건" 이 같아 보이므로 `/healthz` 를 읽을 때 앱이 떴는지 먼저 본다.
 _cert_seed_stats = SeedStats()
@@ -435,7 +443,13 @@ def healthz() -> dict:
         # ⚠ **배포된 것이 어느 커밋인가.** 필드 유무로 버전을 역추적하는 일이
         #   없게 한다 - 2026-09-11 에 실제로 그래야 했다.
         "build": build_snapshot(),
-        "kats": health.snapshot(),
+        # 주의(중요): **설정값을 그대로 낸다.** 환경변수를 잘못 적으면
+        #   `_env_float` 가 조용히 기본값으로 떨어지는데, 그러면 "값을
+        #   올렸다고 믿는 상태" 로 측정하게 된다. 회차마다 여기를 읽어
+        #   무엇으로 쟀는지 확인한다.
+        "kats": {**health.snapshot(),
+                 "connect_timeout": settings.kats_connect_timeout,
+                 "read_timeout": settings.kats_read_timeout},
         # ⚠ 시드가 몇 건 얹혔나. **0 이면 재배포 뒤 데모의 인증 축이 죽는다**
         #   (국표원이 죽어 있는 동안). `skipped` 가 0 이 아니면 시드 파일이
         #   깨진 것이고, 걸러진 줄은 조용히 없어진 것이 아니라 여기 센다.

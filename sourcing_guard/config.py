@@ -46,6 +46,23 @@ def _flag(name: str, default: bool) -> bool:
     return raw.strip().lower() in {"1", "true", "yes", "on"}
 
 
+def _env_float(name: str, default: float) -> float:
+    """숫자 환경변수. **못 읽으면 기본값으로 떨어진다.**
+
+    ⚠ 빈 문자열·오타로 앱이 안 뜨면 그게 더 나쁘다 - 조회 하나가 느린 것과
+      서비스가 안 뜨는 것은 값이 다르다. 대신 기본값으로 조용히 떨어진 것을
+      `/healthz` 가 보여 준다(설정값을 그대로 낸다).
+    """
+    raw = (os.getenv(name) or "").strip()
+    if not raw:
+        return default
+    try:
+        v = float(raw)
+    except ValueError:
+        return default
+    return v if v > 0 else default
+
+
 def _csv(name: str, default: str) -> tuple[str, ...]:
     """쉼표 목록. **비어 있으면 기본값이다.**
 
@@ -78,6 +95,19 @@ class Settings:
     extractor_order: tuple[str, ...]
     kats_base_url: str | None
     kats_service_key: str | None
+    # 국표원 조회 타임아웃. **connect 와 read 를 나눈다** (2026-09-20 P1).
+    #
+    # ⚠⚠ 나누는 이유가 측정이다. 지금까지 둘이 한 값이라 "연결이 안 되는 것" 과
+    #   "연결은 되는데 응답이 느린 것" 을 **가를 수 없었다.** 그 구분이
+    #   fly 를 떠날지 말지를 정한다:
+    #
+    #       연결이 안 된다   시간을 늘려도 소용없다. 경로 문제다
+    #       응답이 느리다    시간을 늘리면 된다
+    #
+    # ⚠ 기본값 8.0 은 **지금과 같은 동작**이다. 아무것도 설정하지 않으면
+    #   전과 똑같이 돌아야 한다 - 이 변경은 동작을 바꾸는 것이 아니다.
+    kats_connect_timeout: float
+    kats_read_timeout: float
     watchlist_db_path: str
     sync_enabled: bool
     sync_token: str | None
@@ -107,6 +137,8 @@ class Settings:
             extractor_order=_csv("EXTRACTOR_ORDER", "gpt"),
             kats_base_url=os.getenv("KATS_BASE_URL") or None,
             kats_service_key=os.getenv("KATS_SERVICE_KEY") or None,
+            kats_connect_timeout=_env_float("KATS_CONNECT_TIMEOUT", 8.0),
+            kats_read_timeout=_env_float("KATS_READ_TIMEOUT", 8.0),
             # 배포 시 반드시 영구 볼륨 경로를 지정한다. 컨테이너 기본 파일시스템에
             # 두면 재배포마다 워치리스트가 사라진다 (기획서 §6.1).
             watchlist_db_path=os.getenv("WATCHLIST_DB_PATH", "data/watchlist.db"),

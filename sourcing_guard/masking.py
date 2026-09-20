@@ -85,9 +85,12 @@ SECRET_SETTINGS: tuple[str, ...] = (
 #: 시크릿이 **아닌** 설정. 모델 이름·경로·스위치처럼 로그에 남아도 되는 것.
 #:
 #: ⚠ `kats_base_url` 은 주소이지 키가 아니다. `extractor_order` 는 벤더 순서다.
+#: ⚠ 타임아웃은 **초 단위 숫자**다. 키가 아니고, `/healthz` 가 무엇으로
+#:   쟀는지 보여 주려면 밖으로 나가야 한다 (2026-09-20 P1).
 PUBLIC_SETTINGS: tuple[str, ...] = (
     "mock_mode", "extractor_model", "gpt_model", "extractor_order",
     "kats_base_url", "watchlist_db_path", "sync_enabled",
+    "kats_connect_timeout", "kats_read_timeout",
 )
 
 

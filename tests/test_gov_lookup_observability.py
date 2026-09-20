@@ -124,11 +124,22 @@ def test_transport_errors_become_KatsApiError_not_raw_httpx(exc_cls):
     finally:
         kc.health = original
 
-    assert got.value.code == "network"
+    # ⚠ 2026-09-20 에 `network` 이 셋으로 갈렸다(P1) - `network.connect` ·
+    #   `network.read` · `network`. **이 검사가 가진 것은 "전송 오류가
+    #   KatsApiError 로 변환되고 관측되는가" 이지 코드 문자열이 아니다.**
+    #   갈래의 소유자는 `test_kats_timeout.test_the_failure_code_says_which_kind_it_was`
+    #   다 - 여기에 다시 적으면 한쪽만 고쳐질 때 나머지가 낡는다 (§6).
+    assert got.value.code.startswith("network"), got.value.code
     # 관측이 됐는가 - 이것이 (1) 이다.
     assert h.failures == 1, h.snapshot()
     assert h.snapshot()["failure_rate"] == 1.0
-    assert h.last_error_code == "network"
+    assert h.last_error_code == got.value.code
+    # ⚠ 반대 방향 - `OPERATOR_FAULT_CODES` 에 들어가면 안 된다. 남의 장애를
+    #   우리 설정 잘못으로 세면 `/healthz` 가 거짓말을 한다.
+    from sourcing_guard.kats_client import OPERATOR_FAULT_CODES
+
+    assert got.value.code not in OPERATOR_FAULT_CODES
+    assert not h.operator_fault() if hasattr(h, "operator_fault") else True
 
 
 @pytest.mark.parametrize("exc_cls", _TRANSPORT_ERRORS,
