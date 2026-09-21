@@ -271,27 +271,6 @@ async def _cache_headers(request: Request, call_next):
 
 #: 머리 배지 자리. HTML 이 `<span class="asof" data-asof></span>` 를 두면
 #: 서버가 날짜를 넣고, 모르면 요소째 지운다.
-_ASOF_SLOT = re.compile(r'<span class="asof" data-asof>.*?</span>', re.S)
-
-
-def _fill_as_of(html: str) -> str:
-    raw = getattr(_recalls, "as_of", None) or ""
-    if not (len(raw) == 8 and raw.isdigit()):
-        return _ASOF_SLOT.sub("", html)
-    # ⚠⚠ **무엇의 날짜인지 앞에 적는다** (2026-09-21 총괄). 전에는
-    #   "2026-09-17 기준" 이라 화면에 **보이는 이름이 없었다** - `title=` 은
-    #   hover 전용이라 폰에서는 없는 것과 같다. `/scan` 에는 바로 아래
-    #   showcase 가 "2026-09-20 기준 도매꾹에서 판매중인 상품" 이라고 자기
-    #   날짜를 말하는데, 위쪽만 무명이면 셀러가 "둘이 왜 다르지" 를 혼자 푼다.
-    #
-    #   ⚠ 폭이 늘면 `.masthead .container:not(:has(.asof))::after` 의 자리
-    #     너비도 같이 맞춰야 한다 - 배지 없는 화면(/batch·/guide)의 내비가
-    #     어긋난다. app.css 의 그 값은 **실측**으로 정한다.
-    shown = f"리콜 {raw[:4]}-{raw[4:6]}-{raw[6:]} 기준"
-    return _ASOF_SLOT.sub(
-        f'<span class="asof" title="리콜 공표 기준일">{shown}</span>', html)
-
-
 #: 화면 파일 → 경로. `og:url`·`canonical` 이 **절대 주소**를 요구해서 필요하다.
 #:
 #: ⚠⚠ 경로가 라우트 데코레이터와 **두 곳에** 적히는 자리다 (§6). 그래서
@@ -379,16 +358,6 @@ def _page(name: str) -> HTMLResponse:
     """
     html = (_STATIC / name).read_text(encoding="utf-8")
 
-    # 머리 오른쪽의 "2026-09-19 기준". **리콜 공표 기준일**이고 모든 화면에
-    # 같은 값이어야 한다 (시안 §6).
-    #
-    # ⚠⚠ 화면마다 fetch 를 붙이지 않는다. 일곱 파일이 각자 물어보면 같은
-    #   판단이 일곱 벌이 되고, 한 곳만 고쳐질 때 나머지가 낡은 날짜를 말한다
-    #   (§6). 서버가 낼 때 한 곳에서 박는다 - `?v=` 해시와 같은 자리다.
-    #
-    # ⚠ 값이 없으면 **자리를 통째로 지운다.** 빈 배지를 남기거나 오늘 날짜로
-    #   메우면 화면이 없는 사실을 말한다 (R3·R5).
-    html = _fill_as_of(html)
     html = _meta_tags(html, name)
 
     commit = build_snapshot()["commit"]
