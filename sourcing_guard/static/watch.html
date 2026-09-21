@@ -47,7 +47,10 @@
     <p>검사는 그 시점의 판단입니다. 오늘 문제가 없던 모델이 다음 공표에서 리콜 대상이 될 수 있습니다.
        저장해두면 새로 공표되는 리콜과 대조합니다.</p>
     </div>
-    <div class="intro-art" aria-hidden="true"><svg class="intro-face" viewBox="0 0 120 120"><use href="/static/mascot.svg#ansimi-look"/></svg></div>
+    <div class="intro-art" aria-hidden="true"><!-- 주의(중요): 스프라이트(`mascot.svg#ansimi-look`)를 쓰다가 그림
+           자산으로 바꿨다 (2026-09-21). 스프라이트 자산은 130x162 라
+           320px 에 쓰면 2.5배 확대다. 히어로에서 `mascot.svg` 의존이
+           빠졌고, 결과 카드의 `ansimi-*` 는 그대로다. --><div class="intro-face art" style="--art:url(/static/hero/default.png);--art2:url(/static/hero/default@2x.png)"></div></div>
   </div>
 </div>
 

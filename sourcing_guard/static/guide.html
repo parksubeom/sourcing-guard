@@ -66,7 +66,10 @@
            히어로에 쓰면 「우리가 틀린 것」 화면에 초록 얼굴이 뜬다 - id 가 곧
            신호라서 생기는 사고다. 히어로는 `ansimi-look`(신호 없음)이나
            `/static/hero/*.png` 만 쓴다. 검사가 그것을 단정한다. -->
-    <div class="intro-art" aria-hidden="true"><svg class="intro-face" viewBox="0 0 120 120"><use href="/static/mascot.svg#ansimi-look"/></svg></div>
+    <div class="intro-art" aria-hidden="true"><!-- 주의(중요): 스프라이트(`mascot.svg#ansimi-look`)를 쓰다가 그림
+           자산으로 바꿨다 (2026-09-21). 스프라이트 자산은 130x162 라
+           320px 에 쓰면 2.5배 확대다. 히어로에서 `mascot.svg` 의존이
+           빠졌고, 결과 카드의 `ansimi-*` 는 그대로다. --><div class="intro-face art" style="--art:url(/static/hero/default.png);--art2:url(/static/hero/default@2x.png)"></div></div>
   </div>
 </div>
 

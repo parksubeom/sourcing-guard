@@ -162,7 +162,16 @@ def test_the_page_does_not_hardcode_the_numbers():
 def test_the_recorded_date_is_not_written_by_hand():
     """날짜는 파일의 실측 시각에서 온다. 손으로 적으면 그 문장이 거짓이 된다."""
     assert payload()["recorded_at"], "기록 시각이 없다"
-    assert not re.search(r"20\d\d-\d\d-\d\d", _HTML), "samples.html 에 날짜가 박혀 있다"
+    # ⚠⚠ **주석을 걷고 본다** (CLAUDE.md §6 ①). 무엇을 언제 왜 바꿨는지 적으려면
+    #   날짜를 쓰게 되고, 그러면 이 가드가 **자기 감사 기록에 걸린다** - 2026-09-21
+    #   에 히어로 자산을 바꾸며 적은 한 줄이 그랬다. 서버는 낼 때 주석을 지우므로
+    #   (`_page`) 주석의 날짜는 **화면에 닿지 않는다.** 막으려는 것은 그려지는
+    #   날짜다.
+    # ⚠ 걷개를 여기서 새로 쓰지 않는다 - 오너는 `tests/srccheck.markup_only` 다.
+    from tests.srccheck import markup_only
+
+    assert not re.search(r"20\d\d-\d\d-\d\d", markup_only(_HTML)), (
+        "samples.html 에 날짜가 박혀 있다")
     # samples.js 의 날짜는 주석의 예시 하나뿐이어야 한다 (코드가 아니라 설명).
     for line in _JS.splitlines():
         if re.search(r"20\d\d-\d\d-\d\d", line):

@@ -1113,7 +1113,7 @@ body{background:var(--bg-page)}
    주의: 225 의 근거와 시안 §13 을 넘긴 사실은 아래 `.art` 주석에 있다.
      그 조건("제목을 60px 로 같이 키워야 한다")은 이제 여덟 화면 전부에서
      충족된다 - 히어로 제목이 전부 60px 이다. */
-.intro-face{width:225px; height:225px; flex:none}
+.intro-face{width:320px; height:320px; flex:none}
 /* 그림 자산 히어로. `--art` 에 파일 경로만 넣으면 되고, 원본(512px·SVG)이
    오면 **파일만** 갈아 끼운다 - 마크업도 CSS 도 안 바뀐다.
    주의: 가로세로 비가 그림마다 달라 `contain` 으로 맞춘다. 늘리면 얼굴이
@@ -1124,6 +1124,9 @@ body{background:var(--bg-page)}
      조용히 사라진다 - `test_no_old_variable_name_disappeared` 가 잡았다.
      기본이 `none` 이면 그림만 안 보이고 자리는 남는다. */
   --art:none;
+  /* 주의: `--art2` 도 기본값을 둔다 - 없으면 `image-set()` 이 든 선언이
+     통째로 무효가 되고 그림이 조용히 사라진다(위 `--art` 와 같은 이유). */
+  --art2:none;
   /* 주의(중요): 시안 실측 225px (이미지 154px × 1280/877 환산). 제목을
      60px 두 줄로 같이 키워야 시안 §13 의 금지("캐릭터가 텍스트보다 크게
      보이는 구성")에 안 걸린다 - 마스코트만 키우면 걸린다.
@@ -1142,7 +1145,15 @@ body{background:var(--bg-page)}
        레티나에서 4배다. 원본을 받으면 파일만 갈아 끼운다 (미완 §1-ab). */
   /* 주의: 크기는 위 `.intro-face` 가 정한다. 전에 여기서 또 정했는데,
      그래서 `.art` 가 붙은 화면만 커지는 갈림이 생겼다. */
+  /* 주의(가장 중요): **`srcset` 이 아니라 `image-set()` 이다.** 히어로는
+     `<img>` 가 아니라 CSS 배경이라 `srcset` 이 안 먹는다. 마크업을 `<img>`
+     로 바꾸는 길도 있었지만, `--art` 에 파일 경로만 넣으면 되는 지금 구조를
+     유지하는 쪽을 골랐다 (위 주석 - "파일만 갈아 끼운다").
+     주의(중요): 순서가 폴백이다. 맨 앞 `url()` 은 `image-set` 을 모르는
+     브라우저용이고, `-webkit-` 은 Safari 17 미만이다. */
   background:var(--art) center/contain no-repeat;
+  background-image:-webkit-image-set(var(--art) 1x, var(--art2) 2x);
+  background-image:image-set(var(--art) 1x, var(--art2) 2x);
 }
 /* 말풍선. 꼬리는 테두리 없이 바탕색만 - 1px 테두리에 꼬리를 그리면 이음매가
    보인다. 장식이라 그 정도면 된다. */
@@ -1158,8 +1169,23 @@ body{background:var(--bg-page)}
   border-right:1px solid var(--brand); border-top:1px solid var(--brand);
   transform:rotate(45deg);
 }
+/* 마스코트를 줄이는 단계. **글칸보다 커 보이면 안 된다** - 시안 §13 의
+   금지("캐릭터가 텍스트보다 크게 보이는 구성")가 그 자리다.
+
+   1440px 에서 320 을 두고 좁아질수록 줄인다. 실측(글칸 대비 · /scan):
+
+       1440  글칸 676 → 320 은 47%
+       1024  글칸 452 → 320 은 71%   ← 높다
+        900  글칸 328 → 320 은 98%   ← 같아진다
+        861  글칸 289 → 320 은 111%  ← 글칸보다 크다
+
+   860px 아래는 원래 **숨긴다**(아래 규칙). 그래서 줄일 구간은 861~1199 뿐이다. */
+@media (max-width:1199px){ .intro-face{width:280px; height:280px} }
+@media (max-width:999px){ .intro-face{width:220px; height:220px} }
 @media (max-width:860px){
-  /* 좁아지면 마스코트를 뺀다. 장식이고, 입력란이 먼저 보여야 한다. */
+  /* 좁아지면 마스코트를 뺀다. 장식이고, 입력란이 먼저 보여야 한다.
+     주의(중요): 그래서 폰(390·320)에는 마스코트가 **없다** - 320px 자산이
+     폭의 82% 라는 걱정은 이 구간에 해당이 없다. */
   .intro-grid{grid-template-columns:minmax(0,1fr)}
   .intro-art{display:none}
 }
