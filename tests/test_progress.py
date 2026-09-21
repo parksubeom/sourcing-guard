@@ -279,3 +279,38 @@ def test_the_api_actually_ships_did_note():
     assert d.get("progress") is not None, "응답에 progress 가 없습니다"
     assert "parts" in d["progress"], "응답에 progress.parts 가 없습니다"
     assert d.get("verified_counts") is not None, "응답에 verified_counts 가 없습니다"
+
+
+@pytest.mark.parametrize("done,kinds", [
+    ((True, True, True), [FindingKind.KC_EXPIRED]),
+    ((True, True, False), [FindingKind.KC_EXPIRED]),
+    ((False, True, False), []),
+    ((True, False, True), [FindingKind.RECALL_MATCH]),
+    ((True, True, True), [FindingKind.KC_EXPIRED, FindingKind.RECALL_MATCH]),
+])
+def test_the_parts_add_up_to_the_number_of_axes(done, kinds):
+    """⚠⚠ **조각의 합이 전체를 넘으면 같은 것을 두 번 센 것이다** (§6 ③).
+
+    전에는 「확인」이 `done` 전부였고 「주의」가 그 위에 얹혔다 - 인증 축이
+    **확인에도 주의에도** 들어가 `2 + 1 + 1 = 4` 인데 축은 셋이었다. 화면에
+    그대로 뜨면 읽는 사람은 넷으로 센다. 사양 자체가 처음부터 그랬다.
+
+    세 조각은 **서로 배타**다:
+        확인 = done 이고 주의 아님 · 주의 = done 이고 주의 · 미수록 = done 아님
+    """
+    got = _progress(Signal.AMBER, _axes(*done), [_f(k) for k in kinds])
+    if got.kind != "counts":
+        pytest.skip("분수형은 조각을 쓰지 않는다")
+    total = sum(p["n"] for p in got.parts)
+    assert total == len(_axes(*done)), (
+        f"조각의 합 {total} 가 전체 {len(_axes(*done))} 와 다릅니다 - "
+        f"같은 축을 두 번 셌습니다: {[(p['n'], p['word']) for p in got.parts]}")
+    assert all(p["n"] > 0 for p in got.parts), "0 인 조각이 들어 있습니다"
+
+
+def test_a_watched_axis_is_not_also_counted_as_plain():
+    """「확인」과 「주의」가 겹치면 안 된다 - 한 축은 한 조각에만 든다."""
+    got = _progress(Signal.AMBER, _axes(True, True, True), [_f(FindingKind.KC_EXPIRED)])
+    by = {p["word"]: p["n"] for p in got.parts}
+    assert by.get("확인") == 2, f"주의 축까지 확인으로 셉니다: {by}"
+    assert by.get("주의") == 1, by

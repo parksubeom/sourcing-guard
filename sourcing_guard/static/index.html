@@ -1160,7 +1160,15 @@
     // ② 읽은 값이 하나도 없으면 그건 상품 문제가 아니라 입력 문제다. "이렇게
     //    읽었습니다" 블록이 통째로 비는 자리에 원인을 대신 놓는다 - 안 놓으면
     //    셀러는 "판단 보류" 를 상품에 대한 판정으로 읽고 그냥 닫는다.
-    if (data.input_note) html += '<p class="input-note">' + esc(data.input_note) + "</p>";
+    // 주의(중요): 그림은 장식이고 **글자는 이미지에 없다.** 문구는 서버가 준
+    //   `input_note` 그대로다 - 화면이 새로 짓지 않는다 (§6).
+    if (data.input_note) {
+      html += '<div class="input-empty">' +
+        '<img class="empty-art" src="/static/empty/input-empty.png" ' +
+        'srcset="/static/empty/input-empty.png 1x, /static/empty/input-empty@2x.png 2x" ' +
+        'width="200" height="200" alt="" aria-hidden="true">' +
+        '<p class="input-note">' + esc(data.input_note) + "</p></div>";
+    }
     html += readPills(data.extracted, grade);
 
     // ③ 축 셋. 서버가 상태를 정해 내려준다 — 프론트가 다시 판정하면 §3.2 의

@@ -483,13 +483,30 @@ def _progress(signal: Signal, axes: list[dict], findings: list[Finding]) -> "Pro
         tail = f"남은 {_SUSA.get(len(left), len(left))}는 아래에 적었습니다."
     else:
         tail = ""
+    # ⚠⚠ **세 조각은 서로 배타다. 합이 축 수와 같아야 한다** (2026-09-21 총괄).
+    #
+    #   전에는 `확인 = done 전부` 였고 주의가 그 위에 얹혔다 - 「인증 조회」가
+    #   **확인에도 주의에도** 들어가 `2 + 1 + 1 = 4` 인데 축은 셋이었다.
+    #   화면에 「2가지 확인 · 1가지 주의 · 1가지 미수록」이 뜨면 읽는 사람은
+    #   넷으로 센다. 사양 자체가 처음부터 그랬다(§2-② 의 3+1=4).
+    #
+    #   갈래:
+    #       확인   done 이고 주의 아님
+    #       주의   done 이고 주의
+    #       미수록 done 아님
+    #
     # ⚠ 낱말을 화면이 고르지 않게 여기서 준다 (§6). 0 인 조각은 넣지 않는다 -
     #   "0가지 주의" 는 없는 것을 있는 것처럼 적는 자리다 (R3).
-    parts = [{"n": len(done), "word": "확인"}]
+    plain = len(done) - attention
+    parts = []
+    if plain:
+        parts.append({"n": plain, "word": "확인"})
     if attention:
         parts.append({"n": attention, "word": "주의"})
     if left:
         parts.append({"n": len(left), "word": "미수록"})
+    # ⚠ 합이 축 수와 같은지는 **검사**가 본다 (`test_progress`). 운영 코드에
+    #   assert 를 두면 -O 에서 사라지고, 안 사라지면 화면 대신 500 이 뜬다.
     return Progress(
         kind="counts", done=len(done), total=len(axes),
         attention=attention, missing=len(left), parts=parts,

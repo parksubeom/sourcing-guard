@@ -1769,3 +1769,15 @@ a.btn-t, a.btn{display:inline-flex; align-items:center; justify-content:center;
 .rv-did.small{background:var(--bg-muted); padding:14px 18px}
 .rv-did.small .h{color:var(--fg-2); font-size:14px; line-height:20px; margin-bottom:8px}
 .rv-did.small dt, .rv-did.small dd{font-size:13px; line-height:19px}
+
+/* 빈 상태 그림. **장식이다** - 글자는 이미지에 없고 문구는 HTML 이 얹는다.
+   주의(중요): 다크에서 밝은 일러스트가 붕 뜰 수 있다. 배경을 깔지 말고
+   그림 자체를 조금 가라앉힌다 - 배경을 깔면 카드 안에 또 카드가 생긴다. */
+.empty-art{display:block; margin:0 auto 4px; width:200px; height:auto}
+.input-empty{display:flex; flex-direction:column; align-items:center; gap:2px}
+.input-empty .input-note{margin:0; text-align:center}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]) .empty-art{opacity:.88}
+}
+:root[data-theme="dark"] .empty-art{opacity:.88}
+@media (max-width:640px){ .empty-art{width:160px} }
