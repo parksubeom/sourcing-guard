@@ -11,7 +11,7 @@ import unicodedata
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta, timezone
 
-from .models import SPECIFIC_FINDING_KINDS, Finding, FindingKind, ProductFacts, ScanMeta, ScanResult, Signal, ItemCategory, WatchSuggestion, ExtractedField, FindingGroup
+from .models import SPECIFIC_FINDING_KINDS, Finding, FindingKind, ProductFacts, ScanMeta, ScanResult, Signal, ItemCategory, VerifiedCounts, WatchSuggestion, ExtractedField, FindingGroup
 
 # Weights are intentionally boring and auditable. Any change must be
 # accompanied by a test case explaining the new behaviour.
@@ -389,8 +389,59 @@ def _absence_expected_headline(kinds: set[FindingKind], grade: str) -> str:
     )
 
 
+#: 우리말 수관형사. 축이 셋뿐이라 넷 이상은 숫자로 떨어진다.
+_GAJI: dict[int, str] = {1: "한", 2: "두", 3: "세"}
+
+
+#: 남은 축이 몇이냐에 따라 회색불의 말이 달라진다.
+#:
+#: ⚠⚠ **여기가 「무능해 보인다」 를 고치는 자리다** (2026-09-21 총괄).
+#:   전에는 사유가 하나도 안 걸리면 무조건 "판단 보류 — 판매자 제공 정보만으로는
+#:   소싱 여부를 가릴 수 없습니다" 였다. 인증·리콜을 실제로 조회하고 기준까지
+#:   찾아 둔 경우에도 같은 말을 해서, **우리가 한 일이 한 줄도 안 보였다.**
+#:
+#: ⚠ 그래도 **주어는 우리다.** "한 가지만 더 받으면 됩니다" 는 우리 진행도이지
+#:   상품에 대한 판단이 아니다. "거의 안전합니다" 로 읽히면 안 된다 (§9).
+#:
+#: ⚠ 하나도 못 한 경우(done 0)는 옛 문구가 맞다 - 자랑할 것이 없다.
+def _verified_counts(
+    findings: list[Finding], axes: list[dict],
+    recall_rows: int | None, rf_noncompliant_rows: int | None,
+) -> "VerifiedCounts":
+    """우리가 한 일의 규모. **하지 않은 일은 세지 않는다.**
+
+    ⚠⚠ 리콜 건수는 **리콜 축을 실제로 수행했을 때만** 채운다. 대조하지 않았는데
+      "37,430건과 대조" 를 적으면 거짓이다 - 화면이 대조하지 않은 것을
+      대조했다고 말한 전례가 그대로 있다 (4-r · CLAUDE.md §6).
+
+    ⚠ 유해물질 기준 수는 findings 에서 센다. 축 라벨("기준 N건")과 **같은
+      자리에서** 나와야 둘이 안 갈린다 (§6).
+    """
+    did_recall = any(a.get("key") == "recall" and a.get("done") for a in axes)
+    n = sum(1 for f in findings if f.kind is FindingKind.HAZARD_RULE_APPLIES)
+    return VerifiedCounts(
+        recall_rows=recall_rows if did_recall else None,
+        rf_noncompliant_rows=rf_noncompliant_rows if did_recall else None,
+        hazard_rules=n or None,
+    )
+
+
+def _remaining_headline(axes: list[dict]) -> str | None:
+    done = [a for a in axes if a.get("done")]
+    left = [a for a in axes if not a.get("done")]
+    if not done or not left:
+        return None
+    # ⚠ **세는 대상은 `done=False` 인 축의 개수**다 (2026-09-21 총괄 ②).
+    #   축이 아니라 finding 을 세면 같은 축이 여러 번 잡힌다.
+    head = f"{_GAJI.get(len(left), str(len(left)))} 가지만 더 받으면 됩니다"
+    # ⚠ 본문에 `" — "` 를 넣지 않는다. index.html 이 그 문자열로 자르므로
+    #   두 개가 되면 h3/p 가 어긋난다.
+    return f"{head} — 아래 문구를 공급처에 보내면 조회합니다."
+
+
 def _unknown_headline(
-    kinds: set[FindingKind], has_extracted: bool, *, absence_grade: str | None = None
+    kinds: set[FindingKind], has_extracted: bool, *, absence_grade: str | None = None,
+    axes: "list[dict] | None" = None,
 ) -> str:
     """UNKNOWN 의 사유를 헤드라인으로 옮긴다.
 
@@ -411,6 +462,11 @@ def _unknown_headline(
     for reason in _UNKNOWN_HEADLINE:
         if reason.kind in kinds:
             return reason.headline
+    # 사유가 하나도 안 걸렸다면 **우리가 어디까지 했는지**를 말한다.
+    if axes:
+        remaining = _remaining_headline(axes)
+        if remaining:
+            return remaining
     return _HEADLINE[Signal.UNKNOWN]
 
 
@@ -541,6 +597,13 @@ def score(
     # ⚠ scorer 는 순수 함수다 - 현재시각을 스스로 읽지 않는다 (CLAUDE.md §6).
     #   "오늘 갱신" 을 말하려면 오늘이 언제인지 부르는 쪽이 알려줘야 한다.
     today: "date | None" = None,
+    # 「지금까지 확인한 것」에 쓸 규모. **판정에 쓰지 않는다** - 그대로 싣는다.
+    #
+    # ⚠ scorer 는 순수 함수라 스스로 못 읽는다 (CLAUDE.md §6). 매일 바뀌는
+    #   값이므로 박아 넣지도 않는다 (R5) - 부르는 쪽이 준다.
+    # ⚠ 못 읽으면 `None` 이고, 화면은 그 줄을 **뺀다** (R3).
+    recall_rows: int | None = None,
+    rf_noncompliant_rows: int | None = None,
     # 이 스캔이 어떻게 나왔나. 판정에 쓰지 않는다 - 그대로 실어 보낸다.
     meta: "ScanMeta | None" = None,
 ) -> ScanResult:
@@ -594,6 +657,10 @@ def score(
     # "판단 보류" 가 아니라 "입력 확인" 이라고 말해야 한다.
     extracted = _extracted_fields(facts)
 
+    # ⚠ 축을 헤드라인보다 **먼저** 만든다 - 회색불 헤드라인이 "몇 가지를
+    #   확인했는가" 를 말하려면 축의 done 을 봐야 한다 (2026-09-21 ②).
+    axes = _axes(findings, recall_data_as_of, recall_synced_at, today)
+
     if signal is Signal.UNKNOWN:
         # 부재가 정상인 등급은 finding 의 detail 에 있다. scorer 는 여전히
         # 순수 함수다 - 주어진 findings 만 읽는다.
@@ -606,7 +673,8 @@ def score(
             None,
         )
         headline = _unknown_headline(
-            kinds, has_extracted=bool(extracted), absence_grade=absence_grade
+            kinds, has_extracted=bool(extracted), absence_grade=absence_grade,
+            axes=axes,
         )
     else:
         headline = _HEADLINE[signal]
@@ -627,10 +695,11 @@ def score(
         extracted=extracted,
         input_note=_input_note(extracted),
         grouped_findings=_grouped_findings(findings),
-        axes=_axes(findings, recall_data_as_of, recall_synced_at, today),
+        axes=axes,
         recall_data_as_of=recall_data_as_of,
         # 축에서 뺀 갱신 시각. 메타 푸터가 받는다 - models.ScanResult 주석 참조.
         recall_synced_label=_sync_label(recall_synced_at, today),
+        verified_counts=_verified_counts(findings, axes, recall_rows, rf_noncompliant_rows),
         # ⚠ 판정에 쓰지 않는다. `_signal_for` 도 `_HEADLINE` 도 meta 를 보지
         #   않는다 - 추출 경로가 신호를 바꾸면 "휴리스틱이면 더 위험" 같은
         #   판정을 하게 되고, 그것은 R1 위반이다.
@@ -1126,6 +1195,12 @@ def _axes(
          "note": cert_note},
         {"key": "recall", "name": "리콜 대조", "label": recall[0], "done": recall[1],
          "note": as_of},
+        # ⚠⚠ **이름이 갈려 있다 — 고치려면 index.html 도 같이 고쳐야 한다.**
+        #   `_UNLOCK_KO["hazard_rule"]` 는 "유해물질 기준" 인데 여기는 "유해물질"
+        #   이다. 2026-09-21 에 여기만 고쳐 봤더니 `tests/test_design_axes.py` 가
+        #   **로딩 스켈레톤(index.html:210)과 축 이름이 같아야 한다**로 묶어 두어
+        #   둘이 함께 깨졌다. 그 줄은 바닥글(219행)에서 9줄 위라 지금 갈린 덩이
+        #   바로 옆이다 - 총괄 판단 대기 (B-서버 ①).
         {"key": "hazard", "name": "유해물질", "label": hazard[0], "done": hazard[1],
          "note": "함유량은 시험성적서로 확인합니다" if hazard[1] else ""},
     ]

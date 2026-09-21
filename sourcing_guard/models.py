@@ -652,6 +652,34 @@ class ScanMeta(BaseModel):
     recall_data_as_of: str | None = None
 
 
+class VerifiedCounts(BaseModel):
+    """「지금까지 확인한 것」에 쓸 수. **우리가 한 일의 규모**다.
+
+    ⚠⚠ 초록이 걸리는 대상이 **상품이 아니라 우리가 한 일**이어야 한다.
+      차이는 길이가 아니라 **주어**다 (2026-09-21 총괄):
+
+          "37,430 건과 대조 · 일치 없음"   주어가 우리.  크게 쓴다
+          "이상 없음"                      주어가 상품.  안 쓴다
+
+    ⚠⚠ **값을 박아 넣지 않는다.** 매일 바뀐다 (R5). `score()` 가 부르는
+      쪽에서 받아 그대로 싣는다 - scorer 는 순수 함수라 스스로 못 읽는다.
+
+    ⚠⚠ **못 읽으면 `None` 이다.** 화면은 그 줄을 **뺀다** - 0 이나 "-" 를
+      그리면 "0건과 대조했다" 는 없는 사실이 된다 (R3·R5).
+
+    ⚠ `recall_rows` 는 **리콜 축을 실제로 수행했을 때만** 채운다. 대조하지
+      않았는데 "37,430건과 대조" 를 적으면 거짓이다 - 화면이 대조하지 않은
+      것을 대조했다고 말한 전례가 있다 (4-r · CLAUDE.md §6).
+    """
+
+    #: 대조한 리콜 공표 건수 (국내 + 국외)
+    recall_rows: int | None = None
+    #: 대조한 전파 부적합 공표 건수
+    rf_noncompliant_rows: int | None = None
+    #: 이 품목에 찾아 둔 유해물질 기준 수
+    hazard_rules: int | None = None
+
+
 class ScanResult(BaseModel):
     signal: Signal
     # 셀러의 질문은 "이거 소싱해도 돼?" 다. 신호(RED/AMBER/GREEN)와 개별 근거만으로는
@@ -676,6 +704,8 @@ class ScanResult(BaseModel):
     #   셋이 되면 폰에서 제일 중요한 절이 줄 끝으로 밀렸다. 옮긴 것이지
     #   **버린 것이 아니다** - 버리면 위 오해가 다시 돌아온다.
     recall_synced_label: str | None = None
+    #: 「지금까지 확인한 것」 — 우리가 한 일의 규모. 위 VerifiedCounts 참조.
+    verified_counts: "VerifiedCounts | None" = None
     # GREEN 은 시점 판단이다 - "지금 리콜 없음" 이지 "앞으로도 안전" 이 아니다
     # (§6.1). 부재의 증명은 원래 약하므로, GREEN 일수록 워치리스트로 잇는다.
     # "지금 괜찮음" 은 못 보증해도 "나중에 리콜되면 알림" 은 보증할 수 있다 -

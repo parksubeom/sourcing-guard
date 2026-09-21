@@ -64,6 +64,7 @@ class NoncompliantIndex:
         self._store = store
         self._by_number: dict[str, dict] = {}
         self._by_model: dict[str, list[dict]] = {}
+        self._size = 0
         self._loaded = False
 
     def load(self) -> int:
@@ -78,12 +79,37 @@ class NoncompliantIndex:
             if model and _model_is_distinctive(model):
                 by_model.setdefault(model, []).append(row)
         self._by_number, self._by_model = by_number, by_model
+        # 조회로 **돌려받을 수 있는** 행 수. 적재하며 한 번 센다.
+        # ⚠ 번호가 겹치면 dict 가 덮으므로 번호 키 수(2,733)는 행 수가 아니다.
+        #   덮인 행도 모델명으로 돌려받으면 대조된 것이다.
+        self._size = sum(
+            1 for row in rows
+            if (_normalize_number(row.get("cert_number")) in by_number)
+            or (normalize_model(row.get("model")) in by_model)
+        )
         self._loaded = True
         _log.info("부적합 현황 인덱스 적재: %d건", len(rows))
         return len(rows)
 
     def invalidate(self) -> None:
         self._loaded = False
+
+    @property
+    def size(self) -> int:
+        """**대조할 때 닿을 수 있는 건수.**
+
+        ⚠⚠ 여기는 훑는 것이 아니라 **dict 조회**다. 번호도 없고 변별력 있는
+          모델명도 없는 행은 어느 쪽으로도 안 닿으므로 "대조했다" 에 넣으면
+          거짓이다 - 그래서 원본 행 수가 아니라 **닿는 것**을 센다.
+
+        ⚠ 2026-09-21 실측: 원본 2,753 · 번호로만 198 · 모델로만 20 ·
+          둘 다 2,535 · **못 닿는 행 0** ⇒ 2,753. 번호 키는 2,733 뿐인데
+          겹쳐 덮인 20행이 모델명으로 돌려받아진다 - **번호 키 수를 쓰면
+          20건을 안 센 것이 된다.**
+        """
+        if not self._loaded:
+            self.load()
+        return self._size
 
     def is_empty(self) -> bool:
         if not self._loaded:

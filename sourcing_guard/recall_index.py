@@ -95,6 +95,17 @@ class RecallIndex:
     def is_empty(self) -> bool:
         return not self._load()
 
+    @property
+    def size(self) -> int:
+        """**대조할 때 실제로 훑는 건수.**
+
+        ⚠⚠ `store.recall_count()` 의 합과 다를 수 있다. `_to_record` 가
+          스키마가 어긋난 행을 조용히 버리기 때문이다. 화면이 "N건과 대조" 를
+          말하려면 **버려진 뒤의 수**여야 한다 (2026-09-21 실측: 37,430 =
+          37,430 · 버려진 것 0. 지금은 같지만 같다는 보장이 없다).
+        """
+        return len(self._load())
+
     def can_compare(self, facts: ProductFacts, *, today: date) -> bool:
         """**이 상품으로 리콜 대조가 가능한가.**
 

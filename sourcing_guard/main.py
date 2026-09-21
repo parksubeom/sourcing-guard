@@ -964,6 +964,14 @@ def scan(req: ScanRequest, request: Request) -> ScanResult:
         findings,
         recall_data_as_of=_recalls.as_of,
         recall_synced_at=_store.get_sync_state("last_sync_ok_at"),
+        # 「지금까지 확인한 것」의 규모. scorer 는 순수 함수라 스스로 못 읽는다.
+        # ⚠ 매일 바뀌므로 박아 넣지 않는다 (R5) - 여기서 살아 있는 값을 준다.
+        # ⚠⚠ **훑는 주체에서 센다.** `store.recall_count()` 합은 DB 행 수이고,
+        #   인덱스는 스키마가 어긋난 행을 버린 뒤 매칭한다. 화면이 "N건과 대조"
+        #   를 말하려면 **버려진 뒤의 수**여야 한다 (§6 "세기 전에 무엇을 셀
+        #   것인가를 먼저 적는다"). 2026-09-21 실측으로는 둘이 같다(37,430).
+        recall_rows=_recalls.size,
+        rf_noncompliant_rows=_noncompliant.size,
         today=datetime.now(KST).date(),
         # 화면 상단 두 줄이 읽는 값. 하드코딩 금지.
         meta=ScanMeta(
