@@ -149,6 +149,13 @@
   --signal-unknown-tint:rgba(138,148,174,.22); --signal-unknown-text:#B6BFD6;
   --bg-page:#12141F; --bg-canvas:#1A1E2D;
   --illust-blob:rgba(255,194,155,.10); --signal-amber-border:rgba(217,123,0,.45);
+  /* 주의(가장 중요): 다크에서는 **그림자를 쓰지 않는다** (총괄 판정 (가) ·
+     2026-09-21). 어두운 바탕에 어두운 그림자는 원리적으로 안 보인다 -
+     라이트 값 `rgba(30,25,50,.04)` 는 다크에서 아무것도 안 그린다.
+     대신 표면이 이미 한 칸 위다: 페이지 #12141F · 카드 #1A1E2D.
+     주의: 다크용 그림자를 새로 만들지 않기로 했다. 만들면 대비를 재야
+       할 것이 하나 더 늘고, 그 자리에서 라이트만 재는 일이 또 난다. */
+  --shadow-1:none;
   --shadow-2:0 6px 20px rgba(0,0,0,.45);
   color-scheme: dark;
 }
@@ -171,6 +178,8 @@
     --signal-unknown-tint:rgba(138,148,174,.22); --signal-unknown-text:#B6BFD6;
     --bg-page:#12141F; --bg-canvas:#1A1E2D;
     --illust-blob:rgba(255,194,155,.10); --signal-amber-border:rgba(217,123,0,.45);
+    /* 주의: 위 `[data-theme="dark"]` 블록과 **같은 이유**로 none 이다. */
+    --shadow-1:none;
     --shadow-2:0 6px 20px rgba(0,0,0,.45);
     color-scheme: dark;
   }
@@ -188,7 +197,7 @@
 /* ── 신호 칩: 색은 신호등 넷에서만. 문구는 SIGNAL_LABEL / SIGNAL_SHORT (index.html) 그대로 ── */
 /* 주의: `white-space:nowrap` 이 없으면 좁은 칸에서 '정상' 이 '정/상' 으로
    접힌다 - 칩이 커진 v2 에서 데모 버튼이 실제로 그렇게 나왔다. */
-.chip{display:inline-flex; align-items:center; gap:8px; padding:8px 14px; border-radius:var(--r-pill); font-size:15px; font-weight:700; line-height:20px; white-space:nowrap}
+.chip{display:inline-flex; align-items:center; align-self:flex-start; gap:8px; padding:8px 14px; border-radius:var(--r-pill); font-size:15px; font-weight:700; line-height:20px; white-space:nowrap}
 .chip .dot{width:10px; height:10px; border-radius:50%; flex:none; margin:0}
 .chip.GREEN{background:var(--signal-green-tint); color:var(--signal-green-text)}   .chip.GREEN .dot{background:var(--signal-green)}
 .chip.AMBER{background:var(--signal-amber-tint); color:var(--signal-amber-text)}   .chip.AMBER .dot{background:var(--signal-amber)}
@@ -199,6 +208,22 @@
 .btn-primary{display:inline-flex; align-items:center; justify-content:center; padding:16px 28px; border:0; border-radius:var(--r-m); background:var(--brand); color:#fff; font:inherit; font-size:17px; font-weight:700; cursor:pointer}
 .btn-primary:hover{background:var(--brand-strong)}
 .btn-ghost{display:inline-flex; align-items:center; padding:16px 20px; border:1px solid var(--border-default); border-radius:var(--r-m); background:transparent; color:var(--fg-2); font:inherit; font-size:15px; font-weight:500; cursor:pointer}
+
+/* ── 카드 표면 ─────────────────────────────────────────────
+ * 주의(가장 중요): `--shadow-1` 이 토큰으로만 있고 **쓰는 곳이 0** 이었다
+ *   (2026-09-21 실측). 시안 §16 값이 선언만 되어 있던 셈이다.
+ * 주의: 여기 든 것은 **내용을 담는 면**이다. 버튼·입력·칩·점·내비는 뺐다 -
+ *   그것들은 카드가 아니고, 그림자를 주면 누를 것처럼 보인다.
+ * 주의: 랜딩의 큰 띠(`.lv2 .band` 28px · `.lv2 .pane` 24px)도 뺐다. 화면
+ *   폭을 채우는 면이라 그림자가 붙으면 카드가 아니라 층으로 읽힌다.
+ * 주의: 다크에서는 `--shadow-1:none` 이라 이 규칙이 아무것도 안 그린다.
+ *   다크의 구분은 표면 밝기가 한다 (위 다크 블록 주석).
+ */
+.promise, .item, .demo, .rcard, .rv, .uk-card, .gd-a, .gd-wrap, .gd-sum li,
+.sx-card, .dg-card, .cmp-col, .mx-card, .mx-sum li, .loading,
+.lv2 .tile, .lv2 .fig{
+  box-shadow:var(--shadow-1);
+}
 .btn-ghost:hover{border-color:var(--fg-3)}
 .btn-primary:focus-visible,.btn-ghost:focus-visible{outline:2px solid var(--border-focus); outline-offset:2px}
 
@@ -237,17 +262,27 @@ header.masthead{border-bottom:1px solid var(--border-default); background:var(--
    주의: 값을 여기서 새로 정하지 않았다. `.hero-say h1`(60/72) ·
      `.hero-say .lead`(20/32)와 같은 수이고, 좁은 폭 분기도 같이 맞춘다
      (`.hero-say h1` 40/48). 두 곳이 갈리면 §6 이다. */
-.intro h2{margin:0 0 var(--s3); font-family:var(--font-display); font-weight:700;
+/* 주의(가장 중요): **`h1` 과 `h2` 를 같이 받는다** (2026-09-21).
+   전에는 `.intro h2` 만이라 히어로가 두 눈금이었다 - `/scan`·`/batch`·
+   `/watch` 는 `<h2>` 라 60px, `/guide`·`/samples`·`/misses`·`/unknown` 은
+   `<h1>` 이라 **아무 규칙도 안 걸려 브라우저 기본 34px** 이었다. 같은
+   히어로 블록인데 제목만 두 배 가까이 차이가 났고, 34px 은 아무도 정한 값이
+   아니었다.
+   주의: 태그가 갈린 것은 문서 구조상 맞다 - 곁가지 화면은 그 제목이 문서의
+     으뜸 제목이라 `h1` 이다. **태그를 맞추는 대신 규칙이 둘 다 받는다.** */
+.intro h1, .intro h2{margin:0 0 var(--s3); font-family:var(--font-display); font-weight:700;
           font-size:60px; line-height:72px; letter-spacing:-.015em}
 .intro p{margin:0; font-size:20px; line-height:32px; color:var(--fg-2); max-width:62ch}
 @media (max-width:640px){
   .intro{padding:var(--s8) 0}
-  .intro h2{font-size:40px; line-height:48px}
+  .intro h1, .intro h2{font-size:40px; line-height:48px}
   .intro p{font-size:18px; line-height:30px}
 }
 
 main{padding:var(--s10) 0 var(--s16)}
-section+section{margin-top:var(--s10)}
+/* 주의: 40 → 48 (시안 눈금 · 2026-09-21). `--s12` 는 이미 있다.
+   여덟 화면 전부에 걸리므로 고친 뒤 여덟 장을 다시 찍고 높이를 적는다. */
+section+section{margin-top:var(--s12)}
 h3{font-size:19px; line-height:1.3; margin:0 0 var(--s3)}
 .hint{font-size:15px; color:var(--fg-3); margin:0 0 var(--s4)}
 
@@ -588,7 +623,7 @@ nav.pages a[aria-current="page"]{color:var(--primary-60); background:var(--prima
  *
  * 주의(가장 중요): **여기서 굵기를 정하지 않는다.** 굵기는 각 제목 규칙이
  *   적는다. 전에는 이 규칙이 `font-weight:400` 을 들고 있었는데, 선택자에
- *   `.intro h2` 가 같이 들어 있어 **`.intro h2{font-weight:700}`(히어로 C안)
+ *   `.intro h2` 가 같이 들어 있어 **히어로 규칙(`.intro h1, .intro h2`)과
  *   과 명시도가 같았다**(둘 다 0-1-1). 같으면 뒤가 이긴다 - 히어로 규칙이
  *   700 을 적어도 화면은 400 이었고, 랜딩의 `.hero-say h1` 만 이 규칙보다
  *   **뒤에 있어서** 700 으로 그려졌다. 같은 제품의 히어로가 그렇게 갈렸고,
@@ -689,7 +724,11 @@ nav.pages a[aria-current="page"]{
  * 주의: 눈금은 README §10-4 다. **화면 글자 최소 15px** (예시 카드 안 한정어만
  *   14px). `--fg-4`(3.7:1)는 18px 미만 글자에 쓰지 않는다 - 보조색은 `--fg-2`.
  */
-body.lv2{word-break:keep-all; overflow-wrap:break-word}
+/* 주의(가장 중요): 한국어 줄바꿈은 **여덟 화면 전부**의 것이다
+   (2026-09-21). 전에는 `body.lv2` 라 랜딩·guide·samples·misses·unknown
+   다섯 장에만 걸렸고, `/scan`·`/batch`·`/watch` 는 어절 중간에서 끊겼다.
+   `lv2` 는 이제 **랜딩 컴포넌트 범위**만 뜻한다 - 타이포는 여기서 준다. */
+body{word-break:keep-all; overflow-wrap:break-word}
 
 /* 히어로 — 1440×900 안에서 끝난다 (헤더 72 + 828). */
 /* 그라데이션 띠. **토큰으로만** 만든다 - 새 색을 여기서 짓지 않는다.
@@ -757,12 +796,12 @@ body.lv2{word-break:keep-all; overflow-wrap:break-word}
 .demo .ex .go{color:var(--brand); font-size:15px; flex:none}
 .demo:hover .ex .go{transform:translateX(2px)}
 
-.lv2 .chip{
-  display:inline-flex; align-items:center; align-self:flex-start; gap:8px;
-  padding:8px 14px; border-radius:999px;
-  font-size:15px; line-height:20px; font-weight:700; white-space:nowrap;
-}
-.lv2 .chip .dot{width:10px; height:10px; border-radius:50%; flex:none}
+/* 주의(중요): 여기 `.lv2 .chip` 이 있었다. 공용 `.chip` 과 **계산값이
+   완전히 같아서**(2026-09-21 실측 - 랜딩·/scan·/samples 셋에서 글자·여백·
+   색·모서리가 한 값) 지웠다. 칩은 한 벌이다.
+   주의: 그 규칙만 `align-self:flex-start` 를 더 들고 있었는데, 칩을 감싸는
+     `.intro-say`·`.hero-say` 가 이미 `align-items:flex-start` 라 결과가
+     같았다. 실측으로 확인하고 지운 것이지 읽어서 지운 것이 아니다. */
 
 /* 예시 결과 카드 — 문구는 전부 서버 것. */
 .hero-art{position:relative; min-height:520px}
@@ -891,13 +930,16 @@ body.lv2{word-break:keep-all; overflow-wrap:break-word}
    넓은 화면에서는 줄이 안 넘쳐 보이는 것이 안 바뀐다. */
 .lv2-sec .end .cta-row{justify-content:center}
 
-.lv2-foot{border-top:1px solid var(--gray-20); padding-block:36px 48px; font-size:16px; line-height:26px; color:var(--fg-2)}
-/* 주의: 공용 `footer p` 가 여기까지 온다. 그 줄은 §9 고정 문구이고 **화면에서
+.site-foot{border-top:1px solid var(--gray-20); padding-block:36px 48px; font-size:16px; line-height:26px; color:var(--fg-2)}
+/* 주의(중요): 이름이 `lv2-foot` 였다. 2026-09-20 에 **여덟 화면 공통**
+   바닥글이 되면서 세대 이름(lv2)이 사실과 달라져 `site-foot` 로 바꿨다.
+   마크업의 소유자는 `sourcing_guard/layout.py` 다.
+   주의: 공용 `footer p` 가 여기까지 온다. 그 줄은 §9 고정 문구이고 **화면에서
    가장 중요한 한 줄**인데 작으면 읽지 않는다. 2026-09-13 에 공용 값이 13px
    이어서 측정이 잡았고(눈으로는 "작은 안내" 로 보여서 넘어간다), 지금은 공용도
    15px 이지만 랜딩은 16px 로 따로 든다. */
-.lv2-foot p{margin:0 0 12px; font-size:16px; line-height:26px; color:var(--fg-2)}
-.lv2-foot .row{display:flex; justify-content:space-between; gap:24px; font-size:15px; line-height:22px}
+.site-foot p{margin:0 0 12px; font-size:16px; line-height:26px; color:var(--fg-2)}
+.site-foot .row{display:flex; justify-content:space-between; gap:24px; font-size:15px; line-height:22px}
 
 @media (max-width:1000px){
   /* 주의(중요): `1fr` 이 아니라 `minmax(0,1fr)` 이다. `1fr` 은 `minmax(auto,1fr)`
@@ -922,7 +964,7 @@ body.lv2{word-break:keep-all; overflow-wrap:break-word}
   .lv2 .pane-h,.lv2 .band-h{font-size:26px; line-height:36px}
   .rc-axes{grid-template-columns:1fr}
   .rc-ax{border-right:0; border-bottom:1px solid var(--gray-20)}
-  .lv2-foot .row{flex-direction:column; gap:6px}
+  .site-foot .row{flex-direction:column; gap:6px}
 }
 
 /* == 도구 화면 (/scan · /batch · /watch) — 디자인 v0.1 =================
@@ -1009,13 +1051,14 @@ body{background:var(--bg-page)}
   padding:var(--s8) 0 var(--s6);
 }
 /* 주의(중요): **여기서도 굵기를 적지 않는다.** 히어로 굵기의 소유자는 위
-   `.intro h2{font-weight:700}` **하나**다 (C안 · 2026-09-20).
+   히어로 규칙 `.intro h1, .intro h2{font-weight:700}` **하나**다
+   (C안 · 2026-09-20 · h1 합류 2026-09-21).
    이 자리에 `font-weight` 를 적으면 명시도가 같고 뒤라서 이기고, 위 규칙은
    말만 남는다 - 공용 규칙 `h1, h2, .wordmark, .intro h2{400}` 이 정확히
    그렇게 이기고 있었다. 지금 그 공용 규칙은 서체만 준다.
    `tests/test_heading_weight.py` 가 computed 로 재서 랜딩(`.hero-say h1`)과
    같은 값인지 단정한다. */
-.intro h2 .ask{color:var(--brand)}
+.intro h1 .ask, .intro h2 .ask{color:var(--brand)}
 .intro-grid{display:grid; grid-template-columns:minmax(0,1fr) auto; gap:24px;
             align-items:center}
 .intro-say{display:flex; flex-direction:column; align-items:flex-start; gap:var(--s3)}
@@ -1025,7 +1068,15 @@ body{background:var(--bg-page)}
   font-weight:700; color:var(--brand);
 }
 .intro-art{position:relative; display:flex; align-items:center; gap:12px}
-.intro-face{width:112px; height:112px; flex:none}
+/* 주의(가장 중요): **마스코트 칸의 크기는 여기 하나가 정한다** (2026-09-21).
+   전에는 여기가 112px 이고 `.intro-face.art` 만 225px 이라, **그림 자산을
+   받은 두 화면(`/scan`·`/batch`)만 225 이고 나머지 다섯은 112** 였다.
+   디자인 판단이 아니라 **자산을 받은 순서**가 만든 차이였다 - 화면을 나란히
+   놓으면 같은 자리의 마스코트가 두 배 차이로 보인다.
+   주의: 225 의 근거와 시안 §13 을 넘긴 사실은 아래 `.art` 주석에 있다.
+     그 조건("제목을 60px 로 같이 키워야 한다")은 이제 여덟 화면 전부에서
+     충족된다 - 히어로 제목이 전부 60px 이다. */
+.intro-face{width:225px; height:225px; flex:none}
 /* 그림 자산 히어로. `--art` 에 파일 경로만 넣으면 되고, 원본(512px·SVG)이
    오면 **파일만** 갈아 끼운다 - 마크업도 CSS 도 안 바뀐다.
    주의: 가로세로 비가 그림마다 달라 `contain` 으로 맞춘다. 늘리면 얼굴이
@@ -1052,7 +1103,8 @@ body{background:var(--bg-page)}
        맞추면 된다.
      주의: 남는 것은 선명도뿐이다 - 113px 원본을 225 로 그리므로 2배,
        레티나에서 4배다. 원본을 받으면 파일만 갈아 끼운다 (미완 §1-ab). */
-  width:225px; height:225px;
+  /* 주의: 크기는 위 `.intro-face` 가 정한다. 전에 여기서 또 정했는데,
+     그래서 `.art` 가 붙은 화면만 커지는 갈림이 생겼다. */
   background:var(--art) center/contain no-repeat;
 }
 /* 말풍선. 꼬리는 테두리 없이 바탕색만 - 1px 테두리에 꼬리를 그리면 이음매가

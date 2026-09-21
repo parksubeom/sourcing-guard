@@ -98,10 +98,20 @@ def test_the_shared_display_rule_sets_no_weight():
       처럼 보이지만 `h2` 단독은 0-0-1 이고 `.intro h2` 는 0-1-1) 선택자에
       클래스가 섞이는 순간 덫이 된다 - 실제로 `.intro h2` 가 섞여 있었다.
     """
-    hit = [(sel, decl) for sel, decl in _rules(_CSS)
-           if "--font-display" in decl and "font-weight" in decl
-           and "," in sel and "h2" in sel]
-    assert not hit, f"공용 제목 규칙이 굵기를 정한다: {hit}"
+    # ⚠⚠ **선택자 글자 모양이 아니라 조각으로 본다** (2026-09-21).
+    #   전에는 `"," in sel` 로 걸렀는데, 히어로 규칙이 `.intro h1, .intro h2` 로
+    #   합쳐지자(프로덕션 · h1 합류) 그것까지 "공용" 으로 잡았다. 덫이 되는 것은
+    #   **맨 `h1`·`h2`**(0-0-1)가 굵기를 적는 경우이지 `.intro h2`(0-1-1)가
+    #   아니다 - 후자는 소유자다.
+    hit = []
+    for sel, decl in _rules(_CSS):
+        if "font-weight" not in decl:
+            continue
+        for part in sel.split(","):
+            if part.strip() in ("h1", "h2"):
+                hit.append((sel.strip(), decl.strip()[:60]))
+                break
+    assert not hit, f"맨 h1·h2 가 굵기를 정한다 - 개별 규칙과 덫이 된다: {hit}"
 
     shared = [sel for sel, decl in _rules(_CSS)
               if "font-family:var(--font-display)" in decl.replace(" ", "")
@@ -115,10 +125,13 @@ def test_the_shared_display_rule_sets_no_weight():
 
 def test_the_two_heroes_ask_for_the_same_weight():
     """같은 제품의 히어로가 갈리면 안 된다 - 한쪽만 굵었던 것이 이 건이다."""
+    # ⚠ 선택자가 `.intro h1, .intro h2` 로 합쳐질 수 있으므로 **조각으로** 찾는다.
     want = {}
     for name, (cls, tag) in _HEADINGS.items():
         for sel, decl in _rules(_CSS):
-            if sel.strip() in (f"{cls} {tag}",) and "font-weight" in decl:
+            if "font-weight" not in decl:
+                continue
+            if any(part.strip() == f"{cls} {tag}" for part in sel.split(",")):
                 want[name] = re.search(r"font-weight:\s*(\d+)", decl).group(1)
     assert len(want) == 2, f"제목 규칙을 못 찾았다: {want}"
     assert len(set(want.values())) == 1, f"두 히어로의 굵기가 다르다: {want}"
@@ -226,8 +239,12 @@ def _visit(browser, base, path, hero_sel):
 
 def _declared(sel: str) -> str:
     """app.css 가 그 선택자에 **적어 둔** 굵기. 기대값을 손으로 적지 않는다."""
+    # ⚠ 선택자가 `.intro h1, .intro h2` 로 합쳐질 수 있다 (프로덕션 · h1 합류
+    #   2026-09-21). **조각으로** 찾는다 - 글자 모양에 기대면 합치는 순간 깨진다.
     for rule_sel, decl in _rules(_CSS):
-        if rule_sel.strip() == sel and "font-weight" in decl:
+        if "font-weight" not in decl:
+            continue
+        if any(part.strip() == sel for part in rule_sel.split(",")):
             return re.search(r"font-weight:\s*(\d+)", decl).group(1)
     raise AssertionError(f"`{sel}` 의 font-weight 선언을 app.css 에서 못 찾았다")
 
