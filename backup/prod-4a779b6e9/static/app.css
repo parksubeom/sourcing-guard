@@ -1,0 +1,1654 @@
+/* 안심 소싱 돋보기 — 공용 스타일
+ *
+ * 스캔 페이지와 감시 목록 페이지가 같은 파일을 쓴다. 신호등 배지·색·톤이
+ * 두 화면에서 갈리면 사용자가 같은 RED 를 다른 것으로 읽는다.
+ *
+ * 차용한 것은 공공 디자인 시스템의 접근성 우선 시각 언어다 — 색 단계,
+ * 1px 보더 위계, 2px 포커스 아웃라인, 절제된 모션. 정부 식별 요소와
+ * 시스템 이름은 가져오지 않는다.
+ */
+
+/* == 디자인 시스템 v0.1 (design/tokens.css) ========================
+ * 주의: 여기는 design/tokens.css 를 옮겨 온 것이다. 값을 여기서 고치지 말고
+ *   그쪽을 고친 뒤 다시 옮긴다 - 두 곳에 적으면 한쪽이 낡는다 (CLAUDE.md 6절).
+ *   tests/test_design_tokens.py 가 두 파일을 대조한다.
+ * 주의: 변수 이름은 하나도 안 바뀌었다. 실측 - app 43개 중 빠진 이름 0 ·
+ *   새 이름 24 (--signal-* 12 · --brand-* 3 · --illust-* 3 · --font-* 3 ·
+ *   --bg-page/-card · --r-pill). 그래서 나머지 규칙이 그대로 새 값으로 그려진다.
+ *
+ * 주의: 이 파일에는 이모지를 쓰지 않는다. 경고 삼각형도 이모지다 -
+ *   tests/test_frontend.py 의 test_no_emoji_anywhere 가 막는다. 이 저장소에서
+ *   같은 함정에 아홉 번째로 걸렸다.
+ */
+/* 안심 소싱 돋보기 — 디자인 토큰 v0.1 (2026-09-13 · 총괄 초안 · 시피님 확정 전)
+ *
+ * 쓰는 법: app.css 의 `:root{ … }` 블록을 이 파일의 :root 블록으로 **통째로** 바꾼다.
+ * 변수 이름은 기존 app.css 와 같게 두었으므로(--gray-*, --primary-*, --fg-*, --bg-*, --r-*, --s*)
+ * 값만 바뀌고 나머지 CSS 는 손대지 않아도 화면 전체가 새 팔레트로 넘어간다.
+ * 새로 생긴 이름(--brand-*, --signal-*, --illust-*, --font-*, --bg-page, --bg-card)은
+ * 새 컴포넌트(마스코트·로딩·⓪ 절)에서 쓴다.
+ *
+ * 원칙 (design/README.md §1)
+ *   1. 브랜드색은 오키드 하나. 신호등(정상·주의·위험·일부 확인)과 색상환에서 멀다.
+ *      오렌지·노랑은 '주의' 와, 민트는 '정상' 과 한 색으로 읽혀서 뺐다.
+ *   2. 신호등 색은 판정을 말하는 자리에만 쓴다. 버튼·링크·장식에 초록·주황·빨강을 쓰지 않는다.
+ *   3. 캐릭터 색(살구·자두 잉크)은 UI 의미가 없다. 다크 모드에서도 바뀌지 않는다.
+ *   4. 그림자는 거의 안 쓴다. 카드는 선 하나(--border-default)로 구분한다.
+ *
+ * 정부 식별 요소(KC 마크·정부 로고·공공 디자인 시스템 폰트)는 가져오지 않는다 — app.css 머리주석 그대로.
+ */
+
+:root{
+  /* ── 중성색: 차가운 슬레이트 (기존 --gray-* 이름 유지) ──
+     `design/안심_소싱_돋보기_디자인_MD.md` §2 의 neutral-* 를 우리 눈금에 맞춘 것.
+     주의(중요): 문서에 없는 두 단(--gray-50 · --gray-60)은 **대비를 재서** 정했다 -
+       fg-4 가 페이지 바탕(#FAF8FF) 위에서 4.5 를 넘어야 한다. */
+  --gray-5:#FCFBFF;  --gray-10:#F3F2FA; --gray-20:#EBEAF3; --gray-30:#E5E7EB;
+  --gray-50:#687284; --gray-60:#5C6579; --gray-80:#4B5568; --gray-100:#20243A;
+
+  /* ── 브랜드: 바이올렛 (문서 brand-*) ── */
+  --primary-10:#F5F3FF; --primary-50:#8B5CF6; --primary-60:#7C3AED; --primary-70:#4C1D95;
+  --secondary-10:#F3F2FA;
+  --brand:var(--primary-50); --brand-strong:var(--primary-60); --brand-tint:var(--primary-10);
+
+  /* ── 신호등: 화면이 유일하게 "판단" 을 색으로 말하는 자리 ──
+     주의(중요): `-text` 는 문서의 600 을 그대로 쓰면 tint 위에서 AA 미달이라(주황 2.92)
+       **같은 색상에서 명도만 낮춰** 4.6 이상으로 맞춘 값이다. 눈으로 고르지
+       않았다 - `tests/test_design_tokens.py` 가 다시 잰다. */
+  --success:#16845B; --warning:#D97706; --danger:#DC3E4D; --info:var(--primary-60);
+  --signal-green:#16845B;   --signal-green-tint:#EAF8F1;   --signal-green-text:#157D56;
+  --signal-amber:#D97706;   --signal-amber-tint:#FFF4DF;   --signal-amber-text:#A75C05;
+  --signal-red:#DC3E4D;     --signal-red-tint:#FFF0F1;     --signal-red-text:#D22636;
+  /* 꽉 찬 신호 알약. **바탕과 그 위 글자를 한 쌍으로** 둔다 (2026-09-20).
+     전에는 바탕만 `-text`(어둡게만 내린 값)를 썼는데, 주황이 그렇게 내려가면
+     흙빛으로 읽혀 같은 화면의 옅은 알약과 다른 색으로 보였다. 실측:
+
+         본색 위 흰 글자    초록 4.68 · 주황 3.19 · 빨강 4.34
+         본색 위 어두운 글자  초록 3.26 · 주황 4.79 · 빨강 3.52
+
+     주황만 답이 반대다. 그래서 **바탕은 본색으로 통일하고 글자를 각자 고른다** -
+     눈이 읽는 것은 색조이고, 색조가 같으면 같은 신호로 읽힌다.
+     빨강은 본색(#DC3E4D)이 흰 글자로 4.34 라 3% 어둡게 한 값이다. */
+  --signal-green-fill:#16845B;  --signal-green-on-fill:#FFFFFF;   /* 4.68 */
+  --signal-amber-fill:#D97706;  --signal-amber-on-fill:#20243A;   /* 4.79 */
+  --signal-red-fill:#DB3746;    --signal-red-on-fill:#FFFFFF;     /* 4.52 */
+  /* 회색불도 꽉 찬 칩이 된다. 본색(#7F8794)에 흰 글자는 **3.62** 로 미달이라
+     한 단계 어둡게 쓴다. RGB 폭 20 이라 '회색불은 회색' 은 그대로다. */
+  --signal-unknown-fill:#646B78; --signal-unknown-on-fill:#FFFFFF; /* 5.36 */
+  --signal-unknown:#7F8794; --signal-unknown-tint:#F1F2F7; --signal-unknown-text:#666E7B;
+  /* 주의(중요): 문서의 neutral-500(#7A8496)은 R·G·B 폭이 28 이라 "회색불은 회색"
+     규칙(폭 24 이하)을 넘는다. **검사를 늦추지 않고 값을 회색 쪽으로**
+     옮겼다 - 회색불은 '모름' 이고 색을 주면 판정으로 읽힌다 (R3). */
+
+  /* ── 캐릭터 전용. UI 의미 없음 — **팔레트가 바뀌어도 그대로 둔다** ── */
+  --illust-body:#FFC29B; --illust-body-2:#F29B6B; --illust-ink:#3B2A5E;
+  --illust-blob:#F1EDFF;        /* 히어로 뒤 원. 배경이 라벤더로 바뀌어 여기만 맞춘다 */
+  --signal-amber-border:#F2C489; /* 오른쪽에 결과가 그려진 예시 카드의 테두리 (랜딩 v2) */
+
+  /* ── 글 · 바탕 · 선 ── */
+  --fg-1:var(--gray-100); --fg-2:var(--gray-80); --fg-3:var(--gray-60); --fg-4:var(--gray-50);
+  --bg-page:#FAF8FF;            /* 페이지 바탕 — body 에 쓴다 (문서 page) */
+  --bg-canvas:#FFFFFF;          /* 카드·입력 바탕 (문서 surface) */
+  --bg-card:var(--bg-canvas);
+  --bg-subtle:var(--gray-10); --bg-muted:var(--secondary-10);
+  --border-default:var(--gray-30); --border-focus:var(--primary-50);
+
+  /* ── 모서리: 기존보다 한 단계 둥글게 — 캐릭터와 같은 곡률 ── */
+  --r-xs:6px; --r-s:8px; --r-m:12px; --r-l:14px; --r-xl:16px;
+  /* v2 큰 카드 (design/README 10-4 '큰 카드 반경 20~28'). 토큰 없이 생짜
+     px 를 쓰면 test_corner_radius_stays_within_scale 이 막는다 - 그 검사가
+     상한을 여기서 읽기 때문이다. 눈금을 올릴 자리가 여기 한 곳이다. */
+  --r-2xl:20px; --r-3xl:24px; --r-4xl:28px;
+  --r-pill:999px;
+
+  /* ── 간격: 기존 그대로 ── */
+  --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:20px; --s6:24px; --s8:32px; --s10:40px; --s12:48px; --s16:64px;
+
+  /* ── 그림자: 떠 있어야 하는 것(툴팁·메뉴)만 ── */
+  --shadow-1:0 1px 2px rgba(30,25,50,.04), 0 8px 24px rgba(30,25,50,.05);
+  --shadow-2:0 6px 20px rgba(30,25,50,.10);
+
+  /* ── 글꼴 ── */
+  /* 제목 · 워드마크. 2026-09-20 에 고운돋움 → Pretendard 700.
+     주의(중요): 이름이 **"Pretendard Variable"** 이다. 가변판
+       @font-face 가 그 이름으로 선언한다(실측) - "Pretendard" 만
+       적으면 CDN 글꼴이 안 걸리고 로컬에 깔린 사람만 본다.
+       뒤의 "Pretendard" 는 로컬 설치판용 폴백이다.
+     주의(중요): 고운돋움을 버린 이유 - 굵기가 400 하나뿐이라
+       시안의 굵은 제목이 안 나온다. 고운돋움을 고른 근거였던
+       "캐릭터와 같은 온도"(README:69)는 **마스코트를 112 → 225 로**
+       키우면서 그림이 직접 맡는다 - 온도를 잃는 것이 아니라
+       글꼴에서 캐릭터로 옮기는 것이다 (총괄 판정).
+     주의: 본문은 Noto Sans KR 그대로다. 바꾼 것은 제목뿐이다. */
+  --font-display:"Pretendard Variable","Pretendard","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  --font-body:"Noto Sans KR",-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  --font-mono:ui-monospace,Menlo,Consolas,monospace;
+
+  color-scheme: light;
+}
+
+/* ── 다크 모드 — 토큰만 준비. 토글 UI 는 예정(미구현). ──
+ * 시스템이 다크면 따라가고(data-theme 없음), 사용자가 고르면 data-theme 이 이긴다.
+ * 캐릭터 색(--illust-*)과 신호등 본색은 그대로. 옅은 배경(tint)만 투명도로 바꾼다.
+ */
+[data-theme="dark"]{
+  --gray-5:#171A26;  --gray-10:#1F2333; --gray-20:#272C3F; --gray-30:#333952;
+  --gray-50:#7C88A8; --gray-60:#9AA5C0; --gray-80:#C2CADD; --gray-100:#EEF1FB;
+  --primary-10:rgba(146,116,255,.18); --primary-50:#9274FF; --primary-60:#B3A0FF; --primary-70:#CFC3FF;
+  --secondary-10:#1F2333;
+  --signal-green-tint:rgba(17,153,106,.22);  --signal-green-text:#6FD9AE;
+  --signal-amber-tint:rgba(217,123,0,.22);   --signal-amber-text:#F2B36B;
+  --signal-red-tint:rgba(232,73,81,.22);     --signal-red-text:#FF9DA2;
+  /* 다크에서는 밝은 바탕 + 어두운 글자다. 주의(가장 중요): 2026-09-20 까지 **흰 글자**
+     였고 실측 1.72 · 1.84 · 1.98 로 전부 AA 미달이었다 - 라이트만 재는
+     검사였고 다크는 아무도 안 봤다. */
+  --signal-green-fill:#6FD9AE;  --signal-green-on-fill:#20243A;   /* 8.88 */
+  --signal-amber-fill:#F2B36B;  --signal-amber-on-fill:#20243A;   /* 8.32 */
+  --signal-red-fill:#FF9DA2;    --signal-red-on-fill:#20243A;     /* 7.71 */
+  --signal-unknown-fill:#B6BCC7; --signal-unknown-on-fill:#20243A; /* 8.01 */
+  --signal-unknown-tint:rgba(138,148,174,.22); --signal-unknown-text:#B6BFD6;
+  --bg-page:#12141F; --bg-canvas:#1A1E2D;
+  --illust-blob:rgba(255,194,155,.10); --signal-amber-border:rgba(217,123,0,.45);
+  /* 주의(가장 중요): 다크에서는 **그림자를 쓰지 않는다** (총괄 판정 (가) ·
+     2026-09-21). 어두운 바탕에 어두운 그림자는 원리적으로 안 보인다 -
+     라이트 값 `rgba(30,25,50,.04)` 는 다크에서 아무것도 안 그린다.
+     대신 표면이 이미 한 칸 위다: 페이지 #12141F · 카드 #1A1E2D.
+     주의: 다크용 그림자를 새로 만들지 않기로 했다. 만들면 대비를 재야
+       할 것이 하나 더 늘고, 그 자리에서 라이트만 재는 일이 또 난다. */
+  --shadow-1:none;
+  --shadow-2:0 6px 20px rgba(0,0,0,.45);
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --gray-5:#171A26;  --gray-10:#1F2333; --gray-20:#272C3F; --gray-30:#333952;
+    --gray-50:#7C88A8; --gray-60:#9AA5C0; --gray-80:#C2CADD; --gray-100:#EEF1FB;
+    --primary-10:rgba(146,116,255,.18); --primary-50:#9274FF; --primary-60:#B3A0FF; --primary-70:#CFC3FF;
+    --secondary-10:#1F2333;
+    --signal-green-tint:rgba(17,153,106,.22);  --signal-green-text:#6FD9AE;
+    --signal-amber-tint:rgba(217,123,0,.22);   --signal-amber-text:#F2B36B;
+    --signal-red-tint:rgba(232,73,81,.22);     --signal-red-text:#FF9DA2;
+    /* 다크에서는 밝은 바탕 + 어두운 글자다. 주의(가장 중요): 2026-09-20 까지 **흰 글자**
+       였고 실측 1.72 · 1.84 · 1.98 로 전부 AA 미달이었다 - 라이트만 재는
+       검사였고 다크는 아무도 안 봤다. */
+    --signal-green-fill:#6FD9AE;  --signal-green-on-fill:#20243A;   /* 8.88 */
+    --signal-amber-fill:#F2B36B;  --signal-amber-on-fill:#20243A;   /* 8.32 */
+    --signal-red-fill:#FF9DA2;    --signal-red-on-fill:#20243A;     /* 7.71 */
+    --signal-unknown-fill:#B6BCC7; --signal-unknown-on-fill:#20243A; /* 8.01 */
+    --signal-unknown-tint:rgba(138,148,174,.22); --signal-unknown-text:#B6BFD6;
+    --bg-page:#12141F; --bg-canvas:#1A1E2D;
+    --illust-blob:rgba(255,194,155,.10); --signal-amber-border:rgba(217,123,0,.45);
+    /* 주의: 위 `[data-theme="dark"]` 블록과 **같은 이유**로 none 이다. */
+    --shadow-1:none;
+    --shadow-2:0 6px 20px rgba(0,0,0,.45);
+    color-scheme: dark;
+  }
+}
+
+/* ── 타이포 눈금 (design/README.md §3). 클래스는 새 화면에서만 쓴다 ── */
+.t-display{font-family:var(--font-display); font-weight:400; font-size:48px; line-height:60px; letter-spacing:-.01em}
+.t-h1{font-family:var(--font-display); font-weight:400; font-size:28px; line-height:36px}
+.t-h2{font-family:var(--font-body); font-weight:700; font-size:20px; line-height:28px}
+.t-body{background:var(--bg-page);font-family:var(--font-body);font-family:var(--font-body); font-weight:400; font-size:15px; line-height:24px}
+.t-label{font-family:var(--font-body); font-weight:700; font-size:15px; line-height:20px; color:var(--fg-2)}
+.t-num{font-family:var(--font-body); font-weight:700; font-size:44px; line-height:48px; font-variant-numeric:tabular-nums}
+@media (max-width:640px){ .t-display{font-size:34px; line-height:42px} .t-h1{font-size:24px; line-height:32px} .t-num{font-size:36px; line-height:40px} }
+
+/* ── 신호 칩: 색은 신호등 넷에서만. 문구는 SIGNAL_LABEL / SIGNAL_SHORT (index.html) 그대로 ── */
+/* 주의: `white-space:nowrap` 이 없으면 좁은 칸에서 '정상' 이 '정/상' 으로
+   접힌다 - 칩이 커진 v2 에서 데모 버튼이 실제로 그렇게 나왔다. */
+.chip{display:inline-flex; align-items:center; align-self:flex-start; gap:8px; padding:8px 14px; border-radius:var(--r-pill); font-size:15px; font-weight:700; line-height:20px; white-space:nowrap}
+.chip .dot{width:10px; height:10px; border-radius:50%; flex:none; margin:0}
+.chip.GREEN{background:var(--signal-green-tint); color:var(--signal-green-text)}   .chip.GREEN .dot{background:var(--signal-green)}
+.chip.AMBER{background:var(--signal-amber-tint); color:var(--signal-amber-text)}   .chip.AMBER .dot{background:var(--signal-amber)}
+.chip.RED{background:var(--signal-red-tint); color:var(--signal-red-text)}         .chip.RED .dot{background:var(--signal-red)}
+.chip.UNKNOWN{background:var(--signal-unknown-tint); color:var(--signal-unknown-text)} .chip.UNKNOWN .dot{background:var(--signal-unknown)}
+
+/* ── 버튼: 브랜드색 하나. 신호등 색 버튼은 만들지 않는다 ── */
+.btn-primary{display:inline-flex; align-items:center; justify-content:center; padding:16px 28px; border:0; border-radius:var(--r-m); background:var(--brand); color:#fff; font:inherit; font-size:17px; font-weight:700; cursor:pointer}
+.btn-primary:hover{background:var(--brand-strong)}
+.btn-ghost{display:inline-flex; align-items:center; padding:16px 20px; border:1px solid var(--border-default); border-radius:var(--r-m); background:transparent; color:var(--fg-2); font:inherit; font-size:15px; font-weight:500; cursor:pointer}
+
+/* ── 카드 표면 ─────────────────────────────────────────────
+ * 주의(가장 중요): `--shadow-1` 이 토큰으로만 있고 **쓰는 곳이 0** 이었다
+ *   (2026-09-21 실측). 시안 §16 값이 선언만 되어 있던 셈이다.
+ * 주의: 여기 든 것은 **내용을 담는 면**이다. 버튼·입력·칩·점·내비는 뺐다 -
+ *   그것들은 카드가 아니고, 그림자를 주면 누를 것처럼 보인다.
+ * 주의: 랜딩의 큰 띠(`.lv2 .band` 28px · `.lv2 .pane` 24px)도 뺐다. 화면
+ *   폭을 채우는 면이라 그림자가 붙으면 카드가 아니라 층으로 읽힌다.
+ * 주의: 다크에서는 `--shadow-1:none` 이라 이 규칙이 아무것도 안 그린다.
+ *   다크의 구분은 표면 밝기가 한다 (위 다크 블록 주석).
+ */
+.promise, .item, .demo, .rcard, .rv, .uk-card, .gd-a, .gd-wrap, .gd-sum li,
+.sx-card, .dg-card, .cmp-col, .mx-card, .mx-sum li, .loading,
+.lv2 .tile, .lv2 .fig{
+  box-shadow:var(--shadow-1);
+}
+.btn-ghost:hover{border-color:var(--fg-3)}
+.btn-primary:focus-visible,.btn-ghost:focus-visible{outline:2px solid var(--border-focus); outline-offset:2px}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0; background:var(--bg-canvas); color:var(--fg-1);
+  /* 주의: 전에는 공공 디자인 시스템 폰트를 맨 앞에 두고 "Noto Sans KR" 을
+     맨 뒤에 뒀다. 그래서 **웹폰트를 받아 놓고 안 썼다** - 맥은 Apple SD
+     Gothic Neo, 윈도우는 맑은 고딕으로 그려지고 제목(고운돋움)과 본문 글꼴이
+     섞인다. 그것이 "폰트가 조잡하다" 의 절반이었다 (design/README §10-1).
+     토큰 하나로 몬다. 공공 디자인 시스템 폰트는 쓰지 않는다 - 이 파일 머리
+     주석의 "정부 식별 요소를 가져오지 않는다" 와 같은 이유다. */
+  font-family:var(--font-body);
+  font-size:17px; line-height:1.55; letter-spacing:0;
+}
+.container{max-width:1248px; margin:0 auto; padding:0 var(--s6)}
+:focus-visible{outline:2px solid var(--border-focus); outline-offset:2px}
+/* 주의: 색을 지정하지 않으면 브라우저 기본 링크색(파랑)이 남는다. 화면 밖에
+   있어 사람 눈엔 안 보이지만 '파란색 0곳' 기준에는 걸린다 - 실제로 걸렸다. */
+.skip{position:absolute; left:-9999px; color:var(--brand)}
+.skip:focus{left:var(--s4); top:var(--s4); z-index:10; background:var(--primary-50); color:#fff; padding:var(--s2) var(--s4); border-radius:var(--r-s)}
+
+/* ── masthead ─────────────────────────────────────────── */
+header.masthead{border-bottom:1px solid var(--border-default); background:var(--bg-canvas)}
+.masthead .container{display:flex; align-items:center; gap:var(--s3); min-height:64px; flex-wrap:wrap}
+.mark{width:32px; height:32px; flex:none; color:var(--primary-70)}
+.wordmark{font-size:19px; font-weight:700; letter-spacing:-.01em}
+
+/* ── hero / intro ─────────────────────────────────────── */
+.intro{background:var(--bg-muted); padding:var(--s10) 0}
+/* 주의(가장 중요): **랜딩 히어로와 같은 눈금이다** (2026-09-20 총괄).
+   전에는 32px 이었고 랜딩은 60px 이라, 같은 제품이 두 벌로 보였다 -
+   주 버튼에서 이미 적어 둔 원칙인데(`.lv2 .btn-primary` 주석) 제목에는
+   적용을 안 했다. 시안을 재 보니 시안도 60px 이었다.
+   주의: 값을 여기서 새로 정하지 않았다. `.hero-say h1`(60/72) ·
+     `.hero-say .lead`(20/32)와 같은 수이고, 좁은 폭 분기도 같이 맞춘다
+     (`.hero-say h1` 40/48). 두 곳이 갈리면 §6 이다. */
+/* 주의(가장 중요): **`h1` 과 `h2` 를 같이 받는다** (2026-09-21).
+   전에는 `.intro h2` 만이라 히어로가 두 눈금이었다 - `/scan`·`/batch`·
+   `/watch` 는 `<h2>` 라 60px, `/guide`·`/samples`·`/misses`·`/unknown` 은
+   `<h1>` 이라 **아무 규칙도 안 걸려 브라우저 기본 34px** 이었다. 같은
+   히어로 블록인데 제목만 두 배 가까이 차이가 났고, 34px 은 아무도 정한 값이
+   아니었다.
+   주의: 태그가 갈린 것은 문서 구조상 맞다 - 곁가지 화면은 그 제목이 문서의
+     으뜸 제목이라 `h1` 이다. **태그를 맞추는 대신 규칙이 둘 다 받는다.** */
+.intro h1, .intro h2{margin:0 0 var(--s3); font-family:var(--font-display); font-weight:700;
+          font-size:60px; line-height:72px; letter-spacing:-.015em}
+.intro p{margin:0; font-size:20px; line-height:32px; color:var(--fg-2); max-width:62ch}
+@media (max-width:640px){
+  .intro{padding:var(--s8) 0}
+  .intro h1, .intro h2{font-size:40px; line-height:48px}
+  .intro p{font-size:18px; line-height:30px}
+}
+
+main{padding:var(--s10) 0 var(--s16)}
+/* 주의: 40 → 48 (시안 눈금 · 2026-09-21). `--s12` 는 이미 있다.
+   여덟 화면 전부에 걸리므로 고친 뒤 여덟 장을 다시 찍고 높이를 적는다. */
+section+section{margin-top:var(--s12)}
+h3{font-size:19px; line-height:1.3; margin:0 0 var(--s3)}
+.hint{font-size:15px; color:var(--fg-3); margin:0 0 var(--s4)}
+
+/* ── 데모 버튼 — 랜딩과 /scan 이 **같은 컴포넌트**다 ─────────
+ *
+ * 칩 · 제목 · 부제를 **세로로** 쌓는다. 가로로 놓으면 셋이 폭을 나눠 가져
+ * 세 칸 모두 두세 어절마다 끊긴다 - 실측(1440px · /scan):
+ *
+ *     칩 74px · 제목 103px · 부제 157px   →   "같은 상품에 / 재질 한 줄 추 / 가"
+ *
+ * 시피님 지시(2026-09-14): "이렇게 줄바꿈 될 바엔 차라리 컬럼 형태로,
+ * 박스 높이를 늘리더라도." 높이는 grid 가 세 칸을 맞춰 준다.
+ *
+ * 주의(중요): 랜딩(`.lv2 .demo`)이 같은 모양을 따로 들고 있었다. 한 곳에 둔다 -
+ *   두 곳에 적으면 한쪽만 고쳐도 나머지가 어긋난다 (CLAUDE.md §6).
+ *   랜딩은 `<a>`, /scan 은 `<button>` 이라 그 차이만 아래에서 덧쓴다.
+ */
+.demos{display:grid; gap:var(--s3); grid-template-columns:repeat(3,1fr)}
+@media (max-width:900px){ .demos{grid-template-columns:1fr} }
+.demo{
+  display:flex; flex-direction:column; align-items:flex-start; gap:12px;
+  text-align:left; background:var(--bg-canvas);
+  border:1.5px solid var(--border-default); border-radius:var(--r-xl);
+  padding:20px 22px; font:inherit; color:inherit; cursor:pointer;
+  transition:border-color 160ms ease-out, box-shadow 160ms ease-out;
+}
+.demo:hover{border-color:var(--primary-50); box-shadow:var(--shadow-2)}
+.demo:disabled{background:var(--bg-subtle); color:var(--fg-4); cursor:not-allowed; border-color:var(--border-default); box-shadow:none}
+.dot{width:12px; height:12px; border-radius:999px; flex:none; margin-top:7px}
+.dot.green{background:var(--success)} .dot.amber{background:var(--warning)} .dot.red{background:var(--danger)}
+/* 제목과 부제의 위계. 전에는 **둘 다 17px/400** 이라 부제가 제목만큼 크게
+   읽혔다(실측). 부제는 한정어다. */
+.demo .t{font-size:17px; line-height:26px; font-weight:700}
+.demo .n{font-size:15px; line-height:22px; color:var(--fg-2)}
+
+/* ── input ────────────────────────────────────────────── */
+textarea{
+  width:100%; min-height:180px; resize:vertical; padding:14px;
+  font:inherit; font-size:15px; line-height:1.55; color:var(--fg-1);
+  background:var(--bg-canvas); border:1px solid var(--border-default); border-radius:var(--r-s);
+  transition:border-color 160ms ease-out;
+}
+textarea::placeholder{color:var(--fg-3)}
+textarea:hover{border-color:var(--fg-3)}
+textarea:focus{border-color:var(--primary-50); outline:2px solid var(--border-focus); outline-offset:2px}
+.actions{display:flex; align-items:center; gap:var(--s4); margin-top:var(--s4); flex-wrap:wrap}
+/* 주 버튼은 랜딩과 같은 눈금이다 - 높이 60 · 글자 19 · 반경 --r-l
+   (`.lv2 .btn-primary`). 도구 화면만 56 이면 같은 제품이 두 벌로 보인다. */
+.btn{
+  height:60px; padding:0 32px; border:0; border-radius:var(--r-l);
+  background:var(--primary-50); color:#fff; font:inherit; font-size:19px; font-weight:700;
+  cursor:pointer; transition:background-color 160ms ease-out;
+}
+.btn:hover{background:var(--primary-60)}
+.btn:active{background:var(--primary-70)}
+.btn:disabled{background:var(--bg-subtle); color:var(--fg-4); cursor:not-allowed}
+/* 짝이 되는 보조 버튼. **높이는 같고 무게가 다르다** - 나란히 놓였을 때
+   높이가 다르면 줄이 어긋나 보인다. /watch 의 "지금 대조하기" 도 이것이다.
+   카드 안 작은 버튼은 `.btn-t.sm` 이 38px 로 따로 받는다. */
+.btn-t{
+  height:60px; padding:0 var(--s5); border:1px solid var(--border-default); border-radius:var(--r-l);
+  background:var(--bg-canvas); color:var(--fg-1); font:inherit; font-size:17px; cursor:pointer;
+}
+.btn-t:hover{border-color:var(--fg-3)}
+.counter{font-size:15px; color:var(--fg-2); font-variant-numeric:tabular-nums}
+
+/* ── 이미지 붙여넣기 ──────────────────────────────────────
+ *
+ * 상세표가 이미지뿐인 페이지가 많다. 텍스트로 복사할 수 없으면 검사 자체를
+ * 못 하므로 캡처를 그대로 받는다. 셀러의 자연스러운 동선은 캡처 도구로
+ * 자르고 Ctrl+V 라, 파일 선택 버튼보다 붙여넣기를 앞에 둔다.
+ */
+.paste{
+  margin-top:var(--s3); padding:var(--s5) var(--s4);
+  border:1px dashed var(--border-default); border-radius:var(--r-m);
+  background:var(--gray-5); text-align:center; cursor:pointer;
+  display:block; width:100%; font:inherit; color:inherit;
+}
+.paste:hover{border-color:var(--primary-50); background:var(--primary-10)}
+.paste.armed{border-color:var(--primary-50); border-style:solid; background:var(--primary-10)}
+.paste b{display:block; font-size:15px; font-weight:700}
+.paste span{display:block; font-size:15px; color:var(--fg-2); margin-top:var(--s1)}
+.paste svg{width:24px; height:24px; color:var(--fg-4)}
+.paste:hover svg,.paste.armed svg{color:var(--primary-60)}
+
+.kc-note{
+  display:flex; gap:var(--s2); align-items:flex-start;
+  margin-top:var(--s3); padding:10px var(--s3);
+  border:1px solid var(--gray-20); border-left:3px solid var(--info);
+  border-radius:var(--r-xs); background:var(--gray-5);
+  font-size:15px; color:var(--fg-2);
+}
+.kc-note svg{width:18px; height:18px; flex:none; color:var(--info); margin-top:1px}
+
+.shots{display:flex; flex-wrap:wrap; gap:var(--s3); margin-top:var(--s3); padding:0; list-style:none}
+.shot{
+  position:relative; width:132px; border:1px solid var(--border-default);
+  border-radius:var(--r-s); overflow:hidden; background:var(--bg-canvas);
+}
+.shot img{display:block; width:100%; height:88px; object-fit:cover; background:var(--gray-10)}
+.shot .meta{display:block; padding:var(--s1) var(--s2); font-size:15px; color:var(--fg-2);
+  font-variant-numeric:tabular-nums; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.shot .drop{
+  position:absolute; top:var(--s1); right:var(--s1); width:28px; height:28px;
+  display:flex; align-items:center; justify-content:center;
+  border:1px solid var(--border-default); border-radius:var(--r-xs);
+  background:rgba(255,255,255,.94); color:var(--fg-2); cursor:pointer; padding:0;
+}
+.shot .drop:hover{border-color:var(--danger); color:var(--danger)}
+@media (prefers-reduced-motion:no-preference){
+  .paste,.shot .drop{transition:border-color .15s ease-out, background-color .15s ease-out, color .15s ease-out}
+}
+
+/* ── alert ────────────────────────────────────────────── */
+.alert{display:flex; gap:var(--s3); padding:14px var(--s4); border-radius:var(--r-m); border:1px solid; margin-top:var(--s4)}
+.alert.danger{border-color:var(--danger); background:#FCECEC}
+/* 안내(경고 아님). 끌어다 놓은 파일을 **왜 안 넣었는지** 적는 자리다 -
+   실패가 아니라 우리가 고르지 않기로 한 것이라 주황을 쓴다. */
+.alert.warn{display:block; border-color:var(--signal-amber-border,var(--signal-amber)); background:var(--signal-amber-tint);
+            color:var(--fg-1); font-size:15px; line-height:23px}
+.alert h4{margin:0 0 2px; font-size:15px}
+.alert p{margin:0; font-size:15px; color:var(--fg-2)}
+.alert svg{flex:none; color:var(--danger)}
+
+/* ── skeleton ─────────────────────────────────────────── */
+.skel{border:1px solid var(--border-default); border-radius:var(--r-l); padding:var(--s6)}
+.skel div{height:14px; border-radius:var(--r-xs); background:var(--gray-10); margin-bottom:var(--s3)}
+.skel div:nth-child(1){height:56px; width:220px; margin-bottom:var(--s5)}
+.skel div:nth-child(2){width:90%} .skel div:nth-child(3){width:75%} .skel div:nth-child(4){width:60%; margin-bottom:0}
+@media (prefers-reduced-motion:no-preference){
+  .skel div{animation:pulse 1.4s ease-out infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
+}
+
+
+.scope{margin:0; padding:var(--s4) var(--s6); background:var(--bg-subtle); border-bottom:1px solid var(--border-default); font-size:15px; color:var(--fg-2)}
+
+/* 읽은 값이 하나도 없을 때. 판정이 아니라 입력 문제라 "이렇게 읽었습니다"
+ * 블록이 있어야 할 자리를 대신 차지한다. 경고색을 쓰지 않는다 - 상품에
+ * 문제가 있다는 뜻이 아니라 다시 붙여넣으면 되는 일이다. */
+.input-note{
+  margin:0; padding:var(--s5) var(--s6); background:#FFF8E6;
+  border-bottom:1px solid var(--border-default);
+  font-size:15px; color:var(--fg-1); line-height:1.6;
+}
+@media (max-width:640px){ .input-note{padding:var(--s4) var(--s5)} }
+
+
+/* 정부 조회로 나가는 링크. 모양은 버튼이지만 요소는 a 로 둔다 - 실제로
+ * 페이지를 이동하므로, button 으로 쓰면 스크린리더가 동작을 잘못 알린다. */
+.golink{
+  display:inline-flex; align-items:center; gap:var(--s1);
+  height:34px; padding:0 var(--s3); margin-left:var(--s2);
+  border:1px solid var(--primary-50); border-radius:var(--r-xs);
+  background:var(--bg-canvas); color:var(--primary-60);
+  font-size:15px; font-weight:700; text-decoration:none; white-space:nowrap;
+  vertical-align:middle;
+}
+.golink:hover{background:var(--primary-10); color:var(--primary-70); border-color:var(--primary-60)}
+.golink svg{width:14px; height:14px; flex:none}
+.f-meta .golink{margin:var(--s1) 0 0}
+
+
+.findings>li.aside{background:var(--gray-5)}
+.findings>li.aside .f-text{color:var(--fg-2)}
+
+/* 전파인증 조회 중 표시. 성공하면 안내 줄(li) 자체가 결과로 교체되므로
+ * 여기 남는 것은 진행 중·실패 메시지뿐이다. */
+.rf-result{margin:var(--s3) 0 0}
+.rf-result .scope{padding:var(--s3) 0; background:none; border:0}
+
+/* 이미지에서 읽은 인증번호 확인. 자동 조회하지 않는 이유는 문장에 있고,
+ * 여기서는 확인·수정 후 조회로 넘어가는 버튼만 준다. */
+.confirm{margin:var(--s3) 0 0; display:flex; flex-wrap:wrap; gap:var(--s2); align-items:center}
+.confirm .sub{font-size:15px; color:var(--fg-2)}
+.btn-t.sm{height:38px; padding:0 var(--s3); font-size:15px; font-weight:700;
+  border-color:var(--primary-50); color:var(--primary-60)}
+.btn-t.sm:hover{background:var(--primary-10); border-color:var(--primary-60)}
+
+
+
+
+footer{border-top:1px solid var(--border-default); margin-top:var(--s16); padding:var(--s8) 0; background:var(--bg-subtle)}
+footer p{margin:0 0 var(--s2); font-size:15px; color:var(--fg-2)}
+footer p:last-child{margin-bottom:0}
+[hidden]{display:none !important}
+
+/* ── 페이지 내비게이션 ─────────────────────────────────── */
+.masthead .container{position:relative}
+/* 리콜 공표 기준일 배지 (시안 §6 머리 오른쪽). 내비가 `margin-left:auto` 로
+   오른쪽을 먹고 있어서 배지는 그 **뒤**에 붙는다. 값이 없으면 서버가 요소째
+   지우므로 빈 칸이 남지 않는다. */
+.asof{
+  margin-left:var(--s4); display:inline-flex; align-items:center; gap:6px;
+  font-size:14px; line-height:20px; color:var(--fg-3); white-space:nowrap;
+}
+.asof::before{
+  content:""; width:14px; height:14px; flex:none; border:1.5px solid currentColor;
+  border-radius:3px; box-shadow:inset 0 3px 0 -1.5px currentColor;
+}
+@media (max-width:640px){
+  /* 폰에서는 내비가 이미 두 줄이다. 날짜까지 머리에 두면 세 줄이 된다 -
+     같은 값을 결과 화면 푸터가 들고 있으므로 여기서 감춘다. */
+  .asof{display:none}
+}
+
+nav.pages{margin-left:auto; display:flex; gap:var(--s1)}
+nav.pages a{
+  display:inline-flex; align-items:center; height:40px; padding:0 var(--s3);
+  border-radius:var(--r-s); font-size:15px; font-weight:700;
+  color:var(--fg-2); text-decoration:none;
+}
+nav.pages a:hover{color:var(--primary-60); background:var(--gray-10)}
+nav.pages a[aria-current="page"]{color:var(--primary-60); background:var(--primary-10)}
+
+/* ── 감시 목록 ─────────────────────────────────────────── */
+.promise{
+  display:flex; gap:var(--s3); padding:18px var(--s5); margin-bottom:var(--s6);
+  background:var(--bg-canvas); border:1px solid var(--border-default); border-radius:var(--r-l);
+}
+.promise svg{flex:none; color:var(--primary-50)}
+.promise h4{margin:0 0 var(--s1); font-size:17px}
+.promise p{margin:0; font-size:15px; color:var(--fg-2)}
+.promise p+p{margin-top:var(--s2); font-size:15px; color:var(--fg-2)}
+
+.watchbar{display:flex; align-items:center; gap:var(--s3); margin-bottom:var(--s5); flex-wrap:wrap}
+.watchbar .counter{margin-left:auto}
+@media (max-width:640px){ .watchbar .counter{margin-left:0; flex-basis:100%} }
+
+.items{list-style:none; margin:0; padding:0; display:grid; gap:var(--s4)}
+.item{border:1px solid var(--border-default); border-radius:var(--r-l); padding:var(--s5); background:var(--bg-canvas)}
+.item.hit{border-color:var(--danger); border-width:2px; padding:calc(var(--s5) - 1px)}
+.item-top{display:flex; align-items:flex-start; gap:var(--s4)}
+.item-top .badge{
+  display:flex; align-items:center; justify-content:center; flex:none;
+  min-width:88px; height:40px; padding:0 var(--s4); border-radius:var(--r-s);
+  font-size:17px; font-weight:700; color:#fff; background:var(--danger);
+}
+.item-top .badge.clear{background:var(--gray-10); color:var(--fg-2)}
+.item h4{margin:0; font-size:19px; line-height:1.3;
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;
+  overflow:hidden; overflow-wrap:anywhere}
+.item dl{display:grid; grid-template-columns:auto 1fr; gap:var(--s1) var(--s3); margin:var(--s3) 0 0; font-size:15px}
+.item dt{color:var(--fg-3)} .item dd{margin:0; color:var(--fg-2); font-variant-numeric:tabular-nums}
+.item .alerts{list-style:none; margin:var(--s4) 0 0; padding:var(--s4) 0 0; border-top:1px solid var(--gray-20)}
+.item .alerts li{font-size:15px; margin-bottom:var(--s2)}
+.item .alerts li:last-child{margin-bottom:0}
+.item .alerts a{color:var(--primary-60); font-size:15px; text-decoration:underline; text-underline-offset:2px}
+@media (max-width:640px){
+  .item-top{flex-direction:column; gap:var(--s3)}
+  .item-top .badge{width:100%}
+  .item dl{grid-template-columns:1fr; gap:0}
+  .item dt{margin-top:var(--s2)}
+}
+
+.empty{
+  border:1px solid var(--border-default); border-radius:var(--r-l);
+  padding:var(--s12) var(--s6); text-align:center; background:var(--bg-subtle);
+}
+.empty svg{color:var(--fg-4); margin-bottom:var(--s3)}
+.empty p{margin:0 0 var(--s2); font-size:17px; color:var(--fg-2)}
+.empty p.sub{font-size:15px; color:var(--fg-3); margin-bottom:var(--s5)}
+.empty a{
+  display:inline-flex; align-items:center; height:48px; padding:0 var(--s5);
+  border-radius:var(--r-s); background:var(--primary-50); color:#fff;
+  font-size:17px; font-weight:700; text-decoration:none;
+}
+.empty a:hover{background:var(--primary-60)}
+
+/* 스캔 결과의 감시 등록 */
+.watch-cta{padding:var(--s5) var(--s6); border-top:1px solid var(--gray-20); display:flex; align-items:center; gap:var(--s4); flex-wrap:wrap}
+.watch-cta p{margin:0; font-size:15px; color:var(--fg-3); flex:1; min-width:200px}
+/* GREEN 일 때 감시 제안을 강조한다. GREEN 은 "조회 시점 기준" 이라 가장 약한
+ * 신호인데, 셀러가 '안전'으로 읽으면 우리가 가장 크게 빗나간다 (기획서 §6.1).
+ * 감시 목록이 그 시점 판단의 유효기간을 이어받는다. */
+.watch-cta.lead{background:var(--primary-10); border-top:1px solid var(--primary-50)}
+.watch-cta.lead p{color:var(--fg-1)}
+.watch-cta.lead .btn-t{border-color:var(--primary-50); color:var(--primary-60); font-weight:700}
+.watch-cta.lead .btn-t:hover{background:var(--bg-canvas); border-color:var(--primary-60)}
+.watch-cta.off p{flex:1 1 100%}
+
+.saved{display:flex; align-items:center; gap:var(--s2); font-size:15px; font-weight:700; color:var(--success)}
+.saved svg{flex:none}
+@media (max-width:640px){ .watch-cta{padding:var(--s4) var(--s5)} }
+
+/* 등급 후보. 갈릴 때 한쪽을 강조하지 않는다 - 느슨한 쪽을 먼저·크게
+   그리면 셀러가 "번호 없어도 되는구나" 로 읽고 위법 상태로 판다.
+   서버가 준 순서 그대로 같은 모양으로 그린다. */
+.grades { list-style: none; margin: 8px 0 4px; padding: 0; }
+.grades li {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px;
+  padding: 6px 10px; margin-bottom: 4px;
+  border: 1px solid var(--gray-20); border-radius: 6px;
+  background: var(--surface-2, transparent);
+}
+.grades b { font-weight: 600; }
+.grades .g {
+  font-size: 15px; padding: 2px 10px; border-radius: 999px;
+  border: 1px solid var(--gray-20);
+}
+.grades .sub { flex-basis: 100%; font-size: 15px; color: var(--fg-2); }
+.confirm.part { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.confirm.part .sub { flex-basis: 100%; }
+
+/* 대량 검사. 500줄을 한 화면에 쏟으면 셀러가 못 읽는다 - 판정별로 접고,
+   구획 안에서도 처음 50줄만 그린 뒤 눌러서 편다. */
+.b-group { border: 1px solid var(--gray-20); border-radius: 8px; margin: 10px 0; }
+.b-group > summary {
+  cursor: pointer; padding: 12px 14px; font-weight: 600;
+  list-style: none;
+}
+.b-group > summary::-webkit-details-marker { display: none; }
+.b-group > summary::before { content: "▸ "; }
+.b-group[open] > summary::before { content: "▾ "; }
+.b-group > .scope { margin: 4px 14px 8px; }
+.b-group > .scope { margin: 2px 14px 8px; }
+.b-n { font-weight: 400; font-size: 15px; }
+.b-list { list-style: none; margin: 0; padding: 0 14px 12px; }
+.b-row {
+  display: flex; gap: 10px; align-items: baseline;
+  padding: 7px 0; border-top: 1px solid var(--gray-20);
+}
+.b-line { min-width: 40px; text-align: right; font-size: 15px; color: var(--fg-2); }
+.b-body { flex: 1; min-width: 0; }
+.b-name { margin: 0 0 2px; word-break: break-all; }
+.b-item { font-weight: 600; margin-right: 8px; }
+/* 등급이 갈리면 품목 후보를 목록으로. 괄호 안에 넣으면 셋 이상일 때
+   안 읽힌다 - 단건 화면에서 같은 판단을 했다. */
+.b-cands { list-style: none; margin: 2px 0; padding: 0; }
+.b-cands li {
+  display: inline-block; margin: 2px 6px 2px 0; padding: 1px 8px;
+  border: 1px solid var(--gray-20); border-radius: 999px; font-size: 15px;
+}
+.b-more { display: contents; }
+
+/* == 제목 계열은 display 서체 (design/README 8-2) ==================
+ * 본문은 body 가 --font-body 를 물려준다. 제목만 여기서 갈라 준다.
+ *
+ * 주의(가장 중요): **여기서 굵기를 정하지 않는다.** 굵기는 각 제목 규칙이
+ *   적는다. 전에는 이 규칙이 `font-weight:400` 을 들고 있었는데, 선택자에
+ *   `.intro h2` 가 같이 들어 있어 **히어로 규칙(`.intro h1, .intro h2`)과
+ *   과 명시도가 같았다**(둘 다 0-1-1). 같으면 뒤가 이긴다 - 히어로 규칙이
+ *   700 을 적어도 화면은 400 이었고, 랜딩의 `.hero-say h1` 만 이 규칙보다
+ *   **뒤에 있어서** 700 으로 그려졌다. 같은 제품의 히어로가 그렇게 갈렸고,
+ *   2026-09-20 배포본 실측으로 잡았다.
+ *
+ *   주의: 줄 번호로 적지 않는다. 규칙을 하나 끼우면 주석이 곧 거짓이 된다 -
+ *     이 주석도 한 번 그렇게 됐다. 가리킬 때는 **선택자**로 가리킨다.
+ *
+ *   주의: 소스 문자열만 보는 검사 1,800개가 전부 못 잡았다. computed 로 재는
+ *     것은 `scripts/measure_weights.py` · `tests/test_heading_weight.py` 다.
+ *
+ * 주의: 400 이었던 원래 이유("Gowun Dodum 은 한 굵기만 있어 굵게 쓰면
+ *   브라우저가 합성해 획이 뭉갠다")는 **이미 사라졌다.** 지금 display 서체는
+ *   Pretendard Variable 이고 가변축으로 실제 굵기를 낸다 - 합성이 없다.
+ *
+ * 주의: `.intro h2` 를 선택자에서 뺐다. `h2` 가 이미 그것을 덮으므로
+ *   font-family 에는 아무 일도 안 하고, 남겨 두면 위와 같은 덫이 그대로다.
+ */
+h1, h2, .wordmark{
+  font-family:var(--font-display);
+}
+
+/* == 2026-09-13 고침: 선언 없는 var 가 테두리를 지우고 있었다 ============
+ * `border: 1px solid var(--line)` 에서 --line 이 **어디에도 선언되지 않았다.**
+ * CSS 는 정의 안 된 var() 가 든 선언을 통째로 무효로 만든다 - 그래서 등급
+ * 갈림 목록(.grades li)과 대량 검사(.b-group · .b-cands li)의 테두리가
+ * 화면에서 안 보이고 있었다. 커밋 209c0d8 · 55e0231 부터다.
+ *
+ * 주의: 디자인 교체가 만든 결함이 아니다. 교체 전 app.css 에도 선언이 없었고,
+ *   tests/test_design_tokens.py 의 '선언 없이 쓰는 변수' 검사가 그때 드러냈다.
+ *   토큰을 바꾸면서 붙인 검사가 **원래 있던 결함**을 잡은 것이다.
+ *
+ * 주의: var(--surface-2, transparent) 는 폴백이 있어 무해하다. 폴백이 있으면
+ *   선언이 무효가 되지 않는다 - 그래서 고치지 않았다.
+ */
+
+/* == 랜딩 첫 화면 (design/landing-hero.html 을 옮겨 온 것) =============
+ * 정본은 design/landing-hero.html 이다. 값을 여기서 고치지 말고 그쪽을
+ * 고친 뒤 옮긴다 - 두 곳에 적으면 한쪽이 낡는다 (CLAUDE.md 6절).
+ *
+ * 주의: 이 절은 랜딩(/)만 쓴다. /scan · /batch · /watch 는 위의 공용 규칙을
+ *   그대로 쓴다 - 헤더·칩·로딩은 다음 커밋에서 옮긴다.
+ */
+
+/* 헤더 -- 마크가 실제 그림이라 자리가 맞는다. 빈 span 이던 때는 워드마크가
+   본문보다 오른쪽으로 밀려 보였다(좌측선 불일치). */
+.masthead .container{justify-content:space-between}
+.brand{display:flex; align-items:center; gap:10px; text-decoration:none; color:inherit}
+.brand .mark{width:32px; height:32px; flex:none}
+.wordmark{font-family:var(--font-display); font-weight:400; font-size:20px}
+nav.pages{display:flex; gap:28px; font-size:15px; font-weight:500; color:var(--fg-2)}
+/* 390px 에서 '상품 / 검사' 로 단어 안이 아니라 **구 사이가** 접혔다.
+   메뉴 이름은 한 덩어리다 - 끊으면 항목이 몇 개인지 안 보인다. */
+nav.pages a{color:inherit; text-decoration:none; white-space:nowrap}
+/* 활성 메뉴는 칩이 아니라 밑줄이다 - 칩은 신호등 칩과 헷갈린다. */
+nav.pages a[aria-current="page"]{
+  color:var(--fg-1); font-weight:700;
+  background:none; border-radius:0; padding:0 0 2px;
+  border-bottom:2px solid var(--brand);
+}
+
+/* 주의(가장 중요): **이 미디어쿼리는 위 `nav.pages` 규칙들 *뒤*에 있어야 한다.**
+   `nav.pages` 선언이 이 파일에 **두 벌**이다 - 374행(머리글)과 556행(랜딩 v2).
+   뒤엣것이 `gap:28px` 를 다시 준다. 미디어쿼리를 앞에 두면 같은 명시도라
+   **나중 것이 이겨** 행 간격까지 28px 이 되고 머리글이 108px 로 두꺼워진다.
+   2026-09-18 에 앞에 두었다가 실측(108px)으로 잡았다. */
+/* 주의(가장 중요): **접지 않으면 화면이 옆으로 밀린다** (2026-09-18 실측).
+   내비 폭이 515px 라 390px 안에 안 들어가고, 문서 scrollWidth 가 539 가 된다.
+   [④ M-5] 로 다섯째 항목(카테고리 가이드)이 들어오면서 넘쳤다 - **9/17 부터**
+   폰에서 그 화면이 내비 밖에 있어 안 보였다. 만들어 놓고 못 닿게 둔 것이다.
+
+   주의(중요): 가로·세로 gap 을 **따로** 준다. `gap:28px` 하나만 두면 행 간격도 28px 이
+     되어 머리글이 108px 로 두꺼워진다(실측). 접는 것이 목적이지 머리글을
+     키우는 것이 아니다.
+
+   주의(중요): `overflow-x:auto` 로도 넘침은 없어지지만 **항목이 여전히 숨는다** -
+     보이게 하는 것이 목적이라 접는 쪽을 골랐다. */
+@media (max-width:640px){
+  nav.pages{margin-left:0; flex-basis:100%; margin-top:var(--s1);
+            flex-wrap:wrap; gap:10px 18px}
+}
+
+
+/* ── 랜딩 v2 본문 (design/landing-v2.html · README §10) ──────────────
+ *
+ * 주의(중요): **전부 `body.lv2` 아래로 묶는다.** 이 절은 `.k` · `.v` · `.t` · `.card`
+ *   같은 짧은 이름을 쓰는데, 그 이름들은 /scan · /watch 에도 있다. 이 저장소
+ *   에서 이름 충돌로 두 번 데였다 - `.paste`(랜딩 카드가 /scan 의 버튼 규칙을
+ *   받아 가운데 정렬됐다) · `.demo span`(칩이 블록이 됐다). 범위를 몸통 클래스
+ *   하나로 가둬 같은 일이 다시 안 나게 한다.
+ *
+ * 주의: 눈금은 README §10-4 다. **화면 글자 최소 15px** (예시 카드 안 한정어만
+ *   14px). `--fg-4`(3.7:1)는 18px 미만 글자에 쓰지 않는다 - 보조색은 `--fg-2`.
+ */
+/* 주의(가장 중요): 한국어 줄바꿈은 **여덟 화면 전부**의 것이다
+   (2026-09-21). 전에는 `body.lv2` 라 랜딩·guide·samples·misses·unknown
+   다섯 장에만 걸렸고, `/scan`·`/batch`·`/watch` 는 어절 중간에서 끊겼다.
+   `lv2` 는 이제 **랜딩 컴포넌트 범위**만 뜻한다 - 타이포는 여기서 준다. */
+body{word-break:keep-all; overflow-wrap:break-word}
+
+/* 히어로 — 1440×900 안에서 끝난다 (헤더 72 + 828). */
+/* 그라데이션 띠. **토큰으로만** 만든다 - 새 색을 여기서 짓지 않는다.
+   위쪽 라벤더에서 페이지 바탕으로 풀리는 아주 얕은 띠이고, 다크에서는
+   `--brand-tint` 가 반투명이라 어두운 바탕 위에서 알아서 약해진다. */
+.lv2-hero{
+  border-bottom:1px solid var(--gray-20);
+  background:linear-gradient(180deg, var(--brand-tint) 0%,
+                             color-mix(in srgb, var(--brand-tint) 35%, transparent) 42%,
+                             transparent 100%);
+}
+/* 주의: 히어로는 **1440x900 안에서 끝나야 한다**(헤더 72 + 828). 처음에
+   `min-height:828 + padding-block:48` 로 뒀더니 안쪽 내용이 828 을 넘어
+   934px 에서 끝났다 - min-height 는 하한이지 상한이 아니다. 측정이 잡았다.
+   여백을 줄이고 상한을 함께 건다. */
+.lv2-hero .hero-grid{
+  display:grid; grid-template-columns:minmax(0,600px) minmax(0,1fr); gap:44px;
+  align-items:center; min-height:788px; padding-block:20px;
+}
+.hero-say{display:flex; flex-direction:column; gap:24px}
+/* 칩. 띠 위에 얹히므로 흰 상자가 아니라 **브랜드 알약**이다. 대비는
+   `--primary-70` / `--bg-canvas` 쌍을 이미 검사가 재고 있다. */
+.hero-say .eyebrow{
+  align-self:flex-start; padding:8px 16px; border-radius:999px;
+  background:var(--bg-canvas); border:1px solid var(--brand);
+  font-size:15px; line-height:20px; font-weight:700; color:var(--brand);
+}
+.hero-say h1{
+  margin:0; font-family:var(--font-display); font-weight:700;
+  font-size:60px; line-height:72px; letter-spacing:-.015em;
+}
+/* 둘째 줄만 브랜드색 (시안 §1 의 큰 제목 처리). 색만 다르고 글자는 그대로다 -
+   질문의 **뒷절**이 우리가 답하는 자리라서 거기에 색이 온다. */
+.hero-say h1 .ask{color:var(--brand)}
+.hero-say .lead{margin:0; font-size:20px; line-height:32px; color:var(--fg-2); max-width:560px}
+
+.lv2 .cta-row{display:flex; align-items:center; gap:16px; flex-wrap:wrap}
+.lv2 .btn-primary{
+  display:inline-flex; align-items:center; height:60px; padding:0 32px;
+  border-radius:var(--r-l); border:0; background:var(--brand); color:#fff;
+  font-size:19px; font-weight:700; text-decoration:none; cursor:pointer;
+}
+.lv2 .btn-primary:hover{background:var(--primary-60)}
+.lv2 .cta-note{font-size:16px; line-height:24px; color:var(--fg-2)}
+.lv2 .btn-text{font-size:17px; line-height:24px; font-weight:700; color:var(--brand); text-decoration:none}
+.lv2 .btn-text:hover{text-decoration:underline; text-underline-offset:3px}
+
+/* 예시 셋 — 칩 + 제목만. note 는 /scan 에서만 (README §10-3). */
+.lv2 .demo-block{display:flex; flex-direction:column; gap:12px}
+.lv2 .demo-lead{font-size:15px; line-height:20px; font-weight:700; color:var(--fg-2)}
+.lv2 .demos{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; align-items:stretch}
+/* 모양은 공용 `.demo` 가 준다. 여기는 **링크라서 다른 것만** 남긴다. */
+.lv2 .demo{border-color:var(--gray-20); color:var(--fg-1); text-decoration:none}
+.lv2 .demo:hover{transform:translateY(-2px); border-color:var(--brand); box-shadow:none}
+/* 예시 카드 셋째 줄 - 무엇을 넣어 본 것인가. 화살표는 "눌러 보라" 는 뜻이라
+   글자와 같은 줄 끝에 둔다. */
+.demo .ex{
+  /* 카드 폭 전체를 써야 화살표가 오른쪽 끝에 붙는다. `.demo` 가
+     `align-items:flex-start` 라 자식이 기본으로 줄어든다. */
+  align-self:stretch;
+  display:flex; align-items:center; justify-content:space-between; gap:8px;
+  margin-top:auto; padding-top:10px; font-size:13px; line-height:20px;
+  color:var(--fg-3); font-variant-numeric:tabular-nums;
+}
+.demo .ex .go{color:var(--brand); font-size:15px; flex:none}
+.demo:hover .ex .go{transform:translateX(2px)}
+
+/* 주의(중요): 여기 `.lv2 .chip` 이 있었다. 공용 `.chip` 과 **계산값이
+   완전히 같아서**(2026-09-21 실측 - 랜딩·/scan·/samples 셋에서 글자·여백·
+   색·모서리가 한 값) 지웠다. 칩은 한 벌이다.
+   주의: 그 규칙만 `align-self:flex-start` 를 더 들고 있었는데, 칩을 감싸는
+     `.intro-say`·`.hero-say` 가 이미 `align-items:flex-start` 라 결과가
+     같았다. 실측으로 확인하고 지운 것이지 읽어서 지운 것이 아니다. */
+
+/* 예시 결과 카드 — 문구는 전부 서버 것. */
+.hero-art{position:relative; min-height:520px}
+/* 주의: 흐림을 준다. 다크에서 이 원들이 **딱딱한 조각**으로 보였다 - 카드
+   가장자리 밖으로 나온 부분만 밝아서 잘린 원처럼 읽혔다 (미완 §1-z).
+   라이트에서는 원래 거의 안 보였으므로 달라지는 것이 없다. */
+.hero-art .blob{position:absolute; border-radius:50%; z-index:0; filter:blur(36px)}
+.hero-art .blob-a{right:-8px; top:0; width:340px; height:340px; background:var(--illust-blob)}
+.hero-art .blob-b{left:-12px; bottom:12px; width:190px; height:190px; background:var(--brand-tint)}
+.rcard{
+  position:relative; z-index:1; background:var(--bg-canvas);
+  border:1.5px solid var(--gray-20); border-radius:var(--r-2xl); overflow:hidden;
+  display:flex; flex-direction:column;
+}
+.rc-head{display:flex; align-items:center; gap:20px; padding:22px 26px; border-bottom:1px solid var(--gray-20)}
+.rc-head.GREEN{background:var(--signal-green-tint)}
+.rc-head.AMBER{background:var(--signal-amber-tint)}
+.rc-head.RED{background:var(--signal-red-tint)}
+/* 마스코트는 히어로에서 크게 (시안). 카드가 1440x900 을 넘지 않는지는
+   `scripts/measure_widths.py` 로 잰다. */
+.rc-face{width:104px; height:104px; flex:none}
+.rc-say{display:flex; flex-direction:column; gap:8px; flex:1; min-width:0}
+/* 주의: 폰 390 에서 "확인 / 필요" · "예시 / 결과" 로 **낱말 안에서** 꺾였다
+   (미완 §1-w). 줄은 넘기되 낱말은 안 쪼갠다. */
+.rc-top{display:flex; align-items:center; gap:12px; flex-wrap:wrap}
+.rc-lab, .rc-tag{white-space:nowrap}
+/* 머리 칩은 꽉 찬 바탕 — 신호가 멀리서도 보여야 한다 (시피님 비평). */
+.chip.solid{font-size:16px}
+/* 점은 글자색을 따라간다. 흰색으로 못 박으면 주황 칩에서 안 보인다. */
+.chip.solid .dot{background:currentColor}
+/* 주의(가장 중요): 바탕과 글자는 **한 쌍으로 움직인다** (`-fill` / `-on-fill`).
+   전에는 바탕만 `-text` 로 어둡게 내렸는데, 주황이 그렇게 내려가면 흙빛이라
+   같은 화면의 옅은 알약과 다른 색으로 보였다. 지금은 **바탕이 본색**이고
+   글자를 각자 고른다 - 눈이 읽는 것은 색조다.
+   16px 굵은 글자는 WCAG 의 '큰 글자'(18.66px 굵게)가 아니라 4.5 가 필요하다.
+   주의(가장 중요): 다크가 2026-09-20 까지 흰 글자였고 실측 1.72~1.98 로 전부 미달이었다.
+      검사가 라이트만 재고 있었다 - 이제 양쪽을 잰다. */
+.chip.solid.GREEN{background:var(--signal-green-fill); color:var(--signal-green-on-fill)}
+.chip.solid.AMBER{background:var(--signal-amber-fill); color:var(--signal-amber-on-fill)}
+.chip.solid.RED{background:var(--signal-red-fill); color:var(--signal-red-on-fill)}
+.rc-lab{font-size:15px; line-height:20px; font-weight:700; color:var(--fg-2)}
+.rc-tag{margin-left:auto; font-size:14px; line-height:20px; font-weight:700; color:var(--fg-2)}
+.rc-h{font-family:var(--font-display); font-weight:400; font-size:26px; line-height:34px}
+.rc-sub{font-size:16px; line-height:24px; color:var(--fg-2)}
+.rc-read{padding:14px 26px; font-size:15px; line-height:22px; color:var(--fg-2); border-bottom:1px solid var(--gray-20)}
+/* 축 셋 — 서버 axes 그대로. **신호 색·체크를 칠하지 않는다** (ResultAxis 주석). */
+.rc-axes{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); border-bottom:1px solid var(--gray-20)}
+.rc-ax{display:flex; flex-direction:column; gap:4px; padding:16px 18px; border-right:1px solid var(--gray-20)}
+.rc-ax:last-child{border-right:0}
+.rc-ax .n{font-size:14px; line-height:20px; font-weight:700; color:var(--fg-2)}
+.rc-ax .v{font-size:18px; line-height:26px; font-weight:700}
+/* 주의(중요): 좁은 칸에서 **날짜 한가운데**가 꺾여 "2026-" / "09-08" 로
+   보였다 - CSS 는 하이픈 뒤를 꺾을 자리로 본다. **날짜만** 묶는다.
+   주의(가장 중요): 처음에는 절을 통짜로 묶었는데(`.m > span{nowrap}`) 절이
+     하나뿐인 유해물질 메모("함유량은 시험성적서로 확인합니다")가 안 꺾여
+     카드 밖으로 **잘려 나갔다.** 캡처가 잡았다. 묶는 범위는 좁을수록 옳다. */
+.rc-ax .m{font-size:14px; line-height:20px; color:var(--fg-2)}
+.rc-ax .m .nb, .rv-ax .m .nb{white-space:nowrap}
+.rc-rows{display:flex; flex-direction:column; padding:0 26px}
+.rc-row{display:flex; gap:14px; padding:16px 0; border-bottom:1px solid var(--gray-20)}
+.rc-row .dot{width:10px; height:10px; border-radius:50%; flex:none; margin-top:8px}
+.rc-row .dot.GREEN{background:var(--signal-green)}
+.rc-row .dot.AMBER{background:var(--signal-amber)}
+.rc-row .dot.RED{background:var(--signal-red)}
+.rc-row .dot.UNKNOWN{background:var(--signal-unknown)}
+.rc-body{display:flex; flex-direction:column; gap:6px; flex:1; min-width:0}
+.rc-t{font-size:16px; line-height:26px}
+.lv2 .src{font-size:15px; line-height:22px; font-weight:500; color:var(--brand); text-decoration:underline; text-underline-offset:3px}
+.rc-foot{display:flex; align-items:center; justify-content:space-between; gap:12px; padding:16px 0 18px}
+.rc-foot .more{font-size:16px; line-height:24px; font-weight:700; color:var(--brand);
+               white-space:nowrap}
+.rc-foot .hint{font-size:14px; line-height:20px; color:var(--fg-2)}
+
+/* ── 절 ─────────────────────────────────────────────────────────── */
+.lv2-sec{padding-block:72px 32px}
+.lv2-sec.last{padding-block:24px 80px}
+.lv2-sec h2{margin:0 0 32px; font-family:var(--font-display); font-weight:400; font-size:40px; line-height:52px}
+.lv2 .tiles{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px}
+.lv2 .tile{
+  display:flex; flex-direction:column; gap:14px; padding:32px 32px 28px;
+  border-radius:var(--r-2xl); background:var(--bg-canvas); border:1.5px solid var(--gray-20);
+}
+.lv2 .tile .k{font-family:var(--font-display); font-weight:400; font-size:26px; line-height:34px}
+.lv2 .tile .b{margin:0; font-size:17px; line-height:28px; color:var(--fg-2)}
+.lv2 .tile .b b{color:var(--fg-1)}
+.lv2 .tile .src{margin-top:auto}
+
+/* 후킹 숫자 하나 */
+.lv2 .band{
+  display:grid; grid-template-columns:1fr 1fr; gap:48px; align-items:center;
+  padding:52px 56px; background:var(--bg-subtle); border-radius:var(--r-4xl);
+}
+.lv2 .band-l{display:flex; flex-direction:column; gap:14px}
+.lv2 .band-k{font-size:15px; line-height:20px; font-weight:700; color:var(--fg-2)}
+.lv2 .band-big{font-family:var(--font-display); font-weight:400; font-size:88px; line-height:96px; letter-spacing:-.02em}
+.lv2 .band-b{margin:0; font-size:18px; line-height:28px; color:var(--fg-2)}
+.lv2 .band-r{display:flex; flex-direction:column; gap:18px; align-items:flex-start}
+.lv2 .band-h{margin:0; font-family:var(--font-display); font-weight:400; font-size:30px; line-height:42px}
+.lv2 .band-s{margin:0; font-size:22px; line-height:32px; font-weight:700}
+
+/* 두 다짐 카드 */
+.lv2 .two{display:grid; grid-template-columns:1fr 1fr; gap:16px}
+.lv2 .pane{
+  display:flex; flex-direction:column; gap:18px; padding:36px;
+  background:var(--bg-canvas); border:1.5px solid var(--gray-20); border-radius:var(--r-3xl);
+}
+.lv2 .pane-h{margin:0; font-family:var(--font-display); font-weight:400; font-size:32px; line-height:42px}
+.lv2 .pane-b{margin:0; font-size:18px; line-height:30px; color:var(--fg-2)}
+.lv2 .pane-lab{font-size:15px; line-height:20px; font-weight:700; color:var(--fg-2)}
+.lv2 .tags{display:flex; flex-wrap:wrap; gap:8px}
+.lv2 .tag{
+  display:inline-flex; align-items:center; padding:8px 14px; border-radius:999px;
+  background:var(--bg-subtle); color:var(--fg-1); font-size:15px; line-height:20px;
+}
+.lv2 .figs{display:grid; grid-template-columns:1fr 1fr; gap:12px}
+.lv2 .fig{display:flex; flex-direction:column; gap:4px; padding:18px 20px; background:var(--bg-subtle); border-radius:16px}
+.lv2 .fig .v{font-size:40px; line-height:48px; font-weight:700; font-variant-numeric:tabular-nums}
+.lv2 .fig .k{font-size:15px; line-height:22px; color:var(--fg-2)}
+.lv2 .pane .src{margin-top:auto}
+
+.lv2-sec .end{display:flex; flex-direction:column; align-items:center; gap:24px; text-align:center}
+.lv2-sec .end h2{margin:0}
+/* 주의: 폰에서 단추와 링크가 **왼쪽에 붙었다.** `.cta-row` 가 줄바꿈하면서
+   폭을 다 차지해, 바깥의 `align-items:center` 가 아무 일도 안 한다 -
+   제목만 가운데이고 나머지는 왼쪽인 화면이 됐다 (미완 §1-w).
+   넓은 화면에서는 줄이 안 넘쳐 보이는 것이 안 바뀐다. */
+.lv2-sec .end .cta-row{justify-content:center}
+
+.site-foot{border-top:1px solid var(--gray-20); padding-block:36px 48px; font-size:16px; line-height:26px; color:var(--fg-2)}
+/* 주의(중요): 이름이 `lv2-foot` 였다. 2026-09-20 에 **여덟 화면 공통**
+   바닥글이 되면서 세대 이름(lv2)이 사실과 달라져 `site-foot` 로 바꿨다.
+   마크업의 소유자는 `sourcing_guard/layout.py` 다.
+   주의: 공용 `footer p` 가 여기까지 온다. 그 줄은 §9 고정 문구이고 **화면에서
+   가장 중요한 한 줄**인데 작으면 읽지 않는다. 2026-09-13 에 공용 값이 13px
+   이어서 측정이 잡았고(눈으로는 "작은 안내" 로 보여서 넘어간다), 지금은 공용도
+   15px 이지만 랜딩은 16px 로 따로 든다. */
+.site-foot p{margin:0 0 12px; font-size:16px; line-height:26px; color:var(--fg-2)}
+.site-foot .row{display:flex; justify-content:space-between; gap:24px; font-size:15px; line-height:22px}
+
+@media (max-width:1000px){
+  /* 주의(중요): `1fr` 이 아니라 `minmax(0,1fr)` 이다. `1fr` 은 `minmax(auto,1fr)`
+     이라 칸의 하한이 **글자의 min-content** 가 된다 - 320px 에서 칸이 314.828px
+     로 풀려 24px 여백과 합쳐 339 가 되고 페이지가 19px 밀렸다(실측).
+     글자를 줄이거나 픽셀을 깎는 것으로는 안 고쳐진다. 칸 폭이 글자에서 나오므로
+     그 수는 폰트·기계마다 다르고 방향까지 갈린다 (미완 §1-l).
+     하한을 0 으로 내리면 칸이 컨테이너 안에 갇힌다. 360px 이상에서는 가용 폭이
+     min-content 보다 넓어 **아무것도 안 바뀐다** - 재서 확인했다. */
+  .lv2-hero .hero-grid{grid-template-columns:minmax(0,1fr); gap:36px; min-height:0}
+  .hero-art{min-height:0}
+  .hero-art .blob{display:none}
+  .lv2 .tiles,.lv2 .two,.lv2 .band,.lv2 .figs{grid-template-columns:1fr; gap:16px}
+  .lv2 .band{padding:36px 28px}
+}
+@media (max-width:640px){
+  .hero-say h1{font-size:40px; line-height:48px}
+  .hero-say .lead{font-size:18px; line-height:30px}
+  .lv2-sec h2{font-size:30px; line-height:38px}
+  .lv2 .demos{grid-template-columns:1fr}
+  .lv2 .band-big{font-size:60px; line-height:68px}
+  .lv2 .pane-h,.lv2 .band-h{font-size:26px; line-height:36px}
+  .rc-axes{grid-template-columns:1fr}
+  .rc-ax{border-right:0; border-bottom:1px solid var(--gray-20)}
+  .site-foot .row{flex-direction:column; gap:6px}
+}
+
+/* == 도구 화면 (/scan · /batch · /watch) — 디자인 v0.1 =================
+ * 정본: design/loading.html(A안) · design/result-card.html.
+ * 값을 여기서 고치지 말고 그쪽을 고친 뒤 옮긴다 (CLAUDE.md 6절).
+ */
+body{background:var(--bg-page)}
+
+/* 로딩 A안 — "지금 무엇을 보고 있는지". 스피너·진행바를 쓰지 않는다.
+   주의: /api/v1/scan 은 한 번에 답하므로 프론트는 어느 단계인지 모른다.
+     네 줄을 전부 같은 상태로 두고 **시간을 재서 '끝' 으로 넘기지 않는다.**
+     단계 모드는 서버 진행 이벤트가 붙은 뒤 총괄이 연다 (README 확정). */
+@keyframes sg-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+@keyframes sg-look{0%,30%{transform:translateX(0)}40%,65%{transform:translateX(-9px)}75%,100%{transform:translateX(0)}}
+@keyframes sg-ell{0%,20%{opacity:.15}40%,100%{opacity:1}}
+@keyframes sg-flow{0%{transform:translateX(-100%)}100%{transform:translateX(300%)}}
+@keyframes sg-pulse{0%,100%{box-shadow:0 0 0 0 rgba(139,76,203,.45)}60%{box-shadow:0 0 0 8px rgba(139,76,203,0)}}
+@keyframes sg-shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+.m-bob{animation:sg-bob 2.6s ease-in-out infinite}
+.m-eyes{animation:sg-look 3.4s ease-in-out infinite}
+.loading{background:var(--bg-canvas); border:1px solid var(--border-default);
+  border-radius:var(--r-xl); overflow:hidden}
+.loading .head{display:flex; align-items:center; gap:20px; padding:24px 28px;
+  border-bottom:1px solid var(--border-default)}
+.loading .head h3{margin:0; font-family:var(--font-display); font-weight:400; font-size:22px}
+.loading .sub{font-size:15px; color:var(--fg-2)}
+.ell span{display:inline-block; width:4px; height:4px; border-radius:50%;
+  background:currentColor; margin-left:3px; opacity:.15; animation:sg-ell 1.2s infinite}
+.ell span:nth-child(2){animation-delay:.2s}
+.ell span:nth-child(3){animation-delay:.4s}
+.track{position:relative; height:6px; border-radius:var(--r-pill); overflow:hidden;
+  background:var(--bg-subtle)}
+.track > i{position:absolute; top:0; left:0; width:33%; height:100%;
+  border-radius:var(--r-pill);
+  background:linear-gradient(90deg,transparent,var(--brand),transparent);
+  animation:sg-flow 1.6s ease-in-out infinite}
+.loading .steps{padding:8px 28px 12px}
+.loading .step{display:flex; gap:14px; padding:14px 0; align-items:flex-start;
+  border-bottom:1px solid var(--border-default)}
+.loading .step:last-child{border-bottom:0}
+.loading .step .d{width:8px; height:8px; border-radius:50%; margin-top:7px; flex:none;
+  background:var(--brand); animation:sg-pulse 1.4s ease-out infinite}
+.loading .step .t{font-weight:500; color:var(--brand)}
+.loading .step .s{font-size:15px; color:var(--fg-2)}
+.loading .step .st{font-size:15px; color:var(--brand); font-weight:700}
+.loading .sk-axes{display:grid; grid-template-columns:repeat(4,minmax(0,1fr));
+  border-top:1px solid var(--border-default)}
+.loading .sk-axes > div{display:flex; flex-direction:column; gap:6px; padding:12px 16px;
+  border-right:1px solid var(--border-default)}
+.loading .sk-axes > div:last-child{border-right:0}
+.loading .sk-axes span{font-size:15px; color:var(--fg-2)}
+.sk{border-radius:var(--r-s);
+  background:linear-gradient(90deg,var(--gray-20) 25%,var(--gray-10) 50%,var(--gray-20) 75%);
+  background-size:200% 100%; animation:sg-shimmer 1.8s linear infinite}
+@media (max-width:800px){ .loading .sk-axes{grid-template-columns:1fr 1fr} }
+/* 주의: 움직임을 줄이라는 설정이면 전부 멈춘다. 접근성이다. */
+@media (prefers-reduced-motion: reduce){
+  .m-bob,.m-eyes,.ell span,.track > i,.sk,.loading .step .d{animation:none}
+  .ell span{opacity:1}
+}
+
+
+/* /watch 항목 머리의 대조 결과 표시. 결과 카드 v2 로 옮기면서 `.f-*` 는 전부
+   `.rv-*` 가 됐지만 이 한 자리는 감시 목록이 쓴다 - 이름을 남겨 둔다. */
+.f-src{font-size:15px; line-height:22px; color:var(--brand)}
+
+/* 감시 목록 알림 (C-화면) — 신호등 색을 쓰지 않는다.
+   리콜 "일치" 는 판정이 아니라 **대조 결과**다 (R6). */
+.alerts{margin:var(--s3) 0 0; padding:var(--s3) 0 0;
+  border-top:1px solid var(--border-default); list-style:none}
+.alert{display:flex; flex-direction:column; gap:4px; padding:var(--s2) 0; font-size:15px}
+.alert .k{font-weight:600}
+.alert .m{color:var(--fg-2)}
+.alert a{font-size:15px; color:var(--brand)}
+
+/* 도구 화면 머리글 - **크림 바탕 위 투명**이다. 회색 띠를 두지 않는다.
+   랜딩에서 `.intro` 를 버렸고 /scan 등에는 남아 있었다. */
+/* 도구 화면 머리 (시안 화면1). 랜딩 히어로와 같은 언어를 쓰되 작다 -
+   여기는 읽는 화면이 아니라 붙여넣는 화면이라 입력란이 빨리 나와야 한다. */
+.intro{
+  background:linear-gradient(180deg, var(--brand-tint) 0%,
+             color-mix(in srgb, var(--brand-tint) 30%, transparent) 55%,
+             transparent 100%);
+  padding:var(--s8) 0 var(--s6);
+}
+/* 주의(중요): **여기서도 굵기를 적지 않는다.** 히어로 굵기의 소유자는 위
+   히어로 규칙 `.intro h1, .intro h2{font-weight:700}` **하나**다
+   (C안 · 2026-09-20 · h1 합류 2026-09-21).
+   이 자리에 `font-weight` 를 적으면 명시도가 같고 뒤라서 이기고, 위 규칙은
+   말만 남는다 - 공용 규칙 `h1, h2, .wordmark, .intro h2{400}` 이 정확히
+   그렇게 이기고 있었다. 지금 그 공용 규칙은 서체만 준다.
+   `tests/test_heading_weight.py` 가 computed 로 재서 랜딩(`.hero-say h1`)과
+   같은 값인지 단정한다. */
+.intro h1 .ask, .intro h2 .ask{color:var(--brand)}
+.intro-grid{display:grid; grid-template-columns:minmax(0,1fr) auto; gap:24px;
+            align-items:center}
+.intro-say{display:flex; flex-direction:column; align-items:flex-start; gap:var(--s3)}
+.intro-say .eyebrow{
+  padding:6px 14px; border-radius:999px; background:var(--bg-canvas);
+  border:1px solid var(--brand); font-size:14px; line-height:20px;
+  font-weight:700; color:var(--brand);
+}
+.intro-art{position:relative; display:flex; align-items:center; gap:12px}
+/* 주의(가장 중요): **마스코트 칸의 크기는 여기 하나가 정한다** (2026-09-21).
+   전에는 여기가 112px 이고 `.intro-face.art` 만 225px 이라, **그림 자산을
+   받은 두 화면(`/scan`·`/batch`)만 225 이고 나머지 다섯은 112** 였다.
+   디자인 판단이 아니라 **자산을 받은 순서**가 만든 차이였다 - 화면을 나란히
+   놓으면 같은 자리의 마스코트가 두 배 차이로 보인다.
+   주의: 225 의 근거와 시안 §13 을 넘긴 사실은 아래 `.art` 주석에 있다.
+     그 조건("제목을 60px 로 같이 키워야 한다")은 이제 여덟 화면 전부에서
+     충족된다 - 히어로 제목이 전부 60px 이다. */
+.intro-face{width:225px; height:225px; flex:none}
+/* 그림 자산 히어로. `--art` 에 파일 경로만 넣으면 되고, 원본(512px·SVG)이
+   오면 **파일만** 갈아 끼운다 - 마크업도 CSS 도 안 바뀐다.
+   주의: 가로세로 비가 그림마다 달라 `contain` 으로 맞춘다. 늘리면 얼굴이
+     찌그러지고, 그건 마스코트에서 제일 눈에 띄는 오류다. */
+.intro-face.art{
+  /* 주의(중요): `--art` 의 **기본값을 여기 둔다.** 인라인 style 이 빠지면
+     CSS 는 정의 안 된 `var()` 가 든 선언을 통째로 무효로 만들어, 배경이
+     조용히 사라진다 - `test_no_old_variable_name_disappeared` 가 잡았다.
+     기본이 `none` 이면 그림만 안 보이고 자리는 남는다. */
+  --art:none;
+  /* 주의(중요): 시안 실측 225px (이미지 154px × 1280/877 환산). 제목을
+     60px 두 줄로 같이 키워야 시안 §13 의 금지("캐릭터가 텍스트보다 크게
+     보이는 구성")에 안 걸린다 - 마스코트만 키우면 걸린다.
+     주의(가장 중요): §13 은 Hero 96~140px 을 권고한다. **넘기기로 정했고
+       그 사실을 여기 적는다** (R5-b ③ - 우리가 정한 것이지 시안 근거가
+       아니다). 근거는 시안 **이미지**가 문서를 넘는다는 것이고, 어느 쪽이
+       기준인지는 시피님 판단이다. */
+  /* 주의(가장 중요): 칸은 **정사각**이다. `look.png` 가 112x113 이라
+     `contain` 이 223x225 로 채운다 - 세로 225 가 그대로 나온다.
+     주의(가장 중요): 한 번 **180x225 로 잡았다가 틀렸다.** 가로 180 이
+       먼저 걸려 `contain` 이 180x181 로 그리고 44px 이 빈 칸으로 남았는데,
+       그것을 보고 "자산이 작아서 225 가 안 된다" 고 보고했다. 막고 있던 것은
+       자산이 아니라 **내가 고른 칸 비율**이었다. 칸 비율을 그림 비율에
+       맞추면 된다.
+     주의: 남는 것은 선명도뿐이다 - 113px 원본을 225 로 그리므로 2배,
+       레티나에서 4배다. 원본을 받으면 파일만 갈아 끼운다 (미완 §1-ab). */
+  /* 주의: 크기는 위 `.intro-face` 가 정한다. 전에 여기서 또 정했는데,
+     그래서 `.art` 가 붙은 화면만 커지는 갈림이 생겼다. */
+  background:var(--art) center/contain no-repeat;
+}
+/* 말풍선. 꼬리는 테두리 없이 바탕색만 - 1px 테두리에 꼬리를 그리면 이음매가
+   보인다. 장식이라 그 정도면 된다. */
+.bubble{
+  position:relative; padding:10px 14px; border-radius:var(--r-l);
+  background:var(--bg-canvas); border:1px solid var(--brand);
+  font-size:14px; line-height:20px; font-weight:700; color:var(--brand);
+  white-space:nowrap;
+}
+.bubble::after{
+  content:""; position:absolute; right:-6px; top:50%; margin-top:-6px;
+  width:10px; height:10px; background:var(--bg-canvas);
+  border-right:1px solid var(--brand); border-top:1px solid var(--brand);
+  transform:rotate(45deg);
+}
+@media (max-width:860px){
+  /* 좁아지면 마스코트를 뺀다. 장식이고, 입력란이 먼저 보여야 한다. */
+  .intro-grid{grid-template-columns:minmax(0,1fr)}
+  .intro-art{display:none}
+}
+/* 로딩 스켈레톤 축이 셋이다 (서버 axes 와 같다). */
+.loading .sk-axes.sk-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media (max-width:800px){ .loading .sk-axes.sk-3{grid-template-columns:1fr} }
+
+/* == 결과 카드 v2 (정본: design/result-card-v2.html · README §10-4·10-5) ====
+ *
+ * 값을 여기서 고치지 말고 정본을 고친 뒤 옮긴다 (CLAUDE.md §6).
+ *
+ * 눈금 - 글자는 15px 아래로 내려가지 않는다. 14px 은 **카드 안 한정어**뿐이고
+ * 그 목록이 scripts/check_landing_acceptance.py 의 SMALL_OK 다:
+ *     .rv-read-h  읽은 값 머리말        .rv-gh    그룹 머리말
+ *     .rv-ax .n   축 이름               .rv-ax .m 축 주석
+ *     .rv-chip    접힌 유해물질 알약     .rv-foot span  메타 푸터
+ *
+ * 주의(중요): **머리만 신호색**이다. 본문까지 물들이면 "주의" 가 카드 전체의
+ *   판정처럼 읽히고, 참고 정보 줄까지 노란 바탕에 얹힌다.
+ *
+ * 주의: 축에는 신호 색·체크를 칠하지 않는다. `done` 은 "그 축을 했다" 지
+ *   "문제 없음" 이 아니다 (ResultAxis 주석).
+ */
+.rv{background:var(--bg-canvas); border:1.5px solid var(--border-default);
+    border-radius:var(--r-2xl); overflow:hidden}
+
+/* ── 머리 ── */
+.rv-head{display:flex; align-items:center; gap:20px; padding:24px 28px;
+         border-bottom:1px solid var(--border-default); background:var(--bg-subtle)}
+.rv-head.GREEN{background:var(--signal-green-tint)}
+.rv-head.AMBER{background:var(--signal-amber-tint)}
+.rv-head.RED{background:var(--signal-red-tint)}
+.rv-head.UNKNOWN{background:var(--signal-unknown-tint)}
+.rv-face{width:88px; height:88px; flex:none; overflow:visible}
+.rv-say{display:flex; flex-direction:column; gap:8px; flex:1; min-width:0}
+.rv-sig{display:flex; align-items:center; gap:12px; flex-wrap:wrap}
+/* 주의(가장 중요): **꽉 찬 칩 규칙은 위 히어로 절(`.chip.solid…`)에 하나만 둔다.**
+   여기 한 벌이 더 있었고, 나중 규칙이 이겨서 **앞엣것이 죽어 있었다** -
+   2026-09-20 에 앞 블록만 고쳤더니 화면이 안 바뀌어 드러났다. 같은 판단을
+   두 곳에 적지 말 것 (§6). 회색만 여기 남긴다 - 히어로에는 회색 칩이 없다. */
+.chip.solid.UNKNOWN{background:var(--signal-unknown-fill); color:var(--signal-unknown-on-fill)}
+.rv-lab{font-size:15px; line-height:20px; font-weight:700}
+.rv-head.GREEN .rv-lab{color:var(--signal-green-text)}
+.rv-head.AMBER .rv-lab{color:var(--signal-amber-text)}
+.rv-head.RED .rv-lab{color:var(--signal-red-text)}
+.rv-head.UNKNOWN .rv-lab{color:var(--signal-unknown-text)}
+.rv-h{margin:0; font-family:var(--font-display); font-weight:400;
+      font-size:26px; line-height:34px; color:var(--fg-1); overflow-wrap:anywhere}
+.rv-sub{margin:0; font-size:16px; line-height:24px; color:var(--fg-2)}
+/* 주의: 좁은 폭에서도 헤드라인을 줄이지 않는다. 정본이 26/34 이고, 시피님
+   비평이 "UI 가 큼지막해야 한다" 였다 - 390px 에서 '확인 후 소싱' 은 26px
+   로도 한 줄에 들어간다(실측). 줄이면 인수 검사가 잡는다. */
+@media (max-width:640px){
+  .rv-head{flex-direction:column; align-items:flex-start; gap:14px; padding:20px}
+}
+
+/* ── 이 페이지에서 이렇게 읽었습니다 ──
+ * 판정보다 위에 둔다. 잘못 읽었으면 셀러가 여기서 바로 알아챈다. */
+.rv-read{display:flex; flex-direction:column; gap:10px; padding:18px 28px;
+         border-bottom:1px solid var(--border-default)}
+.rv-read-h{font-size:14px; line-height:20px; font-weight:700; color:var(--fg-2)}
+.rv-pills{display:flex; flex-wrap:wrap; gap:8px}
+.rv-pill{display:inline-flex; align-items:center; gap:6px; padding:6px 12px;
+         border-radius:var(--r-pill); background:var(--bg-subtle);
+         font-size:15px; line-height:20px; max-width:100%; overflow-wrap:anywhere}
+/* 주의: 라벨은 줄바꿈하지 않는다. 390px 에서 '제품명' 이 '제/품/명' 으로
+   세로로 접혔다 (실측 · 다크 390). 값만 접힌다. */
+.rv-pill .k{color:var(--fg-2); white-space:nowrap; flex:none}
+.rv-pill.grade{background:var(--brand-tint); color:var(--primary-60)}
+.rv-pill.grade b{color:var(--primary-60)}
+@media (max-width:640px){ .rv-read{padding:16px 20px} }
+
+/* ── 축 셋 ── */
+/* 축 셋 — 납작한 띠에서 **카드 셋**으로 (2026-09-20).
+ *
+ * 주의(가장 중요): 카드가 됐어도 **신호 색을 칠하지 않는다.** 위 머리 주석과
+ *   `ResultAxis` 가 같은 말을 한다 - `done` 은 "그 축을 했다" 지 "그 축이
+ *   괜찮다" 가 아니다. 카드 배경·값 글자에 초록/주황/빨강을 주면 "확인함" 이
+ *   "괜찮음" 으로 읽힌다. 검사가 양쪽으로 잠근다.
+ *
+ * 주의: 격자는 원래 `repeat(3, 1fr)` 이었다. 바뀐 것은 선 대신 여백·배경·
+ *   모서리를 준 것뿐이고 JS 가 주는 값은 그대로다. */
+.rv-axes{display:grid; grid-template-columns:repeat(3,minmax(0,1fr));
+         gap:12px; padding:20px 28px 4px}
+.rv-ax{display:flex; flex-direction:column; gap:4px; padding:16px 18px;
+       min-width:0; background:var(--bg-card); border:1px solid var(--border-default);
+       border-radius:var(--r-l)}
+.rv-ax .i{display:block; width:22px; height:22px; margin-bottom:4px; color:var(--fg-3)}
+.rv-ax .i svg{width:100%; height:100%; display:block}
+.rv-ax .n{font-size:13px; line-height:19px; font-weight:700; color:var(--fg-3)}
+.rv-ax .v{font-size:22px; line-height:30px; font-weight:700; color:var(--fg-1);
+          font-family:var(--font-display); overflow-wrap:anywhere}
+.rv-ax .m{font-size:13px; line-height:19px; color:var(--fg-3); overflow-wrap:anywhere}
+@media (max-width:640px){
+  .rv-axes{grid-template-columns:1fr; padding:16px 20px 4px}
+
+}
+
+/* 상품 요약 - 국가기술표준원 등록 원부. 축 카드와 같은 바탕에 두되 신호색은
+   쓰지 않는다. 이것은 **조회 결과의 사실**이지 판정이 아니다. */
+.rv-summary{margin:12px 0 0; padding:16px 20px; border-radius:var(--r-l);
+            background:var(--bg-card); display:grid; gap:8px}
+.sm-h{font-size:13px; font-weight:500; color:var(--fg-3)}
+.sm-row{display:grid; grid-template-columns:84px 1fr; gap:12px; align-items:baseline}
+.sm-k{font-size:13px; color:var(--fg-3)}
+.sm-v{font-size:14px; color:var(--fg-1); overflow-wrap:anywhere}
+@media (max-width:480px){
+  .sm-row{grid-template-columns:1fr; gap:2px}
+}
+
+/* ── 그룹과 근거 줄 ── */
+
+/* ── 그룹과 근거 줄 ── */
+.rv-groups{padding:0 28px 8px}
+.rv-gh{font-size:14px; line-height:20px; font-weight:700; letter-spacing:.02em;
+       padding:18px 0 4px; color:var(--fg-2)}
+.rv-gh.action{color:var(--primary-60)}
+.rv-gh.finding{color:var(--signal-red-text)}
+.rv-rows{list-style:none; margin:0; padding:0}
+.rv-row{display:flex; gap:14px; padding:16px 0;
+        border-bottom:1px solid var(--border-default)}
+.rv-rows>.rv-row:last-child{border-bottom:0}
+.rv-dot{width:10px; height:10px; border-radius:50%; flex:none; margin-top:8px}
+.rv-dot.GREEN{background:var(--signal-green)}
+.rv-dot.AMBER{background:var(--signal-amber)}
+.rv-dot.RED{background:var(--signal-red)}
+.rv-dot.UNKNOWN{background:var(--signal-unknown)}
+.rv-b{display:flex; flex-direction:column; gap:6px; flex:1; min-width:0}
+.rv-t{font-size:16px; line-height:26px; color:var(--fg-1); overflow-wrap:anywhere}
+.rv-src{font-size:15px; line-height:22px; font-weight:500; color:var(--brand);
+        text-decoration:underline; text-underline-offset:3px; align-self:flex-start}
+.rv-src:hover{color:var(--brand-strong)}
+/* 공급처 참고 정보·약한 일치는 이 상품의 판정이 아니다. 같은 모양으로 그리면
+   셀러가 "이 상품이 리콜됐다" 로 읽는다. */
+.rv-row.aside .rv-t{color:var(--fg-2)}
+/* 신호 점이 없는 줄. 유해물질 접힘 하나뿐이다 - 그 줄의 UNKNOWN 은 축을 안
+   흔들려고 고른 값이지 화면에 내보이려고 고른 값이 아니다 (index.html 주석).
+   점 자리(10px + gap 14px)를 padding 으로 메워 다른 줄과 왼쪽을 맞춘다. */
+.rv-row.rv-nosignal{padding-left:24px}
+/* 공급처에 보낼 문안. 복사가 막힌 브라우저에서는 이 블록을 펼쳐 보여 주고
+   셀러가 직접 고른다 - 우리가 선택을 대신 잡아 주지 않는다(잴 것이 생긴다). */
+/* 주의(중요): 「지금 다시 검사」가 <a> 에 <button> 클래스를 쓴다. 앵커는
+   기본이 inline + 밑줄이라 글자가 상자 위쪽에 붙고 밑줄이 남는다.
+   실측: 저장소에서 `<a class="btn-t">` 는 samples.js 한 곳뿐이다 -
+   **앵커에만** 건다. 버튼 쪽은 원래대로 둔다. */
+a.btn-t, a.btn{display:inline-flex; align-items:center; justify-content:center;
+               text-decoration:none}
+
+.rv-ask{display:flex; flex-direction:column; gap:10px; padding:16px 0 0}
+/* 근거 원문 묶음. 요약이지 대체가 아니다 - 줄마다 붙은 개별 링크는 그대로 있다. */
+.rv-srcs{padding:16px 0 0; border-top:1px solid var(--border-default); margin-top:16px}
+.rv-srcs-h{font-size:13px; line-height:20px; font-weight:700; color:var(--fg-2); margin-bottom:8px}
+.rv-srcs ul{list-style:none; margin:0; padding:0; display:flex; flex-wrap:wrap; gap:6px 16px}
+.rv-srcs li{min-width:0}
+.rv-srcs a{font-size:13px; line-height:21px; overflow-wrap:anywhere}
+.rv-ask-text{
+  margin:0; padding:14px 16px; border:1px solid var(--border-default);
+  border-radius:var(--r-m); background:var(--bg-canvas);
+  font-family:var(--font-mono); font-size:13px; line-height:21px;
+  white-space:pre-wrap; overflow-wrap:anywhere; user-select:all;
+  max-height:340px; overflow-y:auto;
+}
+.rv-line{display:flex; align-items:flex-start; justify-content:space-between; gap:12px}
+@media (max-width:640px){
+  .rv-groups{padding:0 20px 8px}
+  /* 좁은 폭에서는 문장이 폭을 다 쓰고 버튼이 아래로 내려간다 - 나란히 두면
+     문장이 서너 글자씩 끊긴다 (실측 · 390). */
+  .rv-line{flex-wrap:wrap}
+  .rv-line>.rv-t{flex:1 1 100%}
+}
+
+/* "이 품목이 아닙니다" — 등급 줄에만. 누르면 저장만 되고 판정은 안 바뀐다. */
+.rv-miss{flex:none; padding:8px 14px; border:1.5px solid var(--border-default);
+         border-radius:var(--r-pill); background:transparent; color:var(--fg-2);
+         font:inherit; font-size:15px; font-weight:500; line-height:20px; cursor:pointer}
+.rv-miss:hover{border-color:var(--fg-3)}
+.rv-miss[disabled]{opacity:.5; cursor:progress}
+.rv-missed{font-size:15px; line-height:22px; color:var(--fg-2)}
+
+/* ── 같은 종류 근거 접기 (README §10-5) ──
+ * 슬라임 하나에 같은 문장이 열네 줄 반복되던 자리다. 접을 때도 **몇 건인지와
+ * 물질·기준치**는 보인다 - 숫자는 서버 detail 에서 읽는다 (R5). */
+.rv-chips{display:flex; flex-wrap:wrap; gap:6px}
+.rv-chip{display:inline-flex; align-items:center; padding:4px 10px;
+         border-radius:var(--r-pill); background:var(--bg-subtle);
+         color:var(--fg-2); font-size:14px; line-height:20px}
+.rv-more{flex:none; padding:0; border:0; background:none; color:var(--brand);
+         font:inherit; font-size:15px; font-weight:700; line-height:22px; cursor:pointer;
+         display:inline-flex; align-items:center; gap:4px}
+.rv-more:hover{color:var(--brand-strong)}
+.rv-more .chev{width:18px; height:18px}
+.rv-more[aria-expanded="true"] .chev{transform:rotate(180deg)}
+.rv-fold{list-style:none; margin:6px 0 0; padding:0}
+.rv-fold li{padding:10px 0; border-top:1px solid var(--border-default);
+            font-size:16px; line-height:26px; color:var(--fg-2)}
+.rv-fold li a{color:var(--brand); font-size:15px; text-decoration:underline;
+              text-underline-offset:3px}
+
+/* ── 메타 푸터 + §9 고정 문구 ── */
+.rv-foot{display:flex; align-items:center; justify-content:space-between; gap:16px;
+         flex-wrap:wrap; padding:14px 28px; background:var(--bg-subtle);
+         border-top:1px solid var(--border-default)}
+.rv-foot span{font-size:14px; line-height:20px; color:var(--fg-2)}
+.rv-foot b{font-weight:700; color:var(--fg-1)}
+@media (max-width:640px){ .rv-foot{padding:14px 20px} }
+
+/* 회색불 결과에서 사유 화면으로. 머리 안에 있으므로 배경을 안 준다 -
+   신호 틴트 위에 상자를 겹치면 칩과 경쟁한다. */
+.rv-why{margin:2px 0 0; font-size:14px; line-height:20px}
+.rv-why a{color:var(--brand); font-weight:600}
+
+/* ── 왜 "모름" 이 나왔나 (2026-09-20) ────────────────────────────
+   주의(중요): 갈래가 둘이고 **색으로 갈리지 않는다.** 열리는 쪽에 초록을
+     칠하면 "열림 = 좋음" 으로 읽히는데, 열리지 않는 셋은 나쁜 것이 아니라
+     우리가 판단을 한 것이다. 왼쪽 선의 **굵기와 글자**로만 가른다. */
+.uk-wrap{display:flex; flex-direction:column; gap:24px; padding-block:40px 64px}
+.uk-wrap h1{margin:0; font-family:var(--font-display); font-weight:400;
+            font-size:36px; line-height:46px}
+.uk-lede{margin:0; font-size:17px; line-height:28px; color:var(--fg-2); max-width:62ch}
+/* 주의(가장 중요): `minmax(320px,1fr)` 은 **320px 화면에서 페이지를 민다.**
+   칸의 하한이 320 이라 좌우 여백과 합쳐 화면을 넘는다 - 실측 가로 넘침 True.
+   같은 함정을 랜딩 격자에서 2026-09-18 에 이미 겪었다(미완 §1-l).
+   하한을 `min(320px, 100%)` 로 두면 좁은 화면에서 칸이 화면 안에 갇힌다. */
+.uk-list{display:grid; gap:14px;
+         grid-template-columns:repeat(auto-fill,minmax(min(320px,100%),1fr))}
+.uk-card{
+  display:flex; flex-direction:column; gap:10px; padding:20px 22px;
+  background:var(--bg-card); border-radius:var(--r-l);
+  border-left:3px solid var(--border-default);
+}
+.uk-card.answer, .uk-card.retry{border-left-color:var(--brand)}
+.uk-card h2{margin:0; font-size:16px; line-height:24px; font-weight:600; color:var(--fg-1)}
+.uk-card p{margin:0; font-size:14px; line-height:22px; color:var(--fg-2)}
+.uk-v{margin-top:auto; padding-top:8px; display:flex; flex-wrap:wrap;
+      align-items:center; gap:8px; font-size:13px; line-height:20px}
+.uk-v b{color:var(--fg-3)}
+.uk-card.answer .uk-v b, .uk-card.retry .uk-v b{color:var(--brand)}
+.uk-axes{display:flex; flex-wrap:wrap; gap:6px}
+.uk-ax{padding:2px 8px; border-radius:999px; background:var(--brand-tint);
+       color:var(--primary-70); font-size:12px; line-height:18px}
+.uk-end{display:flex; flex-direction:column; gap:8px; padding:20px 22px;
+        background:var(--bg-subtle); border-radius:var(--r-l)}
+.uk-end p{margin:0; font-size:15px; line-height:24px; color:var(--fg-2)}
+.uk-cta{padding-top:6px}
+
+/* 다루는 범위 - 검색 하나, 답 하나 (2026-09-20).
+   주의(중요): 표를 내리면서 `.gd-tbl`·`.gd-sum`·`.gd-read` 규칙은 **남겨 뒀다.**
+     `/api/v1/guide` 와 TSV 가 그대로라 표를 다시 그릴 일이 생길 수 있고,
+     CSS 를 지우는 것은 되돌리기 비싼 쪽이다. */
+.gd-ask{display:flex; flex-direction:column; gap:8px; margin:24px 0 12px}
+.gd-ask input{
+  width:100%; padding:14px 16px; font:inherit; font-size:17px;
+  border:1.5px solid var(--border-default); border-radius:var(--r-l);
+  background:var(--bg-canvas); color:var(--fg-1);
+}
+.gd-ask input:focus{outline:2px solid var(--brand); outline-offset:2px}
+.gd-hint{margin:0 0 20px; display:flex; flex-wrap:wrap; gap:8px; align-items:center;
+         font-size:14px; color:var(--fg-3)}
+.gd-chip{
+  padding:6px 12px; border-radius:999px; border:1px solid var(--border-default);
+  background:var(--bg-canvas); color:var(--fg-2); font:inherit; font-size:14px;
+  cursor:pointer;
+}
+.gd-chip:hover{border-color:var(--brand); color:var(--brand)}
+.gd-a{padding:20px 22px; border-radius:var(--r-l); background:var(--bg-card);
+      border-left:3px solid var(--border-default); margin-bottom:12px}
+.gd-a.ok{border-left-color:var(--brand)}
+.gd-a h2{margin:0 0 8px; font-size:19px; line-height:28px; font-weight:600}
+.gd-a p{margin:0 0 8px; font-size:15px; line-height:24px; color:var(--fg-2)}
+.gd-go{margin:14px 0 0}
+.gd-also{margin:0 0 20px; padding:14px 18px; border-radius:var(--r-m);
+         background:var(--signal-amber-tint); color:var(--fg-1);
+         font-size:14px; line-height:22px}
+.gd-scope{margin-top:32px; padding:20px 22px; border-radius:var(--r-l);
+          background:var(--bg-subtle)}
+.gd-scope h2{margin:0 0 10px; font-size:16px; line-height:24px; font-weight:600}
+.gd-scope p{margin:0 0 6px; font-size:15px; line-height:24px; color:var(--fg-2)}
+
+/* 대량 검사 - 붙여넣기 칸과 가이드를 나란히 (시안 화면4). 좁아지면 한 단이
+   되고 가이드가 아래로 내려간다 - 폰에서는 입력이 먼저 보여야 한다. */
+.bt-grid{display:grid; grid-template-columns:minmax(0,1fr) 300px; gap:16px;
+         align-items:start}
+@media (max-width:900px){ .bt-grid{grid-template-columns:minmax(0,1fr)} }
+
+/* 대량 검사 - 세 걸음. 새 격자를 들이지 않고 카드 안에서만 쓴다. */
+.how{list-style:none; margin:0; padding:var(--s5) var(--s6) var(--s6); display:flex;
+     flex-direction:column; gap:var(--s4); counter-reset:how}
+.how li{display:grid; grid-template-columns:24px 1fr; gap:var(--s2) var(--s4);
+        align-items:baseline}
+.how li::before{counter-increment:how; content:counter(how); grid-row:span 2;
+                width:24px; height:24px; border-radius:999px; display:grid;
+                place-items:center; font-size:13px; font-weight:600;
+                background:var(--brand-tint); color:var(--primary-70)}
+.how li b{font-weight:600; color:var(--fg-1)}
+.how li span{grid-column:2; font-size:14px; color:var(--fg-2)}
+
+/* ── [M-5] 카테고리 가이드 ────────────────────────────────────────
+   주의(중요): 화면 글자는 15px 이상이다. 이 절에 14px 이하를 두지 않는다.
+   숫자·문구는 전부 /api/v1/guide 가 그린다 - 여기에도 HTML 에도 안 적는다. */
+.gd{padding-block:var(--s8) var(--s12)}
+.gd h1{font-size:28px; line-height:36px; font-weight:700; color:var(--fg-1); margin:0 0 var(--s3)}
+.gd-lede{font-size:16px; line-height:26px; color:var(--fg-2); margin:0 0 var(--s5); max-width:62ch}
+.gd-label{font-size:15px; line-height:24px; color:var(--signal-amber-text);
+          background:var(--signal-amber-tint); border:1px solid var(--signal-amber-border);
+          border-radius:var(--r-m); padding:12px 16px; margin:0 0 var(--s6)}
+.gd-sum{list-style:none; display:flex; flex-wrap:wrap; gap:var(--s3); padding:0; margin:0 0 var(--s6)}
+.gd-sum li{flex:1 1 160px; background:var(--bg-subtle); border-radius:var(--r-xl); padding:16px 18px;
+           display:flex; flex-direction:column; gap:2px}
+.gd-sum b{font-size:30px; line-height:36px; font-weight:700; color:var(--fg-1); font-variant-numeric:tabular-nums}
+.gd-sum span{font-size:15px; line-height:22px; color:var(--fg-2)}
+.gd-tools{display:flex; flex-wrap:wrap; align-items:center; gap:var(--s3); margin:0 0 var(--s4)}
+.gd-find{font-size:15px; line-height:22px; color:var(--fg-2); font-weight:500}
+.gd-tools input[type=search]{flex:1 1 240px; min-width:0; font:inherit; font-size:16px; line-height:24px;
+    padding:12px 14px; border:1px solid var(--border-default); border-radius:var(--r-m);
+    background:var(--bg-canvas); color:var(--fg-1)}
+.gd-tools input[type=search]:focus-visible{outline:2px solid var(--border-focus); outline-offset:1px}
+.gd-only{font-size:15px; line-height:24px; color:var(--fg-2); display:flex; align-items:center; gap:8px}
+.gd-wrap{overflow-x:auto; border:1px solid var(--border-default); border-radius:var(--r-xl); background:var(--bg-canvas)}
+.gd-tbl{width:100%; border-collapse:collapse; min-width:760px}
+.gd-tbl th, .gd-tbl td{text-align:left; vertical-align:top; padding:14px 16px;
+                       border-bottom:1px solid var(--border-default); font-size:15px; line-height:22px}
+.gd-tbl thead th{font-size:15px; line-height:22px; font-weight:700; color:var(--fg-2);
+                 background:var(--bg-subtle); position:sticky; top:0}
+.gd-tbl tbody tr:last-child th, .gd-tbl tbody tr:last-child td{border-bottom:0}
+.gd-cat{display:block; font-size:16px; line-height:24px; font-weight:700; color:var(--fg-1)}
+.gd-parent{display:block; font-size:15px; line-height:22px; color:var(--fg-3)}
+.gd-n{white-space:nowrap; font-variant-numeric:tabular-nums; color:var(--fg-2)}
+.gd-n b{color:var(--fg-1); font-weight:700}
+.gd-pill, .gd-grade{display:inline-block; margin:0 6px 6px 0; padding:4px 10px; border-radius:var(--r-pill);
+                    font-size:15px; line-height:22px}
+.gd-pill{background:var(--bg-subtle); color:var(--fg-1)}
+.gd-grade{background:var(--brand-tint); color:var(--primary-70); font-weight:500}
+.gd-basis{color:var(--fg-3); max-width:40ch}
+.gd-quiet{background:var(--bg-page)}
+.gd-quiet-txt{color:var(--fg-3)}
+.gd-none{font-size:16px; line-height:26px; color:var(--fg-2); padding:var(--s6) 0}
+.gd-read{margin-top:var(--s10)}
+.gd-read h2{font-size:20px; line-height:28px; font-weight:700; color:var(--fg-1); margin:0 0 var(--s3)}
+.gd-read dl{margin:0; display:grid; gap:var(--s3)}
+.gd-read dt{font-size:16px; line-height:24px; font-weight:700; color:var(--fg-1)}
+.gd-read dd{margin:2px 0 0; font-size:15px; line-height:24px; color:var(--fg-2); max-width:64ch}
+@media (max-width:640px){
+  .gd h1{font-size:24px; line-height:32px}
+  .gd-sum li{flex:1 1 140px; padding:14px 16px}
+  .gd-sum b{font-size:26px; line-height:32px}
+}
+
+/* == 체험 표본 (/samples) ==============================================
+   도매 실상품 열 개를 우리가 실제로 검사한 결과를 얼려 둔 화면이다.
+   칩·버튼·색 토큰은 결과 카드와 같은 것을 쓴다 - 같은 RED 를 두 화면이
+   다르게 그리면 셀러가 다른 것으로 읽는다.
+
+   주의(중요): 그리드 칸에 `minmax(0,1fr)` 을 쓴다. `1fr` 은 하한이
+     min-content 라 320px 에서 칸이 글자 폭을 따라가 페이지가 밀린다
+     (미완 §1-l · 랜딩 히어로가 그랬다). */
+.sx h1{font-size:30px; line-height:38px; margin:0 0 12px}
+.sx-lede{margin:0 0 20px; font-size:17px; line-height:28px; color:var(--fg-2); max-width:760px}
+.sx-honest{
+  margin:0 0 10px; padding:12px 16px; border-radius:var(--r-m);
+  background:var(--bg-canvas); border:1px solid var(--gray-20);
+  font-size:15px; line-height:24px; color:var(--fg-2); max-width:760px;
+}
+.sx-list{
+  display:grid; grid-template-columns:repeat(auto-fill, minmax(min(100%, 340px), 1fr));
+  gap:16px; margin:24px 0 32px;
+}
+.sx-card{
+  display:flex; flex-direction:column; gap:12px; min-width:0;
+  padding:20px; border:1px solid var(--gray-20); border-radius:var(--r-l);
+  background:var(--bg-card);
+}
+.sx-head{display:flex; flex-direction:column; gap:10px; min-width:0}
+/* 주의(중요): 도매 상품명이 제목 자리를 먹는다. **무게만 뒤집는다** -
+   자르면 어떤 상품인지 못 알아본다. */
+.sx-head h2{margin:0; font-size:14px; line-height:21px; font-weight:500;
+            color:var(--fg-3); overflow-wrap:anywhere}
+.sx-headline{margin:0; font-size:17px; line-height:26px; color:var(--fg-1); font-weight:600}
+.sx-rows{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:10px}
+.sx-row{
+  padding:12px 14px; border-radius:var(--r-m); background:var(--bg-canvas);
+  border-left:4px solid var(--gray-20); min-width:0;
+}
+.sx-row.GREEN{border-left-color:var(--signal-green)}
+.sx-row.AMBER{border-left-color:var(--signal-amber)}
+.sx-row.RED{border-left-color:var(--signal-red)}
+.sx-row.UNKNOWN{border-left-color:var(--signal-unknown)}
+.sx-row p{margin:0 0 6px; font-size:14px; line-height:22px; overflow-wrap:anywhere}
+.sx-row a{font-size:13px; line-height:20px}
+.sx-foot{
+  display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-top:auto;
+  padding-top:12px; border-top:1px solid var(--gray-20);
+  font-size:13px; line-height:20px; color:var(--fg-3);
+}
+
+@media (max-width:640px){
+  .sx h1{font-size:24px; line-height:32px}
+  .sx-list{grid-template-columns:minmax(0,1fr)}
+}
+
+/* == 도매꾹 상품 리스트 (/scan 입력란 위) =============================
+   셀러가 직접 타이핑하기 전에 **실제로 팔리고 있는 상품**을 먼저 보여 준다.
+   결과는 미리 조회해 둔 사본이고, 누르면 아래 결과 화면이 그대로 그린다.
+
+   주의(가장 중요): **카드에 신호색을 쓰지 않는다.** 목록에 빨강·노랑이
+     늘어서면 그것이 "이 판매자는 위험" 이라는 평가로 읽힌다. 우리가 한 것은
+     인증번호를 정부 DB 에 조회한 것뿐이다 (§9). 서버도 카드 payload 에
+     신호를 아예 안 싣는다 - 칠할 값이 없는 것이 가장 강한 가드다.
+
+   주의(중요): 칸 하한을 `min(100%, 168px)` 로 감싼다. `minmax(168px,1fr)` 은
+     320px 화면에서 좌우 여백과 합쳐 페이지를 밀어낸다 (미완 §1-l · §1-v). */
+.dg{margin:0 0 var(--s8)}
+.dg-list{
+  display:grid; grid-template-columns:repeat(auto-fill, minmax(min(100%, 168px), 1fr));
+  gap:var(--s3); margin:var(--s4) 0 var(--s3); padding:0; list-style:none;
+}
+.dg-card{
+  display:flex; flex-direction:column; gap:var(--s2); min-width:0; width:100%;
+  padding:var(--s3); text-align:left; cursor:pointer;
+  border:1px solid var(--border-default); border-radius:var(--r-l);
+  background:var(--bg-card); color:inherit; font:inherit;
+}
+.dg-card:hover{border-color:var(--primary-50); box-shadow:var(--shadow-1)}
+.dg-card[aria-pressed="true"]{border-color:var(--primary-50); background:var(--brand-tint)}
+/* 주의(중요): `height:auto` 가 있어야 `aspect-ratio` 가 산다. `<img height="200">`
+   속성이 표현 힌트로 `height:200px` 을 넣고, 높이가 auto 가 아니면 비율은
+   **무시된다** - 실측에서 320px 화면의 카드가 112×**200** 이었다. 속성은
+   지우지 않는다(로드 전 자리를 잡아 화면이 안 흔들린다). */
+.dg-card img{
+  display:block; width:100%; height:auto; aspect-ratio:1/1; object-fit:contain;
+  border-radius:var(--r-s); background:var(--bg-subtle);
+}
+/* 도매 상품명은 길고 슬래시로 이어진다. **두 줄에서 자른다** - 카드가
+   제목 길이를 따라가면 격자가 들쭉날쭉해지고, 전체 제목은 누른 뒤 결과
+   머리에서 그대로 보인다. */
+.dg-t{
+  font-size:14px; line-height:20px; color:var(--fg-1); overflow-wrap:anywhere;
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+}
+.dg-m{
+  display:flex; flex-wrap:wrap; gap:var(--s1) var(--s2); margin-top:auto;
+  font-size:13px; line-height:18px; color:var(--fg-3);
+}
+.dg-m b{color:var(--fg-1); font-weight:700}
+/* 기준일 · 출처. 카드 아래 한 줄. */
+.dg-src{margin:0; font-size:13px; line-height:20px; color:var(--fg-3)}
+
+/* 접어 둔 카드. **높이를 먹지 않게** 확실히 지운다 - `hidden` 속성만 믿으면
+   격자 자식에서 UA 기본값이 덮일 수 있다. */
+.dg-list li[hidden]{display:none}
+
+/* 주의(중요): 폰에서 **두 칸**이 되게 하한을 내린다. 320px 화면의 안쪽 폭은
+   288px 이고 `minmax(140px,·)` + gap 12 는 (288+12)/152 = 1.97 이라 **한 칸**이
+   된다 - 실측에서 카드가 272px 로 한 줄에 하나씩 섰고, 29장이 입력란을
+   8,700px 아래로 밀어냈다. 120px 이면 2.27 이라 두 칸이다. */
+@media (max-width:480px){
+  .dg-list{grid-template-columns:repeat(auto-fill, minmax(min(100%, 120px), 1fr))}
+  .dg-card{padding:var(--s2)}
+  .dg-t{font-size:13px; line-height:19px}
+}
+
+/* == 대비 한 컷 (랜딩) ================================================
+   "인증번호만 보면 vs 우리". 두 칸 다 **같은 한 번의 응답**에서 온다.
+
+   주의(중요): 왼쪽을 붉게 칠하지 않는다. 왼쪽은 틀린 답이 아니라 **덜 본
+     답**이다 - 인증 축만 보면 초록이 맞다. 오른쪽에만 신호색을 준다. */
+.cmp{display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:16px; margin:20px 0 12px}
+.cmp-col{
+  padding:20px; border:1px solid var(--border-default); border-radius:var(--r-l);
+  background:var(--bg-canvas); min-width:0;
+}
+.cmp-ours{border-color:var(--signal-red); background:var(--signal-red-tint)}
+.cmp-k{font-size:14px; line-height:20px; font-weight:700; color:var(--fg-2); margin-bottom:10px}
+.cmp-ours .cmp-k{color:var(--signal-red-text)}
+.cmp-s{margin:0 0 10px; font-size:16px; line-height:26px; overflow-wrap:anywhere}
+.cmp-note{margin:0; font-size:14px; line-height:22px; color:var(--fg-3)}
+
+@media (max-width:640px){
+  .cmp{grid-template-columns:minmax(0,1fr)}
+}
+
+/* == 우리가 틀린 것 (/misses) =========================================
+   틀린 것을 내놓는 화면이다. 붉게 칠해 겁주지 않는다 - 사실을 읽기 쉽게
+   두는 것이 목적이고, 강조는 **없는 의무를 붙인 0** 하나에만 준다. */
+.mx h1{font-size:30px; line-height:38px; margin:0 0 12px}
+.mx-lede{margin:0 0 20px; font-size:17px; line-height:28px; color:var(--fg-2); max-width:760px}
+.mx-sum{
+  list-style:none; margin:0 0 32px; padding:0; display:flex; flex-wrap:wrap; gap:12px;
+}
+.mx-sum li{
+  flex:1 1 150px; min-width:0; padding:16px 18px; border-radius:var(--r-m);
+  background:var(--bg-canvas); border:1px solid var(--border-default);
+}
+.mx-sum b{display:block; font-size:28px; line-height:34px; font-family:var(--font-display)}
+.mx-sum span{font-size:14px; line-height:20px; color:var(--fg-2)}
+.mx-sum li.zero{border-color:var(--signal-green); background:var(--signal-green-tint)}
+.mx h2{font-size:22px; line-height:30px; margin:28px 0 6px}
+.mx-note{margin:0 0 14px; font-size:15px; line-height:24px; color:var(--fg-2)}
+.mx-list{
+  display:grid; grid-template-columns:repeat(auto-fill, minmax(min(100%, 320px), 1fr));
+  gap:14px; margin-bottom:8px;
+}
+.mx-card{
+  padding:18px; border:1px solid var(--border-default); border-radius:var(--r-l);
+  background:var(--bg-card); min-width:0;
+}
+.mx-card h3{margin:0 0 10px; font-size:16px; line-height:24px; overflow-wrap:anywhere}
+.mx-row{display:flex; gap:10px; margin-bottom:6px; font-size:14px; line-height:22px}
+.mx-k{flex:none; width:110px; color:var(--fg-3)}
+.mx-v{min-width:0; overflow-wrap:anywhere}
+.mx-said{
+  display:inline-block; margin:0 6px 4px 0; padding:2px 8px; border-radius:var(--r-pill);
+  background:var(--bg-canvas); border:1px solid var(--border-default); font-size:13px;
+}
+.mx-why{margin:10px 0 0; font-size:14px; line-height:23px; color:var(--fg-2); overflow-wrap:anywhere}
+.mx-missed{
+  list-style:none; margin:0; padding:0; display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap:8px;
+}
+.mx-missed li{
+  padding:12px 14px; border-radius:var(--r-m); background:var(--bg-canvas);
+  border:1px solid var(--border-default); font-size:14px; line-height:22px;
+  min-width:0; overflow-wrap:anywhere;
+}
+
+@media (max-width:640px){
+  .mx h1{font-size:24px; line-height:32px}
+  .mx-list{grid-template-columns:minmax(0,1fr)}
+  .mx-missed{grid-template-columns:minmax(0,1fr)}
+  .mx-k{width:88px}
+}
+.sx-own{
+  margin:0; padding:10px 12px; border-radius:var(--r-m);
+  background:var(--signal-unknown-tint); color:var(--signal-unknown-text);
+  font-size:13px; line-height:20px;
+}

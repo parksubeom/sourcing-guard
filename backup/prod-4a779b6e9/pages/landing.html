@@ -1,0 +1,439 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>안심 소싱 돋보기 — 이 상품, 사입해도 될까?</title>
+<meta name="description" content="상세페이지를 붙여넣으면 KC 인증 · 리콜 · 유해물질 기준을 정부 원문으로 확인합니다. 셀러용 · 무료 · 로그인 없음.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<!-- 제목용 Pretendard. 버전을 박는다 - 안 박으면 최신이 바뀔 때
+     화면이 말없이 달라진다. 경로 근거는 CLAUDE.md R4 참조. -->
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pretendard@1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.css">
+<link rel="icon" type="image/svg+xml" href="/static/favicon.svg?v=4a779b6e9">
+<link rel="stylesheet" href="/static/app.css?v=4a779b6e9">
+<!--
+  랜딩 v2 - design/landing-v2.html 이 정본 (2026-09-13 저녁 · 시피님 비평 반영).
+  스타일은 app.css 의 "랜딩 v2" 절에만 있다. 페이지 전용 스타일 태그를 여기
+  두지 않는다 (검사가 막는다 - 그 태그 이름을 주석에 적어도 걸린다).
+
+  숫자는 **넷뿐이고 전부 그 자리에서 그린다.** HTML 에 적지 않는다:
+    리콜 N건 · 공표일   /healthz  sync.recalls · sync.latest_published_on
+    5개 중 1개          /static/data/안전성조사_보도자료.json (2026-05-14 · 420/85)
+    70.4% · 135건       /healthz  baseline.ok_rate · baseline.denominator
+    0건                 /healthz  baseline.off_target
+  데모 문구와 예시 결과  /api/v1/demos   (items[].title · preview)
+
+  주의: 랜딩은 스캔 API 를 부르지 않는다. 부르면 방문마다 LLM 호출이 나가고
+    투표자가 첫 화면에서 429 를 본다.
+  마스코트는 aria-hidden 이다 - 뜻을 나르지 않는다.
+-->
+</head>
+<body class="lv2">
+<a class="skip" href="#main">본문으로 건너뛰기</a>
+
+<header class="masthead">
+  <div class="container">
+    <a class="brand" href="/">
+      <svg class="mark" viewBox="0 0 120 120" aria-hidden="true"><use href="/static/mascot.svg?v=4a779b6e9#ansimi-GREEN"/></svg>
+      <span class="wordmark">안심 소싱 돋보기</span>
+    </a>
+    <nav class="pages" aria-label="주요 화면">
+      <a href="/" aria-current="page">소개</a>
+      <a href="/scan">상품 검사</a>
+      <a href="/batch">대량 검사</a>
+      <a href="/watch">감시 목록</a>
+      <a href="/guide">다루는 범위</a>
+    </nav>
+    <span class="asof" title="리콜 공표 기준일">2026-09-17 기준</span>
+  </div>
+</header>
+
+<main id="main">
+
+  <!-- 히어로 -->
+  <section class="lv2-hero">
+    <div class="container hero-grid">
+      <div class="hero-say">
+        <span class="eyebrow">셀러용 · 무료 · 로그인 없음</span>
+        <!-- 둘째 줄만 브랜드색 (시안 §1). 글자는 안 바뀐다. -->
+        <h1>이 상품,<br><span class="ask">사입해도 될까?</span></h1>
+        <p class="lead">상세페이지를 붙여넣으세요.<br>KC 인증 · 리콜 · 유해물질 기준을 정부 원문으로 확인합니다.</p>
+
+        <div class="cta-row">
+          <a class="btn-primary" href="/scan">내 상품 검사하기</a>
+          <span class="cta-note">붙여넣기 한 번이면 됩니다</span>
+        </div>
+
+        <div class="demo-block">
+          <div class="demo-lead">예시로 먼저 보기</div>
+          <!-- 문구·순서·개수는 /api/v1/demos 가 단일 출처. 스크립트가 그린다. -->
+          <div class="demos" id="demos"></div>
+          <p class="cta-note"><a href="/samples">실상품 열 개 체험 표본 보기</a> — 인증이 만료되었거나 취소된 상품도 들어 있습니다.</p>
+        </div>
+      </div>
+
+      <!-- 예시 결과 카드. 문구는 전부 서버 것 (실측 1회를 얼려 둔 값). -->
+      <div class="hero-art">
+        <span class="blob blob-a" aria-hidden="true"></span>
+        <span class="blob blob-b" aria-hidden="true"></span>
+        <div class="rcard" id="preview" hidden></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 세 가지만 봅니다 -->
+  <section class="lv2-sec">
+    <div class="container">
+      <h2>셀러가 걸리는 세 가지만 봅니다</h2>
+      <div class="tiles">
+        <div class="tile">
+          <div class="k">KC 인증번호</div>
+          <p class="b">상세페이지에 적힌 번호가 정부 DB에 실제로 있는 번호인지, 지금 유효한지 봅니다.</p>
+          <a class="src" href="https://www.safetykorea.kr/" target="_blank" rel="noopener">원문 · 안전인증정보 safetykorea.kr</a>
+        </div>
+        <div class="tile">
+          <div class="k">리콜</div>
+          <p class="b">이미 리콜 공표된 <b data-h="recalls">목록</b>과 모델명·인증번호를 대조합니다.<span data-when="as_of"> <span data-h="as_of"></span> 공표분까지.</span></p>
+          <a class="src" href="https://www.safetykorea.kr/recall/recallBoard" target="_blank" rel="noopener">원문 · 제품안전정보센터</a>
+        </div>
+        <div class="tile">
+          <div class="k">유해물질 기준</div>
+          <p class="b">재질 한 줄로 어느 기준이 걸리는지 알려 줍니다. 사람이 원문에서 검수한 규칙만 씁니다.</p>
+          <a class="src" href="https://www.law.go.kr/행정규칙/어린이제품공통안전기준" target="_blank" rel="noopener">원문 · 국가법령정보센터 law.go.kr</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 대비 한 컷 — "인증번호만 보면 vs 우리".
+       주의(중요): 문구를 여기 적지 않는다. /api/v1/demos 의 `compare` 가
+         우리 서버가 실제로 낸 **같은 한 번의 응답**에서 두 줄을 준다.
+       주의(중요): 왼쪽을 남의 것이라고 부르지 않는다 - 우리는 남의 도구를 재
+         본 적이 없다. 왼쪽도 우리 결과이고, 다른 것은 **어디까지 보았는가** 다.
+         그래서 "인증번호만 조회하면 여기까지" 로 쓴다. -->
+  <section class="lv2-sec" id="cmp-sec" hidden>
+    <div class="container">
+      <h2>인증번호만 보면 통과합니다</h2>
+      <div class="cmp">
+        <div class="cmp-col">
+          <div class="cmp-k">인증번호만 조회하면</div>
+          <p class="cmp-s" id="cmp-cert"></p>
+          <a class="src" id="cmp-cert-src" target="_blank" rel="noopener"></a>
+        </div>
+        <div class="cmp-col cmp-ours">
+          <div class="cmp-k">저희는 여기까지 봅니다</div>
+          <p class="cmp-s" id="cmp-recall"></p>
+          <a class="src" id="cmp-recall-src" target="_blank" rel="noopener"></a>
+        </div>
+      </div>
+      <p class="cmp-note" id="cmp-note"></p>
+      <p class="cmp-note">저희가 무엇을 틀렸는지도 적어 두었습니다 —
+        <a href="/misses">우리가 틀린 것</a></p>
+    </div>
+  </section>
+
+  <!-- 숫자 하나 -->
+  <section class="lv2-sec">
+    <div class="container">
+      <div class="band">
+        <div class="band-l">
+          <div class="band-k" data-p="band-k">-</div>
+          <div class="band-big" data-p="band-big">-</div>
+          <p class="band-b" data-p="band-b">-</p>
+        </div>
+        <div class="band-r">
+          <p class="band-h">부적합이면 판매 중지 통보, 제품안전정보센터 공개, 고발·과태료로 이어집니다.</p>
+          <p class="band-s">사입한 뒤에 알면 늦습니다.</p>
+          <a class="src" data-p="band-src" href="#" target="_blank" rel="noopener">-</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 판정은 하지 않습니다 · AI 는 읽기만 -->
+  <section class="lv2-sec">
+    <div class="container two">
+      <div class="pane">
+        <h2 class="pane-h">판정은 하지 않습니다.</h2>
+        <p class="pane-b">초록불은 보증이 아닙니다. 상세페이지에 적힌 것만 봅니다. 실물은 시험성적서가, 최종 판단은 셀러가 합니다.</p>
+        <div class="pane-lab">여기서 확인하지 않는 것</div>
+        <div class="tags">
+          <span class="tag">인증번호 도용</span>
+          <span class="tag">실제 함유량</span>
+          <span class="tag">앞으로의 리콜</span>
+          <span class="tag">상표권 · 원산지</span>
+          <span class="tag">식약처 소관 품목</span>
+        </div>
+        <!-- 회색불이 왜 나오는지. 이 칸이 "판정을 안 한다" 를 말하므로
+             "그럼 모름은 뭐냐" 가 바로 여기서 생긴다. -->
+        <a class="src" href="/unknown">왜 "모름" 이 나왔나 — 사유와 다음 걸음</a>
+      </div>
+      <div class="pane">
+        <h2 class="pane-h">AI는 읽기만 합니다.<br>판정은 규칙이 합니다.</h2>
+        <p class="pane-b">AI는 상세페이지에서 품목·재질·인증번호를 읽어냅니다. 정상·주의·위험은 정부 데이터와 사람이 검수한 규칙이 정합니다.</p>
+        <div class="figs">
+          <div class="fig" data-when="ok_rate">
+            <span class="v" data-h="ok_rate"></span>
+            <span class="k">실상품 <span data-h="denominator"></span>개 · 어떤 규제를 받는
+              물건인지 맞힌 비율 (사람이 전수 확인)</span>
+          </div>
+          <div class="fig" data-when="off_target">
+            <span class="v" data-h="off_target"></span>
+            <span class="k">규제 대상이 아닌 상품에 없는 의무를 말한 횟수</span>
+          </div>
+        </div>
+        <a class="src" href="https://github.com/parksubeom/sourcing-guard/blob/main/01_기획서_안심소싱돋보기.md" target="_blank" rel="noopener">숫자 이력 전체 · 기획서</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- 마지막 부름 -->
+  <section class="lv2-sec last">
+    <div class="container end">
+      <h2>지금 검토 중인 상품이 있나요?</h2>
+      <div class="cta-row">
+        <a class="btn-primary" href="/scan">내 상품 검사하기</a>
+        <a class="btn-text" href="/batch">한 번에 여러 개 검사하기 →</a>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-foot">
+  <div class="container">
+    <p>본 결과는 공개된 정부 데이터에 기반한 참고 정보이며, 법적 판단이나 안전 인증을 대체하지 않습니다.</p>
+    <p class="row"><span>데이터 · 국가기술표준원 · 제품안전정보센터 · 국가법령정보센터</span><span>안심 소싱 돋보기</span></p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  "use strict";
+
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text !== undefined && text !== null) n.textContent = String(text);
+    return n;
+  }
+  // 값이 없으면 **숨긴다.** 문장 가운데에 "-" 를 넣으면 쓰레기가 된다 -
+  // 실측: "이미 리콜 공표된 0건과 … - 공표분까지." · "사람이 검수한 -건".
+  // 배포본은 부팅 직후 초기 적재 전 몇 초와 정부 API 장애 때 이 화면이 뜬다.
+  //
+  // 규칙 둘:
+  //   [data-h="키"]     값이 오면 채우고, 없으면 **HTML 에 적힌 기본말**을 둔다
+  //                     (리콜 칸의 "목록" 처럼 숫자 없이도 말이 되는 낱말).
+  //   [data-when="키"]  그 값이 있을 때만 보이는 **딸린 절**. 없으면 통째로 숨긴다.
+  function set(key, val) {
+    var has = !(val === null || val === undefined || val === "");
+    var a = document.querySelectorAll('[data-h="' + key + '"]');
+    for (var i = 0; i < a.length; i++) {
+      if (a[i].dataset.fallback === undefined) a[i].dataset.fallback = a[i].textContent;
+      a[i].textContent = has ? String(val) : a[i].dataset.fallback;
+    }
+    var w = document.querySelectorAll('[data-when="' + key + '"]');
+    for (var j = 0; j < w.length; j++) w[j].hidden = !has;
+  }
+  // 주의: 둘 다 값이 없으면 **null 을 돌려준다.** "-" 를 돌려주면 문장 가운데에
+  //   그대로 박힌다("- 공표분까지"). 모양을 만드는 함수가 없는 값을 지어내지
+  //   않는 것이 옳다 (R5 와 같은 태도).
+  function fmtDate(s) { // YYYYMMDD → YYYY-MM-DD
+    return (typeof s === "string" && /^\d{8}$/.test(s))
+      ? s.slice(0, 4) + "-" + s.slice(4, 6) + "-" + s.slice(6) : null;
+  }
+  function num(n) { return (typeof n === "number") ? n.toLocaleString("ko-KR") : null; }
+
+  // ── 예시 셋 + 예시 결과 카드 ─────────────────────────────────────
+  //
+  // 서버가 단일 출처다. 문구를 여기 적지 않는다 - 프론트가 따로 들고 있으면
+  // 서버의 호출 상한 면제 목록과 갈라지고, 상한을 넘긴 순간 429 를 받는다.
+  //
+  // 주의: **note 는 랜딩에서 그리지 않는다** (design/README §10-3). 첫 화면에
+  //   인증번호가 세 개 뜨면 숫자가 늘고 후킹이 죽는다. /scan 에서만 보인다.
+  var SHORT = { green: "정상", amber: "주의", red: "위험" };
+
+  function drawDemos(items) {
+    var box = document.getElementById("demos");
+    if (!box) return;
+    items.forEach(function (d) {
+      var a = el("a", "demo");
+      a.href = "/scan?demo=" + encodeURIComponent(d.tone);
+      var chip = el("span", "chip " + String(d.tone || "").toUpperCase());
+      chip.appendChild(el("span", "dot"));
+      chip.appendChild(document.createTextNode(SHORT[d.tone] || ""));
+      a.appendChild(chip);
+      a.appendChild(el("span", "t", d.title));
+      box.appendChild(a);
+    });
+  }
+
+  function drawPreview(p) {
+    var box = document.getElementById("preview");
+    if (!box || !p) return;   // 값이 없으면 카드를 안 그린다. 지어내지 않는다.
+    var sig = String(p.signal || "").toUpperCase();
+
+    // 머리 - 헤드라인을 " — " 에서 두 줄로 나눈다. **문장은 안 바꾼다.**
+    var cut = String(p.headline || "").split(" — ");
+    var head = el("div", "rc-head " + sig);
+    var face = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    face.setAttribute("viewBox", "0 0 120 120");
+    face.setAttribute("class", "rc-face");
+    face.setAttribute("aria-hidden", "true");
+    var use = document.createElementNS("http://www.w3.org/2000/svg", "use");
+    // 주의(가장 중요): **지도가 없어졌다** - symbol id 가 신호 값 그대로다
+    //   (`ansimi-GREEN` …). 전에는 이 줄과 index.html 두 곳에 같은 지도가
+    //   있었고 잠그는 검사가 없었다 (CLAUDE.md §6).
+    use.setAttribute("href", "/static/mascot.svg?v=4a779b6e9#ansimi-" + (sig || "UNKNOWN"));
+    face.appendChild(use);
+    head.appendChild(face);
+
+    var say = el("div", "rc-say");
+    var top = el("div", "rc-top");
+    var chip = el("span", "chip solid " + sig);
+    chip.appendChild(el("span", "dot"));
+    chip.appendChild(document.createTextNode(SHORT[sig.toLowerCase()] || ""));
+    top.appendChild(chip);
+    top.appendChild(el("span", "rc-lab", "확인 필요"));
+    top.appendChild(el("span", "rc-tag", "예시 결과"));
+    say.appendChild(top);
+    say.appendChild(el("div", "rc-h", cut[0] || ""));
+    if (cut[1]) say.appendChild(el("div", "rc-sub", cut[1]));
+    head.appendChild(say);
+    box.appendChild(head);
+
+    // 무엇을 읽었나
+    var read = el("div", "rc-read");
+    read.appendChild(document.createTextNode(p.product_name || ""));
+    box.appendChild(read);
+
+    // 축 셋 - 서버가 준 이름·값 그대로. **신호 색을 칠하지 않는다.**
+    var ax = el("div", "rc-axes");
+    (p.axes || []).forEach(function (a) {
+      var c = el("div", "rc-ax");
+      c.appendChild(el("span", "n", a.name));
+      c.appendChild(el("span", "v", a.label));
+      // 날짜만 안 꺾이게 감싼다 - 글자는 그대로 두고 꺾일 자리만 막는다.
+      if (a.note) {
+        var m = el("span", "m");
+        a.note.split(/(\d{4}-\d{2}-\d{2})/).forEach(function (t, i) {
+          if (!t) return;
+          m.appendChild(i % 2 ? el("span", "nb", t) : document.createTextNode(t));
+        });
+        c.appendChild(m);
+      }
+      ax.appendChild(c);
+    });
+    box.appendChild(ax);
+
+    // 근거 줄 - 점 색은 그 finding 의 신호다.
+    var rows = el("div", "rc-rows");
+    (p.rows || []).forEach(function (f) {
+      var r = el("div", "rc-row");
+      r.appendChild(el("span", "dot " + String(f.signal || "").toUpperCase()));
+      var body = el("div", "rc-body");
+      body.appendChild(el("span", "rc-t", f.statement_ko));
+      var a = el("a", "src", f.source_label);
+      a.href = f.source_url; a.target = "_blank"; a.rel = "noopener";
+      body.appendChild(a);
+      r.appendChild(body);
+      rows.appendChild(r);
+    });
+    var foot = el("div", "rc-foot");
+    foot.appendChild(el("span", "more", "근거 전체 보기"));
+    foot.appendChild(el("span", "hint", "모든 줄에 원문 링크가 붙습니다"));
+    rows.appendChild(foot);
+    box.appendChild(rows);
+    box.hidden = false;
+  }
+
+  /* 대비 한 컷. 두 줄 다 서버가 낸 문장 그대로다 - 여기서 만들지 않는다. */
+  function drawCompare(c) {
+    if (!c || !c.cert || !c.recall) return;      /* 없으면 구역째 안 그린다 */
+    document.getElementById("cmp-cert").textContent = c.cert.statement_ko;
+    document.getElementById("cmp-recall").textContent = c.recall.statement_ko;
+    [["cmp-cert-src", c.cert], ["cmp-recall-src", c.recall]].forEach(function (pair) {
+      var a = document.getElementById(pair[0]);
+      if (pair[1].source_url) {
+        a.href = pair[1].source_url;
+        a.textContent = "원문 · " + (pair[1].source_label || "근거");
+      } else { a.hidden = true; }
+    });
+    document.getElementById("cmp-note").textContent =
+      "같은 상품을 한 번 검사한 결과입니다. 왼쪽은 인증 축, 오른쪽은 리콜 축입니다.";
+    document.getElementById("cmp-sec").hidden = false;
+  }
+
+  fetch("/api/v1/demos")
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (data) {
+      if (!data) return;
+      drawDemos((data.items || data) || []);
+      drawPreview(data.preview);
+      drawCompare(data.compare);
+    })
+    .catch(function () { /* 데모가 없어도 소개는 읽힌다 */ });
+
+  // ── 후킹 숫자 하나 — 정부 보도자료 원자료에서 그린다 ──────────────
+  //
+  // 주의: 순서로 고르지 않는다. 제목이 거의 같은 보도자료가 둘이고(85개
+  //   해외직구 / 85개 해외 구매대행) 부적합 수까지 우연히 같아 섞이기 쉽다.
+  //   id 로 고른다.
+  fetch("/static/data/안전성조사_보도자료.json?v=4a779b6e9")
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (d) {
+      if (!d) return;
+      var a = (d.조사 || []).filter(function (x) { return x.id === "2026-05-14-구매대행"; })[0];
+      if (!a) return;
+      // "N개 중 1개" 는 **원자료에서 만든다.** 화면에 비율을 적지 않는다.
+      var oneIn = Math.round(a.조사_수 / a.부적합_수);
+      function put(key, node) {
+        var t = document.querySelector('[data-p="' + key + '"]');
+        if (!t) return;
+        t.textContent = "";
+        t.appendChild(node);
+      }
+      put("band-k", document.createTextNode(a.기관 + " 안전성조사 · " + a.게시일));
+      put("band-big", document.createTextNode(oneIn + "개 중 1개"));
+      // 주의: 모집단 명사를 **리터럴로 적지 않는다.** "온라인 구매대행 제품"
+      //   이라고 적어 뒀는데 원자료는 "해외 구매대행 제품 (…)" 이다 - **해외가
+      //   빠져** 국내 온라인 유통 전체를 잰 것처럼 읽혔다. 괄호 앞을 읽는다.
+      var who = String(a.조사_대상 || "").split("(")[0].trim();
+      if (!who) return;
+      put("band-b", document.createTextNode(
+        who + " " + a.조사_수 + "개를 사서 시험했더니 "
+        + a.부적합_수 + "개가 안전기준 부적합."));
+      var src = document.querySelector('[data-p="band-src"]');
+      if (src) {
+        src.textContent = "보도자료 원문 · " + a.기관;
+        src.setAttribute("href", a.url);
+      }
+    })
+    .catch(function () { /* 원자료가 없으면 - 로 남는다. 지어내지 않는다 */ });
+
+  // ── 리콜 크기와 판정 기준선 — /healthz 에서 그린다 ────────────────
+  fetch("/healthz")
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (h) {
+      if (!h) return;
+      var rec = (h.sync && h.sync.recalls) || {};
+      // 주의: `num(0)` 은 문자열 "0" 이라 **참**이다. 전에 여기서 그 실수를 했고
+      //   "이미 리콜 공표된 0건과 … 대조합니다" 가 나왔다. 수로 먼저 가른다.
+      //   0 도 숨긴다 - 대조할 목록이 없는데 "대조합니다" 는 거짓이다 (R3).
+      var total = (typeof rec.domestic === "number" && typeof rec.overseas === "number")
+        ? rec.domestic + rec.overseas : null;
+      set("recalls", total ? num(total) + "건" : null);
+      set("as_of", fmtDate(h.sync && h.sync.latest_published_on));
+      var b = h.baseline || {};
+      set("ok_rate", typeof b.ok_rate === "number" ? b.ok_rate + "%" : null);
+      set("denominator", num(b.denominator));
+      set("off_target", typeof b.off_target === "number" ? b.off_target + "건" : null);
+    })
+    .catch(function () { /* 값이 없으면 - 로 남는다. 지어내지 않는다 */ });
+})();
+</script>
+</body>
+</html>

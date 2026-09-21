@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>감시 목록 · 안심 소싱 돋보기</title>
+<meta name="description" content="검사한 상품을 저장해두면 새 리콜 공표와 대조합니다.">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<!-- 제목용 Pretendard. 버전을 박는다 - 안 박으면 최신이 바뀔 때
+     화면이 말없이 달라진다. 경로 근거는 CLAUDE.md R4 참조. -->
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pretendard@1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.css">
+<link rel="icon" type="image/svg+xml" href="/static/favicon.svg?v=4a779b6e9">
+<link rel="stylesheet" href="/static/app.css?v=4a779b6e9">
+</head>
+<body>
+<a class="skip" href="#main">본문으로 건너뛰기</a>
+
+<header class="masthead">
+  <div class="container">
+    <a class="brand" href="/">
+      <svg class="mark" viewBox="0 0 120 120" aria-hidden="true"><use href="/static/mascot.svg?v=4a779b6e9#ansimi-GREEN"/></svg>
+      <span class="wordmark">안심 소싱 돋보기</span>
+    </a>
+    <nav class="pages" aria-label="주요 화면">
+      <a href="/">소개</a>
+      <a href="/scan">상품 검사</a>
+      <a href="/batch">대량 검사</a>
+      <a href="/watch" aria-current="page">감시 목록</a>
+      <a href="/guide">다루는 범위</a>
+    </nav>
+    <span class="asof" title="리콜 공표 기준일">2026-09-17 기준</span>
+  </div>
+</header>
+
+<div class="intro">
+  <div class="container intro-grid">
+    <div class="intro-say">
+      <span class="eyebrow">감시 목록</span>
+    <h2>저장한 상품을 새 리콜과 대조합니다</h2>
+    <p>검사는 그 시점의 판단입니다. 오늘 문제가 없던 모델이 다음 공표에서 리콜 대상이 될 수 있습니다.
+       저장해두면 새로 공표되는 리콜과 대조합니다.</p>
+    </div>
+    <div class="intro-art" aria-hidden="true"><svg class="intro-face" viewBox="0 0 120 120"><use href="/static/mascot.svg?v=4a779b6e9#ansimi-look"/></svg></div>
+  </div>
+</div>
+
+<main id="main">
+  <div class="container">
+
+    <div class="promise">
+      <!-- 주의: 전에는 **방패 + 체크**였다. 방패는 보호를, 체크는 판정을 뜻하는
+           기호라 "초록불은 보증이 아니다"(기획서 3.2)와 정면으로 어긋난다.
+           design/README 9절이 둘 다 금지한다. 마스코트로 바꿨다. -->
+      <svg width="32" height="32" viewBox="0 0 120 120" aria-hidden="true"
+           style="flex:none"><use href="/static/mascot.svg?v=4a779b6e9#ansimi-GREEN"/></svg>
+      <div>
+        <h4>이 서비스가 약속할 수 있는 것</h4>
+        <p>“지금 안전하다”는 보증할 수 없습니다. 우리는 상세페이지 글을 읽고, 단속은 실물을 수거해 시험합니다.
+           대신 <strong>나중에 리콜이 공표되면 그것을 놓치지 않는 것</strong>은 약속할 수 있습니다.</p>
+        <p>지금은 이 화면에서 확인하는 방식입니다. 이메일·카카오 알림 발송은 아직 준비 중입니다.
+           목록은 이 브라우저에 저장된 식별자로 관리되며, 브라우저 저장소를 지우면 목록을 다시 찾을 수 없습니다.</p>
+      </div>
+    </div>
+
+    <section aria-labelledby="list-h">
+      <!-- 주의(중요): 목록이 비면 제목과 「지금 대조하기」를 **감춘다**.
+           대조할 것이 없는데 대조 단추가 먼저 보이면, 눌러도 아무 일이
+           없어서 단추가 거짓말을 한다 (2026-09-20 · 미완 §1-y).
+           `hidden` 으로만 여닫는다 - 자바스크립트가 켜기 전까지는 빈 상태가
+           기본이고, 그게 맞다. -->
+      <h3 id="list-h" hidden>감시 중인 상품</h3>
+      <div class="watchbar" id="watchbar" hidden>
+        <button class="btn-t" id="sweep" type="button">지금 대조하기</button>
+        <span class="counter" id="meta"></span>
+      </div>
+
+      <div class="alert danger" id="err" hidden>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+             stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5"/><path d="M12 16.2v.2"/></svg>
+        <div><h4>목록을 불러오지 못했습니다</h4><p id="err-p"></p></div>
+      </div>
+
+      <div id="skel" class="skel" hidden aria-hidden="true"><div></div><div></div><div></div><div></div></div>
+      <div id="list" role="status" aria-live="polite"></div>
+    </section>
+
+  </div>
+</main>
+
+<footer class="site-foot">
+  <div class="container">
+    <p>본 결과는 공개된 정부 데이터에 기반한 참고 정보이며, 법적 판단이나 안전 인증을 대체하지 않습니다.</p>
+    <p class="row"><span>데이터 · 국가기술표준원 · 제품안전정보센터 · 국가법령정보센터</span><span>안심 소싱 돋보기</span></p>
+  </div>
+</footer>
+
+<script src="/static/owner.js?v=4a779b6e9"></script>
+<script>
+(function () {
+  "use strict";
+
+  var $ = function (id) { return document.getElementById(id); };
+  var list = $("list"), skel = $("skel"), err = $("err"), errP = $("err-p"),
+      sweepBtn = $("sweep"), meta = $("meta");
+  var esc = window.SG.esc, owner = window.SG.ownerId();
+
+  // watch_item_id -> 이번 대조에서 새로 잡힌 알림
+  var freshAlerts = {};
+
+  function fmtDate(v) {
+    if (!v) return "기록 없음";
+    // 주의: 공표일(`announced_on`)은 **YYYYMMDD** 다. 전에는 이 함수가
+    //   `YYYY-MM-DD` 만 알아서 화면에 "공표일 20260723" 이 그대로 떴다 -
+    //   같은 카드의 알림 문장 안에는 "2026-07-23" 이 들어 있어서, 한 화면이
+    //   같은 날짜를 두 모양으로 말했다. `index.html` 의 fmtDay 와 같은 모양.
+    var t = String(v);
+    if (/^\d{8}$/.test(t)) return t.slice(0, 4) + "-" + t.slice(4, 6) + "-" + t.slice(6);
+    var d = t.slice(0, 10);
+    return /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : esc(v);
+  }
+
+  function itemRow(it) {
+    // 한 번이라도 리콜에 걸린 항목은 새로고침 뒤에도 계속 강조한다.
+    // seen_recall_fingerprints 는 "이미 알린 리콜" 기록이라 그 자체가 이력이다.
+    var seen = (it.seen_recall_fingerprints || []).length;
+    var fresh = freshAlerts[it.id] || [];
+    var hit = seen > 0 || fresh.length > 0;
+
+    var title = it.product_name || it.model_name || "이름 미상 상품";
+    var html = '<li class="item' + (hit ? " hit" : "") + '">';
+    html += '<div class="item-top">';
+    // [C-화면] **알림에 신호등 색을 쓰지 않는다.** 리콜 "일치" 는 판정이 아니라
+    //   대조 결과다 (R6) - 색을 주면 셀러가 "이 상품은 위험" 으로 읽는다.
+    html += '<span class="f-src">' +
+            (hit ? "리콜 공표 목록과 일치한 기록이 있습니다" : "대조 완료") + "</span>";
+    html += "<div><h4>" + esc(title) + "</h4><dl>";
+    if (it.model_name) html += "<dt>모델명</dt><dd>" + esc(it.model_name) + "</dd>";
+    if (it.maker) html += "<dt>제조사</dt><dd>" + esc(it.maker) + "</dd>";
+    if ((it.kc_numbers || []).length)
+      html += "<dt>인증번호</dt><dd>" + esc(it.kc_numbers.join(", ")) + "</dd>";
+    html += "<dt>등록</dt><dd>" + fmtDate(it.registered_at) + "</dd>";
+    html += "<dt>마지막 대조</dt><dd>" + fmtDate(it.last_swept_at) + "</dd>";
+    html += "</dl></div>";
+    // [C-화면] 감시 해제. 셀러가 넣은 것을 못 지우면 잘못 등록한 항목이
+    // 목록에 영원히 남고, 진짜 알림이 그 사이에 묻힌다.
+    //
+    // 주의: 되돌릴 수 없으므로 한 번 묻는다. 그 항목의 알림도 같이 사라진다는
+    //   사실을 묻는 문장이 말한다 - 안 말하면 "목록에서만 빠지는 줄" 안다.
+    html += '<button class="btn-t sm" type="button" data-unwatch="' + esc(it.id) +
+            '" data-title="' + esc(title) + '">감시 해제</button>';
+    html += "</div>";
+
+    if (fresh.length) {
+      html += '<ul class="alerts">';
+      fresh.forEach(function (a) {
+        var link = a.source_url
+          ? '<a href="' + esc(a.source_url) + '" target="_blank" rel="noopener noreferrer">'
+            + esc(a.source_label || "근거 원문") + " (새 창)</a>"
+          : "";
+        // [C-화면] 매칭 강도를 **칩이 아니라 글로** 낸다 (R6).
+        //
+        // 주의: 알림에서는 오류 비대칭이 뒤집힌다 - 놓친 알림이 우리가 하는
+        //   유일한 약속을 깬다. 그래서 약한 일치도 버리지 않고 내되, "리콜
+        //   입니다" 가 아니라 **"유사 일치 · 원문 확인 필요"** 로 쓴다.
+        var STRENGTH = {
+          exact: "인증번호가 일치합니다 — 원문 확인 필요",
+          strong: "모델명이 일치합니다 — 원문 확인 필요",
+          weak: "유사 일치 · 원문 확인 필요"
+        };
+        var note = STRENGTH[a.strength] || (a.strength ? "원문 확인 필요" : "");
+        html += '<li class="alert">' +
+                '<span class="k">' + esc(a.statement_ko) + "</span>" +
+                (note ? '<span class="m">' + esc(note) + "</span>" : "") +
+                (a.announced_on
+                  ? '<span class="m">공표일 ' + esc(fmtDate(a.announced_on)) + "</span>"
+                  : "") +
+                link + "</li>";
+      });
+      html += "</ul>";
+    } else if (hit) {
+      html += '<ul class="alerts"><li>이전 대조에서 리콜 공표 목록과 일치한 기록이 ' +
+              seen + '건 있습니다. 원문에서 직접 확인해 주세요.</li></ul>';
+    }
+
+    return html + "</li>";
+  }
+
+  //: 목록이 있을 때만 보이는 것들. 비었을 때 감추는 자리가 두 곳이라
+  //  한 함수로 묶는다 - 한쪽만 고치면 나머지가 남는다 (§6).
+  function showListChrome(on) {
+    var h = document.getElementById("list-h");
+    var bar = document.getElementById("watchbar");
+    if (h) h.hidden = !on;
+    if (bar) bar.hidden = !on;
+  }
+
+  function renderEmpty() {
+    showListChrome(false);
+    list.innerHTML =
+      '<div class="empty">' +
+      // 방패는 "보호" 의 기호다 - 우리는 보증하지 않는다 (design 9절).
+      '<svg width="72" height="72" viewBox="0 0 120 120" aria-hidden="true">' +
+      '<use href="/static/mascot.svg?v=4a779b6e9#ansimi-UNKNOWN"/></svg>' +
+      "<p>감시 중인 상품이 없습니다.</p>" +
+      '<p class="sub">상품을 검사한 뒤 결과 화면에서 감시 목록에 추가할 수 있습니다.</p>' +
+      '<a href="/scan">상품 검사하러 가기</a></div>';
+    meta.textContent = "";
+  }
+
+  function render(items, sweep) {
+    if (!items.length) { renderEmpty(); return; }
+    showListChrome(true);
+    // [C-화면] 머리에 **언제까지 확인했나**. 이것이 이 화면의 약속이다 -
+    //   "마지막 대조" 가 없으면 셀러는 감시가 도는지 알 수 없다 (기획서 3.3).
+    //
+    // 주의: 전에는 `last_full_sweep_at` · `last_full_sweep_new` 를 읽었다.
+    //   둘 다 **전체 배치**의 기록이라 이 셀러의 것이 아니다. 실물 확인에서
+    //   잰 것 (2026-09-13):
+    //     - 저장된 알림이 0건인 소유자에게 "새 알림 1" 이 떴다 - 남의 것이다
+    //     - "지금 대조하기" 를 눌러도 날짜가 안 움직였다 - 버튼은 배치가 아니다
+    //   소유자별 값만 읽는다. 서버가 `last_swept_at`·`alerts_stored` 로 준다.
+    var bits = ["감시 " + items.length + "건"];
+    var when = sweep && sweep.last_swept_at;
+    bits.push("마지막 대조 " + (when ? fmtDate(when) : "아직 없음"));
+    var stored = sweep && sweep.alerts_stored;
+    if (stored != null) bits.push("알림 " + Number(stored) + "건");
+    meta.textContent = bits.join(" · ");
+    list.innerHTML = '<ul class="items">' + items.map(itemRow).join("") + "</ul>";
+    wireUnwatch();
+  }
+
+  // 감시 해제. 목록을 다시 그리기 전에 서버가 지웠는지부터 확인한다 -
+  // 화면에서 먼저 지우면 실패했을 때 "사라진 줄 알았는데 있는" 상태가 된다.
+  function wireUnwatch() {
+    Array.prototype.forEach.call(list.querySelectorAll("[data-unwatch]"), function (b) {
+      b.addEventListener("click", function () {
+        var id = b.getAttribute("data-unwatch");
+        var title = b.getAttribute("data-title") || "이 상품";
+        // 조사를 병기하지 않으려고 목적어를 앞으로 뺐다("'X' 감시를"). 화면에
+        // 나가는 문장에서 "을(를)" 은 우리가 받침을 못 센다는 표시다 (②-c).
+        if (!window.confirm(
+              "'" + title + "' 감시를 해제할까요?\n" +
+              "이 상품에 쌓인 알림도 같이 사라지고, 되돌릴 수 없습니다.")) return;
+        b.disabled = true;
+        b.textContent = "해제 중";
+        fetch("/api/v1/watch/" + encodeURIComponent(id) +
+              "?owner_id=" + encodeURIComponent(owner), { method: "DELETE" })
+          .then(function (r) {
+            if (r.status !== 204) throw new Error("서버가 " + r.status + " 로 응답했습니다");
+            // 그 항목의 방금-알림 기록도 버린다. 안 버리면 다음 렌더에서
+            // 없는 항목의 알림을 들고 있게 된다.
+            delete freshAlerts[id];
+            return load();
+          })
+          .catch(function (e) {
+            b.disabled = false;
+            b.textContent = "감시 해제";
+            fail(e);
+          });
+      });
+    });
+  }
+
+  function fail(e) {
+    list.innerHTML = "";
+    errP.textContent = e.message + ". 잠시 후 다시 시도해 주세요.";
+    err.hidden = false;
+  }
+
+  function load() {
+    err.hidden = true;
+    skel.hidden = false;
+    return fetch("/api/v1/watch?owner_id=" + encodeURIComponent(owner))
+      .then(function (r) {
+        if (!r.ok) throw new Error("서버가 " + r.status + " 로 응답했습니다");
+        return r.json();
+      })
+      // 주의: 응답이 배열에서 객체로 바뀌었다 (C-백). 양쪽을 받는다.
+      //   sweep 시각·알림 표시는 주말 묶음이다 (미완 6장 C-화면).
+      //   정적 자산에는 이모지·경고 기호를 쓰지 않는다 - test_no_emoji_anywhere.
+      .then(function (data) {
+        var items = (data && data.items) || data || [];
+        // [C-화면] **저장된 알림**을 항목에 붙인다. 전에는 버튼을 눌러 방금
+        //   스윕한 것만 화면에 있었고, 화면을 안 열어 본 사이의 알림은 사라졌다.
+        //
+        // 주의: **여기가 유일한 소유자다.** 전에는 버튼 핸들러가 스윕 응답으로
+        //   freshAlerts 를 채우고 여기서 저장본을 **더** 얹었다. 스윕이 방금
+        //   저장한 알림이 양쪽에 다 있으므로 같은 알림이 두 줄로 그려졌다 -
+        //   실물 확인에서 리콜 1건이 2줄이었다. 셀러는 "두 건" 으로 읽는다.
+        //   비우고 저장본으로만 채운다. 스윕 응답 ⊆ 저장본이므로 잃는 것은
+        //   없다 (run_sweep 이 save_alerts 를 부른 뒤에 응답한다).
+        freshAlerts = {};
+        (((data && data.alerts) || [])).forEach(function (a) {
+          var id = a.watch_item_id;
+          if (!id) return;
+          (freshAlerts[id] = freshAlerts[id] || []).push(a);
+        });
+        render(items, (data && data.sweep) || null);
+      })
+      .catch(fail)
+      .finally(function () { skel.hidden = true; });
+  }
+
+  sweepBtn.addEventListener("click", function () {
+    sweepBtn.disabled = true;
+    err.hidden = true;
+    fetch("/api/v1/watch/sweep?owner_id=" + encodeURIComponent(owner), { method: "POST" })
+      .then(function (r) {
+        if (!r.ok) throw new Error("서버가 " + r.status + " 로 응답했습니다");
+        return r.json();
+      })
+      .then(function () {
+        // 표시는 `load()` 가 **저장본으로** 다시 그린다. 여기서 채우면 같은
+        //   알림이 두 번 들어간다 (위 load 주석).
+        return load();
+      })
+      .catch(fail)
+      .finally(function () { sweepBtn.disabled = false; });
+  });
+
+  load();
+})();
+</script>
+</body>
+</html>

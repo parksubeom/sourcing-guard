@@ -1,0 +1,376 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>대량 검사 · 안심 소싱 돋보기</title>
+<meta name="description" content="상품명 목록을 붙여넣으면 어느 것을 먼저 봐야 하는지 가려 드립니다.">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<!-- 제목용 Pretendard. 버전을 박는다 - 안 박으면 최신이 바뀔 때
+     화면이 말없이 달라진다. 경로 근거는 CLAUDE.md R4 참조. -->
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pretendard@1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.css">
+<link rel="icon" type="image/svg+xml" href="/static/favicon.svg?v=4a779b6e9">
+<link rel="stylesheet" href="/static/app.css?v=4a779b6e9">
+</head>
+<body>
+<a class="skip" href="#main">본문으로 건너뛰기</a>
+
+<header class="masthead">
+  <div class="container">
+    <a class="brand" href="/">
+      <svg class="mark" viewBox="0 0 120 120" aria-hidden="true"><use href="/static/mascot.svg?v=4a779b6e9#ansimi-GREEN"/></svg>
+      <span class="wordmark">안심 소싱 돋보기</span>
+    </a>
+    <nav class="pages" aria-label="주요 화면">
+      <a href="/">소개</a>
+      <a href="/scan">상품 검사</a>
+      <a href="/batch" aria-current="page">대량 검사</a>
+      <a href="/watch">감시 목록</a>
+      <a href="/guide">다루는 범위</a>
+    </nav>
+  </div>
+</header>
+
+<div class="intro">
+  <div class="container intro-grid">
+    <div class="intro-say">
+      <span class="eyebrow">대량 검사</span>
+    <h2>어느 상품부터 봐야 하는지 가려 드립니다</h2>
+    <!-- 주의(중요): 500 은 batch.MAX_ROWS 다. 손으로 고치면 화면이 서버가
+         안 받는 수를 약속한다 - tests/test_batch_screen.py 가 대조한다. -->
+    <p>최대 500개까지 한 번에 봅니다. 엑셀의 상품명 열을 복사해 붙여넣으세요.</p>
+    <p>상품명만 보므로 1차 선별입니다. 걸러진 상품은 단건 검사로 다시
+       확인하세요.</p>
+    </div>
+    <!-- 마스코트. 신호 스프라이트를 쓰지 않는다 - 히어로는
+         `ansimi-look` 이나 `/static/hero/*.png` 만 쓴다. -->
+    <div class="intro-art" aria-hidden="true"><span class="intro-face art" style="--art:url(/static/hero/batch.png)"></span></div>
+  </div>
+</div>
+
+<main id="main">
+  <div class="container">
+    <!-- 시안은 붙여넣기 칸 옆에 가이드를 세운다. 넓은 화면에서만 두 단이고,
+         좁아지면 가이드가 아래로 내려간다 - 폰에서는 입력이 먼저다. -->
+    <div class="bt-grid">
+    <section class="card">
+      <h3>상품명 붙여넣기</h3>
+      <p class="scope">한 줄에 하나씩. 엑셀에서 열을 복사하면 그대로 붙습니다.
+         <b>CSV·TXT 파일을 끌어다 놓아도 됩니다.</b>
+         열 머리글(<code>상품명</code>)이 섞여도 알아서 걸러냅니다.</p>
+      <textarea id="bt" rows="10"
+        placeholder="탁상용 선풍기 미니 무선&#10;우산 양산 양우산 자동우산&#10;보조배터리 10000mAh C타입"></textarea>
+      <p class="scope" id="cnt">0줄</p>
+      <!-- 끌어다 놓기 안내. 열이 여럿이면 **채우지 않고** 왜 안 채웠는지
+           여기에 적는다 - 우리가 열을 고르면 틀린 열을 조용히 검사한다. -->
+      <p class="alert warn" id="drop-note" hidden></p>
+      <p class="actions">
+        <button class="btn" id="go" type="button">대량 검사 시작하기</button>
+        <button class="btn-t" id="clear" type="button">지우기</button>
+      </p>
+    </section>
+
+    <!-- 세 걸음. 넓은 화면에서 입력 칸 오른쪽에 선다 (시안 화면4). -->
+    <section class="card how-card" aria-labelledby="how-h">
+      <h3 id="how-h">이렇게 쓰세요</h3>
+      <ol class="how">
+        <li><b>엑셀에서 상품명 열 복사</b><span>상품명이 있는 열을 그대로 복사합니다.</span></li>
+        <li><b>여기에 붙여넣기</b><span>한 줄에 하나씩 자동으로 들어갑니다.</span></li>
+        <li><b>결과를 엑셀로 복사</b><span>검사 결과를 표로 복사해 엑셀에 붙여넣을 수 있습니다.</span></li>
+      </ol>
+    </section>
+
+    </div>
+
+    <section id="out" hidden></section>
+  </div>
+</main>
+
+<footer class="site-foot">
+  <div class="container">
+    <p>본 결과는 공개된 정부 데이터에 기반한 참고 정보이며, 법적 판단이나 안전 인증을 대체하지 않습니다.</p>
+    <p class="row"><span>데이터 · 국가기술표준원 · 제품안전정보센터 · 국가법령정보센터</span><span>안심 소싱 돋보기</span></p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  "use strict";
+  function $(id) { return document.getElementById(id); }
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+
+  var bt = $("bt"), out = $("out"), go = $("go");
+  var MAX_SHOWN = 50;   // 구획마다 처음에 그리는 줄 수. 나머지는 눌러서 편다.
+  var last = null;
+
+  // 판정별 이름과 순서. 셀러는 500줄을 다 읽지 않는다 - 다시 볼 것부터 둔다.
+  var GROUPS = [
+    ["needs_review",   "단건 검사로 다시 보세요",       "상품명에 인증번호가 보입니다. 실제 유효 여부는 조회해야 압니다."],
+    ["cert_required",  "인증번호가 반드시 있어야 합니다", "상세페이지에서 번호를 확인한 뒤 단건 검사로 조회하세요."],
+    ["check_supplier", "공급처에 확인이 필요합니다",     "세부품목이 갈려 등급을 하나로 정할 수 없습니다."],
+    ["undecided",      "상품명만으로는 가리지 못했습니다", "상세페이지가 있어야 판단할 수 있습니다."],
+    ["absence_normal", "번호가 없는 것이 정상입니다",    "인증·신고 절차가 없거나 스스로 확인하는 등급입니다."],
+    ["out_of_scope",   "본 서비스 범위 밖입니다",       "다른 부처 소관입니다."]
+  ];
+
+  function countLines() {
+    var n = bt.value.split("\n").filter(function (s) { return s.trim(); }).length;
+    $("cnt").textContent = n + "줄";
+  }
+  bt.addEventListener("input", countLines);
+
+  // ── 끌어다 놓기 ──────────────────────────────────────────────────
+  //
+  // 주의(가장 중요): **열이 여럿이면 채우지 않는다.** 우리가 어느 열이
+  //   상품명인지 고르면 틀린 열을 **조용히** 검사하고, 셀러는 검사됐다고
+  //   믿는다. 이 파일 머리말 ①이 막으려던 바로 그것이다.
+  //
+  // 주의(중요): `.xlsx` 는 파싱하지 않는다. zip 이라 외부 라이브러리나 서버
+  //   업로드가 필요하고, 저장소에 외부 JS 는 **0건**이다. 그 상태를 깨지 않는다.
+  //   열 선택 UI 가 먼저이고 파서는 그다음이다 (미완 §1).
+  //
+  // 주의: 막지 않으면 브라우저가 그 파일로 **이동해** 붙여넣어 둔 줄이 전부
+  //   사라진다. 단건 화면에서 같은 것을 고쳤다.
+  var dropNote = $("drop-note");
+
+  function say(msg) {
+    dropNote.textContent = msg;
+    dropNote.hidden = !msg;
+  }
+
+  // 구분자를 **세어서** 고른다. 탭이 있으면 엑셀에서 온 것이다.
+  function columnCount(text) {
+    var line = text.split(/\r?\n/).filter(function (t) { return t.trim(); })[0] || "";
+    var tabs = line.split("\t").length;
+    if (tabs > 1) return tabs;
+    // 주의: 콤마는 상품명 안에도 있다. 그래서 **모든 줄이 같은 수**일 때만
+    //   열로 본다 - 한 줄만 보고 정하면 "우산, 양산" 을 두 열로 읽는다.
+    var rows = text.split(/\r?\n/).filter(function (t) { return t.trim(); }).slice(0, 20);
+    var counts = rows.map(function (t) { return t.split(",").length; });
+    var first = counts[0];
+    var same = counts.every(function (c) { return c === first; });
+    return same && first > 1 ? first : 1;
+  }
+
+  function takeFile(file) {
+    var name = (file.name || "").toLowerCase();
+    if (/\.(xlsx|xls)$/.test(name)) {
+      say("엑셀 파일은 열을 복사해 붙여넣어 주세요. 저희가 어느 열인지 고르면 틀릴 수 있습니다.");
+      return;
+    }
+    if (!/\.(csv|txt)$/.test(name)) {
+      say("CSV·TXT 파일만 읽습니다. 그 밖의 형식은 열을 복사해 붙여넣어 주세요.");
+      return;
+    }
+    var fr = new FileReader();
+    fr.onload = function () {
+      var text = String(fr.result || "");
+      var cols = columnCount(text);
+      if (cols > 1) {
+        say("열이 " + cols + "개입니다. 어느 열이 상품명인지 저희가 고르면 틀릴 수 " +
+            "있어서 넣지 않았습니다 — 그 열만 복사해 붙여넣어 주세요.");
+        return;
+      }
+      say("");
+      bt.value = text;
+      countLines();
+    };
+    fr.onerror = function () { say("파일을 읽지 못했습니다. 열을 복사해 붙여넣어 주세요."); };
+    fr.readAsText(file, "utf-8");
+  }
+
+  ["dragenter", "dragover"].forEach(function (ev) {
+    document.addEventListener(ev, function (e) {
+      if (!e.dataTransfer || !e.dataTransfer.types) return;
+      if (Array.prototype.indexOf.call(e.dataTransfer.types, "Files") < 0) return;
+      e.preventDefault();
+    });
+  });
+  document.addEventListener("drop", function (e) {
+    var files = (e.dataTransfer && e.dataTransfer.files) || [];
+    if (!files.length) return;
+    e.preventDefault();
+    takeFile(files[0]);
+  });
+  $("clear").addEventListener("click", function () {
+    bt.value = ""; countLines(); out.hidden = true; out.innerHTML = ""; last = null;
+    say("");
+  });
+
+  // 잘림 안내. **조용히 버리면 셀러가 검사됐다고 믿는다.**
+  function truncNote(d) {
+    if (!d.truncated) return "";
+    return '<p class="input-note">' +
+      esc(d.total + "줄만 검사했습니다. " + d.truncated + "줄이 상한(" +
+          d.max_rows + "줄)을 넘어 잘렸습니다. 남은 줄은 나눠서 다시 넣어 주세요.") +
+      "</p>";
+  }
+
+  function rowHtml(r) {
+    // 등급이 갈리면 품목 후보를 **목록으로** 그린다. 괄호 안에 넣으면
+    // 셋 이상일 때 안 읽힌다 - 단건 화면에서 같은 판단을 했다.
+    var items = r.matched_items || [];
+    var body = "";
+    if (r.matched_item) {
+      body = '<span class="b-item">' + esc(r.matched_item) + "</span>" +
+             (r.grade ? '<span class="g">' + esc(r.grade) + "</span>" : "");
+    } else if (items.length) {
+      body = '<ul class="b-cands">' + items.map(function (it) {
+        return "<li>" + esc(it) + "</li>";
+      }).join("") + "</ul>" +
+      (r.grade_candidates && r.grade_candidates.length
+        ? '<span class="sub">' + esc(r.grade_candidates.join(" / ")) + "</span>" : "");
+    }
+    var kc = (r.cert_numbers || []).length
+      ? '<span class="sub">상품명에 보이는 번호: ' + esc(r.cert_numbers.join(", ")) + "</span>" : "";
+    return '<li class="b-row"><span class="b-line">' + esc(r.line) + "</span>" +
+           '<div class="b-body"><p class="b-name">' + esc(r.product_name) + "</p>" +
+           body + kc + "</div></li>";
+  }
+
+  function groupHtml(key, title, note, rows) {
+    if (!rows.length) return "";
+    // 제목은 summary 가 이미 말한다. h4 로 또 쓰면 같은 사실을 두 번 읽게 된다 -
+    // 단건 화면에서 세 번 고친 결함이라 여기서는 처음부터 안 만든다.
+    var head = '<p class="scope">' + esc(note) + "</p>";
+    var shown = rows.slice(0, MAX_SHOWN).map(rowHtml).join("");
+    var rest = rows.length > MAX_SHOWN
+      ? '<div class="b-more" hidden>' + rows.slice(MAX_SHOWN).map(rowHtml).join("") + "</div>" +
+        '<p class="actions"><button class="btn-t sm" type="button" data-more="' + esc(key) + '">' +
+        "나머지 " + (rows.length - MAX_SHOWN) + "줄 펼치기</button></p>"
+      : "";
+    // 판정별로 접는다. 500줄을 다 펼치면 셀러가 못 읽는다 - cert_required 만
+    // 수백 줄이 될 수 있고, 그러면 전부 무시하게 된다.
+    return '<details class="b-group" data-g="' + esc(key) + '"' +
+           (key === "needs_review" || key === "cert_required" ? " open" : "") + ">" +
+           "<summary>" + esc(title) + " · " + rows.length + "줄</summary>" +
+           head + '<ul class="b-list">' + shown + "</ul>" + rest + "</details>";
+  }
+
+  // 엑셀 붙여넣기용. 셀러는 결과를 자기 엑셀로 가져가야 한다 - 화면에만
+  // 있으면 200줄을 손으로 옮겨야 하고, 그러면 아무도 안 쓴다.
+  function toTsv(d) {
+    var head = ["줄", "상품명", "판정", "품목", "등급", "등급후보", "상품명속인증번호"];
+    var lines = [head.join("\t")];
+    var label = {};
+    GROUPS.forEach(function (g) { label[g[0]] = g[1]; });
+    (d.rows || []).forEach(function (r) {
+      lines.push([
+        r.line,
+        r.product_name,
+        label[r.verdict] || r.verdict,
+        r.matched_item || (r.matched_items || []).join(" | "),
+        r.grade || "",
+        (r.grade_candidates || []).join(" | "),
+        (r.cert_numbers || []).join(" ")
+      ].map(function (v) { return String(v).replace(/[\t\n\r]/g, " "); }).join("\t"));
+    });
+    return lines.join("\n");
+  }
+
+  function render(d) {
+    last = d;
+    var by = {};
+    (d.rows || []).forEach(function (r) { (by[r.verdict] = by[r.verdict] || []).push(r); });
+
+    var html = '<div class="card">';
+    html += "<h3>검사 결과 · " + d.total + "줄</h3>";
+    html += truncNote(d);
+    html += '<p class="scope">' + esc(d.scope_note) + "</p>";
+    html += '<p class="actions">' +
+      '<button class="btn-t" id="copy" type="button">엑셀로 복사</button>' +
+      '<button class="btn-t" id="dl" type="button">파일로 저장</button>' +
+      '<span class="sub" id="copied"></span></p>';
+    html += "</div>";
+
+    GROUPS.forEach(function (g) {
+      html += groupHtml(g[0], g[1], g[2], by[g[0]] || []);
+    });
+    out.innerHTML = html;
+    out.hidden = false;
+
+    out.querySelectorAll("button[data-more]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var box = b.closest("details").querySelector(".b-more");
+        if (box) { box.hidden = false; b.remove(); }
+      });
+    });
+    var copy = document.getElementById("copy");
+    if (copy) copy.addEventListener("click", function () {
+      var tsv = toTsv(last);
+      navigator.clipboard.writeText(tsv).then(function () {
+        document.getElementById("copied").textContent =
+          "복사했습니다. 엑셀에 붙여넣으세요.";
+      }, function () {
+        // 클립보드가 막히면 셀러가 직접 고를 수 있게 텍스트로 내놓는다.
+        var ta = document.createElement("textarea");
+        ta.value = tsv; ta.rows = 8; ta.style.width = "100%";
+        copy.parentNode.appendChild(ta); ta.select();
+        document.getElementById("copied").textContent = "직접 복사해 주세요 (Ctrl+C).";
+      });
+    });
+    var dl = document.getElementById("dl");
+    if (dl) dl.addEventListener("click", function () {
+      // BOM 을 붙여야 엑셀이 한글을 안 깨뜨린다.
+      var blob = new Blob(["﻿" + toTsv(last)],
+                          { type: "text/tab-separated-values;charset=utf-8" });
+      var a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "대량검사결과.tsv";
+      a.click();
+      URL.revokeObjectURL(a.href);
+    });
+  }
+
+  go.addEventListener("click", function () {
+    var text = bt.value.trim();
+    if (!text) { bt.focus(); return; }
+    go.disabled = true;
+    out.hidden = false;
+    // 로딩 A안 — **흐르는 띠**다. 채워지는 진행바를 쓰지 않는다.
+    //
+    // 주의: 서버가 진행 건수를 주지 않으므로 "n/N 처리" 를 화면이 지어내면
+    //   거짓이 된다. 건수 진행은 서버가 실제로 주는 값이 생기면 숫자로만 쓴다.
+    out.innerHTML =
+      '<div class="loading" aria-busy="true" aria-live="polite">' +
+        '<div class="head">' +
+          '<svg class="m-bob" viewBox="0 0 120 120" width="72" height="72" aria-hidden="true"' +
+          ' style="flex:none;overflow:visible"><use href="/static/mascot.svg?v=4a779b6e9#ansimi-look"/></svg>' +
+          '<div style="display:flex;flex-direction:column;gap:8px;flex:1">' +
+            '<h3>확인 중입니다<span class="ell"><span></span><span></span><span></span></span></h3>' +
+            '<div class="sub">줄 수가 많으면 시간이 걸립니다. 끝나면 판정별로 묶어 보여 드립니다.</div>' +
+            '<div class="track"><i></i></div>' +
+          "</div>" +
+        "</div>" +
+      "</div>";
+    fetch("/api/v1/batch", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: text })
+    })
+      .then(function (r) {
+        return r.json().then(function (b) {
+          if (!r.ok) throw new Error(b.detail || "검사를 완료하지 못했습니다.");
+          return b;
+        });
+      })
+      .then(render)
+      .catch(function (e) {
+        out.innerHTML = '<div class="card"><p class="scope">' + esc(e.message) + "</p></div>";
+      })
+      .finally(function () { go.disabled = false; });
+  });
+
+  countLines();
+})();
+</script>
+</body>
+</html>
