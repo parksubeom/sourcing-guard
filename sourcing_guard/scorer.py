@@ -11,7 +11,7 @@ import unicodedata
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta, timezone
 
-from .models import SPECIFIC_FINDING_KINDS, Finding, FindingKind, ProductFacts, ScanMeta, ScanResult, Signal, ItemCategory, VerifiedCounts, WatchSuggestion, ExtractedField, FindingGroup
+from .models import SPECIFIC_FINDING_KINDS, Finding, FindingKind, ProductFacts, Progress, ScanMeta, ScanResult, Signal, ItemCategory, VerifiedCounts, WatchSuggestion, ExtractedField, FindingGroup
 
 # Weights are intentionally boring and auditable. Any change must be
 # accompanied by a test case explaining the new behaviour.
@@ -404,6 +404,60 @@ _GAJI: dict[int, str] = {1: "한", 2: "두", 3: "세"}
 #:   상품에 대한 판단이 아니다. "거의 안전합니다" 로 읽히면 안 된다 (§9).
 #:
 #: ⚠ 하나도 못 한 경우(done 0)는 옛 문구가 맞다 - 자랑할 것이 없다.
+#: 우리말 수사 — "남은 **하나**". 축이 셋이라 넷 이상은 숫자로 떨어진다.
+_SUSA: dict[int, str] = {1: "하나", 2: "둘", 3: "셋"}
+#: 우리말 수관형사 — "**세** 축". 수사(셋)와 다르다.
+_GWANHYEONG: dict[int, str] = {1: "한", 2: "두", 3: "세"}
+
+
+def _eul(word: str) -> str:
+    """받침이 있으면 `을`, 없으면 `를`. 화면에 조사가 틀려 나오면 눈에 띈다."""
+    if not word:
+        return "를"
+    last = word[-1]
+    if not ("가" <= last <= "힣"):
+        return "를"
+    return "을" if (ord(last) - 0xAC00) % 28 else "를"
+
+
+def _progress(signal: Signal, axes: list[dict], findings: list[Finding]) -> "Progress":
+    """진행도. **우리 쪽 진행이고 상품 점수가 아니다** (사양 §2-②③).
+
+    ⚠⚠ **RED 는 안 그린다.** 빨강일 때 진행도를 크게 쓰면 판정을 흐린다.
+    ⚠ 분수는 **전부 끝났고 주의도 없을 때만**이다. `1/3` 은 "이 서비스가
+      33%밖에 못 하네" 로 읽힌다.
+    ⚠ 문구를 여기서 준다 - 화면이 지으면 두 벌이 된다 (§6).
+    """
+    done = [a for a in axes if a.get("done")]
+    left = [a for a in axes if not a.get("done")]
+    # 축은 **했고 결과가 주의**인 것. 조회 실패가 아니다 (사양 §2-④).
+    # ⚠ 묶음 판단의 소유자는 `Finding.group` 하나다 - 여기서 다시 적지 않는다 (§6).
+    attention = sum(1 for f in findings if f.group is FindingGroup.FINDING)
+
+    if signal is Signal.RED:
+        return Progress(kind="none", done=len(done), total=len(axes),
+                        attention=attention, missing=len(left))
+
+    if not left and not attention:
+        return Progress(
+            kind="fraction", done=len(done), total=len(axes),
+            attention=0, missing=0,
+            lead=f"{_GWANHYEONG.get(len(axes), len(axes))} 축 모두 확인했습니다.",
+            tail="남은 것이 없습니다.")
+
+    names = " · ".join(str(a.get("name")) for a in done) or "확인한 축"
+    if attention and not left:
+        tail = "아래 주의로 본 이유를 확인하세요."
+    elif left:
+        tail = f"남은 {_SUSA.get(len(left), len(left))}는 아래에 적었습니다."
+    else:
+        tail = ""
+    return Progress(
+        kind="counts", done=len(done), total=len(axes),
+        attention=attention, missing=len(left),
+        lead=f"{names}{_eul(names)} 마쳤습니다.", tail=tail)
+
+
 def _verified_counts(
     findings: list[Finding], axes: list[dict],
     recall_rows: int | None, rf_noncompliant_rows: int | None,
@@ -719,6 +773,7 @@ def score(
         # 축에서 뺀 갱신 시각. 메타 푸터가 받는다 - models.ScanResult 주석 참조.
         recall_synced_label=_sync_label(recall_synced_at, today),
         verified_counts=_verified_counts(findings, axes, recall_rows, rf_noncompliant_rows),
+        progress=_progress(signal, axes, findings),
         # ⚠ 판정에 쓰지 않는다. `_signal_for` 도 `_HEADLINE` 도 meta 를 보지
         #   않는다 - 추출 경로가 신호를 바꾸면 "휴리스틱이면 더 위험" 같은
         #   판정을 하게 되고, 그것은 R1 위반이다.

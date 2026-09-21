@@ -680,6 +680,32 @@ class VerifiedCounts(BaseModel):
     hazard_rules: int | None = None
 
 
+class Progress(BaseModel):
+    """진행도 — **우리 쪽 진행이지 상품 점수가 아니다.**
+
+    ⚠⚠ `3/3` 을 "이 상품 3점" 으로 읽히게 하면 실패다. 그래서 분수는
+      **전부 끝났을 때만** 쓰고(GREEN), 나머지는 **개수**로 센다 -
+      `1/3` 은 "이 서비스가 33%밖에 못 하네" 로 읽힌다 (2026-09-21 사양 §2-②).
+
+    ⚠ RED 는 진행도를 아예 쓰지 않는다. 빨강일 때 진행도를 크게 쓰면
+      판정을 흐린다 (사양 §2-③). `kind == "none"` 이다.
+
+    ⚠ `lead`·`tail` 은 **서버가 준다.** 화면이 지으면 같은 판단이 두 벌이
+      된다 (scorer.py:227 "화면이 짓지 않게 여기서 준다" · §6).
+    """
+
+    #: fraction(분수+막대) · counts(개수) · none(안 그림)
+    kind: str
+    done: int = 0
+    total: int = 0
+    #: 축은 했는데 **결과가 주의**인 것. 조회 실패가 아니다 (사양 §2-④).
+    attention: int = 0
+    #: 우리가 **못 한** 축. UNKNOWN 의 사유가 여기다 (사양 §2-⑤).
+    missing: int = 0
+    lead: str = ""
+    tail: str = ""
+
+
 class ScanResult(BaseModel):
     signal: Signal
     # 셀러의 질문은 "이거 소싱해도 돼?" 다. 신호(RED/AMBER/GREEN)와 개별 근거만으로는
@@ -706,6 +732,8 @@ class ScanResult(BaseModel):
     recall_synced_label: str | None = None
     #: 「지금까지 확인한 것」 — 우리가 한 일의 규모. 위 VerifiedCounts 참조.
     verified_counts: "VerifiedCounts | None" = None
+    #: 진행도. 위 Progress 주석 참조 - **상품 점수가 아니다.**
+    progress: "Progress | None" = None
     # GREEN 은 시점 판단이다 - "지금 리콜 없음" 이지 "앞으로도 안전" 이 아니다
     # (§6.1). 부재의 증명은 원래 약하므로, GREEN 일수록 워치리스트로 잇는다.
     # "지금 괜찮음" 은 못 보증해도 "나중에 리콜되면 알림" 은 보증할 수 있다 -
