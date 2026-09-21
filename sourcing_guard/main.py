@@ -40,7 +40,7 @@ from .models import (
     SellerHints,
     WatchItem,
 )
-from .scorer import KST, gov_lookup_state, has_specific_finding, score
+from .scorer import KST, _sync_label, gov_lookup_state, has_specific_finding, score
 from .demos import DEMOS, DEMO_TEXTS
 from .demos import preview as demo_preview
 from .samples import compare_cut, misses as sample_misses, payload as sample_payload
@@ -343,6 +343,41 @@ def _meta_tags(html: str, name: str) -> str:
     return html.replace(_HEAD_END, "\n".join(tags) + "\n" + _HEAD_END, 1)
 
 
+#: 바닥글의 "리콜 공표 … 기준 · … 갱신" 자리.
+#:
+#: 주의(가장 중요): **머리글 배지가 아니다.** 배지는 2026-09-21 에 뺐다 -
+#:   `/batch`·`/guide` 가 리콜을 안 부르는데 머리글에 달면 "이 화면도 리콜을
+#:   봤다" 로 읽혔다. 바닥글은 **서비스 전체의 출처 자리**라 같은 값이 여덟
+#:   장에 가도 그렇게 안 읽힌다. 그래서 이름도 다르다 - 옛 이름
+#:   (`_fill_as_of`)을 되살리면 "배지가 돌아왔다" 로 읽힌다.
+_FOOT_ASOF_SLOT = re.compile(r'<p class="row foot-asof" data-foot-asof></p>')
+
+
+def _fill_footer_asof(html: str) -> str:
+    """리콜 사본이 언제 것인지 바닥글에 박는다.
+
+    ⚠ **값이 없으면 요소째 지운다** (R5). 빈 줄을 남기거나 오늘 날짜로 메우면
+      화면이 없는 사실을 말한다.
+
+    ⚠ 두 값을 **함께** 적는다. 공표일만 적으면 셀러가 "3일 전 데이터" 로
+      읽는데, 주말·공휴일에는 정부 공표가 없어서 공표일이 며칠 전인 것이
+      정상이다. 갱신 시각은 "우리가 언제 받아 왔나" 다 - `last_sync_ok_at`
+      이고 **시도 시각이 아니다** (§1-k).
+
+    ⚠ 낱말을 여기서 짓지 않는다 - `scorer._sync_label` 이 갱신 절의 소유자다.
+    """
+    raw = getattr(_recalls, "as_of", None) or ""
+    if not (len(raw) == 8 and raw.isdigit()):
+        return _FOOT_ASOF_SLOT.sub("", html)
+
+    on = f"{raw[:4]}-{raw[4:6]}-{raw[6:]}"
+    synced = _sync_label(_store.get_sync_state("last_sync_ok_at"),
+                         datetime.now(KST).date())
+    tail = f" · {synced}" if synced else ""
+    return _FOOT_ASOF_SLOT.sub(
+        f'<p class="row foot-asof"><span>리콜 공표 {on} 기준{tail}</span></p>', html)
+
+
 def _page(name: str) -> HTMLResponse:
     """HTML 을 내면서 정적 자산 참조에 `?v=<build.commit>` 를 박는다.
 
@@ -358,6 +393,7 @@ def _page(name: str) -> HTMLResponse:
     """
     html = (_STATIC / name).read_text(encoding="utf-8")
 
+    html = _fill_footer_asof(html)
     html = _meta_tags(html, name)
 
     commit = build_snapshot()["commit"]

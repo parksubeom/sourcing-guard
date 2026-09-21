@@ -1770,3 +1770,7 @@ a.btn-t, a.btn{display:inline-flex; align-items:center; justify-content:center;
 .input-empty{display:flex; flex-direction:column; align-items:center; gap:2px}
 .input-empty .input-note{margin:0; text-align:center}
 @media (max-width:640px){ .empty-art{width:160px} }
+
+/* 바닥글 기준일 한 줄. 머리글 배지를 뺀 뒤 리콜 사본이 언제 것인지 말하는
+   유일한 상시 자리다 (2026-09-21). 값이 없으면 서버가 요소째 지운다. */
+.site-foot .foot-asof{margin-top:6px; color:var(--fg-3); font-size:14px; line-height:20px}

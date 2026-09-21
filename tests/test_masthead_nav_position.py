@@ -105,9 +105,16 @@ def test_the_header_has_no_date_badge_at_all(css):
         src = markup_only((static / n).read_text(encoding="utf-8"))
         assert 'class="asof"' not in src, f"{n} 에 배지가 남아 있습니다"
 
+    # ⚠⚠ **정의를 본다.** 처음에 `"_fill_as_of" not in main` 으로 썼다가
+    #   "옛 이름(`_fill_as_of`)을 되살리면 배지가 돌아왔다로 읽힌다" 는
+    #   **내 주석**에 걸렸다 (2026-09-21 · 오늘 다섯 번째). 막으려는 것은
+    #   그 함수가 **있는 것**이지 이름을 언급하는 것이 아니다 (CLAUDE.md §6 ①).
     main = (_P(__file__).resolve().parents[1] / "sourcing_guard"
             / "main.py").read_text(encoding="utf-8")
-    assert "_fill_as_of" not in main, "서버가 아직 배지를 채웁니다"
+    assert not _re.search(r"^def _fill_as_of\b", main, _re.M), (
+        "서버가 아직 머리글 배지를 채웁니다")
+    assert _re.search(r"^def _fill_footer_asof\b", main, _re.M), (
+        "바닥글 기준일을 채우는 곳이 없습니다 - 기준일이 화면에서 사라집니다")
 
 
 def test_the_recall_date_still_lives_on_the_result_card():
@@ -123,3 +130,79 @@ def test_the_recall_date_still_lives_on_the_result_card():
     recall = next(a for a in _axes([f], "20260917") if a["key"] == "recall")
     assert "2026-09-17" in (recall["note"] or ""), (
         f"결과 카드에서도 기준일이 사라졌습니다: {recall}")
+
+
+# ── 바닥글 기준일 ───────────────────────────────────────────────────
+
+_FOOT_PAGES = ["/", "/scan", "/batch", "/watch", "/guide",
+               "/samples", "/misses", "/unknown"]
+
+
+def test_every_screen_says_when_the_recall_copy_is_from():
+    """⚠⚠ 머리글 배지를 뺀 뒤 **리콜 사본이 언제 것인지 말하는 유일한 상시
+    자리**다 (2026-09-21).
+
+    배지를 뺐을 때 내가 "잃은 것 없습니다" 라고 보고했는데 **틀렸다** -
+    총괄이 재 보니 여덟 화면 어디에도 기준일 문자열이 **0** 이었다. 전에는
+    여섯 화면 머리글에 늘 보였고, 그 뒤로는 **스캔을 돌려야만** 축 note 에
+    나온다. 랜딩·가이드·표본만 보는 사람은 알 방법이 없었다.
+
+    ⚠ 심사에서 "그 데이터 언제 것이냐" 가 첫 질문이다.
+    ⚠ 바닥글이라 `/batch`·`/guide` 에 같은 값이 가도 "이 화면이 리콜을 봤다"
+      로 안 읽힌다 - 바닥글은 **서비스 전체의 출처 자리**다. 그게 머리글
+      배지와 다른 점이고 R3 가 안 걸리는 이유다.
+    """
+    import re as _re
+
+    from fastapi.testclient import TestClient
+
+    from sourcing_guard.main import app
+
+    assert len(_FOOT_PAGES) == 8
+    seen = []
+    with TestClient(app) as c:
+        for path in _FOOT_PAGES:
+            html = c.get(path).text
+            m = _re.search(r'<p class="row foot-asof">(.*?)</p>', html, _re.S)
+            assert m, f"{path} 바닥글에 기준일 줄이 없습니다"
+            text = _re.sub(r"<[^>]+>", "", m.group(1))
+            assert "리콜 공표" in text and _re.search(r"20\d\d-\d\d-\d\d", text), text
+            assert "data-foot-asof" not in html, f"{path}: 빈 슬롯이 남았습니다"
+            seen.append(text.strip())
+    assert len(set(seen)) == 1, f"화면마다 다른 값이 갑니다: {set(seen)}"
+
+
+def test_the_footer_date_is_not_written_by_hand():
+    """날짜는 **서버가 준다.** 마크업에 박으면 그 문장이 곧 거짓이 된다 (R5)."""
+    import re as _re
+    from pathlib import Path as _P
+
+    from tests.srccheck import markup_only
+
+    static = _P(__file__).resolve().parents[1] / "sourcing_guard" / "static"
+    for path in _FOOT_PAGES:
+        name = {"/": "landing.html"}.get(path, path.lstrip("/") + ".html")
+        name = "index.html" if path == "/scan" else name
+        src = markup_only((static / name).read_text(encoding="utf-8"))
+        assert "data-foot-asof" in src, f"{name} 에 바닥글 자리가 없습니다"
+        m = _re.search(r'<p class="row foot-asof"[^>]*>(.*?)</p>', src, _re.S)
+        assert m and not m.group(1).strip(), (
+            f"{name} 바닥글에 값이 박혀 있습니다: {m.group(1)[:40] if m else ''}")
+
+
+def test_the_footer_line_disappears_when_we_have_no_date():
+    """⚠ 값이 없으면 **요소째 지운다.** 빈 줄을 남기거나 오늘 날짜로 메우면
+    화면이 없는 사실을 말한다 (R3·R5).
+    """
+    from sourcing_guard import main as m
+
+    class _NoDate:
+        as_of = None
+
+    real = m._recalls
+    try:
+        m._recalls = _NoDate()
+        out = m._fill_footer_asof('<x><p class="row foot-asof" data-foot-asof></p></x>')
+    finally:
+        m._recalls = real
+    assert "foot-asof" not in out, f"값이 없는데 줄이 남았습니다: {out}"
