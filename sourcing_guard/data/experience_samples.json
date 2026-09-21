@@ -1,6 +1,6 @@
 {
  "_기록": "체험 표본 기록본. `scripts/record_samples.py` 가 실제 /api/v1/scan 응답을 그대로 담는다. 손으로 고치지 않는다 - 고치면 화면이 없는 문장을 말한다.",
- "recorded_at": "2026-09-19T14:54:44+00:00",
+ "recorded_at": "2026-09-21T08:35:48+00:00",
  "items": [
   {
    "cert_number": "CB063R10777-3001",
@@ -25,7 +25,7 @@
      "target_age": null,
      "legal_item_name": "봉제인형",
      "category": "children_toy",
-     "category_confidence": 0.92,
+     "category_confidence": 0.96,
      "source_page_url": null,
      "raw_language": "ko"
     },
@@ -47,19 +47,19 @@
        "from_cache": false,
        "fetched_at": null
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "recall_clear",
       "signal": "GREEN",
-      "statement_ko": "리콜 공표 목록에서 모델명·인증번호가 일치하는 항목을 찾지 못했습니다. 리콜 대조 기준: 2026-09-14 공표분까지",
+      "statement_ko": "리콜 공표 목록에서 모델명·인증번호가 일치하는 항목을 찾지 못했습니다. 리콜 대조 기준: 2026-09-17 공표분까지",
       "source_label": "국가기술표준원 리콜정보",
       "source_url": "https://www.safetykorea.kr/recall/recallBoard",
       "legal_basis": null,
       "detail": {
-       "recall_data_as_of": "20260914"
+       "recall_data_as_of": "20260917"
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "info_request",
@@ -77,7 +77,7 @@
         "hazard_rule"
        ]
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "info_request",
@@ -96,7 +96,7 @@
         "hazard_rule"
        ]
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "hazard_rule_applies",
@@ -111,7 +111,7 @@
        "limit_value": 60,
        "unit": "mg/kg"
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "hazard_rule_applies",
@@ -126,7 +126,7 @@
        "limit_value": 25,
        "unit": "mg/kg"
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "hazard_rule_applies",
@@ -141,7 +141,7 @@
        "limit_value": 1000,
        "unit": "mg/kg"
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "hazard_rule_applies",
@@ -156,7 +156,7 @@
        "limit_value": 75,
        "unit": "mg/kg"
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "hazard_rule_applies",
@@ -171,7 +171,7 @@
        "limit_value": 60,
        "unit": "mg/kg"
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "hazard_rule_applies",
@@ -186,7 +186,7 @@
        "limit_value": 90,
        "unit": "mg/kg"
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "hazard_rule_applies",
@@ -201,7 +201,7 @@
        "limit_value": 60,
        "unit": "mg/kg"
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "hazard_rule_applies",
@@ -216,7 +216,7 @@
        "limit_value": 500,
        "unit": "mg/kg"
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "hazard_rule_applies",
@@ -231,7 +231,7 @@
        "limit_value": 100,
        "unit": "mg/kg"
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "hazard_rule_applies",
@@ -246,7 +246,7 @@
        "limit_value": 75,
        "unit": "mg/kg"
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "hazard_rule_applies",
@@ -261,7 +261,7 @@
        "limit_value": 0.1,
        "unit": "%"
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "hazard_rule_applies",
@@ -276,7 +276,7 @@
        "limit_value": 0.01,
        "unit": "mg/kg"
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "hazard_rule_applies",
@@ -291,7 +291,7 @@
        "limit_value": 0.1,
        "unit": "mg/kg"
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "hazard_rule_applies",
@@ -306,11 +306,27 @@
        "limit_value": null,
        "unit": null
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      }
     ],
     "coverage_note": "이 품목에는 유해물질 기준이 적용됩니다. 실제 함유량은 시험성적서로만 확인되며, 인증번호 도용·상표권·수입요건은 확인 대상이 아닙니다.",
-    "recall_data_as_of": "20260914",
+    "recall_data_as_of": "20260917",
+    "recall_synced_label": "오늘 17:23 갱신",
+    "verified_counts": {
+     "recall_rows": 37430,
+     "rf_noncompliant_rows": null,
+     "hazard_rules": 14
+    },
+    "progress": {
+     "kind": "fraction",
+     "done": 3,
+     "total": 3,
+     "attention": 0,
+     "missing": 0,
+     "lead": "세 축 모두 확인했습니다.",
+     "tail": "남은 것이 없습니다.",
+     "parts": []
+    },
     "watch_suggestion": {
      "can_watch": true,
      "reason": "지금은 리콜·인증 문제가 없지만, 이는 조회 시점 기준입니다. 이 상품을 감시 목록에 넣으면 나중에 리콜이 공표될 때 가장 먼저 알려드립니다."
@@ -338,21 +354,24 @@
       "name": "인증 조회",
       "label": "조회함",
       "done": true,
-      "note": ""
+      "note": "인증상태: 적합",
+      "did_note": "인증상태: 적합"
      },
      {
       "key": "recall",
       "name": "리콜 대조",
       "label": "대조함",
       "done": true,
-      "note": "2026-09-14 공표분까지 · 2026-09-18 12:53 갱신"
+      "note": "일치 항목 없음 · 2026-09-17 공표분까지",
+      "did_note": "일치 항목 없음 · 2026-09-17 공표분까지"
      },
      {
       "key": "hazard",
-      "name": "유해물질",
-      "label": "수록됨",
+      "name": "유해물질 기준",
+      "label": "기준 14건",
       "done": true,
-      "note": ""
+      "note": "함유량은 시험성적서로 확인합니다",
+      "did_note": "함유량은 시험성적서로 확인합니다"
      }
     ],
     "grouped_findings": [
@@ -376,7 +395,7 @@
           "hazard_rule"
          ]
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "info_request",
@@ -395,7 +414,7 @@
           "hazard_rule"
          ]
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        }
       ]
      },
@@ -420,19 +439,19 @@
          "from_cache": false,
          "fetched_at": null
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "recall_clear",
         "signal": "GREEN",
-        "statement_ko": "리콜 공표 목록에서 모델명·인증번호가 일치하는 항목을 찾지 못했습니다. 리콜 대조 기준: 2026-09-14 공표분까지",
+        "statement_ko": "리콜 공표 목록에서 모델명·인증번호가 일치하는 항목을 찾지 못했습니다. 리콜 대조 기준: 2026-09-17 공표분까지",
         "source_label": "국가기술표준원 리콜정보",
         "source_url": "https://www.safetykorea.kr/recall/recallBoard",
         "legal_basis": null,
         "detail": {
-         "recall_data_as_of": "20260914"
+         "recall_data_as_of": "20260917"
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "hazard_rule_applies",
@@ -447,7 +466,7 @@
          "limit_value": 60,
          "unit": "mg/kg"
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "hazard_rule_applies",
@@ -462,7 +481,7 @@
          "limit_value": 25,
          "unit": "mg/kg"
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "hazard_rule_applies",
@@ -477,7 +496,7 @@
          "limit_value": 1000,
          "unit": "mg/kg"
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "hazard_rule_applies",
@@ -492,7 +511,7 @@
          "limit_value": 75,
          "unit": "mg/kg"
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "hazard_rule_applies",
@@ -507,7 +526,7 @@
          "limit_value": 60,
          "unit": "mg/kg"
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "hazard_rule_applies",
@@ -522,7 +541,7 @@
          "limit_value": 90,
          "unit": "mg/kg"
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "hazard_rule_applies",
@@ -537,7 +556,7 @@
          "limit_value": 60,
          "unit": "mg/kg"
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "hazard_rule_applies",
@@ -552,7 +571,7 @@
          "limit_value": 500,
          "unit": "mg/kg"
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "hazard_rule_applies",
@@ -567,7 +586,7 @@
          "limit_value": 100,
          "unit": "mg/kg"
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "hazard_rule_applies",
@@ -582,7 +601,7 @@
          "limit_value": 75,
          "unit": "mg/kg"
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "hazard_rule_applies",
@@ -597,7 +616,7 @@
          "limit_value": 0.1,
          "unit": "%"
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "hazard_rule_applies",
@@ -612,7 +631,7 @@
          "limit_value": 0.01,
          "unit": "mg/kg"
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "hazard_rule_applies",
@@ -627,7 +646,7 @@
          "limit_value": 0.1,
          "unit": "mg/kg"
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "hazard_rule_applies",
@@ -642,7 +661,7 @@
          "limit_value": null,
          "unit": null
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        }
       ]
      }
@@ -658,7 +677,7 @@
       "recall": "ok",
       "rf": "not_attempted"
      },
-     "recall_data_as_of": "20260914"
+     "recall_data_as_of": "20260917"
     },
     "input_note": null,
     "extraction_note": null,
@@ -692,7 +711,7 @@
      "target_age": null,
      "legal_item_name": "매트",
      "category": "children_textile",
-     "category_confidence": 0.72,
+     "category_confidence": 0.62,
      "source_page_url": null,
      "raw_language": "ko"
     },
@@ -714,7 +733,7 @@
        "from_cache": false,
        "fetched_at": null
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "item_grade_matched",
@@ -736,19 +755,19 @@
         }
        ]
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "recall_clear",
       "signal": "GREEN",
-      "statement_ko": "리콜 공표 목록에서 모델명·인증번호가 일치하는 항목을 찾지 못했습니다. 리콜 대조 기준: 2026-09-14 공표분까지",
+      "statement_ko": "리콜 공표 목록에서 모델명·인증번호가 일치하는 항목을 찾지 못했습니다. 리콜 대조 기준: 2026-09-17 공표분까지",
       "source_label": "국가기술표준원 리콜정보",
       "source_url": "https://www.safetykorea.kr/recall/recallBoard",
       "legal_basis": null,
       "detail": {
-       "recall_data_as_of": "20260914"
+       "recall_data_as_of": "20260917"
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "info_request",
@@ -767,7 +786,7 @@
         "hazard_rule"
        ]
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "hazard_rule_applies",
@@ -782,7 +801,7 @@
        "limit_value": 60,
        "unit": "mg/kg"
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "hazard_rule_applies",
@@ -797,7 +816,7 @@
        "limit_value": 25,
        "unit": "mg/kg"
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "hazard_rule_applies",
@@ -812,7 +831,7 @@
        "limit_value": 1000,
        "unit": "mg/kg"
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "hazard_rule_applies",
@@ -827,7 +846,7 @@
        "limit_value": 75,
        "unit": "mg/kg"
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "hazard_rule_applies",
@@ -842,7 +861,7 @@
        "limit_value": 60,
        "unit": "mg/kg"
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "hazard_rule_applies",
@@ -857,7 +876,7 @@
        "limit_value": 90,
        "unit": "mg/kg"
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "hazard_rule_applies",
@@ -872,7 +891,7 @@
        "limit_value": 60,
        "unit": "mg/kg"
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "hazard_rule_applies",
@@ -887,7 +906,7 @@
        "limit_value": 500,
        "unit": "mg/kg"
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "hazard_rule_applies",
@@ -902,7 +921,7 @@
        "limit_value": 100,
        "unit": "mg/kg"
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "hazard_rule_applies",
@@ -917,7 +936,7 @@
        "limit_value": 75,
        "unit": "mg/kg"
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "hazard_rule_applies",
@@ -932,7 +951,7 @@
        "limit_value": 0.1,
        "unit": "%"
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "substance_mentioned",
@@ -944,7 +963,7 @@
       "detail": {
        "rule_id": "KC-COMMON-3.1.3-PHT"
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "hazard_rule_applies",
@@ -959,7 +978,7 @@
        "limit_value": 0.01,
        "unit": "mg/kg"
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "hazard_rule_applies",
@@ -974,7 +993,7 @@
        "limit_value": 0.1,
        "unit": "mg/kg"
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "hazard_rule_applies",
@@ -989,7 +1008,7 @@
        "limit_value": 75,
        "unit": "mg/kg"
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "hazard_rule_applies",
@@ -1004,7 +1023,7 @@
        "limit_value": 30,
        "unit": "mg/kg"
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "hazard_rule_applies",
@@ -1019,7 +1038,7 @@
        "limit_value": null,
        "unit": null
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "hazard_rule_applies",
@@ -1034,11 +1053,27 @@
        "limit_value": null,
        "unit": null
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      }
     ],
     "coverage_note": "이 품목에는 유해물질 기준이 적용됩니다. 실제 함유량은 시험성적서로만 확인되며, 인증번호 도용·상표권·수입요건은 확인 대상이 아닙니다.",
-    "recall_data_as_of": "20260914",
+    "recall_data_as_of": "20260917",
+    "recall_synced_label": "오늘 17:23 갱신",
+    "verified_counts": {
+     "recall_rows": 37430,
+     "rf_noncompliant_rows": null,
+     "hazard_rules": 17
+    },
+    "progress": {
+     "kind": "fraction",
+     "done": 3,
+     "total": 3,
+     "attention": 0,
+     "missing": 0,
+     "lead": "세 축 모두 확인했습니다.",
+     "tail": "남은 것이 없습니다.",
+     "parts": []
+    },
     "watch_suggestion": {
      "can_watch": true,
      "reason": "공급처에 확인하는 동안 이 상품을 감시 목록에 넣어두면, 그 사이 리콜이 공표되어도 놓치지 않습니다."
@@ -1071,21 +1106,24 @@
       "name": "인증 조회",
       "label": "조회함",
       "done": true,
-      "note": ""
+      "note": "인증상태: 적합",
+      "did_note": "인증상태: 적합"
      },
      {
       "key": "recall",
       "name": "리콜 대조",
       "label": "대조함",
       "done": true,
-      "note": "2026-09-14 공표분까지 · 2026-09-18 12:53 갱신"
+      "note": "일치 항목 없음 · 2026-09-17 공표분까지",
+      "did_note": "일치 항목 없음 · 2026-09-17 공표분까지"
      },
      {
       "key": "hazard",
-      "name": "유해물질",
-      "label": "수록됨",
+      "name": "유해물질 기준",
+      "label": "기준 17건",
       "done": true,
-      "note": ""
+      "note": "함유량은 시험성적서로 확인합니다",
+      "did_note": "함유량은 시험성적서로 확인합니다"
      }
     ],
     "grouped_findings": [
@@ -1113,7 +1151,7 @@
           }
          ]
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "info_request",
@@ -1132,7 +1170,7 @@
           "hazard_rule"
          ]
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "substance_mentioned",
@@ -1144,7 +1182,7 @@
         "detail": {
          "rule_id": "KC-COMMON-3.1.3-PHT"
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        }
       ]
      },
@@ -1169,19 +1207,19 @@
          "from_cache": false,
          "fetched_at": null
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "recall_clear",
         "signal": "GREEN",
-        "statement_ko": "리콜 공표 목록에서 모델명·인증번호가 일치하는 항목을 찾지 못했습니다. 리콜 대조 기준: 2026-09-14 공표분까지",
+        "statement_ko": "리콜 공표 목록에서 모델명·인증번호가 일치하는 항목을 찾지 못했습니다. 리콜 대조 기준: 2026-09-17 공표분까지",
         "source_label": "국가기술표준원 리콜정보",
         "source_url": "https://www.safetykorea.kr/recall/recallBoard",
         "legal_basis": null,
         "detail": {
-         "recall_data_as_of": "20260914"
+         "recall_data_as_of": "20260917"
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "hazard_rule_applies",
@@ -1196,7 +1234,7 @@
          "limit_value": 60,
          "unit": "mg/kg"
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "hazard_rule_applies",
@@ -1211,7 +1249,7 @@
          "limit_value": 25,
          "unit": "mg/kg"
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "hazard_rule_applies",
@@ -1226,7 +1264,7 @@
          "limit_value": 1000,
          "unit": "mg/kg"
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "hazard_rule_applies",
@@ -1241,7 +1279,7 @@
          "limit_value": 75,
          "unit": "mg/kg"
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "hazard_rule_applies",
@@ -1256,7 +1294,7 @@
          "limit_value": 60,
          "unit": "mg/kg"
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "hazard_rule_applies",
@@ -1271,7 +1309,7 @@
          "limit_value": 90,
          "unit": "mg/kg"
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "hazard_rule_applies",
@@ -1286,7 +1324,7 @@
          "limit_value": 60,
          "unit": "mg/kg"
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "hazard_rule_applies",
@@ -1301,7 +1339,7 @@
          "limit_value": 500,
          "unit": "mg/kg"
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "hazard_rule_applies",
@@ -1316,7 +1354,7 @@
          "limit_value": 100,
          "unit": "mg/kg"
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "hazard_rule_applies",
@@ -1331,7 +1369,7 @@
          "limit_value": 75,
          "unit": "mg/kg"
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "hazard_rule_applies",
@@ -1346,7 +1384,7 @@
          "limit_value": 0.1,
          "unit": "%"
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "hazard_rule_applies",
@@ -1361,7 +1399,7 @@
          "limit_value": 0.01,
          "unit": "mg/kg"
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "hazard_rule_applies",
@@ -1376,7 +1414,7 @@
          "limit_value": 0.1,
          "unit": "mg/kg"
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "hazard_rule_applies",
@@ -1391,7 +1429,7 @@
          "limit_value": 75,
          "unit": "mg/kg"
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "hazard_rule_applies",
@@ -1406,7 +1444,7 @@
          "limit_value": 30,
          "unit": "mg/kg"
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "hazard_rule_applies",
@@ -1421,7 +1459,7 @@
          "limit_value": null,
          "unit": null
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "hazard_rule_applies",
@@ -1436,7 +1474,7 @@
          "limit_value": null,
          "unit": null
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        }
       ]
      }
@@ -1452,7 +1490,7 @@
       "recall": "ok",
       "rf": "not_attempted"
      },
-     "recall_data_as_of": "20260914"
+     "recall_data_as_of": "20260917"
     },
     "input_note": null,
     "extraction_note": null,
@@ -1482,7 +1520,7 @@
      "target_age": null,
      "legal_item_name": "직류전원장치",
      "category": "electrical",
-     "category_confidence": 0.95,
+     "category_confidence": 0.92,
      "source_page_url": null,
      "raw_language": "ko"
     },
@@ -1504,7 +1542,7 @@
        "from_cache": false,
        "fetched_at": null
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "item_grade_matched",
@@ -1526,19 +1564,19 @@
         }
        ]
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "recall_clear",
       "signal": "GREEN",
-      "statement_ko": "리콜 공표 목록에서 모델명·인증번호가 일치하는 항목을 찾지 못했습니다. 리콜 대조 기준: 2026-09-14 공표분까지",
+      "statement_ko": "리콜 공표 목록에서 모델명·인증번호가 일치하는 항목을 찾지 못했습니다. 리콜 대조 기준: 2026-09-17 공표분까지",
       "source_label": "국가기술표준원 리콜정보",
       "source_url": "https://www.safetykorea.kr/recall/recallBoard",
       "legal_basis": null,
       "detail": {
-       "recall_data_as_of": "20260914"
+       "recall_data_as_of": "20260917"
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "info_request",
@@ -1556,7 +1594,7 @@
         "hazard_rule"
        ]
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "info_request",
@@ -1575,7 +1613,7 @@
         "hazard_rule"
        ]
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "coverage_gap",
@@ -1585,11 +1623,36 @@
       "source_url": "https://www.law.go.kr/행정규칙/전기용품안전기준",
       "legal_basis": null,
       "detail": {},
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      }
     ],
     "coverage_note": "현재 규칙 DB는 이 품목(품목군 electrical)의 유해물질 기준을 아직 수록하지 않았습니다. 인증·리콜 조회 결과만 반영되었습니다.",
-    "recall_data_as_of": "20260914",
+    "recall_data_as_of": "20260917",
+    "recall_synced_label": "오늘 17:23 갱신",
+    "verified_counts": {
+     "recall_rows": 37430,
+     "rf_noncompliant_rows": null,
+     "hazard_rules": null
+    },
+    "progress": {
+     "kind": "counts",
+     "done": 2,
+     "total": 3,
+     "attention": 0,
+     "missing": 1,
+     "lead": "인증 조회 · 리콜 대조를 마쳤습니다.",
+     "tail": "남은 하나는 아래에 적었습니다.",
+     "parts": [
+      {
+       "n": 2,
+       "word": "확인"
+      },
+      {
+       "n": 1,
+       "word": "미수록"
+      }
+     ]
+    },
     "watch_suggestion": {
      "can_watch": true,
      "reason": "판단에 필요한 정보가 부족합니다. 감시 목록에 넣으면 이후 리콜 공표 시 알려드립니다."
@@ -1617,21 +1680,24 @@
       "name": "인증 조회",
       "label": "조회함",
       "done": true,
-      "note": ""
+      "note": "인증상태: 적합",
+      "did_note": "인증상태: 적합"
      },
      {
       "key": "recall",
       "name": "리콜 대조",
       "label": "대조함",
       "done": true,
-      "note": "2026-09-14 공표분까지 · 2026-09-18 12:53 갱신"
+      "note": "일치 항목 없음 · 2026-09-17 공표분까지",
+      "did_note": "일치 항목 없음 · 2026-09-17 공표분까지"
      },
      {
       "key": "hazard",
-      "name": "유해물질",
+      "name": "유해물질 기준",
       "label": "이 품목 미수록",
       "done": false,
-      "note": ""
+      "note": "",
+      "did_note": ""
      }
     ],
     "grouped_findings": [
@@ -1659,7 +1725,7 @@
           }
          ]
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "info_request",
@@ -1677,7 +1743,7 @@
           "hazard_rule"
          ]
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "info_request",
@@ -1696,7 +1762,7 @@
           "hazard_rule"
          ]
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        }
       ]
      },
@@ -1721,19 +1787,19 @@
          "from_cache": false,
          "fetched_at": null
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "recall_clear",
         "signal": "GREEN",
-        "statement_ko": "리콜 공표 목록에서 모델명·인증번호가 일치하는 항목을 찾지 못했습니다. 리콜 대조 기준: 2026-09-14 공표분까지",
+        "statement_ko": "리콜 공표 목록에서 모델명·인증번호가 일치하는 항목을 찾지 못했습니다. 리콜 대조 기준: 2026-09-17 공표분까지",
         "source_label": "국가기술표준원 리콜정보",
         "source_url": "https://www.safetykorea.kr/recall/recallBoard",
         "legal_basis": null,
         "detail": {
-         "recall_data_as_of": "20260914"
+         "recall_data_as_of": "20260917"
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "coverage_gap",
@@ -1743,7 +1809,7 @@
         "source_url": "https://www.law.go.kr/행정규칙/전기용품안전기준",
         "legal_basis": null,
         "detail": {},
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        }
       ]
      }
@@ -1759,7 +1825,7 @@
       "recall": "ok",
       "rf": "not_attempted"
      },
-     "recall_data_as_of": "20260914"
+     "recall_data_as_of": "20260917"
     },
     "input_note": null,
     "extraction_note": null,
@@ -1775,7 +1841,7 @@
     "headline": "일부만 확인 — 인증·리콜은 대조했으나, 이 품목의 유해물질 기준은 아직 수록되지 않았습니다. 확인된 범위는 아래를 보세요.",
     "score": 0,
     "facts": {
-     "product_name": "1인용 사무실 usb방석 온열 전기 방석",
+     "product_name": "1인용 사무실 usb방석 온열 전기 방석 발열 강아지 고양이",
      "model_name": null,
      "maker": null,
      "materials": [],
@@ -1788,8 +1854,8 @@
      "wireless_hints": [],
      "target_age": null,
      "legal_item_name": "전기방석",
-     "category": "electrical",
-     "category_confidence": 0.93,
+     "category": "household",
+     "category_confidence": 0.86,
      "source_page_url": null,
      "raw_language": "ko"
     },
@@ -1811,7 +1877,7 @@
        "from_cache": false,
        "fetched_at": null
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "item_grade_split",
@@ -1844,19 +1910,19 @@
         }
        ]
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "recall_clear",
       "signal": "GREEN",
-      "statement_ko": "리콜 공표 목록에서 모델명·인증번호가 일치하는 항목을 찾지 못했습니다. 리콜 대조 기준: 2026-09-14 공표분까지",
+      "statement_ko": "리콜 공표 목록에서 모델명·인증번호가 일치하는 항목을 찾지 못했습니다. 리콜 대조 기준: 2026-09-17 공표분까지",
       "source_label": "국가기술표준원 리콜정보",
       "source_url": "https://www.safetykorea.kr/recall/recallBoard",
       "legal_basis": null,
       "detail": {
-       "recall_data_as_of": "20260914"
+       "recall_data_as_of": "20260917"
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "info_request",
@@ -1874,7 +1940,7 @@
         "hazard_rule"
        ]
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "info_request",
@@ -1893,21 +1959,46 @@
         "hazard_rule"
        ]
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "coverage_gap",
       "signal": "UNKNOWN",
-      "statement_ko": "이 품목에는 유해물질 기준이 아니라 전기 안전기준(감전·발열·절연)이 적용됩니다. 그 기준은 실물 시험으로만 확인되며 상세페이지로는 판단할 수 없습니다. 안전인증 또는 안전확인 번호와 시험성적서를 공급처에 요청하세요.",
-      "source_label": "전기용품 안전기준",
-      "source_url": "https://www.law.go.kr/행정규칙/전기용품안전기준",
+      "statement_ko": "이 품목의 유해물질 기준은 아직 규칙 DB에 수록되지 않았습니다.",
+      "source_label": "규칙 DB 커버리지",
+      "source_url": "https://www.safetykorea.kr/policy/targetsSafetyCheck3",
       "legal_basis": null,
       "detail": {},
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      }
     ],
-    "coverage_note": "현재 규칙 DB는 이 품목(품목군 electrical)의 유해물질 기준을 아직 수록하지 않았습니다. 인증·리콜 조회 결과만 반영되었습니다.",
-    "recall_data_as_of": "20260914",
+    "coverage_note": "현재 규칙 DB는 이 품목(품목군 household)의 유해물질 기준을 아직 수록하지 않았습니다. 인증·리콜 조회 결과만 반영되었습니다.",
+    "recall_data_as_of": "20260917",
+    "recall_synced_label": "오늘 17:23 갱신",
+    "verified_counts": {
+     "recall_rows": 37430,
+     "rf_noncompliant_rows": null,
+     "hazard_rules": null
+    },
+    "progress": {
+     "kind": "counts",
+     "done": 2,
+     "total": 3,
+     "attention": 0,
+     "missing": 1,
+     "lead": "인증 조회 · 리콜 대조를 마쳤습니다.",
+     "tail": "남은 하나는 아래에 적었습니다.",
+     "parts": [
+      {
+       "n": 2,
+       "word": "확인"
+      },
+      {
+       "n": 1,
+       "word": "미수록"
+      }
+     ]
+    },
     "watch_suggestion": {
      "can_watch": true,
      "reason": "판단에 필요한 정보가 부족합니다. 감시 목록에 넣으면 이후 리콜 공표 시 알려드립니다."
@@ -1915,7 +2006,7 @@
     "extracted": [
      {
       "label": "제품명",
-      "value": "1인용 사무실 usb방석 온열 전기 방석",
+      "value": "1인용 사무실 usb방석 온열 전기 방석 발열 강아지 고양이",
       "link": null
      },
      {
@@ -1925,7 +2016,7 @@
      },
      {
       "label": "품목 구분",
-      "value": "전기용품",
+      "value": "생활용품",
       "link": null
      }
     ],
@@ -1935,21 +2026,24 @@
       "name": "인증 조회",
       "label": "조회함",
       "done": true,
-      "note": ""
+      "note": "인증상태: 적합",
+      "did_note": "인증상태: 적합"
      },
      {
       "key": "recall",
       "name": "리콜 대조",
       "label": "대조함",
       "done": true,
-      "note": "2026-09-14 공표분까지 · 2026-09-18 12:53 갱신"
+      "note": "일치 항목 없음 · 2026-09-17 공표분까지",
+      "did_note": "일치 항목 없음 · 2026-09-17 공표분까지"
      },
      {
       "key": "hazard",
-      "name": "유해물질",
+      "name": "유해물질 기준",
       "label": "이 품목 미수록",
       "done": false,
-      "note": ""
+      "note": "",
+      "did_note": ""
      }
     ],
     "grouped_findings": [
@@ -1988,7 +2082,7 @@
           }
          ]
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "info_request",
@@ -2006,7 +2100,7 @@
           "hazard_rule"
          ]
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "info_request",
@@ -2025,7 +2119,7 @@
           "hazard_rule"
          ]
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        }
       ]
      },
@@ -2050,29 +2144,29 @@
          "from_cache": false,
          "fetched_at": null
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "recall_clear",
         "signal": "GREEN",
-        "statement_ko": "리콜 공표 목록에서 모델명·인증번호가 일치하는 항목을 찾지 못했습니다. 리콜 대조 기준: 2026-09-14 공표분까지",
+        "statement_ko": "리콜 공표 목록에서 모델명·인증번호가 일치하는 항목을 찾지 못했습니다. 리콜 대조 기준: 2026-09-17 공표분까지",
         "source_label": "국가기술표준원 리콜정보",
         "source_url": "https://www.safetykorea.kr/recall/recallBoard",
         "legal_basis": null,
         "detail": {
-         "recall_data_as_of": "20260914"
+         "recall_data_as_of": "20260917"
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "coverage_gap",
         "signal": "UNKNOWN",
-        "statement_ko": "이 품목에는 유해물질 기준이 아니라 전기 안전기준(감전·발열·절연)이 적용됩니다. 그 기준은 실물 시험으로만 확인되며 상세페이지로는 판단할 수 없습니다. 안전인증 또는 안전확인 번호와 시험성적서를 공급처에 요청하세요.",
-        "source_label": "전기용품 안전기준",
-        "source_url": "https://www.law.go.kr/행정규칙/전기용품안전기준",
+        "statement_ko": "이 품목의 유해물질 기준은 아직 규칙 DB에 수록되지 않았습니다.",
+        "source_label": "규칙 DB 커버리지",
+        "source_url": "https://www.safetykorea.kr/policy/targetsSafetyCheck3",
         "legal_basis": null,
         "detail": {},
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        }
       ]
      }
@@ -2088,7 +2182,7 @@
       "recall": "ok",
       "rf": "not_attempted"
      },
-     "recall_data_as_of": "20260914"
+     "recall_data_as_of": "20260917"
     },
     "input_note": null,
     "extraction_note": null,
@@ -2118,7 +2212,7 @@
      "target_age": null,
      "legal_item_name": "진공청소기",
      "category": "electrical",
-     "category_confidence": 0.86,
+     "category_confidence": 0.83,
      "source_page_url": null,
      "raw_language": "ko"
     },
@@ -2140,7 +2234,7 @@
        "from_cache": false,
        "fetched_at": null
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "item_grade_matched",
@@ -2186,19 +2280,19 @@
         }
        ]
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "recall_clear",
       "signal": "GREEN",
-      "statement_ko": "리콜 공표 목록에서 모델명·인증번호가 일치하는 항목을 찾지 못했습니다. 리콜 대조 기준: 2026-09-14 공표분까지",
+      "statement_ko": "리콜 공표 목록에서 모델명·인증번호가 일치하는 항목을 찾지 못했습니다. 리콜 대조 기준: 2026-09-17 공표분까지",
       "source_label": "국가기술표준원 리콜정보",
       "source_url": "https://www.safetykorea.kr/recall/recallBoard",
       "legal_basis": null,
       "detail": {
-       "recall_data_as_of": "20260914"
+       "recall_data_as_of": "20260917"
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "info_request",
@@ -2216,7 +2310,7 @@
         "hazard_rule"
        ]
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "info_request",
@@ -2235,7 +2329,7 @@
         "hazard_rule"
        ]
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "coverage_gap",
@@ -2245,11 +2339,36 @@
       "source_url": "https://www.law.go.kr/행정규칙/전기용품안전기준",
       "legal_basis": null,
       "detail": {},
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      }
     ],
     "coverage_note": "현재 규칙 DB는 이 품목(품목군 electrical)의 유해물질 기준을 아직 수록하지 않았습니다. 인증·리콜 조회 결과만 반영되었습니다.",
-    "recall_data_as_of": "20260914",
+    "recall_data_as_of": "20260917",
+    "recall_synced_label": "오늘 17:23 갱신",
+    "verified_counts": {
+     "recall_rows": 37430,
+     "rf_noncompliant_rows": null,
+     "hazard_rules": null
+    },
+    "progress": {
+     "kind": "counts",
+     "done": 2,
+     "total": 3,
+     "attention": 0,
+     "missing": 1,
+     "lead": "인증 조회 · 리콜 대조를 마쳤습니다.",
+     "tail": "남은 하나는 아래에 적었습니다.",
+     "parts": [
+      {
+       "n": 2,
+       "word": "확인"
+      },
+      {
+       "n": 1,
+       "word": "미수록"
+      }
+     ]
+    },
     "watch_suggestion": {
      "can_watch": true,
      "reason": "판단에 필요한 정보가 부족합니다. 감시 목록에 넣으면 이후 리콜 공표 시 알려드립니다."
@@ -2277,21 +2396,24 @@
       "name": "인증 조회",
       "label": "조회함",
       "done": true,
-      "note": ""
+      "note": "인증상태: 적합",
+      "did_note": "인증상태: 적합"
      },
      {
       "key": "recall",
       "name": "리콜 대조",
       "label": "대조함",
       "done": true,
-      "note": "2026-09-14 공표분까지 · 2026-09-18 12:53 갱신"
+      "note": "일치 항목 없음 · 2026-09-17 공표분까지",
+      "did_note": "일치 항목 없음 · 2026-09-17 공표분까지"
      },
      {
       "key": "hazard",
-      "name": "유해물질",
+      "name": "유해물질 기준",
       "label": "이 품목 미수록",
       "done": false,
-      "note": ""
+      "note": "",
+      "did_note": ""
      }
     ],
     "grouped_findings": [
@@ -2343,7 +2465,7 @@
           }
          ]
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "info_request",
@@ -2361,7 +2483,7 @@
           "hazard_rule"
          ]
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "info_request",
@@ -2380,7 +2502,7 @@
           "hazard_rule"
          ]
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        }
       ]
      },
@@ -2405,19 +2527,19 @@
          "from_cache": false,
          "fetched_at": null
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "recall_clear",
         "signal": "GREEN",
-        "statement_ko": "리콜 공표 목록에서 모델명·인증번호가 일치하는 항목을 찾지 못했습니다. 리콜 대조 기준: 2026-09-14 공표분까지",
+        "statement_ko": "리콜 공표 목록에서 모델명·인증번호가 일치하는 항목을 찾지 못했습니다. 리콜 대조 기준: 2026-09-17 공표분까지",
         "source_label": "국가기술표준원 리콜정보",
         "source_url": "https://www.safetykorea.kr/recall/recallBoard",
         "legal_basis": null,
         "detail": {
-         "recall_data_as_of": "20260914"
+         "recall_data_as_of": "20260917"
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "coverage_gap",
@@ -2427,7 +2549,7 @@
         "source_url": "https://www.law.go.kr/행정규칙/전기용품안전기준",
         "legal_basis": null,
         "detail": {},
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        }
       ]
      }
@@ -2443,7 +2565,7 @@
       "recall": "ok",
       "rf": "not_attempted"
      },
-     "recall_data_as_of": "20260914"
+     "recall_data_as_of": "20260917"
     },
     "input_note": null,
     "extraction_note": null,
@@ -2459,7 +2581,7 @@
     "headline": "확인 후 소싱 — 공급처에 아래 항목을 확인한 뒤 판단하세요.",
     "score": 70,
     "facts": {
-     "product_name": "12색블럭색연필/조립식색연필/어린이날선물사은품 KC 인증번호 B362R241-8002A",
+     "product_name": "12색블럭색연필",
      "model_name": null,
      "maker": null,
      "materials": [],
@@ -2473,7 +2595,7 @@
      "target_age": null,
      "legal_item_name": "색연필",
      "category": "children_stationery",
-     "category_confidence": 0.88,
+     "category_confidence": 0.94,
      "source_page_url": null,
      "raw_language": "ko"
     },
@@ -2495,7 +2617,7 @@
        "from_cache": false,
        "fetched_at": null
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "item_grade_matched",
@@ -2517,19 +2639,19 @@
         }
        ]
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "recall_clear",
       "signal": "GREEN",
-      "statement_ko": "리콜 공표 목록에서 모델명·인증번호가 일치하는 항목을 찾지 못했습니다. 리콜 대조 기준: 2026-09-14 공표분까지",
+      "statement_ko": "리콜 공표 목록에서 모델명·인증번호가 일치하는 항목을 찾지 못했습니다. 리콜 대조 기준: 2026-09-17 공표분까지",
       "source_label": "국가기술표준원 리콜정보",
       "source_url": "https://www.safetykorea.kr/recall/recallBoard",
       "legal_basis": null,
       "detail": {
-       "recall_data_as_of": "20260914"
+       "recall_data_as_of": "20260917"
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "info_request",
@@ -2547,7 +2669,7 @@
         "hazard_rule"
        ]
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "info_request",
@@ -2566,7 +2688,7 @@
         "hazard_rule"
        ]
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "hazard_rule_applies",
@@ -2581,7 +2703,7 @@
        "limit_value": 60,
        "unit": "mg/kg"
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "hazard_rule_applies",
@@ -2596,7 +2718,7 @@
        "limit_value": 25,
        "unit": "mg/kg"
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "hazard_rule_applies",
@@ -2611,7 +2733,7 @@
        "limit_value": 1000,
        "unit": "mg/kg"
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "hazard_rule_applies",
@@ -2626,7 +2748,7 @@
        "limit_value": 75,
        "unit": "mg/kg"
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "hazard_rule_applies",
@@ -2641,7 +2763,7 @@
        "limit_value": 60,
        "unit": "mg/kg"
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "hazard_rule_applies",
@@ -2656,7 +2778,7 @@
        "limit_value": 90,
        "unit": "mg/kg"
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "hazard_rule_applies",
@@ -2671,7 +2793,7 @@
        "limit_value": 60,
        "unit": "mg/kg"
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "hazard_rule_applies",
@@ -2686,7 +2808,7 @@
        "limit_value": 500,
        "unit": "mg/kg"
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "hazard_rule_applies",
@@ -2701,7 +2823,7 @@
        "limit_value": 100,
        "unit": "mg/kg"
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "hazard_rule_applies",
@@ -2716,7 +2838,7 @@
        "limit_value": 75,
        "unit": "mg/kg"
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "hazard_rule_applies",
@@ -2731,7 +2853,7 @@
        "limit_value": 0.1,
        "unit": "%"
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "hazard_rule_applies",
@@ -2746,7 +2868,7 @@
        "limit_value": 0.01,
        "unit": "mg/kg"
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "hazard_rule_applies",
@@ -2761,7 +2883,7 @@
        "limit_value": 0.1,
        "unit": "mg/kg"
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "hazard_rule_applies",
@@ -2776,11 +2898,36 @@
        "limit_value": null,
        "unit": null
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      }
     ],
     "coverage_note": "이 품목에는 유해물질 기준이 적용됩니다. 실제 함유량은 시험성적서로만 확인되며, 인증번호 도용·상표권·수입요건은 확인 대상이 아닙니다.",
-    "recall_data_as_of": "20260914",
+    "recall_data_as_of": "20260917",
+    "recall_synced_label": "오늘 17:23 갱신",
+    "verified_counts": {
+     "recall_rows": 37430,
+     "rf_noncompliant_rows": null,
+     "hazard_rules": 14
+    },
+    "progress": {
+     "kind": "counts",
+     "done": 3,
+     "total": 3,
+     "attention": 1,
+     "missing": 0,
+     "lead": "인증 조회 · 리콜 대조 · 유해물질 기준을 마쳤습니다.",
+     "tail": "아래 주의로 본 이유를 확인하세요.",
+     "parts": [
+      {
+       "n": 2,
+       "word": "확인"
+      },
+      {
+       "n": 1,
+       "word": "주의"
+      }
+     ]
+    },
     "watch_suggestion": {
      "can_watch": true,
      "reason": "공급처에 확인하는 동안 이 상품을 감시 목록에 넣어두면, 그 사이 리콜이 공표되어도 놓치지 않습니다."
@@ -2788,7 +2935,7 @@
     "extracted": [
      {
       "label": "제품명",
-      "value": "12색블럭색연필/조립식색연필/어린이날선물사은품 KC 인증번호 B362R241-8002A",
+      "value": "12색블럭색연필",
       "link": null
      },
      {
@@ -2808,21 +2955,24 @@
       "name": "인증 조회",
       "label": "조회함",
       "done": true,
-      "note": ""
+      "note": "인증상태: 기간만료",
+      "did_note": "결과는 아래"
      },
      {
       "key": "recall",
       "name": "리콜 대조",
       "label": "대조함",
       "done": true,
-      "note": "2026-09-14 공표분까지 · 2026-09-18 12:53 갱신"
+      "note": "일치 항목 없음 · 2026-09-17 공표분까지",
+      "did_note": "일치 항목 없음 · 2026-09-17 공표분까지"
      },
      {
       "key": "hazard",
-      "name": "유해물질",
-      "label": "수록됨",
+      "name": "유해물질 기준",
+      "label": "기준 14건",
       "done": true,
-      "note": ""
+      "note": "함유량은 시험성적서로 확인합니다",
+      "did_note": "함유량은 시험성적서로 확인합니다"
      }
     ],
     "grouped_findings": [
@@ -2850,7 +3000,7 @@
           }
          ]
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "info_request",
@@ -2868,7 +3018,7 @@
           "hazard_rule"
          ]
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "info_request",
@@ -2887,7 +3037,7 @@
           "hazard_rule"
          ]
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        }
       ]
      },
@@ -2912,7 +3062,7 @@
          "from_cache": false,
          "fetched_at": null
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        }
       ]
      },
@@ -2923,14 +3073,14 @@
        {
         "kind": "recall_clear",
         "signal": "GREEN",
-        "statement_ko": "리콜 공표 목록에서 모델명·인증번호가 일치하는 항목을 찾지 못했습니다. 리콜 대조 기준: 2026-09-14 공표분까지",
+        "statement_ko": "리콜 공표 목록에서 모델명·인증번호가 일치하는 항목을 찾지 못했습니다. 리콜 대조 기준: 2026-09-17 공표분까지",
         "source_label": "국가기술표준원 리콜정보",
         "source_url": "https://www.safetykorea.kr/recall/recallBoard",
         "legal_basis": null,
         "detail": {
-         "recall_data_as_of": "20260914"
+         "recall_data_as_of": "20260917"
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "hazard_rule_applies",
@@ -2945,7 +3095,7 @@
          "limit_value": 60,
          "unit": "mg/kg"
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "hazard_rule_applies",
@@ -2960,7 +3110,7 @@
          "limit_value": 25,
          "unit": "mg/kg"
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "hazard_rule_applies",
@@ -2975,7 +3125,7 @@
          "limit_value": 1000,
          "unit": "mg/kg"
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "hazard_rule_applies",
@@ -2990,7 +3140,7 @@
          "limit_value": 75,
          "unit": "mg/kg"
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "hazard_rule_applies",
@@ -3005,7 +3155,7 @@
          "limit_value": 60,
          "unit": "mg/kg"
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "hazard_rule_applies",
@@ -3020,7 +3170,7 @@
          "limit_value": 90,
          "unit": "mg/kg"
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "hazard_rule_applies",
@@ -3035,7 +3185,7 @@
          "limit_value": 60,
          "unit": "mg/kg"
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "hazard_rule_applies",
@@ -3050,7 +3200,7 @@
          "limit_value": 500,
          "unit": "mg/kg"
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "hazard_rule_applies",
@@ -3065,7 +3215,7 @@
          "limit_value": 100,
          "unit": "mg/kg"
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "hazard_rule_applies",
@@ -3080,7 +3230,7 @@
          "limit_value": 75,
          "unit": "mg/kg"
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "hazard_rule_applies",
@@ -3095,7 +3245,7 @@
          "limit_value": 0.1,
          "unit": "%"
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "hazard_rule_applies",
@@ -3110,7 +3260,7 @@
          "limit_value": 0.01,
          "unit": "mg/kg"
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "hazard_rule_applies",
@@ -3125,7 +3275,7 @@
          "limit_value": 0.1,
          "unit": "mg/kg"
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "hazard_rule_applies",
@@ -3140,7 +3290,7 @@
          "limit_value": null,
          "unit": null
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        }
       ]
      }
@@ -3156,7 +3306,7 @@
       "recall": "ok",
       "rf": "not_attempted"
      },
-     "recall_data_as_of": "20260914"
+     "recall_data_as_of": "20260917"
     },
     "input_note": null,
     "extraction_note": null,
@@ -3184,9 +3334,9 @@
      "rf_numbers": [],
      "wireless_hints": [],
      "target_age": null,
-     "legal_item_name": null,
+     "legal_item_name": "물놀이기구",
      "category": "children_toy",
-     "category_confidence": 0.78,
+     "category_confidence": 0.62,
      "source_page_url": null,
      "raw_language": "ko"
     },
@@ -3208,7 +3358,7 @@
        "from_cache": false,
        "fetched_at": null
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "item_grade_matched",
@@ -3230,19 +3380,19 @@
         }
        ]
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "recall_clear",
       "signal": "GREEN",
-      "statement_ko": "리콜 공표 목록에서 모델명·인증번호가 일치하는 항목을 찾지 못했습니다. 리콜 대조 기준: 2026-09-14 공표분까지",
+      "statement_ko": "리콜 공표 목록에서 모델명·인증번호가 일치하는 항목을 찾지 못했습니다. 리콜 대조 기준: 2026-09-17 공표분까지",
       "source_label": "국가기술표준원 리콜정보",
       "source_url": "https://www.safetykorea.kr/recall/recallBoard",
       "legal_basis": null,
       "detail": {
-       "recall_data_as_of": "20260914"
+       "recall_data_as_of": "20260917"
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "info_request",
@@ -3260,7 +3410,7 @@
         "hazard_rule"
        ]
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "info_request",
@@ -3279,7 +3429,7 @@
         "hazard_rule"
        ]
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "hazard_rule_applies",
@@ -3294,7 +3444,7 @@
        "limit_value": 60,
        "unit": "mg/kg"
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "hazard_rule_applies",
@@ -3309,7 +3459,7 @@
        "limit_value": 25,
        "unit": "mg/kg"
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "hazard_rule_applies",
@@ -3324,7 +3474,7 @@
        "limit_value": 1000,
        "unit": "mg/kg"
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "hazard_rule_applies",
@@ -3339,7 +3489,7 @@
        "limit_value": 75,
        "unit": "mg/kg"
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "hazard_rule_applies",
@@ -3354,7 +3504,7 @@
        "limit_value": 60,
        "unit": "mg/kg"
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "hazard_rule_applies",
@@ -3369,7 +3519,7 @@
        "limit_value": 90,
        "unit": "mg/kg"
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "hazard_rule_applies",
@@ -3384,7 +3534,7 @@
        "limit_value": 60,
        "unit": "mg/kg"
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "hazard_rule_applies",
@@ -3399,7 +3549,7 @@
        "limit_value": 500,
        "unit": "mg/kg"
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "hazard_rule_applies",
@@ -3414,7 +3564,7 @@
        "limit_value": 100,
        "unit": "mg/kg"
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "hazard_rule_applies",
@@ -3429,7 +3579,7 @@
        "limit_value": 75,
        "unit": "mg/kg"
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "hazard_rule_applies",
@@ -3444,7 +3594,7 @@
        "limit_value": 0.1,
        "unit": "%"
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "hazard_rule_applies",
@@ -3459,7 +3609,7 @@
        "limit_value": 0.01,
        "unit": "mg/kg"
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "hazard_rule_applies",
@@ -3474,7 +3624,7 @@
        "limit_value": 0.1,
        "unit": "mg/kg"
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "hazard_rule_applies",
@@ -3489,11 +3639,36 @@
        "limit_value": null,
        "unit": null
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      }
     ],
     "coverage_note": "이 품목에는 유해물질 기준이 적용됩니다. 실제 함유량은 시험성적서로만 확인되며, 인증번호 도용·상표권·수입요건은 확인 대상이 아닙니다.",
-    "recall_data_as_of": "20260914",
+    "recall_data_as_of": "20260917",
+    "recall_synced_label": "오늘 17:23 갱신",
+    "verified_counts": {
+     "recall_rows": 37430,
+     "rf_noncompliant_rows": null,
+     "hazard_rules": 14
+    },
+    "progress": {
+     "kind": "counts",
+     "done": 3,
+     "total": 3,
+     "attention": 1,
+     "missing": 0,
+     "lead": "인증 조회 · 리콜 대조 · 유해물질 기준을 마쳤습니다.",
+     "tail": "아래 주의로 본 이유를 확인하세요.",
+     "parts": [
+      {
+       "n": 2,
+       "word": "확인"
+      },
+      {
+       "n": 1,
+       "word": "주의"
+      }
+     ]
+    },
     "watch_suggestion": {
      "can_watch": true,
      "reason": "공급처에 확인하는 동안 이 상품을 감시 목록에 넣어두면, 그 사이 리콜이 공표되어도 놓치지 않습니다."
@@ -3521,21 +3696,24 @@
       "name": "인증 조회",
       "label": "조회함",
       "done": true,
-      "note": ""
+      "note": "인증상태: 기간만료",
+      "did_note": "결과는 아래"
      },
      {
       "key": "recall",
       "name": "리콜 대조",
       "label": "대조함",
       "done": true,
-      "note": "2026-09-14 공표분까지 · 2026-09-18 12:53 갱신"
+      "note": "일치 항목 없음 · 2026-09-17 공표분까지",
+      "did_note": "일치 항목 없음 · 2026-09-17 공표분까지"
      },
      {
       "key": "hazard",
-      "name": "유해물질",
-      "label": "수록됨",
+      "name": "유해물질 기준",
+      "label": "기준 14건",
       "done": true,
-      "note": ""
+      "note": "함유량은 시험성적서로 확인합니다",
+      "did_note": "함유량은 시험성적서로 확인합니다"
      }
     ],
     "grouped_findings": [
@@ -3563,7 +3741,7 @@
           }
          ]
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "info_request",
@@ -3581,7 +3759,7 @@
           "hazard_rule"
          ]
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "info_request",
@@ -3600,7 +3778,7 @@
           "hazard_rule"
          ]
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        }
       ]
      },
@@ -3625,7 +3803,7 @@
          "from_cache": false,
          "fetched_at": null
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        }
       ]
      },
@@ -3636,14 +3814,14 @@
        {
         "kind": "recall_clear",
         "signal": "GREEN",
-        "statement_ko": "리콜 공표 목록에서 모델명·인증번호가 일치하는 항목을 찾지 못했습니다. 리콜 대조 기준: 2026-09-14 공표분까지",
+        "statement_ko": "리콜 공표 목록에서 모델명·인증번호가 일치하는 항목을 찾지 못했습니다. 리콜 대조 기준: 2026-09-17 공표분까지",
         "source_label": "국가기술표준원 리콜정보",
         "source_url": "https://www.safetykorea.kr/recall/recallBoard",
         "legal_basis": null,
         "detail": {
-         "recall_data_as_of": "20260914"
+         "recall_data_as_of": "20260917"
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "hazard_rule_applies",
@@ -3658,7 +3836,7 @@
          "limit_value": 60,
          "unit": "mg/kg"
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "hazard_rule_applies",
@@ -3673,7 +3851,7 @@
          "limit_value": 25,
          "unit": "mg/kg"
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "hazard_rule_applies",
@@ -3688,7 +3866,7 @@
          "limit_value": 1000,
          "unit": "mg/kg"
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "hazard_rule_applies",
@@ -3703,7 +3881,7 @@
          "limit_value": 75,
          "unit": "mg/kg"
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "hazard_rule_applies",
@@ -3718,7 +3896,7 @@
          "limit_value": 60,
          "unit": "mg/kg"
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "hazard_rule_applies",
@@ -3733,7 +3911,7 @@
          "limit_value": 90,
          "unit": "mg/kg"
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "hazard_rule_applies",
@@ -3748,7 +3926,7 @@
          "limit_value": 60,
          "unit": "mg/kg"
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "hazard_rule_applies",
@@ -3763,7 +3941,7 @@
          "limit_value": 500,
          "unit": "mg/kg"
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "hazard_rule_applies",
@@ -3778,7 +3956,7 @@
          "limit_value": 100,
          "unit": "mg/kg"
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "hazard_rule_applies",
@@ -3793,7 +3971,7 @@
          "limit_value": 75,
          "unit": "mg/kg"
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "hazard_rule_applies",
@@ -3808,7 +3986,7 @@
          "limit_value": 0.1,
          "unit": "%"
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "hazard_rule_applies",
@@ -3823,7 +4001,7 @@
          "limit_value": 0.01,
          "unit": "mg/kg"
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "hazard_rule_applies",
@@ -3838,7 +4016,7 @@
          "limit_value": 0.1,
          "unit": "mg/kg"
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "hazard_rule_applies",
@@ -3853,7 +4031,7 @@
          "limit_value": null,
          "unit": null
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        }
       ]
      }
@@ -3869,7 +4047,7 @@
       "recall": "ok",
       "rf": "not_attempted"
      },
-     "recall_data_as_of": "20260914"
+     "recall_data_as_of": "20260917"
     },
     "input_note": null,
     "extraction_note": null,
@@ -3885,7 +4063,7 @@
     "headline": "일부만 확인 — 인증·리콜은 대조했으나, 이 품목의 유해물질 기준은 아직 수록되지 않았습니다. 확인된 범위는 아래를 보세요.",
     "score": 0,
     "facts": {
-     "product_name": "리빙센스 스텐 전기 무선포트",
+     "product_name": "리빙센스 스텐 전기 무선포트 1.8L",
      "model_name": null,
      "maker": null,
      "materials": [
@@ -3901,7 +4079,7 @@
      "target_age": null,
      "legal_item_name": "전기주전자",
      "category": "electrical",
-     "category_confidence": 0.98,
+     "category_confidence": 0.9,
      "source_page_url": null,
      "raw_language": "ko"
     },
@@ -3923,7 +4101,7 @@
        "from_cache": false,
        "fetched_at": null
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "item_grade_matched",
@@ -3945,19 +4123,19 @@
         }
        ]
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "recall_clear",
       "signal": "GREEN",
-      "statement_ko": "리콜 공표 목록에서 모델명·인증번호가 일치하는 항목을 찾지 못했습니다. 리콜 대조 기준: 2026-09-14 공표분까지",
+      "statement_ko": "리콜 공표 목록에서 모델명·인증번호가 일치하는 항목을 찾지 못했습니다. 리콜 대조 기준: 2026-09-17 공표분까지",
       "source_label": "국가기술표준원 리콜정보",
       "source_url": "https://www.safetykorea.kr/recall/recallBoard",
       "legal_basis": null,
       "detail": {
-       "recall_data_as_of": "20260914"
+       "recall_data_as_of": "20260917"
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "info_request",
@@ -3976,7 +4154,7 @@
         "hazard_rule"
        ]
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "coverage_gap",
@@ -3986,11 +4164,40 @@
       "source_url": "https://www.law.go.kr/행정규칙/전기용품안전기준",
       "legal_basis": null,
       "detail": {},
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      }
     ],
     "coverage_note": "현재 규칙 DB는 이 품목(품목군 electrical)의 유해물질 기준을 아직 수록하지 않았습니다. 인증·리콜 조회 결과만 반영되었습니다.",
-    "recall_data_as_of": "20260914",
+    "recall_data_as_of": "20260917",
+    "recall_synced_label": "오늘 17:23 갱신",
+    "verified_counts": {
+     "recall_rows": 37430,
+     "rf_noncompliant_rows": null,
+     "hazard_rules": null
+    },
+    "progress": {
+     "kind": "counts",
+     "done": 2,
+     "total": 3,
+     "attention": 1,
+     "missing": 1,
+     "lead": "인증 조회 · 리콜 대조를 마쳤습니다.",
+     "tail": "남은 하나는 아래에 적었습니다.",
+     "parts": [
+      {
+       "n": 1,
+       "word": "확인"
+      },
+      {
+       "n": 1,
+       "word": "주의"
+      },
+      {
+       "n": 1,
+       "word": "미수록"
+      }
+     ]
+    },
     "watch_suggestion": {
      "can_watch": true,
      "reason": "판단에 필요한 정보가 부족합니다. 감시 목록에 넣으면 이후 리콜 공표 시 알려드립니다."
@@ -3998,7 +4205,7 @@
     "extracted": [
      {
       "label": "제품명",
-      "value": "리빙센스 스텐 전기 무선포트",
+      "value": "리빙센스 스텐 전기 무선포트 1.8L",
       "link": null
      },
      {
@@ -4023,21 +4230,24 @@
       "name": "인증 조회",
       "label": "조회함",
       "done": true,
-      "note": ""
+      "note": "인증상태: 반납",
+      "did_note": "결과는 아래"
      },
      {
       "key": "recall",
       "name": "리콜 대조",
       "label": "대조함",
       "done": true,
-      "note": "2026-09-14 공표분까지 · 2026-09-18 12:53 갱신"
+      "note": "일치 항목 없음 · 2026-09-17 공표분까지",
+      "did_note": "일치 항목 없음 · 2026-09-17 공표분까지"
      },
      {
       "key": "hazard",
-      "name": "유해물질",
+      "name": "유해물질 기준",
       "label": "이 품목 미수록",
       "done": false,
-      "note": ""
+      "note": "",
+      "did_note": ""
      }
     ],
     "grouped_findings": [
@@ -4065,7 +4275,7 @@
           }
          ]
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "info_request",
@@ -4084,7 +4294,7 @@
           "hazard_rule"
          ]
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        }
       ]
      },
@@ -4109,7 +4319,7 @@
          "from_cache": false,
          "fetched_at": null
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        }
       ]
      },
@@ -4120,14 +4330,14 @@
        {
         "kind": "recall_clear",
         "signal": "GREEN",
-        "statement_ko": "리콜 공표 목록에서 모델명·인증번호가 일치하는 항목을 찾지 못했습니다. 리콜 대조 기준: 2026-09-14 공표분까지",
+        "statement_ko": "리콜 공표 목록에서 모델명·인증번호가 일치하는 항목을 찾지 못했습니다. 리콜 대조 기준: 2026-09-17 공표분까지",
         "source_label": "국가기술표준원 리콜정보",
         "source_url": "https://www.safetykorea.kr/recall/recallBoard",
         "legal_basis": null,
         "detail": {
-         "recall_data_as_of": "20260914"
+         "recall_data_as_of": "20260917"
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "coverage_gap",
@@ -4137,7 +4347,7 @@
         "source_url": "https://www.law.go.kr/행정규칙/전기용품안전기준",
         "legal_basis": null,
         "detail": {},
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        }
       ]
      }
@@ -4153,7 +4363,7 @@
       "recall": "ok",
       "rf": "not_attempted"
      },
-     "recall_data_as_of": "20260914"
+     "recall_data_as_of": "20260917"
     },
     "input_note": null,
     "extraction_note": null,
@@ -4180,10 +4390,10 @@
      "kc_numbers_from_image": [],
      "rf_numbers": [],
      "wireless_hints": [],
-     "target_age": "성인용",
+     "target_age": null,
      "legal_item_name": null,
      "category": "unclassified",
-     "category_confidence": 0.62,
+     "category_confidence": 0.55,
      "source_page_url": null,
      "raw_language": "ko"
     },
@@ -4205,7 +4415,7 @@
        "from_cache": false,
        "fetched_at": null
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "item_grade_matched",
@@ -4227,7 +4437,7 @@
         }
        ]
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "recall_match",
@@ -4249,7 +4459,7 @@
        "matched_value_names_an_item": false,
        "evidence_is_original": true
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "info_request",
@@ -4267,7 +4477,26 @@
         "hazard_rule"
        ]
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
+     },
+     {
+      "kind": "info_request",
+      "signal": "UNKNOWN",
+      "statement_ko": "[대상연령 확인 필요] 대상연령(또는 권장 사용연령) 표기를 확인해 주세요. 만 13세 이하이면 어린이제품 공통안전기준이 적용됩니다.",
+      "source_label": "제품안전정보센터 대상 품목 안내",
+      "source_url": "https://www.safetykorea.kr/policy/targetsSafetyCheck3",
+      "legal_basis": null,
+      "detail": {
+       "missing": "대상연령",
+       "asks_for": [
+        "target_age"
+       ],
+       "unlocks": [
+        "item_grade",
+        "hazard_rule"
+       ]
+      },
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "info_request",
@@ -4285,7 +4514,7 @@
         "item_grade"
        ]
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "coverage_gap",
@@ -4295,11 +4524,27 @@
       "source_url": "https://www.safetykorea.kr/policy/targetsSafetyCheck3",
       "legal_basis": null,
       "detail": {},
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      }
     ],
     "coverage_note": "판정에 필요한 정보가 상세페이지에 없습니다. 공급처 확인 항목을 확인해 주세요.",
-    "recall_data_as_of": "20260914",
+    "recall_data_as_of": "20260917",
+    "recall_synced_label": "오늘 17:23 갱신",
+    "verified_counts": {
+     "recall_rows": 37430,
+     "rf_noncompliant_rows": null,
+     "hazard_rules": null
+    },
+    "progress": {
+     "kind": "none",
+     "done": 2,
+     "total": 3,
+     "attention": 2,
+     "missing": 1,
+     "lead": "",
+     "tail": "",
+     "parts": []
+    },
     "watch_suggestion": {
      "can_watch": true,
      "reason": "이미 문제가 확인된 상품이지만, 감시 목록에 넣으면 이후 추가 리콜도 알려드립니다."
@@ -4314,11 +4559,6 @@
       "label": "인증번호",
       "value": "CA011R021-4001",
       "link": "http://www.safetykorea.kr/search/searchPop?certNum=CA011R021-4001"
-     },
-     {
-      "label": "사용연령",
-      "value": "성인용",
-      "link": null
      }
     ],
     "axes": [
@@ -4327,21 +4567,24 @@
       "name": "인증 조회",
       "label": "조회함",
       "done": true,
-      "note": ""
+      "note": "인증상태: 안전인증취소",
+      "did_note": "결과는 아래"
      },
      {
       "key": "recall",
       "name": "리콜 대조",
       "label": "일치 있음",
       "done": true,
-      "note": "2026-09-14 공표분까지 · 2026-09-18 12:53 갱신"
+      "note": "2026-09-17 공표분까지",
+      "did_note": "결과는 아래"
      },
      {
       "key": "hazard",
-      "name": "유해물질",
+      "name": "유해물질 기준",
       "label": "이 품목 미수록",
       "done": false,
-      "note": ""
+      "note": "",
+      "did_note": ""
      }
     ],
     "grouped_findings": [
@@ -4369,7 +4612,7 @@
           }
          ]
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "info_request",
@@ -4387,7 +4630,26 @@
           "hazard_rule"
          ]
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
+       },
+       {
+        "kind": "info_request",
+        "signal": "UNKNOWN",
+        "statement_ko": "[대상연령 확인 필요] 대상연령(또는 권장 사용연령) 표기를 확인해 주세요. 만 13세 이하이면 어린이제품 공통안전기준이 적용됩니다.",
+        "source_label": "제품안전정보센터 대상 품목 안내",
+        "source_url": "https://www.safetykorea.kr/policy/targetsSafetyCheck3",
+        "legal_basis": null,
+        "detail": {
+         "missing": "대상연령",
+         "asks_for": [
+          "target_age"
+         ],
+         "unlocks": [
+          "item_grade",
+          "hazard_rule"
+         ]
+        },
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "info_request",
@@ -4405,7 +4667,7 @@
           "item_grade"
          ]
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        }
       ]
      },
@@ -4430,7 +4692,7 @@
          "from_cache": false,
          "fetched_at": null
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "recall_match",
@@ -4452,7 +4714,7 @@
          "matched_value_names_an_item": false,
          "evidence_is_original": true
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        }
       ]
      },
@@ -4468,7 +4730,7 @@
         "source_url": "https://www.safetykorea.kr/policy/targetsSafetyCheck3",
         "legal_basis": null,
         "detail": {},
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        }
       ]
      }
@@ -4484,7 +4746,7 @@
       "recall": "ok",
       "rf": "not_attempted"
      },
-     "recall_data_as_of": "20260914"
+     "recall_data_as_of": "20260917"
     },
     "input_note": null,
     "extraction_note": null,
@@ -4500,7 +4762,7 @@
     "headline": "소싱 보류 — 리콜 또는 인증 문제가 확인되었습니다. 아래 근거를 확인하세요.",
     "score": 0,
     "facts": {
-     "product_name": "그릴 후라이팬 고기 불판 와이드 전기 그릴",
+     "product_name": "그릴 후라이팬 고기 불판 와이드 전기 그릴 48cm",
      "model_name": null,
      "maker": null,
      "materials": [],
@@ -4513,8 +4775,8 @@
      "wireless_hints": [],
      "target_age": null,
      "legal_item_name": "전기그릴",
-     "category": "electrical",
-     "category_confidence": 0.86,
+     "category": "household",
+     "category_confidence": 0.84,
      "source_page_url": null,
      "raw_language": "ko"
     },
@@ -4536,7 +4798,7 @@
        "from_cache": false,
        "fetched_at": null
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "item_grade_matched",
@@ -4566,19 +4828,19 @@
         }
        ]
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "recall_clear",
       "signal": "GREEN",
-      "statement_ko": "리콜 공표 목록에서 모델명·인증번호가 일치하는 항목을 찾지 못했습니다. 리콜 대조 기준: 2026-09-14 공표분까지",
+      "statement_ko": "리콜 공표 목록에서 모델명·인증번호가 일치하는 항목을 찾지 못했습니다. 리콜 대조 기준: 2026-09-17 공표분까지",
       "source_label": "국가기술표준원 리콜정보",
       "source_url": "https://www.safetykorea.kr/recall/recallBoard",
       "legal_basis": null,
       "detail": {
-       "recall_data_as_of": "20260914"
+       "recall_data_as_of": "20260917"
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "info_request",
@@ -4596,7 +4858,7 @@
         "hazard_rule"
        ]
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "info_request",
@@ -4615,21 +4877,37 @@
         "hazard_rule"
        ]
       },
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      },
      {
       "kind": "coverage_gap",
       "signal": "UNKNOWN",
-      "statement_ko": "이 품목에는 유해물질 기준이 아니라 전기 안전기준(감전·발열·절연)이 적용됩니다. 그 기준은 실물 시험으로만 확인되며 상세페이지로는 판단할 수 없습니다. 안전인증 또는 안전확인 번호와 시험성적서를 공급처에 요청하세요.",
-      "source_label": "전기용품 안전기준",
-      "source_url": "https://www.law.go.kr/행정규칙/전기용품안전기준",
+      "statement_ko": "이 품목의 유해물질 기준은 아직 규칙 DB에 수록되지 않았습니다.",
+      "source_label": "규칙 DB 커버리지",
+      "source_url": "https://www.safetykorea.kr/policy/targetsSafetyCheck3",
       "legal_basis": null,
       "detail": {},
-      "checked_at": "2026-09-19"
+      "checked_at": "2026-09-21"
      }
     ],
-    "coverage_note": "현재 규칙 DB는 이 품목(품목군 electrical)의 유해물질 기준을 아직 수록하지 않았습니다. 인증·리콜 조회 결과만 반영되었습니다.",
-    "recall_data_as_of": "20260914",
+    "coverage_note": "현재 규칙 DB는 이 품목(품목군 household)의 유해물질 기준을 아직 수록하지 않았습니다. 인증·리콜 조회 결과만 반영되었습니다.",
+    "recall_data_as_of": "20260917",
+    "recall_synced_label": "오늘 17:23 갱신",
+    "verified_counts": {
+     "recall_rows": 37430,
+     "rf_noncompliant_rows": null,
+     "hazard_rules": null
+    },
+    "progress": {
+     "kind": "none",
+     "done": 2,
+     "total": 3,
+     "attention": 1,
+     "missing": 1,
+     "lead": "",
+     "tail": "",
+     "parts": []
+    },
     "watch_suggestion": {
      "can_watch": true,
      "reason": "이미 문제가 확인된 상품이지만, 감시 목록에 넣으면 이후 추가 리콜도 알려드립니다."
@@ -4637,7 +4915,7 @@
     "extracted": [
      {
       "label": "제품명",
-      "value": "그릴 후라이팬 고기 불판 와이드 전기 그릴",
+      "value": "그릴 후라이팬 고기 불판 와이드 전기 그릴 48cm",
       "link": null
      },
      {
@@ -4647,7 +4925,7 @@
      },
      {
       "label": "품목 구분",
-      "value": "전기용품",
+      "value": "생활용품",
       "link": null
      }
     ],
@@ -4657,21 +4935,24 @@
       "name": "인증 조회",
       "label": "조회함",
       "done": true,
-      "note": ""
+      "note": "인증상태: 안전인증취소",
+      "did_note": "결과는 아래"
      },
      {
       "key": "recall",
       "name": "리콜 대조",
       "label": "대조함",
       "done": true,
-      "note": "2026-09-14 공표분까지 · 2026-09-18 12:53 갱신"
+      "note": "일치 항목 없음 · 2026-09-17 공표분까지",
+      "did_note": "일치 항목 없음 · 2026-09-17 공표분까지"
      },
      {
       "key": "hazard",
-      "name": "유해물질",
+      "name": "유해물질 기준",
       "label": "이 품목 미수록",
       "done": false,
-      "note": ""
+      "note": "",
+      "did_note": ""
      }
     ],
     "grouped_findings": [
@@ -4707,7 +4988,7 @@
           }
          ]
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "info_request",
@@ -4725,7 +5006,7 @@
           "hazard_rule"
          ]
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "info_request",
@@ -4744,7 +5025,7 @@
           "hazard_rule"
          ]
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        }
       ]
      },
@@ -4769,7 +5050,7 @@
          "from_cache": false,
          "fetched_at": null
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        }
       ]
      },
@@ -4780,24 +5061,24 @@
        {
         "kind": "recall_clear",
         "signal": "GREEN",
-        "statement_ko": "리콜 공표 목록에서 모델명·인증번호가 일치하는 항목을 찾지 못했습니다. 리콜 대조 기준: 2026-09-14 공표분까지",
+        "statement_ko": "리콜 공표 목록에서 모델명·인증번호가 일치하는 항목을 찾지 못했습니다. 리콜 대조 기준: 2026-09-17 공표분까지",
         "source_label": "국가기술표준원 리콜정보",
         "source_url": "https://www.safetykorea.kr/recall/recallBoard",
         "legal_basis": null,
         "detail": {
-         "recall_data_as_of": "20260914"
+         "recall_data_as_of": "20260917"
         },
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        },
        {
         "kind": "coverage_gap",
         "signal": "UNKNOWN",
-        "statement_ko": "이 품목에는 유해물질 기준이 아니라 전기 안전기준(감전·발열·절연)이 적용됩니다. 그 기준은 실물 시험으로만 확인되며 상세페이지로는 판단할 수 없습니다. 안전인증 또는 안전확인 번호와 시험성적서를 공급처에 요청하세요.",
-        "source_label": "전기용품 안전기준",
-        "source_url": "https://www.law.go.kr/행정규칙/전기용품안전기준",
+        "statement_ko": "이 품목의 유해물질 기준은 아직 규칙 DB에 수록되지 않았습니다.",
+        "source_label": "규칙 DB 커버리지",
+        "source_url": "https://www.safetykorea.kr/policy/targetsSafetyCheck3",
         "legal_basis": null,
         "detail": {},
-        "checked_at": "2026-09-19"
+        "checked_at": "2026-09-21"
        }
       ]
      }
@@ -4813,7 +5094,7 @@
       "recall": "ok",
       "rf": "not_attempted"
      },
-     "recall_data_as_of": "20260914"
+     "recall_data_as_of": "20260917"
     },
     "input_note": null,
     "extraction_note": null,
