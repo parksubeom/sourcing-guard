@@ -211,3 +211,43 @@ def test_the_unused_spec_classes_are_gone():
     for gone in (".rv-cause", ".rv-next"):
         assert not re.search(re.escape(gone) + r"[\s.,:{]", css), (
             f"안 쓰는 클래스가 남아 있습니다: {gone}")
+
+
+def test_the_green_box_does_not_say_the_result():
+    """⚠⚠ 초록 상자는 **행위**, 주황·빨강 상자는 **결과**다 (사양 §2-④).
+
+    초록 바탕에 "인증상태: 기간만료" 가 있으면 읽는 사람이 "만료인데 왜
+    초록?" 하고, 바로 아래 「확인된 문제」에 같은 말이 또 있다 - 중복이다.
+    """
+    from sourcing_guard.models import Finding, FindingKind, Signal
+    from sourcing_guard.scorer import _axes
+
+    def f(kind, sig, state=None):
+        # ⚠ 축 메모는 finding 의 `detail.cert_state` 에서 나온다. 그것 없이
+        #   재면 메모가 빈 채로 통과해 **아무것도 안 보는 검사**가 된다.
+        return Finding(kind=kind, signal=sig, statement_ko="x",
+                       source_url="https://www.safetykorea.kr/", source_label="근거",
+                       detail={"cert_state": state} if state else {})
+
+    clean = {a["key"]: a
+             for a in _axes([f(FindingKind.KC_VERIFIED, Signal.GREEN, "적합")], None)}
+    assert clean["cert"]["did_note"] == clean["cert"]["note"], (
+        "문제가 없는데 결과를 아래로 미룹니다")
+
+    flagged = {a["key"]: a
+               for a in _axes([f(FindingKind.KC_EXPIRED, Signal.AMBER, "기간만료")], None)}
+    assert flagged["cert"]["note"], "축 카드의 메모까지 지웠습니다 - 거기서는 결과가 필요합니다"
+    assert flagged["cert"]["did_note"] == "결과는 아래", (
+        f"초록 상자가 결과를 말합니다 - 결과는 아래 상자의 몫입니다: "
+        f"{flagged['cert']['did_note']!r}")
+
+
+def test_the_screen_uses_did_note_not_note():
+    """가르는 것은 **서버**다. 화면이 가르려면 "기간만료" 같은 낱말을 알아야
+    하고, 그것이 곧 프론트가 축 라벨을 쓰는 것이다 (§6).
+    """
+    src = _index()
+    assert "a.did_note" in src, "화면이 did_note 를 안 씁니다"
+    i = src.index("rv-did")
+    assert "a.note" not in src[i - 900:i + 900] or "did_note" in src[i - 900:i + 900], (
+        "초록 상자가 note 를 직접 씁니다")

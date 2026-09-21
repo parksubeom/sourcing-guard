@@ -1232,8 +1232,12 @@
         //   가 잡았다. 수를 **앞에** 두고 라벨은 서버 것을 그대로 잇는다.
         //   RED 의 "일치 있음" 이 사라지던 것도 같이 풀린다.
         var body = (n ? "<b>" + num(n) + "건</b> · " : "") + esc(a.label);
+        // 주의: `note` 가 아니라 **`did_note`** 다. 그 축에 주의·위험이 붙어
+        //   있으면 서버가 결과를 빼고 "결과는 아래" 로 바꿔 준다 - 초록 바탕에
+        //   「기간만료」가 있으면 "만료인데 왜 초록?" 이 된다 (사양 §2-④).
+        var dn = a.did_note !== undefined ? a.did_note : a.note;
         return "<dt>" + esc(a.name) + "</dt><dd>" + body +
-          (a.note ? " · " + esc(a.note) : "") + "</dd>";
+          (dn ? " · " + esc(dn) : "") + "</dd>";
       });
     var hasNumber = !!vc.recall_rows ||
       (data.axes || []).some(function (a) { return a.done && a.key === "hazard"; });

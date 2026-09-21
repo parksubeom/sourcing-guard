@@ -1302,17 +1302,33 @@ def _axes(
         else:
             cert_note = "공급처에 인증번호를 받으면 여기서 조회합니다"
 
+    # 「지금까지 확인한 것」 상자에 쓸 메모. **행위만 적는다** (사양 §2-④).
+    #
+    # 주의(가장 중요): 그 축에 주의·위험 finding 이 붙어 있으면 결과를 **여기서
+    #   말하지 않는다.** 초록 바탕에 "인증상태: 기간만료" 가 있으면 읽는 사람이
+    #   "만료인데 왜 초록?" 하고, 바로 아래 「확인된 문제」에 같은 말이 또 있다.
+    #   초록 상자는 **행위**, 주황·빨강 상자는 **결과**다 (2026-09-21 총괄).
+    #
+    # 주의: 화면이 가르지 않는다. 가르려면 "기간만료" 같은 낱말을 화면이
+    #   알아야 하고, 그것이 곧 프론트가 축 라벨을 쓰는 것이다 (§6).
+    flagged = {
+        _ATTENTION_AXIS.get(f.kind)
+        for f in findings if f.group is FindingGroup.FINDING
+    } - {None}
+    did = lambda key, note: "결과는 아래" if key in flagged else note
+
     return [
         {"key": "cert", "name": "인증 조회", "label": cert[0], "done": cert[1],
-         "note": cert_note},
+         "note": cert_note, "did_note": did("cert", cert_note)},
         {"key": "recall", "name": "리콜 대조", "label": recall[0], "done": recall[1],
-         "note": as_of},
+         "note": as_of, "did_note": did("recall", as_of)},
         # ⚠ 이름은 `_UNLOCK_KO["hazard_rule"]` 와 **같아야 한다.** 같은 축이 확인
         #   항목 쪽과 결과 축 쪽에서 다른 이름으로 불리고 있었다(프로덕션 포함).
         #   로딩 스켈레톤(index.html)도 같은 이름을 쓴다 - `test_design_axes` 가
         #   셋을 묶는다.
         {"key": "hazard", "name": "유해물질 기준", "label": hazard[0], "done": hazard[1],
-         "note": "함유량은 시험성적서로 확인합니다" if hazard[1] else ""},
+         "note": "함유량은 시험성적서로 확인합니다" if hazard[1] else "",
+         "did_note": did("hazard", "함유량은 시험성적서로 확인합니다" if hazard[1] else "")},
     ]
 
 

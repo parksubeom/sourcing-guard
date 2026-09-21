@@ -1747,8 +1747,14 @@ a.btn-t, a.btn{display:inline-flex; align-items:center; justify-content:center;
    주의(중요): 쓰지 않는 클래스를 남기면 다음 사람이 "쓰라고 만든 것" 으로 읽는다. */
 
 @media (max-width:640px){
-  .rv-score{padding:16px 18px; gap:14px}
+  /* 주의(가장 중요): 좁은 폭에서는 **세로로 쌓는다.** 가로로 두면 개수형에서
+     수가 폭을 먹고 문장이 70~90px 로 눌려 다섯 줄이 된다 (390px 실측
+     2026-09-21). 높이도 95 → 216px 로 뛴다. */
+  .rv-score{padding:16px 18px; gap:10px; flex-direction:column; align-items:flex-start}
   .rv-score .num{font-size:32px; line-height:36px}
+  .rv-score .cnt{font-size:16px; line-height:24px}
+  .rv-score .cnt b{font-size:24px; line-height:28px}
+  .rv-score .say{width:100%}
   .rv-did{margin-left:18px; margin-right:18px}
   .rv-did dl{grid-template-columns:1fr; gap:2px 0}
   .rv-did dt{margin-top:6px}
