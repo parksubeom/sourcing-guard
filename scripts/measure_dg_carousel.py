@@ -33,13 +33,19 @@ with sync_playwright() as p:
     pg.goto(URL, wait_until="networkidle")
     pg.wait_for_selector(SEL)
     print("── ① 손으로 밀기 · 밀면 자동 멈춤 (1440) ──")
+    # ⚠⚠ **실제 입력으로 민다.** 전에는 `el.scrollTo(...)` 로 흉내 냈는데 그것은
+    #   `scroll` 만 내고 휠·포인터를 안 낸다 - 사용자가 하지 않는 행동이다.
+    #   `scroll` 추론을 지운 뒤 이 항목만 False 가 났고, 그건 코드가 아니라
+    #   **측정이 틀린 것**이었다 (2026-09-21).
     time.sleep(11)                       # 자동 2칸분
     auto = scroll_left(pg)
     print(f"   11초 자동      scrollLeft = {auto:.0f}px")
-    pg.eval_on_selector(SEL, "el => el.scrollTo({left: 754})")   # 손으로 민다
-    pg.wait_for_timeout(400)
+    pg.hover(SEL)
+    pg.mouse.wheel(376, 0)               # 손으로 민다 (휠 = 트랙패드 포함)
+    pg.wait_for_timeout(500)
     hand = scroll_left(pg)
     print(f"   손으로 민 직후 scrollLeft = {hand:.0f}px   → 밀린다: {hand > auto}")
+    pg.mouse.move(10, 10)                # 호버를 뗀다 - 멈춤이 호버 때문이 아님을 가른다
     time.sleep(6.5)                      # 자동이 살아 있으면 여기서 움직인다
     after = scroll_left(pg)
     print(f"   민 뒤 6.5초    scrollLeft = {after:.0f}px   → 자동 멈춤: {abs(after - hand) < 1}")
@@ -86,7 +92,10 @@ with sync_playwright() as p:
     q = br.new_page(viewport={"width": 1440, "height": 900})
     q.goto(URL, wait_until="networkidle"); q.wait_for_selector(SEL)
     cards = q.eval_on_selector_all(f"{SEL} > li", "els => els.length")
-    dids  = q.eval_on_selector_all(".dg-did", "els => els.map(e => e.textContent.trim())")
+    # ⚠ `innerText` 로 읽는다. `textContent` 는 조각 사이 공백을 안 내어
+    #   「조회함· CB063R」 로 붙어 보인다 - 화면은 flex gap 으로 떨어져 있다.
+    dids  = q.eval_on_selector_all(
+        ".dg-did", "els => els.map(e => e.innerText.replace(/\\s+/g, ' ').trim())")
     print(f"\n── ③ 카드 줄 ──\n   카드 {cards}장 · did 있는 카드 {len(dids)}장")
     for d in dids[:3]: print(f"   {d}")
     head = q.eval_on_selector("#dg-h", "el => el.textContent.trim()")

@@ -356,3 +356,71 @@ def test_the_auto_scroll_can_be_pushed_by_hand():
                  "max-width: 768px"):
         assert hook in src, f"{hook} 처리가 없다"
     assert "DG_STEP_MS = 5000" in src, "간격이 5초가 아니다"
+
+
+def test_the_auto_scroll_can_come_back_after_it_pauses():
+    """멈춘 자동이 **되살아날 길이 있어야 한다.**
+
+    전에는 `scroll` 이벤트로 "사용자가 밀었다" 를 추론해 `stop()` 을 불렀고,
+    그 `stop()` 은 영구였다 - 우리가 민 smooth 스크롤도 `scroll` 을 내므로
+    느린 프레임 한 번이면 자동이 영영 죽었다 (총괄 2026-09-21).
+
+    지우기 전에 **그 추론이 필요하긴 한지**를 쟀다:
+
+        우리 smooth 스크롤 한 번의 길이   201.7ms  (문턱 700ms 의 1/3.5)
+        휠(트랙패드 관성 포함)            wheel 이 난다      → 직접 잡힌다
+        키보드                          keydown 이 난다     → 직접 잡힌다
+        스크롤바 끌기                    **재지 못했다** - 오버레이라 두께 0px
+
+    앞 셋은 직접 리스너가 덮는다. 마지막은 이 환경에서 집을 수 없어 못 쟀고,
+    그래서 "쓸모없다" 고 말하지 않는다 - 지운 근거는 **덮인 것이 확인된 셋**과
+    "죽으면 영구" 라는 비용 쪽이다.
+
+    주의(가장 중요): 이 검사는 **되살아날 길**을 잠근다. 문턱 숫자를 잠그지
+      않는다 - 숫자를 잠그면 다시 넣을 때 통과해 버린다.
+    """
+    src = markup_only(
+        (_ROOT / "sourcing_guard" / "static" / "index.html").read_text(encoding="utf-8"))
+    body = src[src.index("function dgAutoScroll"):]
+    body = body[:body.index("\n  }")]
+
+    assert not re.search(r'addEventListener\(\s*"scroll"', body), (
+        "스크롤 추론이 돌아왔다 - 우리가 민 것도 scroll 을 내므로 오탐이 영구가 된다")
+    assert "mouseleave" in body and "focusout" in body, (
+        "멈춘 자동을 되살리는 고리가 없다")
+    # 되살리는 쪽이 정말 타이머를 다시 거는지 - 이름만 있고 몸이 비면 못 잡는다
+    assert re.search(r"function start\(\)\s*\{[^}]*setInterval", body), (
+        "start() 가 타이머를 다시 걸지 않는다")
+
+
+def test_the_card_line_does_not_end_on_a_separator():
+    """좁은 폭에서 did 줄이 두 줄이 되는 것 자체는 흠이 아니다 - 29장이 다 같은
+    높이다. 흠은 1행 끝에 「·」 가 혼자 남는 것이었다 (총괄 ⑶).
+
+    고친 방법: 구분자를 **번호 조각 쪽에** 붙이고 조각마다 `nowrap` 을 준다.
+    그러면 줄은 조각 **사이**에서만 바뀐다. 카드 폭도 번호 길이도 안 건드렸다.
+
+    실측 (폭 7개 · 카드 29장):
+
+        1440 · 1280 · 1024 · 768   줄수 1 · 높이 17px
+        390 · 360 · 320            줄수 2 · 높이 34px
+        1행이 「·」 로 끝나는 카드     어느 폭에서도 0개
+
+    주의(중요): 구분자를 `<span aria-hidden>` 으로 한 겹 더 싸 봤더니 **1440 이
+      두 줄이 됐다**(줄수 [1,2]). 안쪽에 flex 항목이 하나 더 생겨 조각의 최소
+      폭이 커진다. 되돌렸다 - 총괄이 못 박은 조건이 「1440 한 줄 유지」다.
+    """
+    src = markup_only(
+        (_ROOT / "sourcing_guard" / "static" / "index.html").read_text(encoding="utf-8"))
+    assert '"<span>· " + esc(it.cert_head)' in src, (
+        "구분자가 번호 조각에 안 붙어 있다 - 1행 끝에 「·」 만 남을 수 있다")
+
+    css = markup_only(
+        (_ROOT / "sourcing_guard" / "static" / "app.css").read_text(encoding="utf-8"))
+    piece = re.search(r"\.dg-did\s*>\s*span\s*\{([^}]*)\}", css)
+    assert piece, ".dg-did > span 규칙이 없다 - 조각이 안 쪼개진다는 보장이 없다"
+    assert re.search(r"white-space\s*:\s*nowrap", piece.group(1)), (
+        "조각 안에서 줄이 바뀔 수 있다")
+    box = re.search(r"\.dg-did\s*\{([^}]*)\}", css)
+    assert box and re.search(r"flex-wrap\s*:\s*wrap", box.group(1)), (
+        "조각이 두 줄로 못 내려간다 - 좁으면 넘치거나 찌그러진다")

@@ -1575,10 +1575,13 @@ a.btn-t, a.btn{display:inline-flex; align-items:center; justify-content:center;
 /* 우리가 한 일. **판정이 아니다** - 초록은 상품이 아니라 우리 행위에 붙는다
    (P4 판정: 카드에 신호를 붙이지 않는다). */
 .dg-did{
-  display:inline-flex; align-items:center; gap:5px;
+  display:flex; flex-wrap:wrap; align-items:center; gap:0 5px;
   font-size:12px; line-height:17px; font-weight:700;
   color:var(--signal-green-text);
 }
+/* 조각 안에서는 안 쪼개진다. 좁으면 조각 **사이**에서만 줄이 바뀌므로
+   「·」 가 1행 끝에 혼자 남지 않는다. 넓으면 한 줄 그대로다. */
+.dg-did > span{display:inline-flex; align-items:center; gap:5px; white-space:nowrap}
 .dg-did svg{flex:none}
 .dg-card{
   display:flex; flex-direction:column; gap:var(--s2); min-width:0; width:100%;
