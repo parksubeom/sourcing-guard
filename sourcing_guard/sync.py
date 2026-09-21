@@ -270,6 +270,14 @@ def run_sync(
     return report
 
 
+#: 부팅 뒤 **첫** 동기화까지 기다리는 초. 주기(`SYNC_INTERVAL_SECONDS`)와 다르다.
+#:
+#: 주의(중요): 배포 직후 곧바로 정부 API 를 때리면 502 가 잦다 - 실측으로
+#:   9/20·9/21 두 번 다 그랬고, 다음 주기에는 성공했다. 그 사이 `/healthz` 의
+#:   `last_sync_error` 가 채워져 **우리가 고장난 것처럼 보인다.**
+FIRST_SYNC_DELAY_SECONDS = 60
+
+
 async def sync_loop(
     kats: KatsClient,
     store: SqliteWatchStore,
@@ -278,6 +286,7 @@ async def sync_loop(
     on_updated=None,
     rra=None,
     on_noncompliant_updated=None,
+    first_delay: int = FIRST_SYNC_DELAY_SECONDS,
 ) -> None:
     """앱 수명 동안 도는 백그라운드 루프.
 
@@ -293,6 +302,21 @@ async def sync_loop(
       걸리는데, 리콜 대조가 그동안 막히면 안 된다. sync_noncompliant 는 예외를
       밖으로 던지지 않으므로 실패해도 루프가 죽지 않는다.
     """
+    # ⚠⚠ **첫 시도를 조금 늦춘다** (2026-09-21). 배포 직후 바로 돌면
+    #   `safetykorea.kr` 이 502 를 주는 일이 잦고, 그러면 `last_sync_error` 가
+    #   채워진 채로 `/healthz` 가 뜬다 - 다음 주기에 성공하면 비워지지만 그
+    #   사이 우리가 고장난 것처럼 보인다. 실측: 9/20·9/21 배포 직후 두 번.
+    #
+    # ⚠ "시작 시 1회" 자체는 유지한다 - 재배포로 생긴 공백을 메우는 것이
+    #   그 목적이고, 1분 늦는다고 그 목적이 깨지지 않는다.
+    # ⚠ 검사는 `first_delay=0` 으로 부른다. 기본값을 0 으로 두면 이 지연이
+    #   있으나 마나가 된다.
+    if first_delay > 0:
+        try:
+            await asyncio.sleep(first_delay)
+        except asyncio.CancelledError:
+            raise
+
     while True:
         try:
             await asyncio.to_thread(run_sync, kats, store, on_updated=on_updated)

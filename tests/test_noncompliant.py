@@ -202,7 +202,8 @@ def test_sync_loop_syncs_noncompliant_when_rra_is_given():
 
     async def drive(monkey):
         task = asyncio.create_task(
-            sync_mod.sync_loop(object(), object(), interval=3600,
+            # ⚠ `first_delay=0` - 기본 60초를 그대로 두면 이 검사가 잠만 잔다.
+            sync_mod.sync_loop(object(), object(), interval=3600, first_delay=0,
                                rra=object(), on_noncompliant_updated=lambda: None)
         )
         await asyncio.sleep(0.05)
@@ -235,7 +236,8 @@ def test_sync_loop_skips_noncompliant_without_rra():
     called = {"noncompliant": 0}
 
     async def drive():
-        task = asyncio.create_task(sync_mod.sync_loop(object(), object(), interval=3600))
+        task = asyncio.create_task(
+            sync_mod.sync_loop(object(), object(), interval=3600, first_delay=0))
         await asyncio.sleep(0.05)
         task.cancel()
         try:
@@ -266,3 +268,46 @@ def test_healthz_exposes_the_noncompliant_count():
     body = TestClient(main_mod.app).get("/healthz").json()
     rf = body["sync"]["rf_noncompliant"]
     assert "count" in rf and "synced_at" in rf
+
+
+def test_the_first_sync_waits_a_little_after_boot():
+    """⚠⚠ 배포 직후 곧바로 정부 API 를 때리면 **502 가 잦다.**
+
+    실측으로 9/20·9/21 배포 직후 두 번 다 그랬고 다음 주기에는 성공했다.
+    그 사이 `/healthz` 의 `last_sync_error` 가 채워져 **우리가 고장난 것처럼
+    보인다.**
+
+    ⚠ "시작 시 1회" 자체는 유지한다 - 재배포로 생긴 공백을 메우는 것이 그
+      목적이고, 1분 늦는다고 그 목적이 깨지지 않는다.
+    ⚠ 기본값이 0 이면 이 지연이 있으나 마나다.
+    """
+    import asyncio
+
+    from sourcing_guard import sync as sync_mod
+
+    assert sync_mod.FIRST_SYNC_DELAY_SECONDS > 0, "첫 동기화 지연이 꺼져 있습니다"
+    assert sync_mod.FIRST_SYNC_DELAY_SECONDS < sync_mod.SYNC_INTERVAL_SECONDS
+
+    ran = {"n": 0}
+
+    def fake_run(*a, **k):
+        ran["n"] += 1
+        return {"ok": True}
+
+    async def drive():
+        sync_mod.run_sync = fake_run
+        task = asyncio.create_task(
+            sync_mod.sync_loop(object(), object(), interval=3600, first_delay=5))
+        await asyncio.sleep(0.05)          # 지연보다 훨씬 짧게
+        task.cancel()
+        try:
+            await task
+        except asyncio.CancelledError:
+            pass
+
+    real = sync_mod.run_sync
+    try:
+        asyncio.run(drive())
+    finally:
+        sync_mod.run_sync = real
+    assert ran["n"] == 0, "지연을 안 기다리고 바로 돌았습니다"
