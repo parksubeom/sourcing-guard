@@ -1771,13 +1771,22 @@ a.btn-t, a.btn{display:inline-flex; align-items:center; justify-content:center;
 .rv-did.small dt, .rv-did.small dd{font-size:13px; line-height:19px}
 
 /* 빈 상태 그림. **장식이다** - 글자는 이미지에 없고 문구는 HTML 이 얹는다.
-   주의(중요): 다크에서 밝은 일러스트가 붕 뜰 수 있다. 배경을 깔지 말고
-   그림 자체를 조금 가라앉힌다 - 배경을 깔면 카드 안에 또 카드가 생긴다. */
+
+   주의(가장 중요): **다크에서 원반이 뜬다. 지금은 그대로 둔다** (2026-09-21
+   총괄 판정). 일러스트에 연보라 원 배경이 구워져 있어 어두운 카드(#1A1E2D)
+   위에 밝은 원반으로 보인다.
+
+     · `opacity` 는 **아무것도 안 풀었다.** 걸고도 뜨고, 원만 문제인데
+       캐릭터까지 흐려진다. 안 풀린 처치를 남기면 다음 사람이 "이게 뭘
+       하는 거지" 하므로 지웠다.
+     · 색으로 원을 빼는 것도 **안 된다** (총괄 시도). `#EDE9FD`·`#E5DEFC` 를
+       투명으로 바꾸면 `input-empty` 의 **종이와 종이 더미가 같이 뚫린다** -
+       종이가 원과 같은 색 대역이다.
+     · 빈 상태는 빈도가 낮고 뜨는 정도가 치명적이지 않다.
+
+   ⇒ **다크용 그림을 받을 때 고친다.** 다음에 디자인 AI 에 다른 것을
+     요청할 때 같이 받는다. 그전까지 여기를 손대지 마라. */
 .empty-art{display:block; margin:0 auto 4px; width:200px; height:auto}
 .input-empty{display:flex; flex-direction:column; align-items:center; gap:2px}
 .input-empty .input-note{margin:0; text-align:center}
-@media (prefers-color-scheme:dark){
-  :root:not([data-theme="light"]) .empty-art{opacity:.88}
-}
-:root[data-theme="dark"] .empty-art{opacity:.88}
 @media (max-width:640px){ .empty-art{width:160px} }

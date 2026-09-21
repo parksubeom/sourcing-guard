@@ -314,3 +314,81 @@ def test_a_watched_axis_is_not_also_counted_as_plain():
     by = {p["word"]: p["n"] for p in got.parts}
     assert by.get("확인") == 2, f"주의 축까지 확인으로 셉니다: {by}"
     assert by.get("주의") == 1, by
+
+
+# ── 빈 상태 ─────────────────────────────────────────────────────────
+
+@pytest.mark.parametrize("text,what", [
+    ("https://example.com/item/12345", "URL 한 줄"),
+    ("배송 빠르고 좋아요 재구매 의사 있습니다 잘 쓸게요", "리뷰만"),
+])
+def test_nothing_read_shows_the_note_and_the_picture(text, what):
+    """⚠⚠ 읽은 값이 하나도 없으면 **상품 문제가 아니라 입력 문제**다.
+
+    재현 방법은 총괄이 프로덕션에서 찾았다 - 목 추출기는 URL 한 줄에서도
+    값을 뽑아 이 자리를 **재현하지 못한다**(목의 문제다). 그래서 추출을
+    비우고 `score()` 부터 본다.
+
+    ⚠ 그림은 장식이라 글은 `input_note` 가 나른다. 둘이 **함께** 떠야 한다 -
+      그림만 뜨면 왜 비었는지 아무도 모른다.
+    """
+    from sourcing_guard.models import ProductFacts
+    from sourcing_guard.scorer import score
+
+    got = score(ProductFacts(product_name=None), [])
+    assert got.extracted == [], f"{what}: 읽은 값이 있으면 이 자리가 아니다"
+    assert got.input_note, f"{what}: 왜 비었는지 말하지 않는다"
+    assert "붙여넣" in got.input_note, got.input_note
+
+
+def test_the_screen_pairs_the_picture_with_the_note():
+    """그림과 문구가 **같은 조건**으로 뜬다. 그림만 뜨면 뜻이 없다."""
+    src = _index()
+    i = src.index("input-empty")
+    around = src[i - 400:i + 700]
+    assert "data.input_note" in around, "그림이 문구와 다른 조건으로 뜹니다"
+    assert "empty/input-empty.png" in around and "srcset" in around
+    assert 'alt=""' in around, "장식 그림에 alt 가 비어 있지 않습니다"
+
+
+def test_the_empty_pictures_carry_no_text_of_their_own():
+    """⚠ **글자는 이미지에 없다.** 문구는 HTML 이 얹고, 지금 코드에 있던
+    문장 그대로다 - 새로 짓지 않는다 (총괄 지시 2026-09-21).
+
+    이미지에 글을 구우면 번역·수정이 안 되고 스크린리더가 못 읽는다.
+    """
+    from pathlib import Path
+
+    from tests.srccheck import markup_only
+
+    watch = markup_only((Path(__file__).resolve().parents[1] / "sourcing_guard"
+                         / "static" / "watch.html").read_text(encoding="utf-8"))
+    assert "감시 중인 상품이 없습니다." in watch, "감시 빈 상태 문구가 사라졌습니다"
+    assert "empty/watch-empty.png" in watch
+    assert 'aria-hidden="true"' in watch[watch.index("watch-empty.png") - 300:
+                                        watch.index("watch-empty.png") + 300]
+
+
+def test_the_dark_floating_disc_is_left_alone_on_purpose():
+    """⚠⚠ 다크에서 원반이 뜨는 것을 **알고 두었다** (총괄 판정 2026-09-21).
+
+    `opacity` 로는 안 풀리고(걸고도 떴다) 색으로 원만 빼는 것도 안 된다 -
+    `input-empty` 의 종이가 원과 같은 색 대역이라 같이 뚫린다.
+    다크용 그림을 받을 때 고친다.
+
+    ⚠ 안 풀린 처치가 다시 들어오는 것을 막는다 - 남기면 다음 사람이
+      "이게 뭘 하는 거지" 한다.
+    """
+    import re
+    from pathlib import Path
+
+    from tests.srccheck import markup_only
+
+    css = markup_only((Path(__file__).resolve().parents[1] / "sourcing_guard"
+                       / "static" / "app.css").read_text(encoding="utf-8"))
+    m = re.findall(r"\.empty-art\{([^}]*)\}", css)
+    assert m, ".empty-art 규칙이 없습니다"
+    for body in m:
+        assert "opacity" not in body, (
+            "빈 상태 그림에 opacity 를 다시 걸었습니다 - 안 풀립니다. "
+            "다크용 그림을 받아서 고치세요")
