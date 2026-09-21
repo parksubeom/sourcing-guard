@@ -212,16 +212,18 @@ def test_the_sweep_that_found_these_tables_is_written_down():
                 if u.count("FindingKind.") >= 4:
                     found.append(f"{p.relative_to(_ROOT)}:{node.lineno}")
     # 알고 있는 자리 수. 늘면 새 표가 생긴 것이다.
-    # ⚠ 9 다. 이력을 남긴다 - 처음 6 으로 적었다가 실측 7 이었고, [4-p] 의
+    # ⚠ 10 이다. 이력을 남긴다 - 처음 6 으로 적었다가 실측 7 이었고, [4-p] 의
     #   `gov_lookup_state` 가 인증(6개)·리콜(4개) 집합을 더해 9 가 됐다.
-    #   **이 가드가 그것을 잡았다** - 표를 만들고 목록에 안 적는 것을 막는 것이
-    #   목적이므로 정상 동작이다.
+    #   2026-09-21 에 `_verified_counts` 의 RF 집합이 더해져 10 이 됐다.
+    #   **이 가드가 세 번 다 잡았다** - 표를 만들고 목록에 안 적는 것을 막는
+    #   것이 목적이므로 정상 동작이다.
     #
     #   models 2    SPECIFIC · NON_SPECIFIC
-    #   scorer 6    _PENALTY · _HARD_RED · _signal_for AMBER · _axes 인증
+    #   scorer 7    _PENALTY · _HARD_RED · _signal_for AMBER · _axes 인증
     #               · gov_lookup_state 인증 · gov_lookup_state 리콜
+    #               · _verified_counts RF (전파 축이 돌았는가)
     #   verifier 1  _CERT_STATE_FINDING
-    assert len(found) == 9, (
+    assert len(found) == 10, (
         "FindingKind 를 4개 이상 담은 자리가 바뀌었습니다:\n  "
         + "\n  ".join(found)
         + "\n  새 표면 _SUBSETS 에 추가하거나 완전성 단정을 붙이세요."

@@ -93,11 +93,14 @@ def test_counts_are_absent_when_we_did_not_compare():
 
     got = _verified_counts([], _axes(True, False, True), 37430, 2753)
     assert got.recall_rows is None
-    assert got.rf_noncompliant_rows is None
 
     got = _verified_counts([], _axes(True, True, True), 37430, 2753)
     assert got.recall_rows == 37430
-    assert got.rf_noncompliant_rows == 2753
+
+    # ⚠ 전파 부적합은 여기서 안 본다 - **다른 축**이다.
+    #   이 검사가 처음에 `rf_noncompliant_rows == 2753` 을 함께 단정했는데,
+    #   그게 곧 총괄이 잡은 결함이었다 (리콜 done 으로 전파를 게이트함).
+    #   전파 쪽은 `test_the_rf_count_is_absent_when_the_rf_axis_never_ran` 이 본다.
 
 
 def test_counts_are_absent_when_the_caller_could_not_read_them():
@@ -147,3 +150,78 @@ def test_the_index_counts_what_it_can_actually_reach():
     assert len(idx._by_number if idx.size or True else {}) or True
     assert idx.size == 3, (
         f"겹쳐 덮인 행을 안 셌습니다: {idx.size} (번호 키 {len(idx._by_number)})")
+
+# ── ③-b 전파 부적합은 **리콜과 다른 축**이다 ──────────────────────────
+
+def _rf(kind_name: str = "RF_WIRELESS_UNVERIFIED"):
+    from sourcing_guard.models import Finding, FindingKind
+
+    return Finding(
+        kind=getattr(FindingKind, kind_name), signal=Signal.AMBER,
+        statement_ko="무선 기능 표기가 있습니다", source_url="https://rra.go.kr/x",
+        source_label="전파 부적합 현황")
+
+
+def test_the_rf_count_is_absent_when_the_rf_axis_never_ran():
+    """⚠⚠ **`verifier.py:610` 이 무선 표기도 번호도 없으면 전파 축을 통째로
+    건너뛴다.** 봉제 완구 같은 상품은 리콜 축이 done=True 여도 부적합 인덱스를
+    한 번도 안 본다 - 거기에 "2,753건과 대조" 를 붙이면 거짓이다.
+
+    ⚠ 처음에 `did_recall` 로 묶었다가 총괄 검수에서 잡혔다. 게이트는 옳았고
+      **축을 잘못 골랐다.** 어제 화면이 "37,430건과 대조" 로 한 잘못과 같은 종류다.
+    """
+    from sourcing_guard.scorer import _verified_counts
+
+    axes = _axes(True, True, True)
+    no_rf = _verified_counts([], axes, 37430, 2753)
+    assert no_rf.recall_rows == 37430, "리콜은 했으므로 남아야 한다"
+    assert no_rf.rf_noncompliant_rows is None, (
+        "전파 축을 안 돌았는데 부적합 건수가 붙었습니다")
+
+    with_rf = _verified_counts([_rf()], axes, 37430, 2753)
+    assert with_rf.rf_noncompliant_rows == 2753
+
+
+@pytest.mark.parametrize("kind_name", [
+    "RF_CERT_VERIFIED", "RF_CERT_NOT_FOUND",
+    "RF_WIRELESS_UNVERIFIED", "RF_NONCOMPLIANT",
+])
+def test_every_rf_finding_kind_opens_the_count(kind_name):
+    """넷 중 어느 것이 나와도 전파 축은 **돌았다**는 뜻이다."""
+    from sourcing_guard.scorer import _verified_counts
+
+    got = _verified_counts([_rf(kind_name)], _axes(True, True, True), 37430, 2753)
+    assert got.rf_noncompliant_rows == 2753, kind_name
+
+
+def test_zero_is_not_a_comparison():
+    """인덱스가 비면 `size` 가 0 이다. 0 을 실으면 화면이 "0건과 대조했다" 를
+    말한다 - 그것도 하지 않은 일이다 (R3).
+    """
+    from sourcing_guard.scorer import _verified_counts
+
+    got = _verified_counts([_rf()], _axes(True, True, True), 0, 0)
+    assert got.recall_rows is None and got.rf_noncompliant_rows is None
+
+
+def test_no_recorded_sample_triggers_the_rf_axis():
+    """실측 0/10 (2026-09-21). 「무선 청소기」·「무선포트」도 RF 가 안 붙는다 -
+    추출기가 **전파 송수신**과 **선이 없음**을 구분하기 때문이고 그게 맞다
+    (`wireless_hints=[]` 로 기록돼 있다).
+
+    ⚠ 그래서 「부적합 공표 N건과 대조」 줄은 **지금 표본에서는 한 번도 안 뜬다.**
+      화면을 그릴 때 그 줄이 없는 경우를 기본으로 봐야 한다.
+    """
+    import json
+    from pathlib import Path as P
+
+    raw = json.loads((P(__file__).resolve().parents[1] / "sourcing_guard" / "data"
+                      / "experience_samples.json").read_text(encoding="utf-8"))
+    rf_kinds = {"rf_cert_verified", "rf_cert_not_found",
+                "rf_wireless_unverified", "rf_noncompliant"}
+    hits = [
+        it["title"] for it in raw["items"]
+        if {f.get("kind") for f in ((it.get("result") or {}).get("findings") or [])} & rf_kinds
+    ]
+    assert len(raw["items"]) == 10, "표본 수가 바뀌었습니다"
+    assert hits == [], f"RF 표본이 생겼습니다 - 위 주석을 갱신하세요: {hits}"

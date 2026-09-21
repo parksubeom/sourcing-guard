@@ -418,10 +418,29 @@ def _verified_counts(
       자리에서** 나와야 둘이 안 갈린다 (§6).
     """
     did_recall = any(a.get("key") == "recall" and a.get("done") for a in axes)
+
+    # ⚠⚠ **전파 부적합은 리콜과 다른 축이다** (2026-09-21 총괄 검수에서 잡혔다).
+    #   `verifier.py:610` 이 무선 표기도 번호도 없으면 전파 축을 **통째로
+    #   건너뛴다.** 그래서 봉제 완구처럼 무선이 아닌 상품은 리콜 축이
+    #   done=True 여도 부적합 인덱스를 **한 번도 안 본다** - 거기에
+    #   "2,753건과 대조" 를 붙이면 거짓이다.
+    #
+    #   내가 처음에 `did_recall` 로 묶었고, 그것은 어제 화면이 "37,430건과
+    #   대조" 로 한 잘못과 **같은 종류**다. 게이트는 옳았고 축을 잘못 골랐다.
+    did_rf = any(
+        f.kind in {
+            FindingKind.RF_CERT_VERIFIED, FindingKind.RF_CERT_NOT_FOUND,
+            FindingKind.RF_WIRELESS_UNVERIFIED, FindingKind.RF_NONCOMPLIANT,
+        }
+        for f in findings
+    )
+
     n = sum(1 for f in findings if f.kind is FindingKind.HAZARD_RULE_APPLIES)
     return VerifiedCounts(
-        recall_rows=recall_rows if did_recall else None,
-        rf_noncompliant_rows=rf_noncompliant_rows if did_recall else None,
+        # ⚠ `or None` 이 0 을 막는다. 인덱스가 비면 size 가 0 인데, 0 을 실으면
+        #   화면이 "0건과 대조했다" 를 말한다 - 그것도 하지 않은 일이다 (R3).
+        recall_rows=(recall_rows or None) if did_recall else None,
+        rf_noncompliant_rows=(rf_noncompliant_rows or None) if did_rf else None,
         hazard_rules=n or None,
     )
 
