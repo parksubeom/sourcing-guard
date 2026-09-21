@@ -114,3 +114,42 @@ def test_every_flagged_kind_knows_its_axis():
     assert not missing, f"주의 kind 인데 축 지도에 없습니다: {missing}"
     extra = sorted(known - flagged)
     assert not extra, f"주의 kind 가 아닌데 축 지도에 있습니다: {extra}"
+
+
+# ── 화면 ────────────────────────────────────────────────────────────
+
+def _index() -> str:
+    from pathlib import Path
+
+    from tests.srccheck import markup_only
+
+    return markup_only((Path(__file__).resolve().parents[1] / "sourcing_guard"
+                        / "static" / "index.html").read_text(encoding="utf-8"))
+
+
+def test_the_screen_picks_the_shape_but_does_not_build_the_words():
+    """화면은 `kind` 를 보고 **고르기만** 한다. 문구는 서버 것이다 (§6).
+
+    ⚠ "3 / 3" 이나 "N가지 확인" 을 화면에서 조립하면 같은 판단이 두 벌이 된다.
+    """
+    src = _index()
+    assert "data.progress" in src, "진행도를 안 그립니다"
+    assert 'pr.kind !== "none"' in src, "RED 에서 진행도를 빼는 가드가 없습니다"
+    assert "pr.lead" in src and "pr.parts" in src, "서버 문구를 안 씁니다"
+    for made_up in ("가지 확인", "가지 주의", "가지 미수록", "축 모두 확인"):
+        assert made_up not in src, f"화면이 진행도 문구를 짓고 있습니다: {made_up}"
+
+
+def test_the_green_box_needs_a_number():
+    """⚠⚠ 숫자 없는 초록 상자는 **축에 초록 칠한 것**이다 (사양 §2-⑧).
+
+    그리고 한 줄은 그 축이 `done` 일 때만 그린다 - `done === false` 를 다른
+    말로 바꿔 채우지 않는다 (4-r 이 고치려던 잘못이다).
+    """
+    src = _index()
+    assert "rv-did" in src
+    # ⚠ **쓰이는 자리**를 본다. 선언만 보면 `if` 에서 빼도 안 물린다 -
+    #   2026-09-21 에 실제로 그랬다 (§6 "가드를 만들 때 반대 방향도 재라").
+    assert "didRows.length && hasNumber" in src, "숫자가 없어도 초록 상자를 그립니다"
+    assert "filter(function (a) { return a.done; })" in src, (
+        "안 한 축까지 초록 상자에 넣고 있습니다")

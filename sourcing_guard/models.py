@@ -704,6 +704,9 @@ class Progress(BaseModel):
     missing: int = 0
     lead: str = ""
     tail: str = ""
+    #: 개수형에 쓸 조각들. `[{"n": 3, "word": "확인"}, …]`
+    #: 화면은 "N가지 {word}" 로 잇기만 한다 - 낱말은 서버가 고른다 (§6).
+    parts: list[dict] = []
 
 
 class ScanResult(BaseModel):

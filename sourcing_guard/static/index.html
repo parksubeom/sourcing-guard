@@ -1178,6 +1178,68 @@
       }).join("") + "</div>";
     }
 
+    // ③-c 진행도 — **우리 쪽 진행이지 상품 점수가 아니다** (사양 §2-②③).
+    //
+    // 주의(가장 중요): 모양·문구를 **서버가 정한다**(`data.progress`). 화면이
+    //   `kind` 를 보고 고르기만 한다 - 여기서 "3/3" 을 조립하면 같은 판단이
+    //   두 벌이 된다 (§6 · scorer.py:227).
+    //
+    // 주의: RED 는 `kind === "none"` 이라 **안 그린다.** 빨강일 때 진행도를
+    //   크게 쓰면 판정을 흐린다.
+    //
+    // 주의: 신호색을 쓰지 않는다. 색을 주면 "3/3 이 초록" 으로 읽혀 진행도가
+    //   판정이 된다. 막대만 초록인데 그건 **채워진 정도**를 말한다.
+    var pr = data.progress;
+    if (pr && pr.kind !== "none") {
+      var pct = pr.total ? Math.round((pr.done / pr.total) * 100) : 0;
+      html += '<div class="rv-score">' +
+        // 분수는 **전부 끝났을 때만**이다. 개수형에 분수를 쓰면 `2 / 3` 이
+        // "이 서비스가 67%밖에 못 하네" 로 읽힌다 (사양 §2-②).
+        (pr.kind === "fraction"
+          ? '<span class="num">' + pr.done + '<span class="of">\u2009/\u2009' + pr.total + "</span></span>"
+          : '<span class="cnt">' + (pr.parts || []).map(function (x) {
+              return "<b>" + x.n + "</b>가지 " + esc(x.word);
+            }).join(' <i aria-hidden="true">·</i> ') + "</span>") +
+        '<span class="say"><b>' + esc(pr.lead) + "</b>" +
+        (pr.tail ? "<span>" + esc(pr.tail) + "</span>" : "") +
+        (pr.kind === "fraction"
+          ? '<span class="bar"><i style="width:' + pct + '%"></i></span>' : "") +
+        "</span></div>";
+    }
+
+    // ③-d 「지금까지 확인한 것」 — 초록이 걸리는 대상이 **상품이 아니라 우리가
+    //     한 일**이다. 주어가 다르다 (사양 §2-⑧).
+    //
+    // 주의(가장 중요): 한 줄은 그 축이 `done === true` 일 때만 그린다.
+    //   `done === false` 를 다른 말로 바꿔 채우지 않는다 - "대조 못 함" 을
+    //   "N건과 대조" 로 적는 것이 이 제품이 고치려는 잘못이다 (4-r).
+    //
+    // 주의(중요): **숫자가 하나도 없으면 안 그린다.** 숫자 없는 초록 상자는
+    //   축에 초록 칠한 것이고, 그건 만들지 않는다 (사양 §2-⑧).
+    var vc = data.verified_counts || {};
+    var num = function (n) { return Number(n).toLocaleString("ko-KR"); };
+    var didRows = (data.axes || []).filter(function (a) { return a.done; })
+      .map(function (a) {
+        var n = a.key === "recall" ? vc.recall_rows : null;
+        // 주의(가장 중요): **라벨을 화면이 고르지 않는다.** 처음에 "대조함" 과
+        //   겹친다고 그 낱말을 JS 에서 비교해 뺐는데, 그것이 곧 축 라벨을
+        //   프론트가 쓰는 것이다 - `test_axes_are_rendered_from_the_server`
+        //   가 잡았다. 수를 **앞에** 두고 라벨은 서버 것을 그대로 잇는다.
+        //   RED 의 "일치 있음" 이 사라지던 것도 같이 풀린다.
+        var body = (n ? "<b>" + num(n) + "건</b> · " : "") + esc(a.label);
+        return "<dt>" + esc(a.name) + "</dt><dd>" + body +
+          (a.note ? " · " + esc(a.note) : "") + "</dd>";
+      });
+    var hasNumber = !!vc.recall_rows ||
+      (data.axes || []).some(function (a) { return a.done && a.key === "hazard"; });
+    if (didRows.length && hasNumber) {
+      html += '<div class="rv-did"><div class="h">' +
+        '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" ' +
+        'stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+        '<path d="M20 6L9 17l-5-5"/></svg>지금까지 확인한 것</div>' +
+        "<dl>" + didRows.join("") + "</dl></div>";
+    }
+
     // ③-b 상품 요약. **국가기술표준원 조회 응답에서만** 온다 (총괄 §3).
     //
     // 주의(가장 중요): 셀러가 붙여넣은 글에서 만들지 않는다. 이 카드가 답하는

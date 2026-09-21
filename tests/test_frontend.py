@@ -581,8 +581,18 @@ def test_axes_are_rendered_from_the_server_not_recomputed():
     §3.2 원칙이 조용히 무너진다 - grouped_findings·headline 을 서버가 내리는
     것과 같은 이유다.
     """
-    html = (Path(__file__).resolve().parents[1] / "sourcing_guard" / "static"
-            / "index.html").read_text(encoding="utf-8")
+    # ⚠⚠ **주석을 걷고 본다** (2026-09-21). 무엇을 왜 그렇게 그리는지 적으려면
+    #   축 라벨을 인용해야 하고, 그러면 이 가드가 **자기 감사 기록에 걸린다** -
+    #   `test_landing` 주석이 "이 저장소에서 열네 번째다" 라고 적어 둔 그 자리다.
+    #   막으려는 것은 화면에 **그려지는** 라벨이지 설명이 아니다.
+    #
+    # ⚠ 주석 제거를 여기서 새로 쓰지 않는다 - 오너는 `tests/srccheck.markup_only`
+    #   하나다 (§6 · `test_srccheck` 가 그것을 잡는다).
+    from tests.srccheck import markup_only
+
+    raw = (Path(__file__).resolve().parents[1] / "sourcing_guard" / "static"
+           / "index.html").read_text(encoding="utf-8")
+    html = markup_only(raw)
     assert "data.axes" in html
     # 프론트가 축 라벨을 자기가 만들면 안 된다.
     for banned in ("조회함", "대조함", "이 품목 미수록", "일치 있음"):

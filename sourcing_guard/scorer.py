@@ -483,9 +483,16 @@ def _progress(signal: Signal, axes: list[dict], findings: list[Finding]) -> "Pro
         tail = f"남은 {_SUSA.get(len(left), len(left))}는 아래에 적었습니다."
     else:
         tail = ""
+    # ⚠ 낱말을 화면이 고르지 않게 여기서 준다 (§6). 0 인 조각은 넣지 않는다 -
+    #   "0가지 주의" 는 없는 것을 있는 것처럼 적는 자리다 (R3).
+    parts = [{"n": len(done), "word": "확인"}]
+    if attention:
+        parts.append({"n": attention, "word": "주의"})
+    if left:
+        parts.append({"n": len(left), "word": "미수록"})
     return Progress(
         kind="counts", done=len(done), total=len(axes),
-        attention=attention, missing=len(left),
+        attention=attention, missing=len(left), parts=parts,
         lead=f"{names}{_eul(names)} 마쳤습니다.", tail=tail)
 
 

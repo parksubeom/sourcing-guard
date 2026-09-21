@@ -1776,3 +1776,8 @@ a.btn-t, a.btn{display:inline-flex; align-items:center; justify-content:center;
   .rv-did dl{grid-template-columns:1fr; gap:2px 0}
   .rv-did dt{margin-top:6px}
 }
+.rv-score .cnt{display:flex; align-items:baseline; gap:8px; flex-wrap:wrap;
+               font-size:17px; line-height:26px; color:var(--fg-1); flex:none}
+.rv-score .cnt b{font-family:var(--font-display); font-weight:700;
+                 font-size:28px; line-height:32px}
+.rv-score .cnt i{font-style:normal; color:var(--fg-3)}
