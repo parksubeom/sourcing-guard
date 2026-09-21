@@ -78,6 +78,55 @@ def test_empty_index_is_reported_as_empty():
     assert idx.is_empty()
 
 
+def test_is_empty_and_size_are_the_same_question(index):
+    """⚠⚠ **`is_empty()` ⟺ `size == 0`. 이 동치가 rf 게이트를 닫고 있다.**
+
+    `scorer._verified_counts` 는 RF finding 이 있으면 부적합 건수를 싣는다.
+    그런데 `verifier.py:617` 은 인덱스가 비면 부적합 **대조를 건너뛰고도**
+    뒤에서 `RF_WIRELESS_UNVERIFIED` 를 붙일 수 있다 - 그때 건수가 실리면
+    "대조하지 않은 것을 대조했다" 가 된다 (4-r 과 같은 종류).
+
+    지금은 안 실린다. 인덱스가 비면 `size` 가 0 이고 `(0 or None)` 이 None
+    이기 때문이다. **두 함수가 서로를 모르는 채 우연히 맞물려 있다.**
+
+    ⚠ verifier 에 "부적합을 실제로 대조했다" 는 finding 을 새로 넣어 닫는 길도
+      있지만 **그러지 않는다** (2026-09-21 총괄). 범위가 넓어진다.
+      **이 검사가 그 자리를 대신 지킨다** - 누가 `size` 를 "원본 행 수" 로
+      바꾸거나 `is_empty` 를 다르게 정의하면 여기서 깨진다.
+
+    ⚠ 이 동치를 **진짜 객체**로 재는 것은 여기뿐이다. tests/ 안의 다른
+      `is_empty` 는 전부 가짜 객체다.
+    """
+    db = pathlib.Path(tempfile.mkdtemp()) / "eq.db"
+    empty = NoncompliantIndex(SqliteWatchStore(db))
+    assert empty.is_empty() and empty.size == 0
+
+    assert not index.is_empty() and index.size > 0
+
+    # ⚠⚠ **행이 있는데 닿을 수 없는 경우**를 반드시 같이 잰다.
+    #   2026-09-21 에 위 두 줄만 두고 반대 방향을 재 보니 **셋 중 둘이 안 물었다** -
+    #   `size = len(rows)` 로 바꿔도, `is_empty` 를 번호만 보게 바꿔도 통과했다.
+    #   표본의 모든 행이 번호로 닿아서 세 정의가 우연히 같은 수를 냈기 때문이다.
+    #   번호도 없고 변별력 있는 모델명도 없는 행을 넣어야 정의가 갈린다.
+    class _Unreachable:
+        def rf_noncompliant_rows(self):
+            return [{"cert_number": "", "model": "Q1"}]   # 둘 다 못 쓴다
+
+    ghost = NoncompliantIndex(_Unreachable())
+    assert ghost.size == 0, "닿을 수 없는 행을 셌습니다 - 원본 행 수를 쓴 것입니다"
+    assert ghost.is_empty(), "닿을 수 없는데 비지 않았다고 합니다"
+
+    # 번호는 없고 모델명으로만 닿는 행. `is_empty` 가 번호만 보면 여기서 깨진다.
+    class _ModelOnly:
+        def rf_noncompliant_rows(self):
+            return [{"cert_number": "", "model": "DECKTS183"}]
+
+    model_only = NoncompliantIndex(_ModelOnly())
+    assert model_only.size == 1
+    assert not model_only.is_empty(), (
+        "모델명으로 닿는 행이 있는데 비었다고 합니다 - is_empty 가 번호만 봅니다")
+
+
 def test_store_refuses_to_overwrite_with_empty_list():
     """수집이 실패했는데 테이블을 비우면 RED 소스가 조용히 사라진다."""
     db = pathlib.Path(tempfile.mkdtemp()) / "r.db"
