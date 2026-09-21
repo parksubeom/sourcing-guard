@@ -676,6 +676,12 @@ class SqliteWatchStore:
             return {
                 "initial_load_at": self.get_sync_state("initial_load_at"),
                 "last_sync_at": self.get_sync_state("last_sync_at"),
+                # ⚠⚠ **시도 시각과 성공 시각은 다르다.** `last_sync_at` 은
+                #   성공·실패를 안 가리고 쓰인다 - 2026-09-15~18 에 나흘 내내
+                #   실패하는 동안 화면이 "어제 갱신했다" 를 말한 원인이 그것이다
+                #   (§1-k). 감시하는 쪽은 **성공 시각**을 봐야 "받아 오고 있나" 에
+                #   답할 수 있다. 화면(바닥글 "…갱신")도 이 값을 쓴다.
+                "last_sync_ok_at": self.get_sync_state("last_sync_ok_at"),
                 "last_sync_error": self.get_sync_state("last_sync_error"),
                 "recalls": {
                     "domestic": self.recall_count("domestic"),

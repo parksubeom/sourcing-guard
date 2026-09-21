@@ -78,7 +78,38 @@ def _card(item: dict[str, Any]) -> dict[str, Any] | None:
         "url": item.get("url"),
         "price": item.get("price"),
         "unit_qty": item.get("unitQty"),
+        # 우리가 이 상품에 **무엇을 했는지** 한 줄. 사진·가격·수량만 있으면
+        # 도매꾹 목록과 같아서 손이 안 간다.
+        #
+        # 주의(가장 중요): **판정이 아니라 행위다.** 「정상/주의/위험」은 안
+        #   붙인다 - 그건 우리가 도매꾹 상품에 등급을 매기는 것이고 P4 판정이
+        #   막은 자리다. 「조회함」은 우리가 한 일이라 그 금지에 안 걸린다.
+        #   초록은 상품이 아니라 **우리 행위**에 붙는다.
+        # 주의(중요): 문자열과 줄인 번호를 **여기서** 만든다. 화면이 자르면
+        #   자르는 규칙이 두 벌이 된다 (§6).
+        **_did(item),
     }
+
+
+#: 카드에 보일 인증번호 앞자리 수. 전체를 카드에 박지 않는다 (총괄 2026-09-21).
+_CERT_HEAD = 6
+
+
+def _did(item: dict[str, Any]) -> dict[str, Any]:
+    """「인증 조회함 · CB061R…」. 축이 **실제로 수행됐을 때만** 만든다.
+
+    ⚠ `done` 이 아니면 아무것도 안 낸다 - 하지 않은 일에 표를 붙이면 그게
+      거짓이다 (4-r 과 같은 뿌리).
+    """
+    result = item.get("result") or {}
+    axes = {a.get("key"): a for a in (result.get("axes") or [])}
+    cert = axes.get("cert") or {}
+    if not cert.get("done"):
+        return {}
+    nums = ((result.get("facts") or {}).get("kc_numbers")) or item.get("cert_numbers") or []
+    num = str(nums[0]).strip() if nums else ""
+    short = (num[:_CERT_HEAD] + "…") if len(num) > _CERT_HEAD else num
+    return {"did": "인증 조회함", "cert_head": short or None}
 
 
 def payload() -> dict[str, Any]:

@@ -620,3 +620,26 @@ def test_no_screen_string_promises_a_daily_refresh():
                 if promise in line:
                     bad.append(f"{name}:{i} {promise}")
     assert bad == [], f"서 있는 약속이 화면에 남아 있다: {bad}"
+
+
+def test_healthz_shows_when_we_last_succeeded_not_just_when_we_tried():
+    """⚠⚠ **시도 시각과 성공 시각은 다르다.**
+
+    `last_sync_at` 은 성공·실패를 안 가리고 쓰인다. 2026-09-15~18 에 나흘 내내
+    실패하는 동안 화면이 "어제 갱신했다" 를 말한 원인이 그것이고(§1-k), 그때
+    `last_sync_ok_at` 을 만들어 **화면**은 고쳤다. 그런데 `/healthz` 가 그
+    값을 안 내보내서 **감시하는 쪽은 여전히 시도 시각만 본다.**
+
+    ⚠ 투표 기간 점검이 `/healthz` 하나다 (§1-k 점검 목록). 거기에 성공 시각이
+      없으면 "받아 오고 있나" 에 답할 수 없다.
+    """
+    from fastapi.testclient import TestClient
+
+    from sourcing_guard.main import app
+
+    with TestClient(app) as c:
+        sync = c.get("/healthz").json()["sync"]
+    assert "last_sync_ok_at" in sync, (
+        "/healthz 가 성공 시각을 안 냅니다 - 시도 시각만 보면 나흘 실패해도 "
+        "'어제 갱신' 으로 읽힙니다")
+    assert "last_sync_at" in sync, "시도 시각도 남아 있어야 합니다 (둘 다 쓴다)"

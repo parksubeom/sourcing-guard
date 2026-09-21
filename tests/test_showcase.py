@@ -172,9 +172,21 @@ def test_the_card_payload_carries_no_signal(payload):
     `axes` 가 붙었을 때 안 걸린다.
     """
     assert payload["items"], "카드가 없다"
-    want = {"no", "title", "thumb", "url", "price", "unit_qty"}
+    # `did`·`cert_head` 는 **우리가 한 일**이다 (2026-09-21). 판정이 아니라
+    # 행위라 이 금지에 안 걸린다 - 초록은 상품이 아니라 우리 행위에 붙는다.
+    want = {"no", "title", "thumb", "url", "price", "unit_qty", "did", "cert_head"}
     for card in payload["items"]:
-        assert set(card) == want, f'{card.get("no")} 의 키가 {set(card)} 다'
+        assert set(card) <= want, (
+            f'{card.get("no")} 에 모르는 키가 있다: {set(card) - want}')
+
+    # ⚠ 키 집합만 재면 `did` 에 "정상" 을 담아도 통과한다 - **값도 본다.**
+    for card in payload["items"]:
+        for banned in ("signal", "score", "axes", "verdict", "findings", "grade"):
+            assert banned not in card, f'{card["no"]} 에 {banned} 가 있다'
+        if card.get("did"):
+            for word in ("정상", "주의", "위험", "안전", "적합", "이상 없음"):
+                assert word not in card["did"], (
+                    f'{card["no"]} 의 did 가 판정을 말한다: {card["did"]!r}')
 
 
 def test_numbers_are_numbers(payload):
@@ -302,22 +314,45 @@ def test_the_screen_does_not_hardcode_the_base_date():
     assert not re.search(r"20\d{2}-\d{2}-\d{2}", dg), "화면에 날짜가 박혀 있다"
 
 
-def test_the_list_grid_cannot_push_the_page_sideways():
-    """`minmax(N,1fr)` 의 하한이 곧 최소 폭이다. `min(N,100%)` 로 감싼다.
+def test_the_list_cannot_push_the_page_sideways():
+    """목록이 **페이지를 옆으로 밀지 않는다.**
 
-    랜딩(2026-09-18)과 `/unknown`(09-20)에서 같은 자리가 두 번 났다 -
-    1280 에서는 멀쩡하고 320 에서만 밀린다.
+    막는 방법이 2026-09-21 에 바뀌었다. 전에는 격자였고 `minmax(N,1fr)` 의
+    하한이 곧 최소 폭이라 `min(N,100%)` 로 감싸야 했다(랜딩·`/unknown` 에서
+    같은 자리가 두 번 났다). 지금은 **가로 스크롤**이라 목록이 스스로 넘치고
+    페이지는 안 밀린다 - `overflow-x` 가 그 자리를 대신한다.
 
-    ⚠⚠ **주석을 빼고 본다.** 처음에 원문을 그대로 훑었더니 "`minmax(140px,·)`
-      는 한 칸이 된다" 라고 **설명한 주석**이 이 검사에 걸렸다 - 저장소에서
-      열두 번 넘게 난 그 자리다. 오너는 `tests/srccheck.markup_only` 다 (§6).
+    주의(가장 중요): **주석을 빼고 본다.** 처음에 원문을 그대로 훑었더니
+      minmax 를 **설명한 주석**이 이 검사에 걸렸다 - 저장소에서 열두 번 넘게
+      난 그 자리다. 오너는 `tests/srccheck.markup_only` 다 (§6).
     """
     css = markup_only(
         (_ROOT / "sourcing_guard" / "static" / "app.css").read_text(encoding="utf-8"))
-    rules = re.findall(r"([^{}]*\.dg-list[^{}]*)\{([^}]*)\}", css)
-    lowers = [m for _sel, decl in rules for m in re.findall(r"minmax\(([^,]+),", decl)]
-    # ⚠ 수를 단정한다 - 기본 격자 하나 + 폰 격자 하나. 0개를 보고 통과하면
-    #   그건 검사가 아니다 (CLAUDE.md §6).
-    assert len(lowers) == 2, f".dg-list 의 minmax 가 {len(lowers)}개다: {lowers}"
-    for lower in lowers:
-        assert "min(" in lower and "100%" in lower, f"하한이 {lower.strip()} 다"
+    rules = dict(re.findall(r"([^{}]*\.dg-list[^{}]*)\{([^}]*)\}", css))
+    base = next((d for s, d in rules.items() if s.strip() == ".dg-list"), None)
+    assert base, ".dg-list 규칙이 없다"
+    assert re.search(r"overflow-x\s*:\s*auto", base), (
+        "목록이 스크롤 컨테이너가 아니다 - 넘치면 페이지가 옆으로 밀린다")
+    assert re.search(r"scroll-snap-type\s*:\s*x", base), "칸 맞춤이 없다"
+
+    item = next((d for s, d in rules.items() if "> li" in s), None)
+    assert item, ".dg-list > li 규칙이 없다"
+    assert re.search(r"scroll-snap-align", item), "카드가 칸에 안 맞춰진다"
+    assert re.search(r"flex\s*:\s*0 0 auto", item), (
+        "카드가 줄어들 수 있다 - 그러면 스크롤이 아니라 찌그러진다")
+
+
+def test_the_auto_scroll_can_be_pushed_by_hand():
+    """주의(가장 중요): **CSS `@keyframes` 로 굴리면 손으로 못 민다.**
+    그것이 이 방식을 고른 이유이므로, 애니메이션이 아니라 **스크롤**인지 잠근다.
+
+    주의(중요): 사용자가 밀면 자동이 멈춰야 한다 - 안 그러면 손과 타이머가 싸운다.
+    """
+    src = markup_only(
+        (_ROOT / "sourcing_guard" / "static" / "index.html").read_text(encoding="utf-8"))
+    assert "scrollBy" in src and "behavior" in src, "타이머가 스크롤로 밀지 않는다"
+    assert "@keyframes" not in src, "keyframes 로 굴리면 손으로 못 민다"
+    for hook in ("mouseenter", "focusin", "touchstart", "prefers-reduced-motion",
+                 "max-width: 768px"):
+        assert hook in src, f"{hook} 처리가 없다"
+    assert "DG_STEP_MS = 5000" in src, "간격이 5초가 아니다"
