@@ -278,7 +278,16 @@ def _fill_as_of(html: str) -> str:
     raw = getattr(_recalls, "as_of", None) or ""
     if not (len(raw) == 8 and raw.isdigit()):
         return _ASOF_SLOT.sub("", html)
-    shown = f"{raw[:4]}-{raw[4:6]}-{raw[6:]} 기준"
+    # ⚠⚠ **무엇의 날짜인지 앞에 적는다** (2026-09-21 총괄). 전에는
+    #   "2026-09-17 기준" 이라 화면에 **보이는 이름이 없었다** - `title=` 은
+    #   hover 전용이라 폰에서는 없는 것과 같다. `/scan` 에는 바로 아래
+    #   showcase 가 "2026-09-20 기준 도매꾹에서 판매중인 상품" 이라고 자기
+    #   날짜를 말하는데, 위쪽만 무명이면 셀러가 "둘이 왜 다르지" 를 혼자 푼다.
+    #
+    #   ⚠ 폭이 늘면 `.masthead .container:not(:has(.asof))::after` 의 자리
+    #     너비도 같이 맞춰야 한다 - 배지 없는 화면(/batch·/guide)의 내비가
+    #     어긋난다. app.css 의 그 값은 **실측**으로 정한다.
+    shown = f"리콜 {raw[:4]}-{raw[4:6]}-{raw[6:]} 기준"
     return _ASOF_SLOT.sub(
         f'<span class="asof" title="리콜 공표 기준일">{shown}</span>', html)
 

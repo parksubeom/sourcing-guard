@@ -475,12 +475,19 @@ footer p:last-child{margin-bottom:0}
 /* 리콜 공표 기준일 배지 (시안 §6 머리 오른쪽). 내비가 `margin-left:auto` 로
    오른쪽을 먹고 있어서 배지는 그 **뒤**에 붙는다. 값이 없으면 서버가 요소째
    지우므로 빈 칸이 남지 않는다. */
+/* 아이콘 폭과 간격의 **소유자가 하나**다. 배지 없는 화면의 자리표시자가
+   같은 값을 써야 하는데, 두 곳에 적으면 한쪽만 고쳐질 때 내비가 어긋난다 (§6). */
+.masthead{--asof-icon:14px; --asof-gap:6px}
 .asof{
-  margin-left:var(--s4); display:inline-flex; align-items:center; gap:6px;
+  margin-left:var(--s4); display:inline-flex; align-items:center; gap:var(--asof-gap);
   font-size:14px; line-height:20px; color:var(--fg-3); white-space:nowrap;
 }
 .asof::before{
-  content:""; width:14px; height:14px; flex:none; border:1.5px solid currentColor;
+  /* 주의: 의사요소는 전역 `box-sizing:border-box` 를 안 받는다(계산값 content-box).
+     테두리가 밖으로 붙어 겉폭이 14 → 16px 이 됐고, 자리표시자가 2px 모자랐다.
+     **겉폭을 토큰과 같게** 못박아 계산이 정확해지게 한다 - 픽셀을 쫓지 않는다. */
+  content:""; box-sizing:border-box;
+  width:var(--asof-icon); height:var(--asof-icon); flex:none; border:1.5px solid currentColor;
   border-radius:3px; box-shadow:inset 0 3px 0 -1.5px currentColor;
 }
 @media (max-width:640px){
@@ -673,9 +680,26 @@ h1, h2, .wordmark{
 .masthead .container{justify-content:space-between}
 /* 배지가 없는 화면(/batch·/guide)은 자식이 셋에서 둘이 되어 space-between 이
    내비를 오른쪽 끝으로 민다 - 실측 152px. 배지를 다는 것은 설계 위반이므로
-   (그 둘은 리콜을 대조하지 않는다) **자리만** 남긴다. */
+   (그 둘은 리콜을 대조하지 않는다) **자리만** 남긴다.
+
+   주의(가장 중요): 폭을 **픽셀로 적지 않는다.** 배지 문구와 같은 모양의
+   글자를 넣고 숨겨서 **글꼴이 폭을 정하게** 한다 - 숫자를 적으면 문구가
+   한 글자만 바뀌어도 어긋나고, 그 수는 글꼴·기기에 따라 달라진다
+   (CLAUDE.md §6 "320px 은 상수가 아니다"). 실제로 2026-09-21 에 배지가
+   "2026-09-17 기준" → "리콜 2026-09-17 기준" 이 되면서 124 → 153 으로
+   움직였다.
+
+   주의: 글자 모양은 `main._fill_as_of` 의 형식과 **같아야 한다.**
+   `tests/test_masthead_nav_position.py` 가 둘을 묶는다.
+
+   주의: `visibility:hidden` 이라 스크린리더가 읽지 않는다. 날짜처럼 보이지만
+   0 으로 채운 자리표시자다 - 화면에 그려지지 않는다. */
 .masthead .container:not(:has(.asof))::after{
-  content:""; flex:none; margin-left:var(--s4); width:124px;
+  content:"리콜 0000-00-00 기준"; visibility:hidden; flex:none;
+  margin-left:var(--s4); white-space:nowrap;
+  font-size:14px; line-height:20px;
+  /* 배지의 아이콘 자리. 값은 위 `.masthead` 가 한 곳에서 정한다. */
+  padding-left:calc(var(--asof-icon) + var(--asof-gap));
 }
 .brand{display:flex; align-items:center; gap:10px; text-decoration:none; color:inherit}
 .brand .mark{width:32px; height:32px; flex:none}

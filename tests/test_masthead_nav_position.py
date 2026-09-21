@@ -33,7 +33,19 @@ CSS = Path(__file__).resolve().parents[1] / "sourcing_guard" / "static" / "app.c
 
 @pytest.fixture(scope="module")
 def css() -> str:
-    return CSS.read_text(encoding="utf-8")
+    """⚠⚠ **주석을 걷고 본다.**
+
+    2026-09-21 에 `test_the_icon_box_owns_its_size_in_one_place` 가 자기
+    **감사 주석**을 보고 통과했다 - 규칙 위 주석에 "전역 `box-sizing:border-box`
+    를 안 받는다" 라고 적어 뒀고, 정작 선언을 지워도 그 글자가 남아서
+    가드가 아무것도 못 봤다. CLAUDE.md §6 이 이름 붙인 자리다.
+
+    ⚠ 주석 제거를 여기서 새로 쓰지 않는다 - 오너는 `tests/srccheck.markup_only`
+      하나다 (`test_srccheck` 가 그것을 잡는다).
+    """
+    from tests.srccheck import markup_only
+
+    return markup_only(CSS.read_text(encoding="utf-8"))
 
 
 def test_the_active_link_keeps_its_horizontal_padding(css):
@@ -69,19 +81,82 @@ def test_screens_without_the_date_badge_still_reserve_its_place(css):
 
     설계는 그대로 두고 **자리만** 남긴다. 안 남기면 `space-between` 이
     내비를 152px 오른쪽으로 민다 (2026-09-21 실측).
+
+    ⚠⚠ **폭을 픽셀로 적지 않는다.** 2026-09-21 에 배지 문구가
+      "2026-09-17 기준" → "리콜 2026-09-17 기준" 이 되자 124 → 153 으로
+      움직였다. 숫자를 적어 두면 문구가 한 글자만 바뀌어도 어긋나고, 그 수는
+      글꼴·기기에 따라 달라진다 (CLAUDE.md §6 "320px 은 상수가 아니다").
+      **같은 모양의 글자를 넣고 숨겨서 글꼴이 폭을 정하게 한다.**
     """
-    assert re.search(
-        r'\.masthead \.container:not\(:has\(\.asof\)\)::after\s*\{[^}]*width', css, re.S), (
-        "배지 없는 화면의 자리 확보가 사라졌습니다 - /batch·/guide 의 내비가 "
-        "오른쪽으로 밀립니다")
+    m = re.search(
+        r'\.masthead \.container:not\(:has\(\.asof\)\)::after\s*\{(.*?)\}', css, re.S)
+    assert m, ("배지 없는 화면의 자리 확보가 사라졌습니다 - /batch·/guide 의 "
+               "내비가 오른쪽으로 밀립니다")
+    body = m.group(1)
+    assert re.search(r'content\s*:\s*"[^"]+"', body), (
+        "자리표시자에 글자가 없습니다 - 폭이 0 이 됩니다")
+    assert not re.search(r"(?<!padding-)(?<!-)\bwidth\s*:\s*\d", body), (
+        f"자리 폭을 픽셀로 적었습니다 - 문구가 바뀌면 어긋납니다: {body.strip()[:80]}")
+
+
+def test_the_placeholder_says_the_same_shape_as_the_real_badge(css):
+    """⚠⚠ **자리표시자와 배지 문구는 같은 모양이어야 한다.**
+
+    폭이 글자에서 나오므로, `main._fill_as_of` 가 내는 형식이 바뀌면 여기도
+    바뀌어야 한다. 두 곳에 적힌 같은 판단이라 검사로 묶는다 (§6).
+    """
+    import re as _re
+    from pathlib import Path as _P
+
+    main = (_P(__file__).resolve().parents[1] / "sourcing_guard" / "main.py").read_text(
+        encoding="utf-8")
+    fmt = _re.search(r'shown = f"([^"]+)"', main)
+    assert fmt, "_fill_as_of 의 배지 형식을 못 찾았습니다"
+    # f-string 의 치환 자리를 숫자 자리로 바꾼다: "리콜 {…}-{…}-{…} 기준"
+    shape = _re.sub(r"\{[^}]*\}", "0", fmt.group(1))          # "리콜 0-0-0 기준"
+    head, tail = shape.split("0", 1)[0], shape.rsplit("0", 1)[-1]
+
+    ph = _re.search(
+        r'\.masthead \.container:not\(:has\(\.asof\)\)::after\s*\{[^}]*content\s*:\s*"([^"]+)"',
+        css, _re.S)
+    assert ph, "자리표시자 글자를 못 찾았습니다"
+    got = ph.group(1)
+    assert got.startswith(head) and got.endswith(tail), (
+        f"자리표시자가 배지와 다른 모양입니다\n  배지 {shape!r}\n  자리 {got!r}")
+    assert len(_re.findall(r"\d", got)) == 8, (
+        f"날짜 자릿수가 다릅니다 - 폭이 어긋납니다: {got!r}")
 
 
 def test_the_reserved_slot_is_not_read_aloud(css):
-    """빈 자리는 `::after` 의 `content:""` 다 - 요소가 아니므로 스크린리더가
-    읽을 것이 없다. `aria-hidden` 을 붙일 대상 자체가 없는 편이 안전하다.
+    """자리표시자에는 **날짜처럼 보이는 글자**가 들어 있다. 스크린리더가 읽으면
+    있지도 않은 기준일을 말하는 셈이라 `visibility:hidden` 으로 감춘다 -
+    `display:none` 은 자리까지 없애 버려서 안 된다.
     """
     m = re.search(
         r'\.masthead \.container:not\(:has\(\.asof\)\)::after\s*\{(.*?)\}', css, re.S)
     assert m, "자리 확보 규칙이 없습니다"
-    assert re.search(r'content\s*:\s*""', m.group(1)), (
-        '자리 확보가 `content:""` 가 아닙니다 - 텍스트가 들어가면 읽힙니다')
+    body = m.group(1)
+    assert re.search(r"visibility\s*:\s*hidden", body), (
+        "자리표시자가 안 숨겨졌습니다 - 없는 기준일을 읽습니다")
+    assert not re.search(r"display\s*:\s*none", body), (
+        "display:none 은 자리까지 없앱니다")
+
+
+def test_the_icon_box_owns_its_size_in_one_place(css):
+    """⚠ 자리표시자가 배지의 **아이콘 자리**까지 비워야 폭이 맞는다.
+
+    아이콘 폭·간격을 두 곳에 적으면 한쪽만 고쳐질 때 내비가 어긋난다 -
+    실제로 2px 모자랐다. 토큰 하나로 묶는다 (§6).
+
+    ⚠ 의사요소는 전역 `box-sizing:border-box` 를 안 받는다. 테두리가 밖으로
+      붙어 겉폭이 토큰보다 커지므로 **명시**한다.
+    """
+    assert re.search(r"--asof-icon\s*:", css), "아이콘 폭 토큰이 없습니다"
+    assert re.search(r"--asof-gap\s*:", css), "아이콘 간격 토큰이 없습니다"
+    before = re.search(r"\.asof::before\s*\{(.*?)\}", css, re.S)
+    assert before and "box-sizing:border-box" in before.group(1).replace(" ", ""), (
+        "아이콘이 border-box 가 아닙니다 - 테두리만큼 자리표시자가 모자랍니다")
+    after = re.search(
+        r'\.masthead \.container:not\(:has\(\.asof\)\)::after\s*\{(.*?)\}', css, re.S)
+    assert "--asof-icon" in after.group(1) and "--asof-gap" in after.group(1), (
+        "자리표시자가 아이콘 토큰을 안 씁니다 - 값을 두 곳에 적은 것입니다")
