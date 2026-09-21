@@ -1216,6 +1216,11 @@
     //
     // 주의(중요): **숫자가 하나도 없으면 안 그린다.** 숫자 없는 초록 상자는
     //   축에 초록 칠한 것이고, 그건 만들지 않는다 (사양 §2-⑧).
+    // 주의(가장 중요): RED 는 **빨강이 먼저**다 (사양 §2-③ · 총괄 판정 2).
+    //   「확인했습니다」가 「안전인증취소」보다 위에 있으면 뜻이 흐려진다.
+    //   그래서 초록 상자를 함수로 두고 RED 에서는 finding 묶음 **뒤**에 그린다.
+    //   제목도 RED 일 때만 「어떻게 찾았나」다 - 그 자리에서 이 상자가 답하는
+    //   질문이 "괜찮은가" 가 아니라 "어떻게 알아냈나" 이기 때문이다.
     var vc = data.verified_counts || {};
     var num = function (n) { return Number(n).toLocaleString("ko-KR"); };
     var didRows = (data.axes || []).filter(function (a) { return a.done; })
@@ -1232,13 +1237,16 @@
       });
     var hasNumber = !!vc.recall_rows ||
       (data.axes || []).some(function (a) { return a.done && a.key === "hazard"; });
+    var didBox = "";
     if (didRows.length && hasNumber) {
-      html += '<div class="rv-did"><div class="h">' +
+      didBox = '<div class="rv-did' + (sig === "RED" ? " small" : "") + '"><div class="h">' +
         '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" ' +
         'stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
-        '<path d="M20 6L9 17l-5-5"/></svg>지금까지 확인한 것</div>' +
+        '<path d="M20 6L9 17l-5-5"/></svg>' +
+        (sig === "RED" ? "어떻게 찾았나" : "지금까지 확인한 것") + "</div>" +
         "<dl>" + didRows.join("") + "</dl></div>";
     }
+    if (sig !== "RED") html += didBox;
 
     // ③-b 상품 요약. **국가기술표준원 조회 응답에서만** 온다 (총괄 §3).
     //
@@ -1274,6 +1282,9 @@
     } else if (all.length) {
       html += '<div class="rv-groups"><ul class="rv-rows">' + rowsHtml(all) + "</ul></div>";
     }
+
+    // RED 는 여기서 초록 상자를 그린다 - 빨강 뒤, 작게.
+    if (sig === "RED") html += didBox;
 
     // ⑤ 공급처에 보낼 문안. **감시 CTA 보다 먼저** 온다 (2026-09-20 총괄).
     //

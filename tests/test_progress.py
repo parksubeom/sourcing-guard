@@ -153,3 +153,61 @@ def test_the_green_box_needs_a_number():
     assert "didRows.length && hasNumber" in src, "숫자가 없어도 초록 상자를 그립니다"
     assert "filter(function (a) { return a.done; })" in src, (
         "안 한 축까지 초록 상자에 넣고 있습니다")
+
+
+def test_the_progress_bar_is_not_a_signal_colour():
+    """⚠⚠ **진행도는 판정이 아니다.** `design/tokens.css` 원칙 2 -
+    "신호등 색은 판정을 말하는 자리에만. 버튼·링크·장식에 쓰지 않는다."
+
+    초록 막대는 그 순간 판정으로 읽힌다. 사양 이미지가 초록이었고 그것이
+    틀렸다 (2026-09-21 총괄 정정).
+    """
+    import re
+    from pathlib import Path
+
+    from tests.srccheck import markup_only
+
+    css = markup_only((Path(__file__).resolve().parents[1] / "sourcing_guard"
+                       / "static" / "app.css").read_text(encoding="utf-8"))
+    m = re.search(r"\.rv-score \.bar i\{([^}]*)\}", css)
+    assert m, "진행도 막대 규칙이 없습니다"
+    body = m.group(1)
+    for banned in ("--signal-green", "--signal-amber", "--signal-red", "--signal-unknown"):
+        assert banned not in body, (
+            f"진행도 막대에 신호색을 썼습니다({banned}) - 진행도는 판정이 아닙니다")
+    assert "--brand" in body, "막대 색이 --brand 가 아닙니다"
+
+
+def test_red_shows_the_problem_before_what_we_did():
+    """⚠⚠ RED 는 **빨강이 먼저**다 (사양 §2-③).
+
+    「확인했습니다」가 「안전인증취소」보다 위에 있으면 뜻이 흐려진다.
+    같은 정보라도 그 자리에서 답하는 질문이 달라서 제목도 바뀐다.
+    """
+    src = _index()
+    assert 'if (sig !== "RED") html += didBox;' in src, (
+        "RED 에서도 초록 상자를 먼저 그립니다")
+    assert 'if (sig === "RED") html += didBox;' in src, (
+        "RED 에서 초록 상자를 아예 안 그립니다 - 빼는 것이 아니라 뒤로 옮기는 것입니다")
+    assert "어떻게 찾았나" in src, "RED 제목이 그대로입니다"
+    i_groups = src.index("rv-groups")
+    i_red_box = src.rindex('if (sig === "RED") html += didBox;')
+    assert i_groups < i_red_box, "RED 의 초록 상자가 finding 묶음보다 앞에 있습니다"
+
+
+def test_the_unused_spec_classes_are_gone():
+    """쓰지 않는 클래스를 남기면 다음 사람이 "쓰라고 만든 것" 으로 읽는다.
+
+    `.rv-cause`·`.rv-next` 는 사양이 **빈 화면에 그린 것**이라 생겼는데,
+    `rv-groups`·`.rv-ask` 가 이미 같은 말을 한다 (총괄 판정 2).
+    """
+    import re
+    from pathlib import Path
+
+    from tests.srccheck import markup_only
+
+    css = markup_only((Path(__file__).resolve().parents[1] / "sourcing_guard"
+                       / "static" / "app.css").read_text(encoding="utf-8"))
+    for gone in (".rv-cause", ".rv-next"):
+        assert not re.search(re.escape(gone) + r"[\s.,:{]", css), (
+            f"안 쓰는 클래스가 남아 있습니다: {gone}")
