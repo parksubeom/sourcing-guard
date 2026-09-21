@@ -251,3 +251,31 @@ def test_the_screen_uses_did_note_not_note():
     i = src.index("rv-did")
     assert "a.note" not in src[i - 900:i + 900] or "did_note" in src[i - 900:i + 900], (
         "초록 상자가 note 를 직접 씁니다")
+
+
+def test_the_api_actually_ships_did_note():
+    """⚠⚠ **dict 를 재는 것과 응답을 재는 것은 다르다.**
+
+    2026-09-21 에 `_axes()` 가 `did_note` 를 담았는데 `ResultAxis` 모델에
+    필드가 없어 **Pydantic 이 통째로 버렸다.** 단위 검사는 dict 를 봐서
+    통과했고, **프로덕션에 배포하고 나서** `did_note: None` 으로 드러났다.
+
+    ⚠ 서버가 화면에 무엇을 주는지는 **응답으로** 재야 한다.
+    """
+    from fastapi.testclient import TestClient
+
+    from sourcing_guard.main import app
+
+    with TestClient(app) as c:
+        # ⚠ 인증번호를 넣지 않는다 - 넣으면 실 조회로 나가고 `conftest` 가
+        #   막는다 (CLAUDE.md §7). 여기서 보려는 것은 **필드가 실리는가** 이지
+        #   조회 결과가 아니다.
+        d = c.post("/api/v1/scan", json={
+            "page_text": "어린이 물놀이 튜브 유아용 대상연령 3세 이상"
+        }).json()
+    assert d["axes"], "축이 없습니다"
+    for a in d["axes"]:
+        assert "did_note" in a, f"응답에 did_note 가 없습니다: {a}"
+    assert d.get("progress") is not None, "응답에 progress 가 없습니다"
+    assert "parts" in d["progress"], "응답에 progress.parts 가 없습니다"
+    assert d.get("verified_counts") is not None, "응답에 verified_counts 가 없습니다"
