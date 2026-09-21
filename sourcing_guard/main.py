@@ -9,6 +9,7 @@ import asyncio
 import hashlib
 import logging
 import re
+from html import escape as html_escape
 from contextlib import asynccontextmanager, suppress
 
 from pathlib import Path
@@ -282,6 +283,78 @@ def _fill_as_of(html: str) -> str:
         f'<span class="asof" title="리콜 공표 기준일">{shown}</span>', html)
 
 
+#: 화면 파일 → 경로. `og:url`·`canonical` 이 **절대 주소**를 요구해서 필요하다.
+#:
+#: ⚠⚠ 경로가 라우트 데코레이터와 **두 곳에** 적히는 자리다 (§6). 그래서
+#:   `tests/test_page_meta.py` 가 등록된 라우트와 대조한다 - 한쪽만 고치면
+#:   검사가 깨진다. R4 표와 `ALLOWED_HOSTS` 를 묶은 것과 같은 방식이다.
+_PAGE_ROUTE: dict[str, str] = {
+    "landing.html": "/",
+    "index.html": "/scan",
+    "batch.html": "/batch",
+    "watch.html": "/watch",
+    "guide.html": "/guide",
+    "samples.html": "/samples",
+    "misses.html": "/misses",
+    "unknown.html": "/unknown",
+}
+
+_TITLE = re.compile(r"<title>(?P<v>.*?)</title>", re.S)
+_DESC = re.compile(r'<meta\s+name="description"\s+content="(?P<v>[^"]*)"')
+_HEAD_END = "</head>"
+
+
+def _meta_tags(html: str, name: str) -> str:
+    """링크 미리보기 태그를 **서버가 한 곳에서** 박는다.
+
+    ⚠⚠ **새 문구를 짓지 않는다.** `og:title` 은 그 화면의 `<title>`, 
+      `og:description` 은 그 화면의 `<meta name=description>` 을 그대로 쓴다.
+      여덟 파일에 공유용 문구를 따로 적으면 같은 판단이 두 벌이 되고, 한쪽만
+      고쳐질 때 링크 미리보기가 낡은 말을 한다 (§6). 지금 description 은
+      §9 를 지키는 문장이라 그대로 쓸 수 있다.
+
+    ⚠ 이미 태그가 있으면 **건드리지 않는다** - 화면이 자기 것을 갖고 싶을 때
+      서버가 덮어쓰면 원인을 못 찾는다.
+    """
+    if "og:title" in html:
+        return html
+    route = _PAGE_ROUTE.get(name)
+    if route is None:
+        return html
+
+    base = settings.public_base_url
+    title = _TITLE.search(html)
+    desc = _DESC.search(html)
+    if not (title and desc):
+        return html
+
+    url = base + route
+    # ⚠ 값에 `"` 가 들어가면 속성이 그 자리에서 끊긴다. `/unknown` 의 제목이
+    #   `왜 "모름" 이 나왔나` 라 실제로 깨졌다 (2026-09-21 실측).
+    esc = lambda s: html_escape(s, quote=True)
+    t_v, d_v = esc(title.group("v")), esc(desc.group("v"))
+    # 커버는 배포마다 안 바뀌므로 `?v=` 는 `_page` 의 정규식이 붙인다.
+    tags = [
+        f'<link rel="canonical" href="{url}">',
+        '<meta property="og:type" content="website">',
+        '<meta property="og:site_name" content="안심 소싱 돋보기">',
+        '<meta property="og:locale" content="ko_KR">',
+        f'<meta property="og:url" content="{url}">',
+        f'<meta property="og:title" content="{t_v}">',
+        f'<meta property="og:description" content="{d_v}">',
+        f'<meta property="og:image" content="{base}/static/og.png">',
+        '<meta property="og:image:width" content="1920">',
+        '<meta property="og:image:height" content="1080">',
+        '<meta property="og:image:alt" '
+        'content="안심 소싱 돋보기 — 상세페이지를 붙여넣으면 KC 인증·리콜·유해물질 기준을 정부 원문으로 확인합니다">',
+        '<meta name="twitter:card" content="summary_large_image">',
+        f'<meta name="twitter:title" content="{t_v}">',
+        f'<meta name="twitter:description" content="{d_v}">',
+        f'<meta name="twitter:image" content="{base}/static/og.png">',
+    ]
+    return html.replace(_HEAD_END, "\n".join(tags) + "\n" + _HEAD_END, 1)
+
+
 def _page(name: str) -> HTMLResponse:
     """HTML 을 내면서 정적 자산 참조에 `?v=<build.commit>` 를 박는다.
 
@@ -307,6 +380,7 @@ def _page(name: str) -> HTMLResponse:
     # ⚠ 값이 없으면 **자리를 통째로 지운다.** 빈 배지를 남기거나 오늘 날짜로
     #   메우면 화면이 없는 사실을 말한다 (R3·R5).
     html = _fill_as_of(html)
+    html = _meta_tags(html, name)
 
     commit = build_snapshot()["commit"]
     if commit:

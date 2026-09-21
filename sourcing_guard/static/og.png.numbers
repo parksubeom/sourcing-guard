@@ -1,0 +1,6 @@
+# static/og.png 그림 안에 **그려져 있는** 숫자다. 검사는 PNG 를 못 읽으므로
+# 여기에 적어 두고 baseline.BASELINE 과 대조한다 (tests/test_page_meta.py).
+# ⚠ 기준선을 옮기면 이 파일과 **커버 그림**을 함께 고쳐야 한다.
+denominator=135
+ok_rate=77.0
+off_target=0

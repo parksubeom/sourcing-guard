@@ -111,6 +111,10 @@ class Settings:
     watchlist_db_path: str
     sync_enabled: bool
     sync_token: str | None
+    #: 링크 미리보기(og:url·og:image·canonical)가 **절대 주소**를 요구한다.
+    #: 상대 경로를 넣으면 카카오·슬랙이 이미지를 못 가져간다.
+    #: ⚠ 나가는 주소가 아니다 - HTML 에 적을 뿐이라 R4 허용 호스트와 무관하다.
+    public_base_url: str
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -148,6 +152,8 @@ class Settings:
             # 수동 트리거 인증. 비어 있으면 엔드포인트가 403 을 돌려준다 —
             # 토큰 미설정을 "인증 없음" 으로 해석하면 아무나 부를 수 있다.
             sync_token=os.getenv("SYNC_TOKEN") or None,
+            public_base_url=(os.getenv("PUBLIC_BASE_URL")
+                             or "https://sourcing-guard.fly.dev").rstrip("/"),
         )
 
 

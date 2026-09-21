@@ -90,7 +90,7 @@ SECRET_SETTINGS: tuple[str, ...] = (
 PUBLIC_SETTINGS: tuple[str, ...] = (
     "mock_mode", "extractor_model", "gpt_model", "extractor_order",
     "kats_base_url", "watchlist_db_path", "sync_enabled",
-    "kats_connect_timeout", "kats_read_timeout",
+    "kats_connect_timeout", "kats_read_timeout", "public_base_url",
 )
 
 
