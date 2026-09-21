@@ -1214,13 +1214,11 @@ def _axes(
          "note": cert_note},
         {"key": "recall", "name": "리콜 대조", "label": recall[0], "done": recall[1],
          "note": as_of},
-        # ⚠⚠ **이름이 갈려 있다 — 고치려면 index.html 도 같이 고쳐야 한다.**
-        #   `_UNLOCK_KO["hazard_rule"]` 는 "유해물질 기준" 인데 여기는 "유해물질"
-        #   이다. 2026-09-21 에 여기만 고쳐 봤더니 `tests/test_design_axes.py` 가
-        #   **로딩 스켈레톤(index.html:210)과 축 이름이 같아야 한다**로 묶어 두어
-        #   둘이 함께 깨졌다. 그 줄은 바닥글(219행)에서 9줄 위라 지금 갈린 덩이
-        #   바로 옆이다 - 총괄 판단 대기 (B-서버 ①).
-        {"key": "hazard", "name": "유해물질", "label": hazard[0], "done": hazard[1],
+        # ⚠ 이름은 `_UNLOCK_KO["hazard_rule"]` 와 **같아야 한다.** 같은 축이 확인
+        #   항목 쪽과 결과 축 쪽에서 다른 이름으로 불리고 있었다(프로덕션 포함).
+        #   로딩 스켈레톤(index.html)도 같은 이름을 쓴다 - `test_design_axes` 가
+        #   셋을 묶는다.
+        {"key": "hazard", "name": "유해물질 기준", "label": hazard[0], "done": hazard[1],
          "note": "함유량은 시험성적서로 확인합니다" if hazard[1] else ""},
     ]
 

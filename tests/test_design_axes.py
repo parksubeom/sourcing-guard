@@ -46,7 +46,7 @@ def _axis_names() -> list[str]:
 
 def test_the_server_still_sends_exactly_three_axes():
     """축 수가 바뀌면 참조·화면·이 검사를 **함께** 옮긴다는 신호다."""
-    assert _axis_names() == ["인증 조회", "리콜 대조", "유해물질"], _axis_names()
+    assert _axis_names() == ["인증 조회", "리콜 대조", "유해물질 기준"], _axis_names()
 
 
 def test_the_item_grade_is_a_finding_not_an_axis():

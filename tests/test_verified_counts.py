@@ -16,11 +16,6 @@ def _axes(*done: bool) -> list[dict]:
 
 # ── ① 축 이름이 두 곳에서 같은가 ────────────────────────────────────
 
-@pytest.mark.xfail(strict=True, reason=(
-    "B-서버 ① 보류 — 여기만 고치면 test_design_axes 가 로딩 스켈레톤"
-    "(index.html:210)과 묶어 둔 것이 깨진다. 그 줄은 바닥글 9줄 위라 "
-    "프로덕션과 갈린 덩이 옆이다. 합친 뒤에 함께 고친다. "
-    "⚠ 고쳐지면 strict xfail 이 스스로 실패한다 - 그때 이 표시를 지운다."))
 def test_the_hazard_axis_has_one_name_everywhere():
     """같은 축이 화면 두 곳에서 다른 이름으로 불리고 있었다.
 
