@@ -160,3 +160,29 @@ def test_the_icon_box_owns_its_size_in_one_place(css):
         r'\.masthead \.container:not\(:has\(\.asof\)\)::after\s*\{(.*?)\}', css, re.S)
     assert "--asof-icon" in after.group(1) and "--asof-gap" in after.group(1), (
         "자리표시자가 아이콘 토큰을 안 씁니다 - 값을 두 곳에 적은 것입니다")
+
+
+def test_the_badge_box_is_described_in_one_place(css):
+    """⚠⚠ **폭이 글자에서 나오므로 글꼴도 묶여야 한다.**
+
+    2026-09-21 에 아이콘만 토큰으로 묶고 `font-size`·`line-height` 는 배지와
+    자리표시자 두 곳에 따로 적었다. `.asof` 만 15px 로 바꾸면 자리표시자는
+    14px 로 남아 폭이 어긋나는데 **앞선 검사 넷 중 어느 것도 그걸 안 물었다** -
+    문자열은 보지만 글꼴은 안 봤다. 같은 실수를 같은 자리에서 두 번 했다.
+    """
+    for name in ("--asof-font", "--asof-line"):
+        assert re.search(rf"{name}\s*:", css), f"{name} 토큰이 없습니다"
+
+    for sel, label in (
+        (r"\.asof\s*\{(.*?)\}", "배지"),
+        (r'\.masthead \.container:not\(:has\(\.asof\)\)::after\s*\{(.*?)\}', "자리표시자"),
+    ):
+        m = re.search(sel, css, re.S)
+        assert m, f"{label} 규칙을 못 찾았습니다"
+        body = m.group(1)
+        for prop, token in (("font-size", "--asof-font"), ("line-height", "--asof-line")):
+            decl = re.search(rf"{prop}\s*:\s*([^;}}]+)", body)
+            assert decl, f"{label}: {prop} 선언이 없습니다"
+            assert token in decl.group(1), (
+                f"글꼴이 두 곳에 따로 적혀 있습니다 - {label} 의 {prop} 가 "
+                f"{decl.group(1).strip()!r} 입니다. 토큰 {token} 을 쓰세요")

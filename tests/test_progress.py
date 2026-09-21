@@ -80,3 +80,37 @@ def test_the_progress_rides_on_the_result():
     got = score(ProductFacts(product_name="무언가"), [])
     assert got.progress is not None
     assert got.progress.kind in ("fraction", "counts", "none")
+
+
+def test_attention_counts_axes_not_findings():
+    """⚠⚠ **왼쪽이 축인데 오른쪽만 finding 이면 분모가 다르다** (§6).
+
+    화면은 「3가지 확인 · 1가지 주의」라고 쓴다. 둘은 같은 것을 세야 한다.
+    처음에 finding 개수로 셌고, RED 에서 취소 + 리콜이 2 로 나왔다 - 그 둘은
+    **같은 축 둘**(cert · recall)이라 축으로 세도 2 지만, 한 축에 두 건이
+    걸리면 갈린다.
+    """
+    from sourcing_guard.scorer import _verified_counts  # noqa: F401  (임포트 확인)
+    from sourcing_guard.scorer import _progress
+
+    # 인증 축 하나에 두 건이 걸린 경우 - finding 은 2, **축은 1**.
+    two_on_one = [_f(FindingKind.KC_REVOKED), _f(FindingKind.KC_SUSPENDED)]
+    got = _progress(Signal.AMBER, _axes(True, True, True), two_on_one)
+    assert got.attention == 1, (
+        f"한 축에 두 건이 걸렸는데 {got.attention} 로 셉니다 - finding 을 센 것입니다")
+
+
+def test_every_flagged_kind_knows_its_axis():
+    """⚠ `FindingGroup.FINDING` 인데 지도에 없으면 그 축이 **조용히 안 세어진다.**
+
+    새 kind 가 생겼을 때 여기서 잡는다 (§6 "손으로 유지하는 목록은 낡는다").
+    """
+    from sourcing_guard.models import FindingGroup, _FINDING_GROUP
+    from sourcing_guard.scorer import _ATTENTION_AXIS
+
+    flagged = {k for k, g in _FINDING_GROUP.items() if g is FindingGroup.FINDING}
+    known = {k.value for k in _ATTENTION_AXIS}
+    missing = sorted(flagged - known)
+    assert not missing, f"주의 kind 인데 축 지도에 없습니다: {missing}"
+    extra = sorted(known - flagged)
+    assert not extra, f"주의 kind 가 아닌데 축 지도에 있습니다: {extra}"

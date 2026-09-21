@@ -420,6 +420,26 @@ def _eul(word: str) -> str:
     return "을" if (ord(last) - 0xAC00) % 28 else "를"
 
 
+#: 주의·위험이 **어느 축에 걸리는가.** 진행도가 「N가지 주의」를 축으로 세려면
+#: 필요하다 (사양 §2-② · 2026-09-21 총괄 ④).
+#:
+#: 주의(가장 중요): 여기 있는 것은 `FindingGroup.FINDING` **전부**여야 한다.
+#:   새 kind 가 생기고 여기 없으면 그 축은 조용히 안 세어진다 -
+#:   `tests/test_progress.py` 가 완전성을 잡는다 (§6).
+#:
+#: 주의: `rf_noncompliant` 는 축 셋(cert·recall·hazard)에 없다. 전파는 아직
+#:   별도 축이 아니라서 `None` 이다 - 빼먹은 것이 아니라 축이 없는 것이다.
+_ATTENTION_AXIS: dict[FindingKind, "str | None"] = {
+    FindingKind.KC_NOT_FOUND: "cert",
+    FindingKind.KC_REVOKED: "cert",
+    FindingKind.KC_EXPIRED: "cert",
+    FindingKind.KC_SUSPENDED: "cert",
+    FindingKind.KC_UNDER_ACTION: "cert",
+    FindingKind.RECALL_MATCH: "recall",
+    FindingKind.RF_NONCOMPLIANT: None,
+}
+
+
 def _progress(signal: Signal, axes: list[dict], findings: list[Finding]) -> "Progress":
     """진행도. **우리 쪽 진행이고 상품 점수가 아니다** (사양 §2-②③).
 
@@ -431,8 +451,19 @@ def _progress(signal: Signal, axes: list[dict], findings: list[Finding]) -> "Pro
     done = [a for a in axes if a.get("done")]
     left = [a for a in axes if not a.get("done")]
     # 축은 **했고 결과가 주의**인 것. 조회 실패가 아니다 (사양 §2-④).
-    # ⚠ 묶음 판단의 소유자는 `Finding.group` 하나다 - 여기서 다시 적지 않는다 (§6).
-    attention = sum(1 for f in findings if f.group is FindingGroup.FINDING)
+    #
+    # ⚠⚠ **세는 대상은 축이지 finding 이 아니다** (2026-09-21 총괄 ④).
+    #   화면이 「3가지 확인 · 1가지 주의」라고 쓰는데, 왼쪽이 축이고 오른쪽만
+    #   finding 이면 **분모가 다른 두 수를 나란히 놓는 것**이다 (§6).
+    #   처음에 finding 개수로 셌고 RED 에서 2 가 나왔다 - 취소 + 리콜 두 건이
+    #   **같은 축 둘**(cert · recall)에 걸린 것이라 "2가지" 가 아니다.
+    #
+    # ⚠ 묶음 판단의 소유자는 `Finding.group` 하나다 - 여기서 다시 적지 않는다.
+    flagged = {
+        _ATTENTION_AXIS.get(f.kind)
+        for f in findings if f.group is FindingGroup.FINDING
+    } - {None}
+    attention = sum(1 for a in axes if a.get("key") in flagged)
 
     if signal is Signal.RED:
         return Progress(kind="none", done=len(done), total=len(axes),
