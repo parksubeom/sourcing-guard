@@ -1518,7 +1518,7 @@
      "rf_numbers": [],
      "wireless_hints": [],
      "target_age": null,
-     "legal_item_name": "직류전원장치",
+     "legal_item_name": "충전기",
      "category": "electrical",
      "category_confidence": 0.92,
      "source_page_url": null,
@@ -1528,9 +1528,9 @@
      {
       "kind": "kc_verified",
       "signal": "GREEN",
-      "statement_ko": "인증번호 'HU101339-24004B'가 조회되었습니다(인증상태: 적합). 등록 제품명: 직류전원장치",
+      "statement_ko": "인증번호 'HU101339-24004'가 조회되었습니다(인증상태: 적합). 등록 제품명: 직류전원장치",
       "source_label": "국가기술표준원 안전인증정보 조회",
-      "source_url": "http://www.safetykorea.kr/search/searchPop?certNum=HU101339-24004B",
+      "source_url": "http://www.safetykorea.kr/search/searchPop?certNum=HU101339-24004",
       "legal_basis": null,
       "detail": {
        "maker": "Lianjiang HY-ETECH Co.,Ltd.",
@@ -1542,7 +1542,7 @@
        "from_cache": false,
        "fetched_at": null
       },
-      "checked_at": "2026-09-21"
+      "checked_at": "2026-09-22"
      },
      {
       "kind": "item_grade_matched",
@@ -1564,7 +1564,7 @@
         }
        ]
       },
-      "checked_at": "2026-09-21"
+      "checked_at": "2026-09-22"
      },
      {
       "kind": "recall_clear",
@@ -1576,7 +1576,7 @@
       "detail": {
        "recall_data_as_of": "20260917"
       },
-      "checked_at": "2026-09-21"
+      "checked_at": "2026-09-22"
      },
      {
       "kind": "info_request",
@@ -1594,7 +1594,7 @@
         "hazard_rule"
        ]
       },
-      "checked_at": "2026-09-21"
+      "checked_at": "2026-09-22"
      },
      {
       "kind": "info_request",
@@ -1613,7 +1613,7 @@
         "hazard_rule"
        ]
       },
-      "checked_at": "2026-09-21"
+      "checked_at": "2026-09-22"
      },
      {
       "kind": "coverage_gap",
@@ -1623,12 +1623,12 @@
       "source_url": "https://www.law.go.kr/행정규칙/전기용품안전기준",
       "legal_basis": null,
       "detail": {},
-      "checked_at": "2026-09-21"
+      "checked_at": "2026-09-22"
      }
     ],
     "coverage_note": "현재 규칙 DB는 이 품목(품목군 electrical)의 유해물질 기준을 아직 수록하지 않았습니다. 인증·리콜 조회 결과만 반영되었습니다.",
     "recall_data_as_of": "20260917",
-    "recall_synced_label": "오늘 17:23 갱신",
+    "recall_synced_label": "2026-09-21 17:23 갱신",
     "verified_counts": {
      "recall_rows": 37430,
      "rf_noncompliant_rows": null,
@@ -1725,7 +1725,7 @@
           }
          ]
         },
-        "checked_at": "2026-09-21"
+        "checked_at": "2026-09-22"
        },
        {
         "kind": "info_request",
@@ -1743,7 +1743,7 @@
           "hazard_rule"
          ]
         },
-        "checked_at": "2026-09-21"
+        "checked_at": "2026-09-22"
        },
        {
         "kind": "info_request",
@@ -1762,7 +1762,7 @@
           "hazard_rule"
          ]
         },
-        "checked_at": "2026-09-21"
+        "checked_at": "2026-09-22"
        }
       ]
      },
@@ -1773,9 +1773,9 @@
        {
         "kind": "kc_verified",
         "signal": "GREEN",
-        "statement_ko": "인증번호 'HU101339-24004B'가 조회되었습니다(인증상태: 적합). 등록 제품명: 직류전원장치",
+        "statement_ko": "인증번호 'HU101339-24004'가 조회되었습니다(인증상태: 적합). 등록 제품명: 직류전원장치",
         "source_label": "국가기술표준원 안전인증정보 조회",
-        "source_url": "http://www.safetykorea.kr/search/searchPop?certNum=HU101339-24004B",
+        "source_url": "http://www.safetykorea.kr/search/searchPop?certNum=HU101339-24004",
         "legal_basis": null,
         "detail": {
          "maker": "Lianjiang HY-ETECH Co.,Ltd.",
@@ -1787,7 +1787,7 @@
          "from_cache": false,
          "fetched_at": null
         },
-        "checked_at": "2026-09-21"
+        "checked_at": "2026-09-22"
        },
        {
         "kind": "recall_clear",
@@ -1799,7 +1799,7 @@
         "detail": {
          "recall_data_as_of": "20260917"
         },
-        "checked_at": "2026-09-21"
+        "checked_at": "2026-09-22"
        },
        {
         "kind": "coverage_gap",
@@ -1809,7 +1809,7 @@
         "source_url": "https://www.law.go.kr/행정규칙/전기용품안전기준",
         "legal_basis": null,
         "detail": {},
-        "checked_at": "2026-09-21"
+        "checked_at": "2026-09-22"
        }
       ]
      }
@@ -4079,7 +4079,7 @@
      "target_age": null,
      "legal_item_name": "전기주전자",
      "category": "electrical",
-     "category_confidence": 0.9,
+     "category_confidence": 0.94,
      "source_page_url": null,
      "raw_language": "ko"
     },
@@ -4087,9 +4087,9 @@
      {
       "kind": "kc_expired",
       "signal": "AMBER",
-      "statement_ko": "인증번호 'SU071354-12001ZZC' 의 인증상태가 '반납' 로 조회되었습니다. 재인증되어 번호가 바뀌었을 수 있습니다. 공급처에 현재 유효한 인증번호를 확인해 주세요.",
+      "statement_ko": "인증번호 'SU071354-12001' 의 인증상태가 '반납' 로 조회되었습니다. 재인증되어 번호가 바뀌었을 수 있습니다. 공급처에 현재 유효한 인증번호를 확인해 주세요.",
       "source_label": "국가기술표준원 안전인증정보 조회",
-      "source_url": "http://www.safetykorea.kr/search/searchPop?certNum=SU071354-12001ZZC",
+      "source_url": "http://www.safetykorea.kr/search/searchPop?certNum=SU071354-12001",
       "legal_basis": null,
       "detail": {
        "maker": "Zhongshan City Xiaolan Town Feiying Electrical Appliance Factory",
@@ -4101,7 +4101,7 @@
        "from_cache": false,
        "fetched_at": null
       },
-      "checked_at": "2026-09-21"
+      "checked_at": "2026-09-22"
      },
      {
       "kind": "item_grade_matched",
@@ -4123,7 +4123,7 @@
         }
        ]
       },
-      "checked_at": "2026-09-21"
+      "checked_at": "2026-09-22"
      },
      {
       "kind": "recall_clear",
@@ -4135,7 +4135,7 @@
       "detail": {
        "recall_data_as_of": "20260917"
       },
-      "checked_at": "2026-09-21"
+      "checked_at": "2026-09-22"
      },
      {
       "kind": "info_request",
@@ -4154,7 +4154,7 @@
         "hazard_rule"
        ]
       },
-      "checked_at": "2026-09-21"
+      "checked_at": "2026-09-22"
      },
      {
       "kind": "coverage_gap",
@@ -4164,12 +4164,12 @@
       "source_url": "https://www.law.go.kr/행정규칙/전기용품안전기준",
       "legal_basis": null,
       "detail": {},
-      "checked_at": "2026-09-21"
+      "checked_at": "2026-09-22"
      }
     ],
     "coverage_note": "현재 규칙 DB는 이 품목(품목군 electrical)의 유해물질 기준을 아직 수록하지 않았습니다. 인증·리콜 조회 결과만 반영되었습니다.",
     "recall_data_as_of": "20260917",
-    "recall_synced_label": "오늘 17:23 갱신",
+    "recall_synced_label": "2026-09-21 17:23 갱신",
     "verified_counts": {
      "recall_rows": 37430,
      "rf_noncompliant_rows": null,
@@ -4275,7 +4275,7 @@
           }
          ]
         },
-        "checked_at": "2026-09-21"
+        "checked_at": "2026-09-22"
        },
        {
         "kind": "info_request",
@@ -4294,7 +4294,7 @@
           "hazard_rule"
          ]
         },
-        "checked_at": "2026-09-21"
+        "checked_at": "2026-09-22"
        }
       ]
      },
@@ -4305,9 +4305,9 @@
        {
         "kind": "kc_expired",
         "signal": "AMBER",
-        "statement_ko": "인증번호 'SU071354-12001ZZC' 의 인증상태가 '반납' 로 조회되었습니다. 재인증되어 번호가 바뀌었을 수 있습니다. 공급처에 현재 유효한 인증번호를 확인해 주세요.",
+        "statement_ko": "인증번호 'SU071354-12001' 의 인증상태가 '반납' 로 조회되었습니다. 재인증되어 번호가 바뀌었을 수 있습니다. 공급처에 현재 유효한 인증번호를 확인해 주세요.",
         "source_label": "국가기술표준원 안전인증정보 조회",
-        "source_url": "http://www.safetykorea.kr/search/searchPop?certNum=SU071354-12001ZZC",
+        "source_url": "http://www.safetykorea.kr/search/searchPop?certNum=SU071354-12001",
         "legal_basis": null,
         "detail": {
          "maker": "Zhongshan City Xiaolan Town Feiying Electrical Appliance Factory",
@@ -4319,7 +4319,7 @@
          "from_cache": false,
          "fetched_at": null
         },
-        "checked_at": "2026-09-21"
+        "checked_at": "2026-09-22"
        }
       ]
      },
@@ -4337,7 +4337,7 @@
         "detail": {
          "recall_data_as_of": "20260917"
         },
-        "checked_at": "2026-09-21"
+        "checked_at": "2026-09-22"
        },
        {
         "kind": "coverage_gap",
@@ -4347,7 +4347,7 @@
         "source_url": "https://www.law.go.kr/행정규칙/전기용품안전기준",
         "legal_basis": null,
         "detail": {},
-        "checked_at": "2026-09-21"
+        "checked_at": "2026-09-22"
        }
       ]
      }
@@ -5101,5 +5101,12 @@
     "disclaimer": "본 결과는 공개된 정부 데이터에 기반한 참고 정보이며, 법적 판단이나 안전 인증을 대체하지 않습니다."
    }
   }
- ]
+ ],
+ "rerecorded": {
+  "at": "2026-09-22T09:15:01+00:00",
+  "items": [
+   "HU101339-24004",
+   "SU071354-12001"
+  ]
+ }
 }

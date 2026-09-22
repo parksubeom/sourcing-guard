@@ -150,6 +150,11 @@ def record_compare(base: str) -> int:
         print("인증·리콜 줄을 못 찾았다 - 대비 컷을 만들지 않는다", file=sys.stderr)
         return 2
 
+    if only is not None:
+        # CHOSEN 순서를 지킨다 - **순서가 화면 순서**이고 첫 카드가 초록이어야 한다.
+        fresh = {i["cert_number"]: i for i in out}
+        out = [fresh.get(n) or kept_by_num[n] for n in CHOSEN if n in kept_by_num or n in fresh]
+
     payload = {
         "_기록": (
             "랜딩 대비 한 컷. scripts/record_samples.py --compare 가 실제 "
@@ -177,6 +182,11 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--base", default="http://127.0.0.1:8012")
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--only", default=None,
+                    help="이 인증번호들만 다시 기록한다(쉼표 구분). 나머지는 "
+                         "기존 기록본에서 그대로 옮긴다. 전량은 조회 10회다")
+    ap.add_argument("--out", default=None,
+                    help="다른 파일로 내보낸다. 기록본을 덮기 전에 대조하려면 쓴다")
     ap.add_argument("--compare", action="store_true",
                     help="랜딩의 대비 한 컷만 기록한다 (빨강 데모 1회)")
     args = ap.parse_args()
@@ -189,8 +199,17 @@ def main() -> int:
         (_ROOT / "sourcing_guard/data/cert_seed.json").read_text(encoding="utf-8")
     )["entries"]}
 
+    only = {n.strip() for n in args.only.split(",") if n.strip()} if args.only else None
+    if only:
+        missing = only - set(CHOSEN)
+        if missing:
+            print(f"CHOSEN 에 없는 번호입니다: {sorted(missing)}", file=sys.stderr)
+            return 2
+
     plan = []
     for num in CHOSEN:
+        if only is not None and num not in only:
+            continue
         raw = titles.get(num)
         if raw is None:
             print(f"표본에 쓸 상품명을 못 찾았다: {num}", file=sys.stderr)
@@ -208,6 +227,24 @@ def main() -> int:
     if args.dry_run:
         return 0
 
+    # 부분 재기록이면 기존 기록본을 읽어 **안 고른 것은 그대로 옮긴다.**
+    #
+    # ⚠⚠ 전량 재기록은 조회 10회 + LLM 10회다. 고칠 카드가 둘이면 그 비용에
+    #   근거가 없고, **여덟 장이 다른 추출 회차로 갈아끼워진다.** 체험표본은
+    #   신호 구성(적합·만료·취소)이 설계된 것이라 그게 더 위험하다.
+    kept_by_num: dict[str, dict] = {}
+    if only is not None:
+        if not _OUT.is_file():
+            print(f"{_OUT} 이 없습니다. --only 는 기존 기록본이 있어야 합니다.",
+                  file=sys.stderr)
+            return 2
+        old = json.loads(_OUT.read_text(encoding="utf-8"))
+        kept_by_num = {str(i["cert_number"]): i for i in (old.get("items") or [])}
+        missing = only - set(kept_by_num)
+        if missing:
+            print(f"기존 기록본에 없는 번호입니다: {sorted(missing)}", file=sys.stderr)
+            return 2
+
     out = []
     with httpx.Client(timeout=120.0) as client:
         for i, p in enumerate(plan, 1):
@@ -218,6 +255,14 @@ def main() -> int:
                 print(f"  FAIL {p['cert_number']} HTTP {r.status_code} {r.text[:160]}")
                 return 1
             body = r.json()
+            # ⚠⚠ 부분 재기록에서는 **인증 조회가 성공한 것만** 담는다.
+            #   조회를 못 한 답을 기록본에 넣으면 화면이 조용히 덜 정확해지고,
+            #   그 상태가 **열 장짜리 큐레이션 세트에 박힌다.**
+            cert_state = (body.get("meta") or {}).get("gov_lookup", {}).get("cert")
+            if only is not None and cert_state != "ok":
+                print(f'  FAIL {p["cert_number"]} 인증 조회 {cert_state!r} - '
+                      "기록본을 건드리지 않고 멈춥니다.", file=sys.stderr)
+                return 1
             out.append({
                 "cert_number": p["cert_number"],
                 "title": p["title"],
@@ -229,6 +274,11 @@ def main() -> int:
             # IP당 분당 12회 제한이 있다. 여유를 둔다.
             time.sleep(6)
 
+    if only is not None:
+        # CHOSEN 순서를 지킨다 - **순서가 화면 순서**이고 첫 카드가 초록이어야 한다.
+        fresh = {i["cert_number"]: i for i in out}
+        out = [fresh.get(n) or kept_by_num[n] for n in CHOSEN if n in kept_by_num or n in fresh]
+
     payload = {
         "_기록": (
             "체험 표본 기록본. `scripts/record_samples.py` 가 실제 /api/v1/scan "
@@ -238,9 +288,16 @@ def main() -> int:
         "recorded_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "items": out,
     }
-    with _OUT.open("w", encoding="utf-8", newline="") as fh:
+    if only is not None:
+        payload["rerecorded"] = {"at": payload["recorded_at"], "items": sorted(only)}
+        # ⚠ 안 고른 장의 `recorded_at` 은 옛것이다. 하나로 적으면 여덟 장의
+        #   기록 시각이 오늘로 둔갑한다 (R5).
+        payload["recorded_at"] = (old or {}).get("recorded_at") or payload["recorded_at"]
+
+    dest = Path(args.out) if args.out else _OUT
+    with dest.open("w", encoding="utf-8", newline="") as fh:
         fh.write(json.dumps(payload, ensure_ascii=False, indent=1) + "\n")
-    print(f"→ {_OUT} ({_OUT.stat().st_size:,} bytes)")
+    print(f"→ {dest} ({dest.stat().st_size:,} bytes)")
     return 0
 
 
