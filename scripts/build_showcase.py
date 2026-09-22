@@ -520,7 +520,7 @@ def _write_notes(details, listing, category_of, gov_cert, states, chosen,
 
 
 # ── ② 스캔 ──────────────────────────────────────────────────────────
-def scan(base: str, *, sleep: float = 6.0) -> int:
+def scan(base: str, *, sleep: float = 6.0, only: set[str] | None = None) -> int:
     """고른 상품을 `/api/v1/scan` 에 넣고 **응답 그대로** 사본에 붙인다.
 
     ⚠ 문장을 여기서 만들지 않는다 (R5 · CLAUDE.md §3 ③). 담기는 것은 우리
@@ -529,6 +529,19 @@ def scan(base: str, *, sleep: float = 6.0) -> int:
     ⚠⚠ **RED 가 나오면 화면에서 뺀다** (총괄 지시). 인증상태로 미리 걸렀지만
       리콜 일치는 스캔해 봐야 안다. 뺀 건수는 보고한다 - 0 이 아니면 그 사실이
       기록이다.
+
+    `only` (부분 재기록 · 2026-09-22)
+    ---------------------------------
+    상품번호 몇 개만 다시 스캔하고 나머지는 **손대지 않는다.** 전량 재기록은
+    국표원 조회를 29회 쓴다 - 고칠 카드가 여섯이면 그 비용이 근거 없다.
+
+    ⚠⚠ 부분 재기록에서는 **인증 조회가 성공한 것만 사본에 넣는다.**
+      `meta.gov_lookup.cert != "ok"` 면 스캔 자체는 200 을 돌려주지만 그 답은
+      조회를 못 한 답이다 - 그걸 사본에 넣으면 화면이 조용히 덜 정확해진다
+      (2026-09-08 사고와 같은 모양). 그런 카드는 **목록에서 뺀다.**
+
+    ⚠ 그리고 **고르려던 것 중 첫 번째가 실패하면 통째로 멈춘다.** 죽은 서버에
+      나머지 호출을 태우지 않는다 (총괄 2026-09-22). 사본은 한 글자도 안 바뀐다.
     """
     if not OUT.is_file():
         print(f"{OUT} 이 없습니다. 먼저 collect 를 돌리세요.", file=sys.stderr)
@@ -539,12 +552,23 @@ def scan(base: str, *, sleep: float = 6.0) -> int:
         print("사본이 비어 있습니다", file=sys.stderr)
         return 2
 
+    if only:
+        missing = only - {str(it["no"]) for it in items}
+        if missing:
+            print(f"사본에 없는 상품번호입니다: {sorted(missing)}", file=sys.stderr)
+            return 2
+
     kept: list[dict] = []
     red_rows: list[tuple[str, list[str], list[str]]] = []
     dropped_red = 0
+    dropped_lookup: list[tuple[str, str]] = []
+    rescanned: list[str] = []
     signals: Counter[str] = Counter()
     with httpx.Client(timeout=180.0) as client:
         for i, item in enumerate(items, 1):
+            if only is not None and str(item["no"]) not in only:
+                kept.append(item)          # 손대지 않는다
+                continue
             t0 = time.time()
             r = client.post(base + "/api/v1/scan", json={"page_text": item["page_text"]})
             if r.status_code != 200:
@@ -560,6 +584,18 @@ def scan(base: str, *, sleep: float = 6.0) -> int:
             print(f'  {i:2}/{len(items)} {item["no"]:>10} {time.time()-t0:5.1f}s  '
                   f'{sig:8} {meta.get("extraction_path"):9} '
                   f'{(meta.get("gov_lookup") or {}).get("cert")}')
+            cert_state = (meta.get("gov_lookup") or {}).get("cert")
+            if only is not None and cert_state != "ok":
+                # 조회를 못 한 답을 사본에 넣지 않는다.
+                if not rescanned:
+                    # 고르려던 것 중 **첫 번째**다. 서버가 죽었다고 보고 멈춘다.
+                    print(f"      인증 조회 {cert_state!r} - 첫 카드부터 실패했습니다. "
+                          "사본을 건드리지 않고 멈춥니다.", file=sys.stderr)
+                    return 1
+                print(f"      인증 조회 {cert_state!r} - 이 카드를 목록에서 뺍니다")
+                dropped_lookup.append((str(item["no"]), str(cert_state)))
+                continue
+            rescanned.append(str(item["no"]))
             if sig == "RED":
                 dropped_red += 1
                 red_rows.append((item["no"], item.get("cert_numbers") or [],
@@ -575,12 +611,28 @@ def scan(base: str, *, sleep: float = 6.0) -> int:
             time.sleep(sleep)
 
     payload["items"] = kept
-    payload["scanned_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
-    payload["dropped_red"] = dropped_red
+    now = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    if only is None:
+        payload["scanned_at"] = now
+        payload["dropped_red"] = dropped_red
+    else:
+        # ⚠ `scanned_at` 을 덮지 않는다. 23장은 그때 것이고 6장만 지금 것이다 -
+        #   하나로 적으면 23장의 조회 시각이 오늘로 둔갑한다 (R5).
+        payload["rescanned"] = {"at": now, "items": rescanned,
+                                "dropped_lookup": dropped_lookup,
+                                "dropped_red": dropped_red}
+        if dropped_lookup:
+            payload.setdefault("뺀_상품", []).extend(
+                {"no": no, "이유": f"인증 조회 {st} - 근거가 셀러 표기와 다른 번호를 "
+                                   "가리켜, 판정을 다시 기록할 때까지 제외"}
+                for no, st in dropped_lookup)
     counts = write_sanitized(OUT, payload)
     prune_thumbs(kept)
     _write_red_notes(red_rows)
-    print(f"신호 {dict(signals)} · RED 로 뺀 것 {dropped_red}건")
+    print(f"신호 {dict(signals)} · RED 로 뺀 것 {dropped_red}건"
+          + (f" · 조회 실패로 뺀 것 {len(dropped_lookup)}건" if dropped_lookup else "")
+          + (f" · 다시 기록한 것 {len(rescanned)}건 · 손대지 않은 것 "
+             f"{len(kept) - len(rescanned)}건" if only is not None else ""))
     print(f"→ {OUT} ({OUT.stat().st_size:,} bytes)")
     print(f"   제거기록 {dict(sorted(counts.items()))}")
     return 0
@@ -752,11 +804,16 @@ def main() -> int:
     ap.add_argument("--sleep", type=float, default=6.0)
     ap.add_argument("--dry-run", action="store_true",
                     help="collect: 도매꾹만 부르고 국표원·썸네일은 건너뛴다")
+    ap.add_argument("--only", default=None,
+                    help="scan: 이 상품번호들만 다시 스캔한다(쉼표 구분). "
+                         "나머지는 손대지 않는다. 전량은 국표원 조회 29회다")
     args = ap.parse_args()
     stages = {
         "collect": lambda: collect(args.limit, dry_run=args.dry_run),
         "screen": screen_titles,
-        "scan": lambda: scan(args.base, sleep=args.sleep),
+        "scan": lambda: scan(
+            args.base, sleep=args.sleep,
+            only={n.strip() for n in args.only.split(",") if n.strip()} if args.only else None),
     }
     code = stages[args.stage]()
     # ⚠ `SystemExit(None)` 은 **종료코드 0** 이다. 단계가 실수로 아무것도

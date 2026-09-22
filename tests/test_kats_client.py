@@ -781,3 +781,61 @@ def test_exact_match_ignores_letter_case():
     rows = [{**CERT_ROW, "certNum": "CB113H018-2012r", "certState": "적합"}]
     rec = client_with(lambda r: ok(rows)).lookup_certification("CB113H018-2012R")
     assert rec is not None and rec.cert_number == "CB113H018-2012"[:0] + "CB113H018-2012r"
+
+
+# --- KC 표지 제거의 경계 ----------------------------------------------------
+#
+# 코퍼스 5,289건(전파 부적합 + 리콜 인증번호) 실측 (2026-09-22):
+#     'KC' 를 경계 없이 지우면 결과가 달라지는 건수  76건 (1.44%)
+#       ① 맨 앞의 KC (토큰이 필요한 자리)               0건
+#       ② KCC 포함  (토큰이 망가뜨리는 자리)           56건
+#       ③ 중간·끝의 KC (역시 망가뜨림)                 20건
+#     → 망가뜨리는 것 76 vs 지켜 주는 것 0
+# 경계를 붙인 뒤 76건이 전부 원문으로 보존된다.
+
+@pytest.mark.parametrize("raw,want", [
+    # 지워야 하는 것 - 셀러가 붙이는 표지. docstring 이 명시한 입력들이다.
+    ("KC-12345", "12345"),
+    ("KC_12345", "12345"),
+    ("KC12345", "12345"),
+    ("ＫＣ 12345", "12345"),
+    ("인증번호:12345", "12345"),
+    ("인증번호:KC12345", "12345"),          # 구분자를 KC 보다 먼저 지워야 산다
+    ("KC인증 CB061R2170-3018", "CB061R2170-3018"),
+    # 지우면 안 되는 것 - KCC 는 전파 접두사다
+    ("KCC-CRM-EFM-IPTIMEEX300", "KCC-CRM-EFM-IPTIMEEX300"),
+    ("MSIP-KCC-1234", "MSIP-KCC-1234"),
+    ("KCC", "KCC"),
+    # 중간·끝의 KC 는 모델명의 일부다
+    ("MSIP-REI-CVP-ML-0307-KC", "MSIP-REI-CVP-ML-0307-KC"),
+    ("MSIP-CRM-Wkc-iclearDSP", "MSIP-CRM-WKC-ICLEARDSP"),
+    # 원래 건드리면 안 되는 것
+    ("XU-12345-6789", "XU-12345-6789"),
+    ("CB063R2170-3018", "CB063R2170-3018"),
+])
+def test_kc_marker_is_stripped_only_when_it_is_a_marker(raw, want):
+    """'KC' 는 **맨 앞에서 숫자를 이끌 때만** 표지다.
+
+    주의(가장 중요): 지우는 쪽과 지키는 쪽을 **같은 표에서** 잰다. 한쪽만 재면
+      반대로 틀린다 - 처음에 코퍼스(정부 DB)만 보고 "지켜 주는 것 0건" 을 얻었는데,
+      그 코퍼스에 'KC-12345' 가 없는 것은 그게 **셀러 표기**이기 때문이었다.
+
+    주의(중요): 망가진 번호는 근거 URL 도 망가뜨린다 - `cert_evidence_url` 이
+      이 함수를 쓴다. 근거가 딴 것을 가리키는 것이 R2 가 막는 자리다.
+    """
+    assert normalize_kc(raw) == want
+
+
+def test_the_kc_marker_rule_does_not_eat_kcc_anywhere_in_the_corpus():
+    """코퍼스 모양의 입력에서 KCC 가 한 글자도 안 깎이는지.
+
+    위 표는 손으로 고른 열넷이다. 이 검사는 **접두·중간·끝** 세 자리를 모두
+    훑어 규칙이 자리에 무관한지 본다 - 표만 두면 표에 없는 자리가 뚫린다.
+    """
+    seeds = ["KCC-CMM-LZE-DS100", "KCC-CRI-BMC-BMC-BMC550", "R-C-C3W-KC2020001",
+             "MSIP-REI-CVP-ML-0812-KC", "MSIP-CRM-Wkc-iclearPro", "R-C-12r-KC606"]
+    for raw in seeds:
+        got = normalize_kc(raw)
+        assert "KC" in got.upper(), f"{raw!r} 에서 KC 가 사라졌다 → {got!r}"
+        assert got == raw.upper().replace(" ", ""), f"{raw!r} → {got!r}"
+    assert len(seeds) == 6

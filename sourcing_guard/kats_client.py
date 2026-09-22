@@ -514,15 +514,44 @@ class RecallRecord:
     uid: str | None = None
 
 
+#: 맨 앞에 붙은 "KC" 표지. **뒤에 숫자가 와야** 먹는다.
+#
+# ⚠⚠ 경계가 없으면 정당한 번호를 망가뜨린다. 코퍼스 5,289건(전파 부적합 +
+#   리콜 인증번호)에 대고 "KC" 를 그냥 지운 것과 대조한 실측 (2026-09-22):
+#
+#       'KC' 를 지우면 결과가 달라지는 건수      76건 (1.44%)
+#         ① 맨 앞의 KC (토큰이 **필요한** 자리)     0건
+#         ② KCC 포함 (토큰이 **망가뜨리는** 자리)  56건
+#             'KCC-CMM-LZE-DS100'  → 'C-CMM-LZE-DS100'
+#         ③ 중간·끝의 KC (역시 망가뜨림)          20건
+#             'MSIP-REI-CVP-ML-0307-KC' → 'MSIP-REI-CVP-ML-0307'
+#             'MSIP-CRM-Wkc-iclearDSP'  → 'MSIP-CRM-W-ICLEARDSP'
+#       → 망가뜨리는 것 76건 vs 지켜 주는 것 0건
+#
+#   ⚠ "지켜 주는 것 0건" 을 "토큰이 필요 없다" 로 읽으면 안 된다. 이 코퍼스는
+#     **정부 DB** 이고, 아래 docstring 이 걱정하는 'KC-12345' 는 **셀러 표기**다.
+#     그쪽도 쟀다 - 상세페이지 텍스트 188,076자(표본 5파일)에서 'KC'+숫자 0건,
+#     「홀로 KC」117건은 "KC인증"·"KC마크" 같은 말이라 CERT_NUMBER_RE 가 안 뽑는다.
+#     표본에 없다고 안 올 것은 아니므로 **경계를 붙여 둘 다 살린다.**
+#
+#   ⚠ KCC 는 전파 접두사다. 우리가 대조하는 부적합 방송통신기자재 2,753건이
+#     그 영역이고, 망가진 번호로 만든 근거 URL 은 딴 것을 가리킨다 (R2).
+_KC_PREFIX_RE = re.compile(r"^KC[-_]*(?=\d)")
+
+
 def normalize_kc(raw: str) -> str:
     """Normalise a KC number for comparison.
 
     Sellers type these in wildly inconsistent forms across KR/CN pages:
     'KC-12345', 'ＫＣ 12345', 'XU-12345-6789', '인증번호:12345'.
+
+    ⚠ 구분자(`:`·공백)를 **KC 표지보다 먼저** 지운다. 순서를 바꾸면
+      '인증번호:KC12345' 에서 KC 가 맨 앞이 아니게 되어 안 먹는다.
     """
     s = unicodedata.normalize("NFKC", raw).upper()
-    for token in ("인증번호", "认证号", "KC인증", "KC", ":", "：", " ", "\u200b"):
+    for token in ("인증번호", "认证号", "KC인증", ":", "：", " ", "\u200b"):
         s = s.replace(token, "")
+    s = _KC_PREFIX_RE.sub("", s, count=1)
     return s.strip("-_/")
 
 
