@@ -38,6 +38,7 @@ import logging
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
+from urllib.parse import parse_qs, urlsplit
 
 _log = logging.getLogger(__name__)
 
@@ -95,6 +96,31 @@ def _card(item: dict[str, Any]) -> dict[str, Any] | None:
 _CERT_HEAD = 6
 
 
+def _looked_up(result: dict[str, Any]) -> str:
+    """근거 URL 에 **실제로 들어간** 인증번호. 없으면 빈 문자열.
+
+    카드 줄은 「우리가 한 행위」다. 그런데 공급사가 적은 원문을 그대로 쓰면
+    우리가 부르지 않은 문자열을 보여주게 된다 - 실측으로 갈리는 자리가 둘이다:
+
+        b362r241-8002a   → 조회·근거 URL 은 B362R241-8002A   (대소문자 · 9/29)
+        CB063R4501-0001  → 조회·근거 URL 은 CB063R4501-0001A (끝 A · 7/29 중 일부)
+
+    ⚠ `normalize_kc` 를 여기서 다시 부르지 않는다. 그러면 규칙이 두 벌이 되고,
+      그 함수가 `KCC-…` 의 `KC` 를 먹는 결함(코퍼스 5,289건 중 76건)을 카드가
+      같이 뒤집어쓴다. 조회가 이미 쓴 값을 **읽기만** 한다 (§6).
+
+    ⚠ 번호가 둘이면 첫 근거를 쓴다. 카드 줄이 하나라 하나만 고른다.
+    """
+    for f in result.get("findings") or []:
+        url = str(f.get("source_url") or "")
+        if "certNum=" not in url:
+            continue
+        got = parse_qs(urlsplit(url).query).get("certNum") or []
+        if got and got[0].strip():
+            return got[0].strip()
+    return ""
+
+
 def _did(item: dict[str, Any]) -> dict[str, Any]:
     """「인증 조회함 · CB061R…」. 축이 **실제로 수행됐을 때만** 만든다.
 
@@ -106,8 +132,7 @@ def _did(item: dict[str, Any]) -> dict[str, Any]:
     cert = axes.get("cert") or {}
     if not cert.get("done"):
         return {}
-    nums = ((result.get("facts") or {}).get("kc_numbers")) or item.get("cert_numbers") or []
-    num = str(nums[0]).strip() if nums else ""
+    num = _looked_up(result)
     short = (num[:_CERT_HEAD] + "…") if len(num) > _CERT_HEAD else num
     return {"did": "인증 조회함", "cert_head": short or None}
 

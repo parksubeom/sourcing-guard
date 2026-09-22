@@ -28,7 +28,7 @@ from pathlib import Path
 
 import pytest
 
-from tests.srccheck import emoji_chars, markup_only
+from tests.srccheck import code_only, emoji_chars, markup_only
 
 _ROOT = Path(__file__).resolve().parents[1]
 _DATA = _ROOT / "sourcing_guard" / "data" / "showcase.json"
@@ -424,3 +424,52 @@ def test_the_card_line_does_not_end_on_a_separator():
     box = re.search(r"\.dg-did\s*\{([^}]*)\}", css)
     assert box and re.search(r"flex-wrap\s*:\s*wrap", box.group(1)), (
         "조각이 두 줄로 못 내려간다 - 좁으면 넘치거나 찌그러진다")
+
+
+def test_the_card_shows_the_number_we_actually_looked_up():
+    """카드 줄은 「우리가 한 행위」다. 그러면 **우리가 부른 문자열**이어야 한다.
+
+    공급사가 적은 원문을 그대로 쓰면 우리가 부르지 않은 값을 보여준다. 실측으로
+    갈리는 자리가 둘이었다 (사본 29장 기준):
+
+        대소문자   b362r241-8002a  → 조회·근거 URL 은 B362R241-8002A   (9/29)
+        끝자리     CB063R4501-0001 → 조회·근거 URL 은 CB063R4501-0001A
+
+    고친 방법: 카드가 **근거 URL 의 certNum** 에서 자른다. 화면 글자가 바뀐
+    카드는 6/29 이고, 소문자가 남은 카드는 0 이 됐다.
+
+    주의(가장 중요): **`normalize_kc` 를 카드에서 다시 부르지 않는다.** 그러면
+      규칙이 두 벌이 되고, 그 함수가 `KCC-…` 의 `KC` 를 먹는 결함(코퍼스
+      5,289건 중 76건)을 카드가 같이 뒤집어쓴다. 조회가 이미 쓴 값을 읽기만 한다.
+
+    주의(중요): 기대값을 현재 출력에서 베끼지 않는다 - **근거 URL 에서** 끌어와
+      대조한다. 출력을 붙여넣으면 그 검사는 버그를 지킨다 (§6).
+    """
+    from urllib.parse import parse_qs, urlsplit
+
+    import sourcing_guard.showcase as sc
+
+    src = (_ROOT / "sourcing_guard" / "showcase.py").read_text(encoding="utf-8")
+    assert "normalize_kc" not in code_only(src), (
+        "카드가 정규화를 다시 한다 - 규칙이 두 벌이 된다")
+
+    raw = json.loads((_ROOT / "sourcing_guard" / "data" / "showcase.json")
+                     .read_text(encoding="utf-8"))
+    rows = raw["items"] if isinstance(raw, dict) else raw
+    by_no = {str(r["no"]): r for r in rows}
+
+    cards = sc.payload()["items"]
+    checked = 0
+    for card in cards:
+        head = card.get("cert_head")
+        if not head:
+            continue
+        urls = [f.get("source_url") or "" for f in by_no[str(card["no"])]["result"]["findings"]]
+        want = next((parse_qs(urlsplit(u).query)["certNum"][0]
+                     for u in urls if "certNum=" in u), None)
+        assert want, f"{card['no']}: 근거 URL 에 certNum 이 없는데 카드가 번호를 보인다"
+        assert head.rstrip("…") == want[:len(head.rstrip("…"))], (
+            f"{card['no']}: 카드 {head!r} 가 조회한 번호 {want!r} 에서 온 것이 아니다")
+        checked += 1
+    # 0개를 보고 통과하면 그건 검사가 아니다 (§6)
+    assert checked == len(cards) == 29, f"29장을 다 못 봤다 - {checked}장만 봤다"
