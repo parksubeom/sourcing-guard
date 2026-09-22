@@ -105,9 +105,22 @@ def test_every_thumbnail_exists_and_is_small(raw):
     # ⚠ **반대 방향.** "쓰는 파일이 있다" 만 재면 주인 없는 파일이 리포에
     #   남는다 - 실측에서 두 장이 남았다 (collect 를 다시 돌리면 고른 상품이
     #   달라지고, scan 이 RED 를 빼면 그 상품 썸네일도 주인을 잃는다).
+    #
+    # ⚠⚠ 다만 **잠시 자리를 비운 것**은 주인 없는 것이 아니다 (2026-09-22).
+    #   조회가 실패해 목록에서 뺀 카드는 서버가 살아나면 다시 들어온다. 그때
+    #   썸네일을 다시 받으려면 도매꾹을 또 불러야 하므로 파일은 남긴다 -
+    #   사본이 `rescanned.dropped_lookup` 에 **누구를 왜 뺐는지 적고 있다.**
+    #   그 목록에 없는 파일만 주인이 없는 것이다.
+    #   ⚠ 이 예외는 사본이 스스로 밝힌 것에만 열린다. 목록을 안 적고 빼면
+    #     그 파일은 여기서 걸린다.
     on_disk = {f.name for f in _THUMBS.glob("*.webp")}
     used = {i["thumb_file"] for i in raw["items"]}
-    assert on_disk == used, f"주인 없는 썸네일: {sorted(on_disk - used)}"
+    parked = {f"{no}.webp"
+              for no, _ in ((raw.get("rescanned") or {}).get("dropped_lookup") or [])}
+    orphan = on_disk - used - parked
+    assert not orphan, f"주인 없는 썸네일: {sorted(orphan)}"
+    assert parked <= on_disk, (
+        f"자리를 비웠다고 적힌 카드의 썸네일이 없다: {sorted(parked - on_disk)}")
 
 
 def test_no_seller_identity_survives(raw):
@@ -472,4 +485,9 @@ def test_the_card_shows_the_number_we_actually_looked_up():
             f"{card['no']}: 카드 {head!r} 가 조회한 번호 {want!r} 에서 온 것이 아니다")
         checked += 1
     # 0개를 보고 통과하면 그건 검사가 아니다 (§6)
-    assert checked == len(cards) == 29, f"29장을 다 못 봤다 - {checked}장만 봤다"
+    # ⚠ 절대 수를 박지 않는다. 사본은 조회 실패로 카드가 빠지면 줄어든다
+    #   (2026-09-22: 29 → 25). 박아 두면 사본이 바뀔 때마다 이 검사가
+    #   **결함이 아닌 이유로** 깨지고, 그러면 수를 고치는 습관이 든다.
+    #   재는 것은 "카드가 있고, 그 전부를 봤는가" 다.
+    assert cards, "사본이 비었다 - 볼 카드가 없으면 이 검사는 침묵이다"
+    assert checked == len(cards), f"{len(cards)}장 중 {checked}장만 봤다"
