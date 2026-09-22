@@ -145,6 +145,31 @@ def load_entries(path: Path | None = None, *, now: datetime | None = None
         if not ok:
             reasons.append(f"레코드를 해석하지 못했다: {key}")
             continue
+        # ⚠⚠ **키와 담긴 번호가 다르면 싣지 않는다** (2026-09-22).
+        #
+        #   국표원 조회는 접두 **부분일치**로 답한다. 2026-09-22 이전 코드가
+        #   `rows[0]` 을 썼기 때문에, 그 전에 만든 시드에는 셀러가 적은 번호를
+        #   키로 하고 **다른 인증의 레코드**를 담은 줄이 섞여 있다.
+        #
+        #   실측 (2026-09-19 시드 29건 중 **5건**):
+        #       키 HU073506-24001 → 담긴 것 HU073506-24001A · 적합
+        #       키 SU071354-12001 → 담긴 것 SU071354-12001ZZC · 반납
+        #
+        #   그런 줄을 캐시에 얹으면 조회가 캐시에서 끝나 `_pick_exact` 가
+        #   **불리지 않는다.** 셀러가 적은 번호로 남의 인증 상태가 나가고,
+        #   그것이 「적합」이면 **거짓 GREEN** 이다. 같은 날 실측으로
+        #   -9001(기간만료) vs -9001r(적합) 이 확인됐다.
+        #
+        #   ⚠ 거르면 그 번호는 캐시 미스가 되어 **실조회**로 간다. 정부 API 가
+        #     죽어 있으면 "조회 실패" 가 되고, 그게 거짓 GREEN 보다 낫다 (R3).
+        #   ⚠ 시드를 다시 만들면(`scripts/build_cert_seed.py`) `_pick_exact` 를
+        #     거치므로 이 줄들이 자연히 사라진다. 이 검사는 **옛 시드가 남아
+        #     있는 동안의 안전망**이고, 다시 만든 뒤에도 지우지 않는다 -
+        #     부분일치는 API 의 성질이지 우리 버그가 아니다.
+        got = normalize_kc(str(getattr(record, "cert_number", "") or ""))
+        if got and got != key:
+            reasons.append(f"키와 담긴 번호가 다르다(부분일치 시드): {key} → {got}")
+            continue
         seen.add(key)
         out.append(SeedEntry(cert_number=key, fetched_at=when, record=record))
 

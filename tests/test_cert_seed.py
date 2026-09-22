@@ -34,11 +34,29 @@ from sourcing_guard.kats_client import (
 
 
 # ── 실제로 배포되는 시드 파일 ────────────────────────────────────────
-def test_the_shipped_seed_parses_without_dropping_a_single_row():
-    """걸러진 줄이 있으면 그 번호는 시드가 없는 것과 같다. 조용히 줄면 안 된다."""
+_KNOWN_SKIP = "키와 담긴 번호가 다르다"
+
+
+def test_the_shipped_seed_is_only_dropped_for_a_reason_we_know():
+    """걸러진 줄이 있으면 그 번호는 시드가 없는 것과 같다. 조용히 줄면 안 된다.
+
+    ⚠⚠ 전에는 `skipped == 0` 이었다. 2026-09-22 에 **실제로 0 이 아니게 됐고,
+      그때 이 검사가 옳았다** - 시드가 깨끗하지 않았다. 9/19 에 옛 코드
+      (`rows[0]`)로 만들어 **셀러가 적은 번호를 키로 하고 다른 인증의 레코드를
+      담은 줄**이 5건 섞여 있었다.
+
+      그런 줄은 캐시에서 조회가 끝나게 만들어 `_pick_exact` 를 건너뛰고,
+      「적합」이면 **거짓 GREEN** 이 된다. 적재에서 거르는 것이 안전망이다.
+
+    ⚠ 그래서 조건을 `== 0` 에서 **「모르는 이유로는 안 걸러진다」**로 옮겼다.
+      수를 박지 않는다 - 시드를 다시 만들면(`scripts/build_cert_seed.py`,
+      `_pick_exact` 를 거친다) 0 이 되고, 그때도 이 검사는 그대로 통과한다.
+      새로운 **종류**의 오염이 생기면 걸린다.
+    """
     entries, stats = load_entries()
     assert entries, "시드 파일이 비어 있다 - 재배포하면 데모의 인증 축이 죽는다"
-    assert stats.skipped == 0, f"걸러진 줄이 있다: {stats.reasons}"
+    unknown = [r for r in stats.reasons if _KNOWN_SKIP not in r]
+    assert not unknown, f"모르는 이유로 걸러진 줄: {unknown}"
 
 
 def test_every_seeded_number_looks_like_a_cert_number():
@@ -238,7 +256,11 @@ def test_the_app_seeds_the_cache_on_startup():
 
     assert "cert_seed" in body, "/healthz 가 시드 상태를 말하지 않는다"
     assert body["cert_seed"]["loaded"] > 0, "시작 시 시드를 얹지 않았다"
-    assert body["cert_seed"]["skipped"] == 0, body["cert_seed"]["reasons"]
+    # ⚠ `skipped == 0` 이 아니다. 부분일치 시드(2026-09-22 · 5건)는 **걸러지는
+    #   것이 맞다** - 자세한 이유는 `test_the_shipped_seed_is_only_dropped_…`.
+    #   여기서는 **모르는 이유로 걸러지지 않는가**만 본다.
+    unknown = [r for r in body["cert_seed"]["reasons"] if "키와 담긴 번호가 다르다" not in r]
+    assert not unknown, unknown
 
 
 def test_seeding_twice_in_one_process_reports_it_as_already_loaded():
@@ -256,3 +278,72 @@ def test_seeding_twice_in_one_process_reports_it_as_already_loaded():
 
     assert first.applied > 0 and second.applied == 0
     assert second.loaded == first.loaded, "파일에서 읽은 수는 같아야 한다"
+
+
+def test_a_seed_row_whose_record_is_a_different_number_is_rejected(tmp_path):
+    """**키와 담긴 번호가 다르면 싣지 않는다.**
+
+    국표원 조회는 접두 부분일치로 답한다. 2026-09-22 이전 코드가 `rows[0]` 을
+    썼기 때문에 그 전에 만든 시드에는 셀러가 적은 번호를 키로 하고 **다른
+    인증의 레코드**를 담은 줄이 섞여 있다 - 실측으로 29건 중 5건이었다.
+
+    그런 줄을 캐시에 얹으면 조회가 캐시에서 끝나 `_pick_exact` 가 **불리지
+    않는다.** 셀러가 적은 번호로 남의 인증 상태가 나가고, 그것이 「적합」이면
+    거짓 GREEN 이다. 같은 날 실측으로 -9001(기간만료) vs -9001r(적합) 이 확인됐다.
+
+    주의(중요): 거른 줄은 캐시 미스가 되어 **실조회**로 간다. 정부 API 가
+      죽어 있으면 "조회 실패" 가 되고, 그게 거짓 GREEN 보다 낫다 (R3).
+    """
+    import json
+    from pathlib import Path
+
+    from sourcing_guard.cert_seed import load_entries
+
+    def row(key: str, got: str, status: str = "적합") -> dict:
+        return {
+            "cert_number": key,
+            "fetched_at": "2026-09-19T14:02:56+00:00",
+            "record": {"cert_number": got, "product_name": "완구",
+                       "model_name": "M", "maker": "-", "status": status,
+                       "state": "ok",
+                       "detail_url": f"http://www.safetykorea.kr/search/searchPop?certNum={got}"},
+        }
+
+    p = Path(tmp_path) / "seed.json"
+    p.write_text(json.dumps({"entries": [
+        row("CB061R2170-3018", "CB061R2170-3018"),          # 같다 - 실린다
+        row("CB064R2424-9001", "CB064R2424-9001R"),         # 접미 - 걸러진다
+        row("HU073506-24001", "HU073506-24001A"),           # 접미 - 걸러진다
+        row("CB113H018-2012", "cb113h018-2012"),            # 대소문자만 - 실린다
+    ]}, ensure_ascii=False), encoding="utf-8")
+
+    entries, stats = load_entries(p)
+    kept = {e.cert_number for e in entries}
+    assert kept == {"CB061R2170-3018", "CB113H018-2012"}, kept
+    assert stats.loaded == 2 and stats.skipped == 2, (stats.loaded, stats.skipped)
+    assert all("키와 담긴 번호가 다르다" in r for r in stats.reasons), stats.reasons
+
+
+def test_the_shipped_seed_has_no_partial_match_rows_left_after_filtering():
+    """리포에 든 시드에 그 줄이 몇 개인지 **세서** 적는다.
+
+    2026-09-22 기준 29건 중 5건이 걸러진다(9/19 에 옛 코드로 만든 것). 시드를
+    다시 만들면 `_pick_exact` 를 거치므로 0 이 된다 - 그때 이 검사는 여전히
+    통과한다(거를 것이 없을 뿐). 0 을 보고 통과하는 것이 아니라 **걸러진 뒤
+    남은 것에 어긋난 줄이 없다**를 잠근다.
+    """
+    from pathlib import Path
+
+    from sourcing_guard.cert_seed import load_entries
+    from sourcing_guard.kats_client import normalize_kc
+
+    entries, stats = load_entries(Path("sourcing_guard/data/cert_seed.json"))
+    assert entries, "시드가 통째로 비었다 - 그러면 이 검사는 침묵이다"
+    for e in entries:
+        got = normalize_kc(str(e.record.cert_number or ""))
+        assert got == e.cert_number, f"{e.cert_number} 에 {got} 가 실렸다"
+    # ⚠ 수를 박지 않는다. 파일에 든 줄 수에서 끌어온다 - 시드를 다시 만들면
+    #   건수가 달라지고, 박아 두면 결함이 아닌 이유로 깨진다.
+    raw = json.loads(Path("sourcing_guard/data/cert_seed.json").read_text(encoding="utf-8"))
+    assert stats.loaded + stats.skipped == len(raw["entries"]), (
+        stats.loaded, stats.skipped, len(raw["entries"]))

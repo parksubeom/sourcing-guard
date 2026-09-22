@@ -81,14 +81,43 @@ def test_at_least_one_card_is_green():
     assert "GREEN" in signals, f"초록불이 하나도 없다: {signals}"
 
 
+#: 시드에 **일부러 없는** 번호와 그 이유. 2026-09-22 에 둘이 생겼다.
+#
+# 9/19 시드가 옛 코드(`rows[0]`)로 만들어져 **셀러가 적은 번호를 키로 하고
+# 다른 인증의 레코드**를 담고 있었다. 그 줄을 캐시에 얹으면 조회가 캐시에서
+# 끝나 `_pick_exact` 를 건너뛰고, 「적합」이면 거짓 GREEN 이 된다. 그래서
+# `cert_seed.load_entries` 가 거른다.
+#
+# ⚠⚠ **표본 카드 자체도 같은 병이다.** 화면이 셀러가 적지 않은 번호를 말한다:
+#       HU101339-24004  → 화면은 'HU101339-24004B 조회됨(적합)'  ← 인증 축 거짓 초록
+#       SU071354-12001  → 화면은 'SU071354-12001ZZC … 반납'
+#   시드만 고치면 표본은 그대로다. **표본을 다시 기록해야 낫는다**(실호출 2회).
+#   그때 이 목록을 비운다 - 미완 §1-ac.
+_SEED_GAP_ON_PURPOSE = {
+    "HU101339-24004": "9/19 시드가 HU101339-24004B 를 담고 있어 걸러졌다 (미완 §1-ac)",
+    "SU071354-12001": "9/19 시드가 SU071354-12001ZZC 를 담고 있어 걸러졌다 (미완 §1-ac)",
+}
+
+
 def test_every_sample_number_is_in_the_cert_seed():
     """⚠ 시드에 없는 번호를 표본에 넣으면, 재배포 뒤 국표원이 죽어 있을 때
     그 카드만 "조회 실패" 가 된다. 표본은 그럴 때도 살아 있어야 한다.
+
+    ⚠⚠ 빠져도 되는 것은 **이유가 적힌 것뿐**이다. 목록에 없는 번호가 빠지면
+      여기서 걸린다. 그리고 반대쪽도 잠근다 - 목록에 적어 놓고 **실제로는
+      시드에 있는** 번호가 있으면 그것도 실패다. 그래야 다 나은 뒤에 이
+      목록이 조용히 남아 있지 않는다.
     """
     seeded = {e.cert_number for e in load_entries()[0]}
-    for c in _cards():
-        assert c["id"] in seeded, (
-            f'{c["id"]} 가 시드에 없다 - scripts/build_cert_seed.py 를 다시 돌릴 것')
+    ids = {c["id"] for c in _cards()}
+    missing = {i for i in ids if i not in seeded}
+    assert missing <= set(_SEED_GAP_ON_PURPOSE), (
+        f"{sorted(missing - set(_SEED_GAP_ON_PURPOSE))} 가 시드에 없다 - "
+        "scripts/build_cert_seed.py 를 다시 돌릴 것")
+    stale = {i for i in _SEED_GAP_ON_PURPOSE if i in ids and i in seeded}
+    assert not stale, (
+        f"{sorted(stale)} 는 이제 시드에 있다 - _SEED_GAP_ON_PURPOSE 에서 빼라")
+    assert ids, "표본이 비었다 - 그러면 이 검사는 침묵이다"
 
 
 # ── 개인정보 ─────────────────────────────────────────────────────────
