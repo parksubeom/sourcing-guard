@@ -559,14 +559,50 @@ class KatsClient:
         self._client = httpx.Client(timeout=self._timeout)
 
     # -- public ------------------------------------------------------------
+    def _pick_exact(self, rows: list[dict], key: str) -> dict | None:
+        """보낸 번호와 **정확히 일치하는** 줄. 없으면 None.
+
+        ⚠⚠ 이 API 는 **접두 부분일치**로 답한다. 실측 (2026-09-22 · 실호출 6회):
+
+            보낸 것 CB063R4501-0001  → 2줄 ['CB063R4501-0001A', 'CB063R4501-0001']
+            보낸 것 CB113H018-2012   → 2줄 ['CB113H018-2012r',  'CB113H018-2012']
+            보낸 것 CB064R2424-9001  → 3줄 ['CB064R2424-9001r', 'CB064R2424-9001',
+                                            'CB064R2424-9001A']
+
+          셋 다 **정확 일치가 응답 안에 있는데 첫 줄이 아니었다.** 전에는
+          `rows[0]` 을 썼고, 그래서 셀러가 적지 않은 번호의 인증 상태를
+          「인증 확인됨」으로 내보냈다 - 사본 29장 중 6장(20.7%)이 그 상태였다.
+
+        ⚠ 접미(A·R 등)가 같은 인증의 이력인지 별개 인증인지는 **모른다.**
+          고시를 찾았지만 번호 부여 체계·접미 규정이 없다 (R5-b ② · 실측:
+          시행규칙 두 벌 621,592자에서 '인증번호' 32건이 전부 서식 빈칸).
+          그래서 **모르는 채로도 옳은 선택**을 한다 - 정확 일치를 고르는 것은
+          이력이든 별개든 양쪽에서 맞다.
+
+        ⚠ 대소문자를 무시한다. 정부 정본 표기가 소문자일 수 있다 - `…-2012R` 로
+          보내도 `…-2012r` 로 온다(실측). 양쪽 다 `normalize_kc` 를 통과시켜
+          비교하므로 규칙이 한 벌이다 (§6).
+
+        ⚠ `rows[0]` 은 어디에도 남기지 않는다. 순서 보장을 우리가 아는 바 없고,
+          여러 줄이 올 때 어느 인증이 뽑힐지가 호출마다 달라질 수 있다.
+        """
+        field = self._op("certification")["fields"]["cert_number"]
+        for row in rows:
+            if normalize_kc(str(row.get(field, ""))) == key:
+                return row
+        return None
+
     def lookup_certification(self, kc_number: str) -> CertRecord | None:
         key = normalize_kc(kc_number)
         if self._mock:
             return _mock_cert(key)
         rows = self._call("certification", self._query("certification", "cert_number", key))
-        if not rows:
+        row = self._pick_exact(rows, key)
+        if row is None:
+            # 근처 값이 있어도 **없는 것으로 답한다.** 셀러가 적지 않은 번호로
+            # 「확인됨」을 주면 그것이 거짓 GREEN 이다 (R3 · R3-b).
             return None
-        return self._to_cert(rows[0])
+        return self._to_cert(row)
 
     def search_recalls(
         self,

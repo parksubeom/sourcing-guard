@@ -1,0 +1,70 @@
+{
+  "note": "순번 0 ⑴ · 총괄 승인 실호출 6회 · 직결",
+  "when": "2026-09-22",
+  "calls": [
+    {
+      "kind": "셀러 표기",
+      "sent": "CB063R4501-0001",
+      "normalized": "CB063R4501-0001",
+      "rows": 2,
+      "certNums": [
+        "CB063R4501-0001A",
+        "CB063R4501-0001"
+      ],
+      "first": "CB063R4501-0001A"
+    },
+    {
+      "kind": "셀러 표기",
+      "sent": "CB113H018-2012",
+      "normalized": "CB113H018-2012",
+      "rows": 2,
+      "certNums": [
+        "CB113H018-2012r",
+        "CB113H018-2012"
+      ],
+      "first": "CB113H018-2012r"
+    },
+    {
+      "kind": "셀러 표기",
+      "sent": "CB064R2424-9001",
+      "normalized": "CB064R2424-9001",
+      "rows": 3,
+      "certNums": [
+        "CB064R2424-9001r",
+        "CB064R2424-9001",
+        "CB064R2424-9001A"
+      ],
+      "first": "CB064R2424-9001r"
+    },
+    {
+      "kind": "근거 번호",
+      "sent": "CB063R4501-0001A",
+      "normalized": "CB063R4501-0001A",
+      "rows": 1,
+      "certNums": [
+        "CB063R4501-0001A"
+      ],
+      "first": "CB063R4501-0001A"
+    },
+    {
+      "kind": "근거 번호",
+      "sent": "CB113H018-2012R",
+      "normalized": "CB113H018-2012R",
+      "rows": 1,
+      "certNums": [
+        "CB113H018-2012r"
+      ],
+      "first": "CB113H018-2012r"
+    },
+    {
+      "kind": "근거 번호",
+      "sent": "CB064R2424-9001R",
+      "normalized": "CB064R2424-9001R",
+      "rows": 1,
+      "certNums": [
+        "CB064R2424-9001r"
+      ],
+      "first": "CB064R2424-9001r"
+    }
+  ]
+}

@@ -243,18 +243,47 @@ def run_sync(
     #   그대로이므로 new=0 이고, 정정된 내용이 재시작 전까지 반영되지 않는다.
     wrote_something = bool(report.fetched) and any(report.fetched.values())
 
-    # ⚠⚠ **받아 온 때만** 쓰는 시각. `last_sync_at`(시도 시각)과 다르다.
+    # ⚠⚠ **전부 받아 온 때만** 쓰는 시각. `last_sync_at`(시도 시각)과 다르다.
     #
     #   2026-09-15~18 에 safetykorea.kr 호출이 사흘 실패하는 동안 화면이
     #   "2026-09-17 14:21 갱신" 이라고 말했다 - **아무것도 못 받아 온 시도의
     #   시각**이다. 셀러를 안심시키려고 넣은 문장이 정반대로 작동했다.
     #
-    #   ⚠ 조건을 새로 쓰지 않는다. `on_updated` 를 부르는 **그 조건**을 그대로
-    #     쓴다 - 두 곳에 적으면 갈린다 (§6 "같은 판단을 두 곳에 적지 마라").
+    # ⚠⚠ **조건이 `wrote_something` 이 아니라 `report.ok` 다** (2026-09-22).
+    #
+    #   전에는 `on_updated` 와 같은 조건을 썼고, 주석이 그 이유로 §6 "같은 판단을
+    #   두 곳에 적지 마라" 를 들었다. **거꾸로 당겨 쓴 것이다.** §6 이 금지하는
+    #   것은 같은 판단을 두 곳에 적는 것이지, **다른 두 질문을 한 조건으로
+    #   합치라**가 아니다. 둘은 다른 질문이다:
+    #
+    #       on_updated       메모리 인덱스를 다시 읽어야 하나  = **쓴 게 있나**
+    #       last_sync_ok_at  화면이 최신이라고 말해도 되나      = **전부 성공했나**
+    #
+    #   합쳐 뒀더니 `any()` 가 **양쪽으로** 틀렸다. 실제 `run_sync` 를 돌려 잰
+    #   진리표다 (2026-09-22):
+    #
+    #       A 둘 다 성공·신규 있음  fetched {'domestic':1,'overseas':1}  ok True   찍힘  ✅
+    #       B domestic 만 실패      fetched {'overseas':1}              ok False  찍힘  ❌
+    #       C 둘 다 성공·둘 다 0건  fetched {'domestic':0,'overseas':0} ok True   안찍힘 ❌
+    #       D 둘 다 실패            fetched {}                          ok False  안찍힘 ✅
+    #
+    #   B 가 2026-09-21·22 에 실제로 났다 - domestic 이 502 인데 화면은 "갱신됨"
+    #   이라고 말했다. 셀러 상품은 **국내** 리콜에 걸리므로 틀리는 방향이 나쁜
+    #   쪽이다 (R6). 2026-09-15~18 버그와 같은 병이고, 그때 막은 것은 "전부
+    #   실패" 뿐이라 "일부 실패" 가 남아 있었다.
+    #
+    #   ⚠ C 는 지금 0줄이다. 증분이 `month_windows` 로 **당월+전월 두 달치를
+    #     전부** 받으므로(신규만이 아니다) 스코프 합계가 0 이 되려면 두 달 내내
+    #     공표가 0 이어야 한다. 국내 4,249건·해외 33,181건 규모에서는 안 난다.
+    #     "확률이 낮다" 가 아니라 **왜 안 나는지**가 근거다 - 윈도 수가 줄거나
+    #     신규만 받는 방식으로 바뀌면 그때 C 가 살아난다.
+    #
+    #   ⚠ `on_updated` 는 `wrote_something` 그대로다. B 에서 overseas 를 실제로
+    #     썼으므로 인덱스는 다시 읽어야 **맞다.**
     #
     #   ⚠ `last_sync_at` 은 **그대로 둔다.** `/healthz` 가 "언제 시도했고 무엇이
     #     틀렸나" 를 말하는 값이라 없애면 관측이 약해진다.
-    if wrote_something:
+    if report.ok:
         store.set_sync_state("last_sync_ok_at", report.finished_at)
 
     if on_updated is not None and wrote_something:

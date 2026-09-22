@@ -551,7 +551,14 @@ def test_a_failed_sync_does_not_write_the_success_time(tmp_path):
 
 
 def test_a_successful_sync_writes_both_times(tmp_path):
-    """반대 방향 - 받아 왔으면 **둘 다** 써지고 스윕이 돈다."""
+    """반대 방향 - **전부** 받아 왔으면 둘 다 써지고 스윕이 돈다.
+
+    ⚠ 전에는 overseas 가 빈 목록인 스텁이었다. 그러면 전량 적재가 완료로
+      기록되지 않아 `report.errors` 가 남는다 - 이름은 successful 인데 실제로는
+      **성공이 아니었다.** `any(report.fetched.values())` 기준으로는 참이라
+      검사가 통과했고, 그 통과가 결함을 굳히고 있었다 (§6 "검사가 기대값을
+      현재 출력에 맞춰 쓰면 버그를 고정한다"). 양쪽 다 주도록 고쳤다.
+    """
     from sourcing_guard.storage import SqliteWatchStore
     from sourcing_guard.sync import run_sync
 
@@ -559,18 +566,62 @@ def test_a_successful_sync_writes_both_times(tmp_path):
 
     class _Alive:
         def recalls_all(self, *a, overseas=False, **k):
-            return [] if overseas else [_recall(uid="u-ok-1")]
+            return [_recall(uid="u-ok-os" if overseas else "u-ok-1")]
 
         def recalls_published_on(self, *a, **k):
             return []
 
     called: list[str] = []
-    report = run_sync(_Alive(), store, on_updated=lambda: called.append("swept"))
+    # 전량 적재는 `min_plausible` 건 이상이어야 완료로 기록된다. 스텁이 2건이라
+    # 기본값(1000)이면 "성공" 을 흉내 낼 수 없다.
+    report = run_sync(_Alive(), store, min_plausible=0,
+                      on_updated=lambda: called.append("swept"))
 
+    assert report.ok, report.errors
     assert any(report.fetched.values()), report.fetched
     assert store.get_sync_state("last_sync_ok_at"), "받아 왔는데 성공 시각이 없다"
     assert store.get_sync_state("last_sync_at")
     assert called == ["swept"]
+
+
+def test_a_half_failed_sync_does_not_claim_the_screen_is_up_to_date(tmp_path):
+    """**한 스코프만 실패해도 「갱신됨」이라고 말하지 않는다.**
+
+    2026-09-21·22 에 실제로 났다 - domestic 이 502 인데 overseas 는 성공해서
+    `any(report.fetched.values())` 가 참이 됐고, 화면이 4시간 넘게 "갱신됨" 을
+    말했다. 셀러 상품은 **국내** 리콜에 걸리므로 틀리는 방향이 나쁜 쪽이다 (R6).
+
+    ⚠ `on_updated` 는 **불려야 맞다.** overseas 를 실제로 썼으므로 인덱스는 다시
+      읽어야 한다. 두 질문이 다르다는 것이 이 검사의 요지다.
+    """
+    from sourcing_guard.kats_client import KatsApiError
+    from sourcing_guard.storage import SqliteWatchStore
+    from sourcing_guard.sync import run_sync
+
+    store = SqliteWatchStore(str(tmp_path / "w.db"))
+    store.set_sync_state("initial_load_at", "2026-09-01T00:00:00+00:00")
+
+    class _HalfDead:
+        def recalls_all(self, *a, overseas=False, **k):
+            raise AssertionError("증분이어야 한다")
+
+        def recalls_published_on(self, window, *, overseas=False):
+            if not overseas:
+                raise KatsApiError("http", "HTTP 502")
+            return [_recall(uid=f"u-os-{window}")]
+
+    called: list[str] = []
+    report = run_sync(_HalfDead(), store, min_plausible=0,
+                      on_updated=lambda: called.append("swept"))
+
+    assert not report.ok and report.errors, "국내가 죽었는데 오류가 안 남았다"
+    assert report.fetched.get("domestic") is None, (
+        "실패한 스코프는 키가 아예 없어야 한다 - 0 이면 any() 해석이 달라진다")
+    assert not store.get_sync_state("last_sync_ok_at"), (
+        "반쪽 성공인데 「갱신됨」 시각을 썼다 - 화면이 최신이라고 거짓말한다")
+    assert store.get_sync_state("last_sync_at"), "시도 시각은 남아야 한다"
+    assert called == ["swept"], (
+        "overseas 를 실제로 썼으므로 인덱스는 다시 읽어야 한다 - 두 질문은 다르다")
 
 
 def test_the_screen_is_handed_the_success_time_not_the_attempt_time():

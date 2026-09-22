@@ -715,3 +715,69 @@ def test_expired_cache_is_refetched_when_the_api_is_healthy():
 
     assert client.calls == 2
     assert result.stale is False
+
+
+# --- 접두 부분일치: 정확 일치가 첫 줄이 아니다 -------------------------------
+#
+# 실호출 6회로 확정한 동작이다 (2026-09-22 · 총괄 승인 · Claude outputs 에 기록):
+#
+#     보낸 것 CB063R4501-0001  → 2줄 ['CB063R4501-0001A', 'CB063R4501-0001']
+#     보낸 것 CB113H018-2012   → 2줄 ['CB113H018-2012r',  'CB113H018-2012']
+#     보낸 것 CB064R2424-9001  → 3줄 ['CB064R2424-9001r', 'CB064R2424-9001',
+#                                     'CB064R2424-9001A']
+#
+# 셋 다 정확 일치가 **응답 안에 있는데 첫 줄이 아니었다.**
+
+def _rows_like_live(sent: str) -> list[dict]:
+    """실호출이 준 모양 - 근처 값이 먼저 오고 정확 일치가 뒤에 온다."""
+    return [
+        {**CERT_ROW, "certNum": sent + "r", "certState": "적합",
+         "productName": "완구", "modelName": "다른모델"},
+        {**CERT_ROW, "certNum": sent, "certState": "기간만료",
+         "productName": "유아용섬유제품", "modelName": "내모델"},
+        {**CERT_ROW, "certNum": sent + "A", "certState": "적합",
+         "productName": "완구", "modelName": "또다른모델"},
+    ]
+
+
+def test_exact_match_wins_even_when_it_is_not_the_first_row():
+    """정부 API 는 접두 부분일치로 답한다. **첫 줄을 쓰면 남의 인증을 보여준다.**
+
+    전에는 `rows[0]` 이었고, 사본 29장 중 6장(20.7%)이 셀러가 적지 않은 번호의
+    인증 상태를 「인증 확인됨」으로 내보내고 있었다.
+
+    주의(가장 중요): 이 검사는 **순서에 기대지 않는다.** 정확 일치를 두 번째에
+      두고, 첫 줄에는 다른 상태·다른 모델을 둔다. 첫 줄을 고르면 값이 통째로
+      달라지므로 어느 쪽을 골랐는지가 드러난다.
+    """
+    sent = "CB064R2424-9001"
+    rec = client_with(lambda r: ok(_rows_like_live(sent))).lookup_certification(sent)
+    assert rec is not None, "정확 일치가 응답에 있는데 못 찾았다"
+    assert rec.cert_number == sent, (
+        f"정확 일치가 아니라 근처 값을 골랐다: {rec.cert_number!r}")
+    assert rec.status == "기간만료", "고른 줄의 다른 필드까지 정확 일치의 것이어야 한다"
+    assert rec.model_name == "내모델"
+
+
+def test_no_exact_match_is_not_found_even_when_neighbours_exist():
+    """근처 값이 있어도 **없는 것으로 답한다.**
+
+    셀러가 적지 않은 번호로 「확인됨」을 주면 그것이 거짓 GREEN 이다 (R3 · R3-b).
+    접미가 같은 인증의 이력인지 별개 인증인지는 **모른다** - 고시에 규정이 없다
+    (R5-b ②). 모르면 GREEN 으로 반올림하지 않는다.
+    """
+    sent = "CB064R2424-9001"
+    rows = [r for r in _rows_like_live(sent) if r["certNum"] != sent]   # 정확 일치를 뺀다
+    assert len(rows) == 2, "가드가 볼 근처 값이 사라졌다"
+    rec = client_with(lambda r: ok(rows)).lookup_certification(sent)
+    assert rec is None, f"근처 값으로 답했다: {rec.cert_number if rec else None!r}"
+
+
+def test_exact_match_ignores_letter_case():
+    """정부 정본 표기가 소문자일 수 있다 - `…-2012R` 로 보내도 `…-2012r` 로 온다(실측).
+
+    양쪽 다 `normalize_kc` 를 통과시켜 비교하므로 규칙이 한 벌이다 (§6).
+    """
+    rows = [{**CERT_ROW, "certNum": "CB113H018-2012r", "certState": "적합"}]
+    rec = client_with(lambda r: ok(rows)).lookup_certification("CB113H018-2012R")
+    assert rec is not None and rec.cert_number == "CB113H018-2012"[:0] + "CB113H018-2012r"
