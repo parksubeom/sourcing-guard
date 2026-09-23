@@ -683,6 +683,21 @@ class SqliteWatchStore:
                 #   답할 수 있다. 화면(바닥글 "…갱신")도 이 값을 쓴다.
                 "last_sync_ok_at": self.get_sync_state("last_sync_ok_at"),
                 "last_sync_error": self.get_sync_state("last_sync_error"),
+                # ⚠⚠ **부팅 동기화와 평시 동기화를 갈라 센다** (2026-09-22).
+                #
+                #   주기가 24시간인데 하루에 여러 번 배포한다. 배포마다 부팅
+                #   동기화 한 번이 돌고 24시간이 오기 전에 또 배포되므로,
+                #   **평시 경로가 한 번도 실행된 적이 없을 수 있다.** 502 관측
+                #   넷이 전부 배포 직후였던 것이 우연이 아니라 구조였다.
+                #
+                #   `periodic` 이 0 이면 우리는 평시 경로를 **본 적이 없는 것**
+                #   이고, 그 상태로 "동기화가 된다" 고 말하면 안 된다.
+                #   프로세스 메모리가 아니라 DB 라 재배포해도 안 지워진다.
+                "syncs": {
+                    "boot": int(self.get_sync_state("sync_count_boot") or 0),
+                    "periodic": int(self.get_sync_state("sync_count_periodic") or 0),
+                    "last_kind": self.get_sync_state("last_sync_kind"),
+                },
                 "recalls": {
                     "domestic": self.recall_count("domestic"),
                     "overseas": self.recall_count("overseas"),

@@ -694,3 +694,58 @@ def test_healthz_shows_when_we_last_succeeded_not_just_when_we_tried():
         "/healthz 가 성공 시각을 안 냅니다 - 시도 시각만 보면 나흘 실패해도 "
         "'어제 갱신' 으로 읽힙니다")
     assert "last_sync_at" in sync, "시도 시각도 남아 있어야 합니다 (둘 다 쓴다)"
+
+
+def test_healthz_tells_whether_the_periodic_path_ever_ran(tmp_path):
+    """**평시 경로가 한 번이라도 돌았나**를 `/healthz` 가 말한다.
+
+    주기가 24시간인데 하루에 여러 번 배포한다. 배포마다 부팅 동기화 한 번이
+    돌고 24시간이 오기 전에 또 배포되므로, **평시 경로가 한 번도 실행된 적이
+    없을 수 있다** - 502 관측 넷이 전부 배포 직후였던 것이 우연이 아니라
+    구조였다 (2026-09-22).
+
+    주기를 줄이면 「리콜은 공표되는 것이지 실시간이 아니다」라는 근거가 깨지고,
+    배포를 멈추면 개발이 멈춘다. 그래서 **동작을 안 바꾸고 관측만** 더했다.
+
+    주의(가장 중요): 이 수는 **DB** 에 쌓는다. 프로세스 메모리면 재배포마다
+      0 이 되어 "평시가 한 번이라도 돌았나" 에 영영 답할 수 없다.
+    """
+    from sourcing_guard.storage import SqliteWatchStore
+
+    store = SqliteWatchStore(str(tmp_path / "w.db"))
+    snap = store.sync_snapshot()
+    assert snap["syncs"] == {"boot": 0, "periodic": 0, "last_kind": None}, snap["syncs"]
+
+    store.set_sync_state("sync_count_boot", "3")
+    store.set_sync_state("sync_count_periodic", "1")
+    store.set_sync_state("last_sync_kind", "periodic")
+    snap = SqliteWatchStore(str(tmp_path / "w.db")).sync_snapshot()
+    assert snap["syncs"] == {"boot": 3, "periodic": 1, "last_kind": "periodic"}, (
+        "재시작 뒤에도 남아야 한다 - DB 값이다")
+
+
+def test_the_loop_counts_boot_and_periodic_apart():
+    """루프가 **첫 회차는 boot, 그 뒤는 periodic** 으로 센다.
+
+    주의(중요): 주석을 걷고 본다 - 이 규칙을 설명한 주석이 검사에 걸린다.
+    """
+    import re
+
+    from tests.srccheck import code_only
+
+    src = code_only((Path(__file__).resolve().parents[1]
+                     / "sourcing_guard" / "sync.py").read_text(encoding="utf-8"))
+    body = src[src.index("async def sync_loop"):]
+    assert re.search(r'kind\s*=\s*"boot"', body), "첫 회차를 boot 로 안 센다"
+    assert re.search(r'kind\s*=\s*"periodic"', body), "그 뒤를 periodic 으로 안 센다"
+    # 주기 대기 **뒤에** periodic 으로 바뀌어야 한다. 앞이면 첫 회차가 평시로 센다.
+    #
+    # ⚠ `code_only` 는 **토큰 사이에 공백을 넣는다**(`asyncio . sleep ( interval )`).
+    #   문자열로 찾으면 못 찾는다 - 걷개의 출력 형태를 모르고 쓰면 검사가
+    #   ValueError 로 죽는다(실패가 아니라 오류라 더 헷갈린다).
+    m_sleep = re.search(r"asyncio\s*\.\s*sleep\s*\(\s*interval\s*\)", body)
+    m_periodic = re.search(r'kind\s*=\s*"periodic"', body)
+    assert m_sleep and m_periodic, "주기 대기나 periodic 표시를 못 찾았다"
+    sleep_at, periodic_at = m_sleep.start(), m_periodic.start()
+    assert periodic_at > sleep_at, (
+        "주기 대기 앞에서 periodic 으로 바꾸면 **부팅 동기화가 평시로 센다**")

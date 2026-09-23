@@ -27,6 +27,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import time
 from dataclasses import asdict, dataclass, field
 from datetime import date, datetime, timezone
 
@@ -42,6 +43,49 @@ SYNC_INTERVAL_SECONDS = 24 * 60 * 60  # 리콜은 공표되는 것이지 실시�
 # 이 아래로 떨어졌는데 적재 완료로 기록돼 있으면 상태가 어긋난 것이다.
 MIN_PLAUSIBLE_RECALLS = 1000
 
+#: 실패한 스코프를 다시 부르는 간격(초)과 횟수. **간격이 넓고 횟수가 적다.**
+#:
+#: ⚠⚠ 이 수는 **장애가 얼마나 오래 가나**에서 왔지 감으로 정한 것이 아니다.
+#:   2026-09-21~22 관측:
+#:
+#:       09-22 00:53  domestic 502 · overseas 성공
+#:       09-22 01:16  둘 다 502
+#:       09-22 07:28  domestic 502 · overseas 성공
+#:       09-22 09:24  **둘 다 성공**        ← 07:28 실패로부터 1시간 56분
+#:
+#:   분 단위 재시도로는 안 잡힌다. 그리고 원인이 **origin 쪽**이라(우리 릴레이가
+#:   아니다 - PC 직결도 같은 시간대에 죽었다) 짧은 간격으로 두들겨도 안 듣는다.
+#:   60분 × 3회면 3시간 창이고, 관측된 1시간 56분을 덮는다.
+#:
+#: ⚠ 잰 범위: 한 번의 「실패→성공」 간격뿐이다(1시간 56분). 표본 하나로 정한
+#:   수이므로, 더 긴 장애를 보면 다시 정한다.
+#:
+#: ⚠ 호출 비용: 실패한 스코프의 윈도 2개 × 최대 3회 = **하루 최대 +6회.**
+#:   평시가 4회이므로 최악 10회다. 국표원 공개 상한을 우리는 모르지만(R5)
+#:   어느 해석으로도 과하지 않다.
+#:
+#: ⚠⚠ **사용자 조회 경로에는 재시도를 넣지 않는다.** 거기서는 빨리 실패해
+#:   UNKNOWN 으로 내려가는 것이 옳고(R3), 기다리는 사람이 있다.
+#:   여기는 배경이라 **기다리는 사람이 없다** - 대가가 완전히 다르다
+#:   (`kats_client.py:150` 의 무재시도 규칙은 그쪽 것이다).
+RETRY_GAP_SECONDS = 60 * 60
+RETRY_MAX = 3
+
+
+def _scope_err(scope: str, msg: str) -> str:
+    """스코프 오류 한 줄. **접두 규칙을 한 곳에 둔다.**
+
+    재시도가 성공하면 그 스코프의 옛 오류를 걷어내야 `report.ok` 가 참이 된다.
+    걷어내는 쪽과 만드는 쪽이 접두를 따로 적으면 갈린다 (§6).
+    """
+    return f"{scope}: {msg}"
+
+
+def _drop_scope_errors(report: "SyncReport", scope: str) -> None:
+    """그 스코프가 **결국 성공했으므로** 앞선 오류를 지운다."""
+    head = f"{scope}:"
+    report.errors = [e for e in report.errors if not e.startswith(head)]
+
 
 @dataclass
 class SyncReport:
@@ -51,6 +95,9 @@ class SyncReport:
     fetched: dict[str, int] = field(default_factory=dict)
     new: dict[str, int] = field(default_factory=dict)
     errors: list[str] = field(default_factory=list)
+    #: 스코프별 재시도 횟수. 0 이면 한 번에 됐다. `/healthz` 가 낸다 -
+    #: 재시도가 **실제로 듣는지**를 이 수로만 알 수 있다.
+    retried: dict[str, int] = field(default_factory=dict)
 
     @property
     def ok(self) -> bool:
@@ -135,6 +182,8 @@ def run_sync(
     today: date | None = None,
     on_updated=None,
     min_plausible: int = MIN_PLAUSIBLE_RECALLS,
+    retry_gap: float = 0.0,
+    retry_max: int = 0,
 ) -> SyncReport:
     """한 번 동기화한다. 예외를 밖으로 던지지 않는다.
 
@@ -168,7 +217,12 @@ def run_sync(
     # 영원히 복구되지 않는다.
     batches: dict[str, list[dict]] = {}
 
-    for scope in SCOPES:
+    def _one_scope(scope: str) -> bool:
+        """한 스코프를 받아 저장한다. 성공하면 True.
+
+        ⚠ 재시도가 **이 함수를 다시 부른다.** 수집 로직을 두 벌로 적으면
+          한쪽만 고쳐져 갈린다 (§6).
+        """
         overseas = scope == "overseas"
         records = []
         try:
@@ -179,23 +233,55 @@ def run_sync(
                     records.extend(kats.recalls_published_on(window, overseas=overseas))
         except KatsApiError as exc:
             # kats_client 가 이미 health 에 기록했다. 여기서는 이 스코프만 건너뛴다.
-            report.errors.append(f"{scope}: {exc}")
+            report.errors.append(_scope_err(scope, str(exc)))
             _log.warning("리콜 동기화 실패 (%s): %s", scope, exc)
-            continue
+            return False
         except Exception as exc:  # noqa: BLE001 — 어떤 예외도 앱을 죽이면 안 된다
-            report.errors.append(f"{scope}: {type(exc).__name__}: {exc}")
+            report.errors.append(_scope_err(scope, f"{type(exc).__name__}: {exc}"))
             _log.exception("리콜 동기화 중 예상치 못한 오류 (%s)", scope)
-            continue
+            return False
 
         report.fetched[scope] = len(records)
         if mode == "initial":
             batches[scope] = _rows(records)
-            continue
+            return True
         try:
             report.new[scope] = _persist(store, records, scope=scope, fetched_at=fetched_at)
         except Exception as exc:  # noqa: BLE001
-            report.errors.append(f"{scope} 저장: {type(exc).__name__}: {exc}")
+            report.errors.append(_scope_err(scope, f"저장: {type(exc).__name__}: {exc}"))
             _log.exception("리콜 저장 실패 (%s)", scope)
+            return False
+        return True
+
+    for scope in SCOPES:
+        _one_scope(scope)
+
+    # ── 실패한 스코프만 다시 부른다 ──────────────────────────────────────
+    #
+    # ⚠⚠ **증분 모드에서만** 한다. 초기 적재는 전량이라 무겁고, "두 스코프가
+    #   모두 성공했을 때만 완료로 기록" 하는 규칙이 있어 반쪽 재시도가 그 규칙을
+    #   흔든다.
+    #
+    # ⚠ 성공하면 그 스코프의 **옛 오류를 걷어낸다.** 안 걷으면 `report.ok` 가
+    #   거짓으로 남아 `last_sync_ok_at` 이 안 찍힌다 - 실제로는 다 받았는데
+    #   화면이 "갱신 안 됨" 이라고 말하게 된다.
+    #
+    # ⚠ 기다리는 사람이 없다. 60분을 자도 아무도 안 막힌다.
+    if mode == "incremental" and retry_max > 0:
+        for attempt in range(1, retry_max + 1):
+            failed = [s for s in SCOPES if s not in report.fetched]
+            if not failed:
+                break
+            _log.warning("리콜 동기화 재시도 %d/%d (%s) - %d초 뒤",
+                         attempt, retry_max, ",".join(failed), retry_gap)
+            if retry_gap > 0:
+                time.sleep(retry_gap)
+            for scope in failed:
+                report.retried[scope] = report.retried.get(scope, 0) + 1
+                if _one_scope(scope):
+                    _drop_scope_errors(report, scope)
+                    _log.info("리콜 동기화 재시도 성공 (%s · %d회째)",
+                              scope, report.retried[scope])
 
     report.finished_at = _now()
 
@@ -316,6 +402,8 @@ async def sync_loop(
     rra=None,
     on_noncompliant_updated=None,
     first_delay: int = FIRST_SYNC_DELAY_SECONDS,
+    retry_gap: float = RETRY_GAP_SECONDS,
+    retry_max: int = RETRY_MAX,
 ) -> None:
     """앱 수명 동안 도는 백그라운드 루프.
 
@@ -346,9 +434,31 @@ async def sync_loop(
         except asyncio.CancelledError:
             raise
 
+    # ⚠⚠ **부팅 동기화와 평시 동기화를 갈라 센다** (2026-09-22).
+    #
+    #   주기가 24시간인데 우리는 하루에 여러 번 배포한다. 배포마다 프로세스가
+    #   새로 떠서 부팅 동기화 한 번을 돌고, 24시간이 오기 전에 또 배포된다.
+    #   그래서 **평시 경로가 한 번도 실행된 적이 없을 수 있고, 우리는 그것을
+    #   알 방법이 없었다** - 502 관측 넷이 전부 배포 직후였던 것이 우연이
+    #   아니라 구조였다.
+    #
+    #   주기를 줄이면 「리콜은 공표되는 것이지 실시간이 아니다」라는 근거가
+    #   깨지고, 배포를 멈추면 개발이 멈춘다. 그래서 **동작을 안 바꾸고 관측만**
+    #   더한다 - `/healthz` 가 `boot`/`periodic` 을 따로 센다.
+    #
+    #   ⚠ 이 수는 **프로세스 메모리가 아니라 DB** 에 쌓는다. 재배포하면 0 이
+    #     되는 값으로는 "평시가 한 번이라도 돌았나" 에 영영 답할 수 없다.
+    kind = "boot"
     while True:
         try:
-            await asyncio.to_thread(run_sync, kats, store, on_updated=on_updated)
+            store.set_sync_state(f"sync_count_{kind}",
+                                 str(int(store.get_sync_state(f"sync_count_{kind}") or 0) + 1))
+            store.set_sync_state("last_sync_kind", kind)
+        except Exception:  # noqa: BLE001 — 세는 일이 동기화를 막으면 안 된다
+            _log.exception("동기화 회차를 세지 못했다")
+        try:
+            await asyncio.to_thread(run_sync, kats, store, on_updated=on_updated,
+                                    retry_gap=retry_gap, retry_max=retry_max)
         except asyncio.CancelledError:
             raise
         except Exception:  # noqa: BLE001 — 루프가 죽으면 동기화가 조용히 멈춘다
@@ -368,3 +478,4 @@ async def sync_loop(
             await asyncio.sleep(interval)
         except asyncio.CancelledError:
             raise
+        kind = "periodic"

@@ -12,7 +12,7 @@ import pytest
 
 from sourcing_guard.kats_client import KatsApiError, RecallRecord
 from sourcing_guard.storage import SqliteWatchStore
-from sourcing_guard.sync import month_windows, run_sync
+from sourcing_guard.sync import SCOPES, month_windows, run_sync
 
 
 def rec(uid: str, *, on: str = "20260723", scope: str = "domestic", model: str = "M-1"):
@@ -516,3 +516,136 @@ def test_minimum_is_measured_on_the_batch_not_the_table(store):
     assert report.ok is False
     assert store.get_sync_state("initial_load_at") == first
     assert store.recall_count() == 80
+
+
+# ---------------------------------------------------------------------------
+# 재시도 — 502 는 간헐이고 우리는 기다리는 사람이 없다
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class FlakyClient(StubClient):
+    """N 번째 호출까지 실패하고 그 뒤 성공한다. 스코프별로 센다."""
+
+    fail_until: dict = field(default_factory=dict)
+    attempts: dict = field(default_factory=dict)
+    first_window: str = ""
+
+    def recalls_published_on(self, date_prefix: str, *, overseas: bool = False):
+        scope = "overseas" if overseas else "domestic"
+        self.calls.append((date_prefix, scope))
+        # ⚠ **회차는 첫 창에서만 센다.** 실패하면 그 스코프를 통째로 건너뛰어
+        #   둘째 창을 안 부르고, 성공하면 둘 다 부른다 - 호출 수로 회차를
+        #   나누면 어긋난다 (처음에 그렇게 짰다가 2회째도 실패로 셌다).
+        if date_prefix == self.first_window:
+            self.attempts[scope] = self.attempts.get(scope, 0) + 1
+        if self.attempts.get(scope, 0) <= self.fail_until.get(scope, 0):
+            raise KatsApiError("http", "HTTP 502")
+        return self.monthly.get((scope, date_prefix), [])
+
+
+def _incremental(store):
+    store.set_sync_state("initial_load_at", "2026-09-01T00:00:00+00:00")
+
+
+def test_a_scope_that_fails_once_is_retried_and_the_screen_says_up_to_date(store):
+    """**재시도가 성공하면 그 스코프의 옛 오류를 걷어낸다.**
+
+    안 걷으면 `report.ok` 가 거짓으로 남아 `last_sync_ok_at` 이 안 찍힌다 -
+    실제로는 다 받았는데 화면이 "갱신 안 됨" 이라고 말한다.
+
+    주의(가장 중요): 이 검사는 **간격을 0 으로** 돌린다. 운영값은 60분이고,
+      그 수는 관측(2026-09-22 07:28 실패 → 09:24 성공 = 1시간 56분)에서 왔다.
+    """
+    today = date(2026, 9, 22)
+    _incremental(store)
+    c = FlakyClient(
+        monthly={(s, w): [rec(f"{s}{w}", scope=s)]
+                 for s in SCOPES for w in month_windows(today)},
+        fail_until={"domestic": 1}, first_window=month_windows(today)[0],
+    )
+    report = run_sync(c, store, today=today, min_plausible=0,
+                      retry_gap=0, retry_max=3)
+
+    assert report.retried == {"domestic": 1}, report.retried
+    assert report.ok, report.errors
+    assert set(report.fetched) == set(SCOPES), report.fetched
+    assert store.get_sync_state("last_sync_ok_at"), (
+        "재시도로 다 받았는데 「갱신됨」 시각을 안 썼다")
+
+
+def test_retry_gives_up_after_the_cap_and_does_not_claim_success(store):
+    """**횟수가 있다.** 죽은 서버를 영원히 두들기지 않는다.
+
+    그리고 포기했으면 「갱신됨」이라고 말하지 않는다 (R6 - 틀리는 방향이
+    나쁜 쪽이다).
+    """
+    today = date(2026, 9, 22)
+    _incremental(store)
+    c = FlakyClient(
+        monthly={(s, w): [rec(f"{s}{w}", scope=s)]
+                 for s in SCOPES for w in month_windows(today)},
+        fail_until={"domestic": 99}, first_window=month_windows(today)[0],
+    )
+    report = run_sync(c, store, today=today, min_plausible=0,
+                      retry_gap=0, retry_max=2)
+
+    assert report.retried == {"domestic": 2}, report.retried
+    assert not report.ok and report.errors
+    assert "domestic" not in report.fetched
+    assert not store.get_sync_state("last_sync_ok_at")
+    # 처음 1회 + 재시도 2회 = 3회. 창이 둘이지만 첫 창에서 예외가 나면
+    # 그 스코프를 건너뛰므로 스코프당 호출은 회차와 같다.
+    assert sum(1 for _, s in c.calls if s == "domestic") == 3, c.calls
+
+
+def test_the_healthy_scope_is_not_called_again(store):
+    """**실패한 스코프만** 다시 부른다. 성공한 쪽을 또 부르면 호출이 배로 는다."""
+    today = date(2026, 9, 22)
+    _incremental(store)
+    c = FlakyClient(
+        monthly={(s, w): [rec(f"{s}{w}", scope=s)]
+                 for s in SCOPES for w in month_windows(today)},
+        fail_until={"domestic": 1}, first_window=month_windows(today)[0],
+    )
+    run_sync(c, store, today=today, min_plausible=0, retry_gap=0, retry_max=3)
+    overseas_calls = sum(1 for _, s in c.calls if s == "overseas")
+    assert overseas_calls == len(month_windows(today)), (
+        f"성공한 스코프를 다시 불렀다: {overseas_calls}회")
+
+
+def test_the_full_load_is_never_retried(store):
+    """초기 적재는 **재시도하지 않는다.**
+
+    전량이라 무겁고, "두 스코프가 모두 성공했을 때만 완료로 기록" 하는 규칙이
+    있어 반쪽 재시도가 그 규칙을 흔든다.
+    """
+    today = date(2026, 9, 22)
+    c = FlakyClient(full={s: [rec(f"{s}", scope=s)] for s in SCOPES},
+                    fail_until={"domestic": 1})
+
+    def _boom(*a, **k):
+        raise KatsApiError("http", "HTTP 502")
+
+    c.recalls_all = _boom                       # 전량은 무조건 실패시킨다
+    report = run_sync(c, store, today=today, min_plausible=0,
+                      retry_gap=0, retry_max=3)
+    assert report.mode == "initial"
+    assert report.retried == {}, f"초기 적재를 재시도했다: {report.retried}"
+
+
+def test_the_user_lookup_path_has_no_retry():
+    """**사용자 조회에는 재시도를 넣지 않았다.**
+
+    거기서는 빨리 실패해 UNKNOWN 으로 내려가는 것이 옳고(R3), 기다리는 사람이
+    있다. 배경 동기화는 기다리는 사람이 없어 대가가 다르다.
+
+    주의(중요): 주석을 걷고 본다 - 이 규칙을 **설명한 주석**이 검사에 걸린다
+      (저장소에서 열다섯 번 넘게 난 자리).
+    """
+    from tests.srccheck import code_only
+
+    src = code_only((Path(__file__).resolve().parents[1]
+                     / "sourcing_guard" / "kats_client.py").read_text(encoding="utf-8"))
+    for token in ("retry_max", "RETRY_MAX", "retry_gap"):
+        assert token not in src, f"사용자 조회 경로에 {token} 이 생겼다"

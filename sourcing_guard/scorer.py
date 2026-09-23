@@ -905,6 +905,14 @@ def _norm_name(value: str | None) -> str:
 
 def _our_item_names(facts: ProductFacts, findings: list[Finding]) -> set[str]:
     """우리가 이 상품을 무엇으로 봤는가. 등급 후보 + 법령 품목명."""
+    # ⚠ `legal_item_name` 은 **조건부로 결정적**이다 (2026-09-22 확인).
+    #   등급 조회는 hints + legal_name + **raw_text** 를 함께 본다
+    #   (`verifier.py:950` · 그 주석이 "확장 **폴백**" 이라 적고 있다). raw_text 에
+    #   원래 표현이 있으면 legal_name 이 흔들려도 결과가 안 바뀐다 - 체험표본
+    #   재기록에서 '직류전원장치' → '충전기' 로 바뀌었는데 `item_grade_matched`
+    #   가 동일했다.
+    #   ⚠⚠ 그래도 「판정에 쓰이는 필드」에서 빼지 않는다. **raw_text 가 빈약한
+    #     입력에서는 폴백이 결정적이 된다** - 상품명만 들어오는 경로가 그렇다.
     names = {facts.legal_item_name or ""}
     for f in findings:
         for cand in (f.detail or {}).get("candidates", []) or []:
