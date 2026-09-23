@@ -464,7 +464,7 @@ def collect(limit: int, *, dry_run: bool = False) -> int:
     }
     counts = write_sanitized(OUT, payload)
     prune_thumbs(records)
-    print(f"→ {OUT} ({OUT.stat().st_size:,} bytes)")
+    print(f"→ {dest} ({dest.stat().st_size:,} bytes)")
     print(f"   제거기록 {dict(sorted(counts.items()))}")
 
     _write_notes(
@@ -520,7 +520,8 @@ def _write_notes(details, listing, category_of, gov_cert, states, chosen,
 
 
 # ── ② 스캔 ──────────────────────────────────────────────────────────
-def scan(base: str, *, sleep: float = 6.0, only: set[str] | None = None) -> int:
+def scan(base: str, *, sleep: float = 6.0, only: set[str] | None = None,
+         out: Path | None = None) -> int:
     """고른 상품을 `/api/v1/scan` 에 넣고 **응답 그대로** 사본에 붙인다.
 
     ⚠ 문장을 여기서 만들지 않는다 (R5 · CLAUDE.md §3 ③). 담기는 것은 우리
@@ -626,14 +627,20 @@ def scan(base: str, *, sleep: float = 6.0, only: set[str] | None = None) -> int:
                 {"no": no, "이유": f"인증 조회 {st} - 근거가 셀러 표기와 다른 번호를 "
                                    "가리켜, 판정을 다시 기록할 때까지 제외"}
                 for no, st in dropped_lookup)
-    counts = write_sanitized(OUT, payload)
-    prune_thumbs(kept)
-    _write_red_notes(red_rows)
+    # ⚠ `--out` 이면 **진짜 사본을 안 건드린다.** 덮기 전에 대조하려고 둔 길이다
+    #   (`record_samples.py` 와 같은 패턴). 썸네일 정리도 그때는 안 한다 -
+    #   사본과 썸네일이 갈리는 자리다.
+    dest = out or OUT
+    counts = write_sanitized(dest, payload)
+    if out is None:
+        prune_thumbs(kept)
+    if out is None:
+        _write_red_notes(red_rows)
     print(f"신호 {dict(signals)} · RED 로 뺀 것 {dropped_red}건"
           + (f" · 조회 실패로 뺀 것 {len(dropped_lookup)}건" if dropped_lookup else "")
           + (f" · 다시 기록한 것 {len(rescanned)}건 · 손대지 않은 것 "
              f"{len(kept) - len(rescanned)}건" if only is not None else ""))
-    print(f"→ {OUT} ({OUT.stat().st_size:,} bytes)")
+    print(f"→ {dest} ({dest.stat().st_size:,} bytes)")
     print(f"   제거기록 {dict(sorted(counts.items()))}")
     return 0
 
@@ -807,13 +814,17 @@ def main() -> int:
     ap.add_argument("--only", default=None,
                     help="scan: 이 상품번호들만 다시 스캔한다(쉼표 구분). "
                          "나머지는 손대지 않는다. 전량은 국표원 조회 29회다")
+    ap.add_argument("--out", default=None,
+                    help="scan: 다른 파일로 내보낸다. 진짜 사본을 덮기 전에 "
+                         "대조하려면 쓴다")
     args = ap.parse_args()
     stages = {
         "collect": lambda: collect(args.limit, dry_run=args.dry_run),
         "screen": screen_titles,
         "scan": lambda: scan(
             args.base, sleep=args.sleep,
-            only={n.strip() for n in args.only.split(",") if n.strip()} if args.only else None),
+            only={n.strip() for n in args.only.split(",") if n.strip()} if args.only else None,
+            out=Path(args.out) if args.out else None),
     }
     code = stages[args.stage]()
     # ⚠ `SystemExit(None)` 은 **종료코드 0** 이다. 단계가 실수로 아무것도

@@ -53,12 +53,16 @@ MIN_PLAUSIBLE_RECALLS = 1000
 #:       09-22 07:28  domestic 502 · overseas 성공
 #:       09-22 09:24  **둘 다 성공**        ← 07:28 실패로부터 1시간 56분
 #:
-#:   분 단위 재시도로는 안 잡힌다. 그리고 원인이 **origin 쪽**이라(우리 릴레이가
-#:   아니다 - PC 직결도 같은 시간대에 죽었다) 짧은 간격으로 두들겨도 안 듣는다.
-#:   60분 × 3회면 3시간 창이고, 관측된 1시간 56분을 덮는다.
+#: ⚠⚠ **1시간 56분은 복구 시간이 아니라 관측 간격이 만든 상한이다** (총괄
+#:   2026-09-23). 07:28 과 09:24 사이에 우리가 안 봤을 뿐이고, 실제로는 07:29 에
+#:   나았을 수도 있다. 그 수를 「장애가 길다」의 근거로 쓰면 **가정을 하나
+#:   더한 것**이다.
 #:
-#: ⚠ 잰 범위: 한 번의 「실패→성공」 간격뿐이다(1시간 56분). 표본 하나로 정한
-#:   수이므로, 더 긴 장애를 보면 다시 정한다.
+#:   그래서 간격을 **늘려 간다** - 5분 · 30분 · 120분. 가정을 안 하고, 호출 수는
+#:   똑같이 최대 3회다. 짧은 장애면 5분에 회복하고, 길면 2시간 35분까지 창이
+#:   열려 있다. **틀렸을 때 싼 쪽**이다.
+#:
+#: ⚠ 표본 1개로 정한 수다 — 더 긴 장애를 보면 다시 정한다.
 #:
 #: ⚠ 호출 비용: 실패한 스코프의 윈도 2개 × 최대 3회 = **하루 최대 +6회.**
 #:   평시가 4회이므로 최악 10회다. 국표원 공개 상한을 우리는 모르지만(R5)
@@ -68,8 +72,8 @@ MIN_PLAUSIBLE_RECALLS = 1000
 #:   UNKNOWN 으로 내려가는 것이 옳고(R3), 기다리는 사람이 있다.
 #:   여기는 배경이라 **기다리는 사람이 없다** - 대가가 완전히 다르다
 #:   (`kats_client.py:150` 의 무재시도 규칙은 그쪽 것이다).
-RETRY_GAP_SECONDS = 60 * 60
-RETRY_MAX = 3
+RETRY_GAPS_SECONDS: tuple[int, ...] = (5 * 60, 30 * 60, 120 * 60)
+RETRY_MAX = len(RETRY_GAPS_SECONDS)
 
 
 def _scope_err(scope: str, msg: str) -> str:
@@ -182,8 +186,7 @@ def run_sync(
     today: date | None = None,
     on_updated=None,
     min_plausible: int = MIN_PLAUSIBLE_RECALLS,
-    retry_gap: float = 0.0,
-    retry_max: int = 0,
+    retry_gaps: tuple[int, ...] = (),
 ) -> SyncReport:
     """한 번 동기화한다. 예외를 밖으로 던지지 않는다.
 
@@ -267,15 +270,15 @@ def run_sync(
     #   화면이 "갱신 안 됨" 이라고 말하게 된다.
     #
     # ⚠ 기다리는 사람이 없다. 60분을 자도 아무도 안 막힌다.
-    if mode == "incremental" and retry_max > 0:
-        for attempt in range(1, retry_max + 1):
+    if mode == "incremental" and retry_gaps:
+        for attempt, gap in enumerate(retry_gaps, 1):
             failed = [s for s in SCOPES if s not in report.fetched]
             if not failed:
                 break
             _log.warning("리콜 동기화 재시도 %d/%d (%s) - %d초 뒤",
-                         attempt, retry_max, ",".join(failed), retry_gap)
-            if retry_gap > 0:
-                time.sleep(retry_gap)
+                         attempt, len(retry_gaps), ",".join(failed), gap)
+            if gap > 0:
+                time.sleep(gap)
             for scope in failed:
                 report.retried[scope] = report.retried.get(scope, 0) + 1
                 if _one_scope(scope):
@@ -402,8 +405,7 @@ async def sync_loop(
     rra=None,
     on_noncompliant_updated=None,
     first_delay: int = FIRST_SYNC_DELAY_SECONDS,
-    retry_gap: float = RETRY_GAP_SECONDS,
-    retry_max: int = RETRY_MAX,
+    retry_gaps: tuple[int, ...] = RETRY_GAPS_SECONDS,
 ) -> None:
     """앱 수명 동안 도는 백그라운드 루프.
 
@@ -458,7 +460,7 @@ async def sync_loop(
             _log.exception("동기화 회차를 세지 못했다")
         try:
             await asyncio.to_thread(run_sync, kats, store, on_updated=on_updated,
-                                    retry_gap=retry_gap, retry_max=retry_max)
+                                    retry_gaps=retry_gaps)
         except asyncio.CancelledError:
             raise
         except Exception:  # noqa: BLE001 — 루프가 죽으면 동기화가 조용히 멈춘다

@@ -565,7 +565,7 @@ def test_a_scope_that_fails_once_is_retried_and_the_screen_says_up_to_date(store
         fail_until={"domestic": 1}, first_window=month_windows(today)[0],
     )
     report = run_sync(c, store, today=today, min_plausible=0,
-                      retry_gap=0, retry_max=3)
+                      retry_gaps=(0, 0, 0))
 
     assert report.retried == {"domestic": 1}, report.retried
     assert report.ok, report.errors
@@ -588,7 +588,7 @@ def test_retry_gives_up_after_the_cap_and_does_not_claim_success(store):
         fail_until={"domestic": 99}, first_window=month_windows(today)[0],
     )
     report = run_sync(c, store, today=today, min_plausible=0,
-                      retry_gap=0, retry_max=2)
+                      retry_gaps=(0, 0))
 
     assert report.retried == {"domestic": 2}, report.retried
     assert not report.ok and report.errors
@@ -608,7 +608,7 @@ def test_the_healthy_scope_is_not_called_again(store):
                  for s in SCOPES for w in month_windows(today)},
         fail_until={"domestic": 1}, first_window=month_windows(today)[0],
     )
-    run_sync(c, store, today=today, min_plausible=0, retry_gap=0, retry_max=3)
+    run_sync(c, store, today=today, min_plausible=0, retry_gaps=(0, 0, 0))
     overseas_calls = sum(1 for _, s in c.calls if s == "overseas")
     assert overseas_calls == len(month_windows(today)), (
         f"성공한 스코프를 다시 불렀다: {overseas_calls}회")
@@ -629,7 +629,7 @@ def test_the_full_load_is_never_retried(store):
 
     c.recalls_all = _boom                       # 전량은 무조건 실패시킨다
     report = run_sync(c, store, today=today, min_plausible=0,
-                      retry_gap=0, retry_max=3)
+                      retry_gaps=(0, 0, 0))
     assert report.mode == "initial"
     assert report.retried == {}, f"초기 적재를 재시도했다: {report.retried}"
 
@@ -649,3 +649,29 @@ def test_the_user_lookup_path_has_no_retry():
                      / "sourcing_guard" / "kats_client.py").read_text(encoding="utf-8"))
     for token in ("retry_max", "RETRY_MAX", "retry_gap"):
         assert token not in src, f"사용자 조회 경로에 {token} 이 생겼다"
+
+
+def test_the_retry_gaps_escalate_and_are_capped():
+    """간격이 **늘어난다.** 5분 · 30분 · 120분.
+
+    ⚠⚠ 처음엔 60분 × 3 으로 잡았다. 근거가 「관측된 장애가 1시간 56분」이었는데,
+      그 수는 **관측 간격이 만든 상한**이지 복구 시간이 아니다(07:28 과 09:24
+      사이를 안 봤을 뿐 07:29 에 나았을 수도 있다). 그 수를 「장애가 길다」의
+      근거로 쓰면 가정을 하나 더한 것이다 (총괄 2026-09-23).
+
+      늘려 가는 간격은 **가정을 안 한다** - 짧은 장애면 5분에 회복하고, 길면
+      2시간 35분까지 창이 열린다. 호출 수는 똑같이 최대 3회다.
+
+    주의(중요): 횟수에 **상한이 있다.** 죽은 서버를 영원히 두들기지 않는다.
+    """
+    from sourcing_guard.sync import RETRY_GAPS_SECONDS, RETRY_MAX
+
+    assert list(RETRY_GAPS_SECONDS) == sorted(RETRY_GAPS_SECONDS), (
+        f"간격이 안 늘어난다: {RETRY_GAPS_SECONDS}")
+    assert len(set(RETRY_GAPS_SECONDS)) == len(RETRY_GAPS_SECONDS), "같은 간격이 겹친다"
+    assert RETRY_MAX == len(RETRY_GAPS_SECONDS) <= 4, (
+        f"재시도가 너무 많다: {RETRY_MAX}회")
+    assert RETRY_GAPS_SECONDS[0] <= 10 * 60, (
+        "첫 재시도가 너무 늦다 - 짧은 장애를 못 잡는다")
+    assert sum(RETRY_GAPS_SECONDS) >= 2 * 60 * 60, (
+        "창이 너무 좁다 - 관측된 장애(최대 1시간 56분)를 못 덮는다")

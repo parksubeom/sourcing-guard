@@ -31,12 +31,6 @@ from sourcing_guard.kats_client import normalize_kc  # noqa: E402
 #: 「적힌 값 vs 근거」로 재면 불일치인데 **괜찮은 것**. 이유를 같이 적는다 -
 #: 이유 없이 목록에 든 항목은 다음 사람이 지운다 (총괄 2026-09-22).
 KNOWN_OK = {
-    ("sourcing_guard/data/showcase.json", "CB063R4501-0001A"):
-        "certs[].detail_url — collect(9/20) 산출물. `scan` 이 안 건드리고 "
-        "**화면에 안 나간다**(카드 키·단건 응답 모두 certs 없음). 재수집 때 사라진다",
-    ("sourcing_guard/data/showcase.json", "CB064R2424-9001R"):
-        "certs[].detail_url — collect(9/20) 산출물. `scan` 이 안 건드리고 "
-        "**화면에 안 나간다**(카드 키·단건 응답 모두 certs 없음). 재수집 때 사라진다",
     ("sourcing_guard/data/cert_seed.json", "HU073506-24001A"):
         "9/19 시드 오염. `cert_seed.load_entries` 가 **싣지 않는다**(라이브 확인: "
         "loaded 24 · skipped 5). 시드를 다시 만들면 사라진다",
@@ -60,6 +54,20 @@ KNOWN_OK = {
        for n in ("HU073506-24001A", "HU073519-24001A", "HU101339-24004B",
                  "SU071354-12001ZZC", "YU101649-22001A")},
 }
+
+#: 세지 않고 **따로 보고**하는 서브트리. 화면에 안 나가는 수집 메타다.
+#:
+#: ⚠⚠ `showcase.json` 의 `certs[]` 는 collect 단계가 붙인 국표원 조회 메타이고
+#:   `scan` 이 안 건드린다. `_pick_exact`(2026-09-22) 이전에 수집한 것이라
+#:   `detail_url` 이 셀러 표기와 다른 번호를 가리킨다.
+#:
+#:   **화면에 안 나간다** - 카드 키에도 단건 응답에도 `certs` 가 없다. 그리고
+#:   그 사실은 `tests/test_showcase.py` 가 잠근다(여기 적어 두는 것만으로는
+#:   내일 누가 `certs` 를 화면에 내면 안 걸린다).
+#:
+#:   ⚠ 번호마다 예외로 넣으면 **재수집할 때마다 목록이 는다.** 실제로 카드
+#:     넷을 되살리자 2종 → 4종이 됐다. 경로로 다루고 수만 따로 낸다.
+SKIP_SUBTREE = {"certs"}
 
 #: 「적힌 값」이 파일에 없어 그 질문으로는 못 재는 파일. 대신 **화면 번호 vs
 #: 링크 번호**로 잰다 - 둘 다 화면에 나가는 값이고, 갈리면 그 자체가 결함이다.
@@ -120,7 +128,7 @@ def _claimed_here(node: dict) -> set[str]:
     return set()
 
 
-def walk(node, claimed: frozenset[str], out: list):
+def walk(node, claimed: frozenset[str], out: list, *, aside: list | None = None):
     """근거 URL 을 만날 때마다 **바깥에서 내려온 「적힌 번호 집합」**과 짝짓는다.
 
     ⚠⚠ **가장 가까운 상위로 덮지 않는다.** 처음엔 그렇게 짰는데, 시드에서
@@ -133,15 +141,19 @@ def walk(node, claimed: frozenset[str], out: list):
     if isinstance(node, dict):
         here = claimed or frozenset(_claimed_here(node))
         for k, v in node.items():
+            if k in SKIP_SUBTREE:
+                if aside is not None:
+                    walk(v, here, aside)
+                continue
             if isinstance(v, str):
                 got = _cert_in(v)
                 if got:
                     out.append((here, got))
             else:
-                walk(v, here, out)
+                walk(v, here, out, aside=aside)
     elif isinstance(node, list):
         for v in node:
-            walk(v, claimed, out)
+            walk(v, claimed, out, aside=aside)
 
 
 _CERT_IN_TEXT = __import__("re").compile(
@@ -173,7 +185,8 @@ def main() -> int:
             continue
         doc = json.loads(p.read_text(encoding="utf-8"))
         pairs: list[tuple[str | None, str]] = []
-        walk(doc, None, pairs)
+        aside: list = []
+        walk(doc, frozenset(), pairs, aside=aside)
         named = [(a, b) for a, b in pairs if a]
         bad = [(a, b) for a, b in named
                if normalize_kc(b) not in {normalize_kc(x) for x in a}
@@ -182,6 +195,11 @@ def main() -> int:
         total_pairs += len(named)
         total_bad += len(bad)
         tail = f" · 알려진 예외 {len({b for _, b in excused})}종" if excused else ""
+        off = [(a, b) for a, b in aside
+               if a and normalize_kc(b) not in {normalize_kc(x) for x in a}]
+        if aside:
+            tail += (f" · 화면 밖 {', '.join(sorted(SKIP_SUBTREE))} "
+                     f"{len(aside)}건 중 어긋남 {len(off)}")
         print(f"{rel:52s} 근거URL {len(pairs):4d} · 짝지어진 것 {len(named):4d} "
               f"· **불일치 {len(bad)}**{tail}")
         shown = sorted({(tuple(sorted(a)), b) for a, b in bad})

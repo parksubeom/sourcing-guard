@@ -491,3 +491,39 @@ def test_the_card_shows_the_number_we_actually_looked_up():
     #   재는 것은 "카드가 있고, 그 전부를 봤는가" 다.
     assert cards, "사본이 비었다 - 볼 카드가 없으면 이 검사는 침묵이다"
     assert checked == len(cards), f"{len(cards)}장 중 {checked}장만 봤다"
+
+
+def test_the_collect_metadata_never_reaches_the_screen():
+    """`certs[]` 는 **화면에 안 나간다.** 그 사실이 감사 예외의 근거다.
+
+    collect 단계가 붙인 국표원 조회 메타이고 `scan` 이 안 건드린다.
+    `_pick_exact`(2026-09-22) 이전에 수집한 것이라 `detail_url` 이 셀러 표기와
+    다른 번호를 가리킨다 - 실측 30건 중 6건.
+
+    ⚠⚠ `scripts/audit_recorded_certs.py` 가 이 서브트리를 **불일치로 세지
+      않는다.** 그 면제의 근거가 「화면에 안 나간다」 하나뿐이므로, 그 근거를
+      여기서 잠근다. 주석에만 적어 두면 내일 누가 `certs` 를 화면에 내도
+      안 걸린다.
+
+    ⚠ 반대쪽도 본다 - 사본에 `certs` 가 아예 없어지면 이 검사는 침묵이다.
+    """
+    import json as _json
+
+    import sourcing_guard.showcase as sc
+
+    raw = _json.loads((_ROOT / "sourcing_guard" / "data" / "showcase.json")
+                      .read_text(encoding="utf-8"))
+    have = [i for i in raw["items"] if i.get("certs")]
+    assert have, "사본에 certs 가 없다 - 그러면 이 검사는 침묵이다"
+
+    payload = sc.payload()
+    blob = _json.dumps(payload, ensure_ascii=False)
+    assert "certs" not in blob, "목록 응답에 certs 가 새 나갔다"
+    assert "detail_url" not in blob, "목록 응답에 detail_url 이 새 나갔다"
+
+    # 단건도 본다. 목록만 재면 단건으로 새는 것을 못 본다.
+    one = sc.result_of(str(have[0]["no"]))
+    assert one is not None, f'{have[0]["no"]} 단건이 없다 - 그러면 이 절은 침묵이다'
+    blob1 = _json.dumps(one, ensure_ascii=False)
+    assert "certs" not in blob1, "단건 응답에 certs 가 새 나갔다"
+    assert "detail_url" not in blob1, "단건 응답에 detail_url 이 새 나갔다"
