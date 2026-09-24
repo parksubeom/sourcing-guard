@@ -4,6 +4,7 @@
 그리고 놓친 리콜은 이 서비스가 하는 유일한 약속을 깨뜨린다 (CLAUDE.md R6).
 """
 
+import json
 from dataclasses import dataclass, field, replace
 from datetime import date
 from pathlib import Path
@@ -675,3 +676,67 @@ def test_the_retry_gaps_escalate_and_are_capped():
         "첫 재시도가 너무 늦다 - 짧은 장애를 못 잡는다")
     assert sum(RETRY_GAPS_SECONDS) >= 2 * 60 * 60, (
         "창이 너무 좁다 - 관측된 장애(최대 1시간 56분)를 못 덮는다")
+
+
+def test_healthz_says_we_are_retrying_while_we_wait(store, monkeypatch):
+    """**재시도 대기 중임을 밖에서 볼 수 있다.**
+
+    `last_sync_at`·`last_sync_error` 는 `run_sync` **끝**에서 쓰인다. 그래서
+    재시도가 도는 동안(최대 5+30+120 = 155분) `/healthz` 의 `sync` 블록이
+    **옛 값**을 말한다 - 2026-09-23 배포 뒤 실제로 6분간 "오류 없음" 이라고
+    말하는 동안 둘 다 502 였다.
+
+    주의(가장 중요): 이 검사는 **대기 한가운데**를 잡는다. `time.sleep` 을
+      가로채 그 시점의 상태를 읽는다 - 끝난 뒤에 보면 이미 지워져 있다.
+    """
+    import sourcing_guard.sync as sync_mod
+
+    today = date(2026, 9, 22)
+    _incremental(store)
+    seen: list = []
+
+    def _peek(_secs):
+        seen.append(store.get_sync_state("retrying"))
+
+    monkeypatch.setattr(sync_mod.time, "sleep", _peek)
+    c = FlakyClient(
+        monthly={(s, w): [rec(f"{s}{w}", scope=s)]
+                 for s in SCOPES for w in month_windows(today)},
+        fail_until={"domestic": 1}, first_window=month_windows(today)[0],
+    )
+    run_sync(c, store, today=today, min_plausible=0, retry_gaps=(1, 1, 1))
+
+    assert seen and seen[0], "재시도 대기 중인데 아무 표시도 없었다"
+    state = json.loads(seen[0])
+    assert state["scopes"] == ["domestic"], state
+    assert state["attempt"] == 1 and state["of"] == 3, state
+    assert state["since"]
+
+    # 끝나면 지운다. 남겨 두면 `/healthz` 가 영원히 "재시도 중" 을 말한다.
+    assert not store.get_sync_state("retrying"), "끝났는데 표시가 남았다"
+
+
+def test_the_retry_count_is_written_where_healthz_can_read_it(store):
+    """㉡ 재시도가 **실제로 들었는지**는 이 수로만 안다.
+
+    만들어 놓고 안 내면 `/healthz` 를 보는 사람이 「한 번에 됐다」와
+    「두 번 만에 됐다」를 못 가린다.
+    """
+    today = date(2026, 9, 22)
+    _incremental(store)
+    c = FlakyClient(
+        monthly={(s, w): [rec(f"{s}{w}", scope=s)]
+                 for s in SCOPES for w in month_windows(today)},
+        fail_until={"domestic": 1}, first_window=month_windows(today)[0],
+    )
+    run_sync(c, store, today=today, min_plausible=0, retry_gaps=(0, 0, 0))
+    assert json.loads(store.get_sync_state("last_retried")) == {"domestic": 1}
+
+    # 한 번에 된 회차는 **빈 값**이다. 옛 회차의 수가 남아 있으면 안 된다.
+    c2 = FlakyClient(
+        monthly={(s, w): [rec(f"{s}{w}2", scope=s)]
+                 for s in SCOPES for w in month_windows(today)},
+        first_window=month_windows(today)[0],
+    )
+    run_sync(c2, store, today=today, min_plausible=0, retry_gaps=(0, 0, 0))
+    assert not store.get_sync_state("last_retried"), "옛 재시도 수가 남았다"

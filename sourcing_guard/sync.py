@@ -76,6 +76,23 @@ RETRY_GAPS_SECONDS: tuple[int, ...] = (5 * 60, 30 * 60, 120 * 60)
 RETRY_MAX = len(RETRY_GAPS_SECONDS)
 
 
+def _set_retrying(store: SqliteWatchStore, *, scopes, attempt: int = 0,
+                  of: int = 0, gap: int = 0) -> None:
+    """「지금 재시도 대기 중」을 밖에서 볼 수 있게 남긴다. 빈 스코프면 지운다.
+
+    ⚠ 세는 일이 동기화를 막으면 안 되므로 예외를 삼킨다.
+    """
+    try:
+        if not scopes:
+            store.set_sync_state("retrying", "")
+            return
+        store.set_sync_state("retrying", json.dumps(
+            {"scopes": list(scopes), "attempt": attempt, "of": of,
+             "gap_seconds": gap, "since": _now()}, ensure_ascii=False))
+    except Exception:  # noqa: BLE001
+        _log.exception("재시도 상태를 남기지 못했다")
+
+
 def _scope_err(scope: str, msg: str) -> str:
     """스코프 오류 한 줄. **접두 규칙을 한 곳에 둔다.**
 
@@ -277,6 +294,21 @@ def run_sync(
                 break
             _log.warning("리콜 동기화 재시도 %d/%d (%s) - %d초 뒤",
                          attempt, len(retry_gaps), ",".join(failed), gap)
+            # ⚠⚠ **재시도 대기 중임을 밖에서 볼 수 있게 한다** (2026-09-24).
+            #
+            #   `last_sync_at`·`last_sync_error` 는 이 함수 **끝**에서 쓰인다.
+            #   그래서 재시도가 도는 동안(최대 5+30+120 = 155분) `/healthz` 의
+            #   `sync` 블록이 **옛 값**을 말한다 - 2026-09-23 배포 뒤 실제로
+            #   6분간 "오류 없음" 이라고 말하는 동안 둘 다 502 였다.
+            #
+            #   `kats.calls/failures` 가 그동안 말해 주지만, `sync` 블록만 보면
+            #   정상으로 보인다. §1-k 점검 목록이 `sync.last_sync_error` 를
+            #   「사흘 놓친 자리」로 지목한 그 값이다.
+            #
+            #   ⚠ 프로세스가 죽으면 이 값이 남는다. `sync_loop` 가 부팅 때
+            #     지운다 - 안 지우면 `/healthz` 가 영원히 "재시도 중" 을 말한다.
+            _set_retrying(store, scopes=failed, attempt=attempt,
+                          of=len(retry_gaps), gap=gap)
             if gap > 0:
                 time.sleep(gap)
             for scope in failed:
@@ -312,8 +344,14 @@ def run_sync(
                 sorted(batches),
             )
 
+    _set_retrying(store, scopes=())          # 끝났다. 남겨 두면 거짓말이 된다
     store.set_sync_state("last_sync_at", report.finished_at)
     store.set_sync_state("last_sync_error", "; ".join(report.errors) if report.errors else "")
+    # ㉡ 재시도가 **실제로 들었는지**는 이 수로만 알 수 있다. 만들어 놓고 안 내면
+    #   `/healthz` 를 보는 사람은 「한 번에 됐다」와 「두 번 만에 됐다」를 못 가린다.
+    store.set_sync_state(
+        "last_retried",
+        json.dumps(report.retried, ensure_ascii=False) if report.retried else "")
 
     # 메모리 인덱스가 갱신된 사본을 다시 읽게 한다. 안 부르면 스캔이 재시작
     # 전까지 옛 사본으로 대조하고, 새로 공표된 리콜을 놓친다.
@@ -466,6 +504,10 @@ async def sync_loop(
     #
     #   ⚠ 이 수는 **프로세스 메모리가 아니라 DB** 에 쌓는다. 재배포하면 0 이
     #     되는 값으로는 "평시가 한 번이라도 돌았나" 에 영영 답할 수 없다.
+    # ⚠ 프로세스가 재시도 대기 중에 죽으면 `retrying` 이 남는다. 부팅 때
+    #   지운다 - 안 지우면 `/healthz` 가 영원히 "재시도 중" 을 말한다.
+    _set_retrying(store, scopes=())
+
     kind = "boot"
     while True:
         try:
@@ -492,6 +534,19 @@ async def sync_loop(
                 raise
             except Exception:  # noqa: BLE001
                 _log.exception("부적합 현황 동기화에서 예상치 못한 오류")
+        # ㉤ **끝난 횟수**를 따로 센다 (2026-09-24).
+        #
+        #   `boot`/`periodic` 은 `run_sync` **앞에서** 오른다 - 「평시 경로가
+        #   실행됐나」를 재는 값이라 시작만 해도 맞다. 그런데 그 값을 **완료
+        #   조건**으로 쓰면 막 시작한 회차를 끝난 것으로 읽는다(2026-09-24 에
+        #   배포 조건이 그래서 틀렸다). 끝을 보려면 끝에서 오르는 값이 있어야 한다.
+        try:
+            store.set_sync_state(
+                "sync_count_done",
+                str(int(store.get_sync_state("sync_count_done") or 0) + 1))
+        except Exception:  # noqa: BLE001
+            _log.exception("완료 회차를 세지 못했다")
+
         try:
             await asyncio.sleep(interval)
         except asyncio.CancelledError:

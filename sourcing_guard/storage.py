@@ -15,6 +15,7 @@ CLAUDE.md R6 관련: 여기는 저장만 한다. 매칭 규칙은 watchlist.py �
 
 from __future__ import annotations
 
+import json
 import logging
 import sqlite3
 import threading
@@ -131,6 +132,20 @@ def _add_missing_columns(conn: sqlite3.Connection) -> None:
         for name, decl in columns:
             if name not in have:
                 conn.execute(f"ALTER TABLE {table} ADD COLUMN {name} {decl}")
+
+
+def _json_or_none(raw: str | None):
+    """저장된 JSON 한 줄. 비었거나 깨졌으면 None.
+
+    ⚠ 깨진 값으로 `/healthz` 를 500 으로 만들지 않는다 - 헬스체크가 죽으면
+      감시가 통째로 멈춘다.
+    """
+    if not raw:
+        return None
+    try:
+        return json.loads(raw)
+    except Exception:  # noqa: BLE001
+        return {"parse_error": raw[:80]}
 
 
 class SqliteWatchStore:
@@ -693,11 +708,27 @@ class SqliteWatchStore:
                 #   `periodic` 이 0 이면 우리는 평시 경로를 **본 적이 없는 것**
                 #   이고, 그 상태로 "동기화가 된다" 고 말하면 안 된다.
                 #   프로세스 메모리가 아니라 DB 라 재배포해도 안 지워진다.
+                # ⚠⚠ `boot`·`periodic` 은 **시작** 횟수다 (`run_sync` 앞에서
+                #   오른다). `done` 이 **완료**다 - `run_sync` 와 부적합 동기화가
+                #   둘 다 끝난 뒤에 오른다.
+                #
+                #   2026-09-24 에 배포 조건을 `periodic == 1` 로 잡았다가 틀렸다 -
+                #   1 은 「막 시작했다」이지 「끝났다」가 아니라서, 그대로 따랐으면
+                #   막 깬 회차를 끊었다. **끝을 보려면 끝에서 오르는 값을 본다.**
                 "syncs": {
                     "boot": int(self.get_sync_state("sync_count_boot") or 0),
                     "periodic": int(self.get_sync_state("sync_count_periodic") or 0),
+                    "done": int(self.get_sync_state("sync_count_done") or 0),
                     "last_kind": self.get_sync_state("last_sync_kind"),
                 },
+                # 지금 재시도 대기 중인가. 비었으면 None.
+                #
+                # ⚠ `last_sync_at`·`last_sync_error` 는 `run_sync` **끝**에서
+                #   쓰이므로, 재시도가 도는 동안(최대 155분) 그 둘은 **옛 값**이다.
+                #   이 값이 없으면 `sync` 블록만 보고 「정상」으로 읽는다.
+                "retrying": _json_or_none(self.get_sync_state("retrying")),
+                # 마지막 회차에서 스코프별 재시도 횟수. 없으면 None(한 번에 됐다).
+                "last_retried": _json_or_none(self.get_sync_state("last_retried")),
                 "recalls": {
                     "domestic": self.recall_count("domestic"),
                     "overseas": self.recall_count("overseas"),

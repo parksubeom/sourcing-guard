@@ -714,14 +714,27 @@ def test_healthz_tells_whether_the_periodic_path_ever_ran(tmp_path):
 
     store = SqliteWatchStore(str(tmp_path / "w.db"))
     snap = store.sync_snapshot()
-    assert snap["syncs"] == {"boot": 0, "periodic": 0, "last_kind": None}, snap["syncs"]
+    # ⚠ 딕셔너리 **전체**를 비교한다. 필드가 늘면 여기서 걸리고, 그게 맞다 -
+    #   2026-09-24 에 `done` 을 더했을 때 이 검사가 알려줬다.
+    assert snap["syncs"] == {"boot": 0, "periodic": 0, "done": 0,
+                             "last_kind": None}, snap["syncs"]
 
     store.set_sync_state("sync_count_boot", "3")
     store.set_sync_state("sync_count_periodic", "1")
     store.set_sync_state("last_sync_kind", "periodic")
+    store.set_sync_state("sync_count_done", "1")
     snap = SqliteWatchStore(str(tmp_path / "w.db")).sync_snapshot()
-    assert snap["syncs"] == {"boot": 3, "periodic": 1, "last_kind": "periodic"}, (
+    assert snap["syncs"] == {"boot": 3, "periodic": 1, "done": 1,
+                             "last_kind": "periodic"}, (
         "재시작 뒤에도 남아야 한다 - DB 값이다")
+
+    # ⚠⚠ **시작과 완료가 다르다.** `periodic` 은 `run_sync` 앞에서, `done` 은
+    #   부적합 동기화까지 끝난 뒤에 오른다. 같은 수를 기대하면 안 된다 -
+    #   진행 중이면 started > done 이고, 그 차이가 「지금 돌고 있다」는 뜻이다.
+    store.set_sync_state("sync_count_done", "0")
+    snap = SqliteWatchStore(str(tmp_path / "w.db")).sync_snapshot()
+    assert snap["syncs"]["periodic"] == 1 and snap["syncs"]["done"] == 0, (
+        "시작과 완료를 따로 세지 않는다")
 
 
 def test_the_loop_counts_boot_and_periodic_apart():
@@ -749,3 +762,52 @@ def test_the_loop_counts_boot_and_periodic_apart():
     sleep_at, periodic_at = m_sleep.start(), m_periodic.start()
     assert periodic_at > sleep_at, (
         "주기 대기 앞에서 periodic 으로 바꾸면 **부팅 동기화가 평시로 센다**")
+
+
+def test_the_done_counter_rises_after_the_work_not_before():
+    """㉤ **끝난 횟수**는 일이 끝난 **뒤에** 오른다.
+
+    `boot`/`periodic` 은 `run_sync` **앞에서** 오른다 - 「평시 경로가 실행됐나」를
+    재는 값이라 시작만 해도 맞다. 그런데 그 값을 **완료 조건**으로 쓰면 막 시작한
+    회차를 끝난 것으로 읽는다(2026-09-24 에 배포 조건이 그래서 틀렸다).
+
+    주의(가장 중요): 소스에서 **순서**를 본다. 값만 재면 「끝나고 올랐는지」와
+      「시작하고 올랐는지」가 구분되지 않는다.
+    """
+    import re
+
+    from tests.srccheck import code_only
+
+    src = code_only((Path(__file__).resolve().parents[1]
+                     / "sourcing_guard" / "sync.py").read_text(encoding="utf-8"))
+    body = src[src.index("async def sync_loop"):]
+
+    m_started = re.search(r'sync_count_ \{ kind \}|sync_count_\{kind\}', body)
+    m_run = re.search(r"to_thread\s*\(\s*run_sync", body)
+    m_done = re.search(r'"sync_count_done"', body)
+    m_sleep = re.search(r"asyncio\s*\.\s*sleep\s*\(\s*interval\s*\)", body)
+    assert m_started and m_run and m_done and m_sleep, (
+        m_started, m_run, m_done, m_sleep)
+
+    assert m_started.start() < m_run.start(), "시작 계수가 run_sync 뒤에 있다"
+    assert m_done.start() > m_run.start(), "**완료 계수가 run_sync 앞에 있다**"
+    assert m_done.start() < m_sleep.start(), "완료 계수가 주기 대기 뒤에 있다"
+
+
+def test_the_retrying_flag_is_cleared_on_boot():
+    """프로세스가 재시도 대기 중에 죽으면 표시가 남는다. **부팅 때 지운다.**
+
+    안 지우면 `/healthz` 가 영원히 "재시도 중" 을 말하고, 그 값을 보고
+    기다리는 사람이 영영 기다린다.
+    """
+    import re
+
+    from tests.srccheck import code_only
+
+    src = code_only((Path(__file__).resolve().parents[1]
+                     / "sourcing_guard" / "sync.py").read_text(encoding="utf-8"))
+    body = src[src.index("async def sync_loop"):]
+    clear = re.search(r"_set_retrying\s*\(\s*store\s*,\s*scopes\s*=\s*\(\s*\)\s*\)", body)
+    loop = re.search(r"while\s+True\s*:", body)
+    assert clear and loop, (clear, loop)
+    assert clear.start() < loop.start(), "부팅 때 안 지우고 루프 안에서 지운다"
