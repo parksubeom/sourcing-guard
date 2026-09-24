@@ -66,9 +66,9 @@ def test_failure_rate_and_last_success_move():
       실패율이 그것을 드러낸다.
     """
     h = KatsHealth()
-    h.record_failure("network", "ReadError")
-    h.record_failure("network", "Timeout")
-    h.record_success()
+    h.record_failure("network", "ReadError", path="user_cert")
+    h.record_failure("network", "Timeout", path="user_cert")
+    h.record_success("user_cert")
     snap = h.snapshot()
 
     assert snap["calls"] == 3 and snap["failures"] == 2
@@ -312,3 +312,103 @@ def test_the_scope_labels_match_the_verifier():
         f"gov_lookup_state 가 보는 scope 와 verifier 가 쓰는 scope 가 다릅니다.\n"
         f"  verifier: {sorted(used)}\n  scorer  : {sorted(checked)}"
     )
+
+
+# ---------------------------------------------------------------------------
+# 경로별 계수 — 「무엇의 실패율인가」에 답할 수 있어야 한다
+# ---------------------------------------------------------------------------
+
+
+def test_the_health_counts_each_call_path_apart():
+    """`_call()` 을 **네 갈래**가 공유한다. 합쳐 세면 무엇의 실패율인지 못 말한다.
+
+    실제로 그 오독이 문서에 남았다 - `docs/미완_목록.md:3049` 가
+    「9회 중 3회 실패(0.333) → **셀러 셋 중 하나**가 조회 실패를 본다」고
+    적었는데, 그 실패는 **동기화의 domestic 호출**이었을 수 있다.
+
+    주의(중요): 합계(`calls`·`failures`)는 **그대로 둔다.** 기존 감시와 검사가
+      본다. 경로별은 더하는 것이지 대체가 아니다.
+    """
+    from sourcing_guard.kats_client import CALL_PATHS, KatsHealth
+
+    h = KatsHealth()
+    h.record_success("user_cert")
+    h.record_failure("http", "502", path="sync_incremental")
+    h.record_failure("http", "502", path="sync_incremental")
+    h.record_success("sync_incremental")
+
+    snap = h.snapshot()
+    assert snap["calls"] == 4 and snap["failures"] == 2, snap
+    assert snap["failure_rate"] == 0.5
+
+    bp = snap["by_path"]
+    assert set(bp) == set(CALL_PATHS), set(bp) ^ set(CALL_PATHS)
+    assert bp["user_cert"] == {"calls": 1, "failures": 0, "failure_rate": 0.0,
+                               "last_success_at": h.last_success_at}
+    assert bp["sync_incremental"]["calls"] == 3
+    assert bp["sync_incremental"]["failures"] == 2
+    assert bp["sync_incremental"]["failure_rate"] == 0.667
+    # 한 번도 안 부른 경로는 **비율이 None** 이다. 0.0 으로 두면 "전부 성공" 으로
+    # 읽히는데 실제로는 부른 적이 없다 (4-p 와 같은 규칙).
+    assert bp["sync_full"]["calls"] == 0
+    assert bp["sync_full"]["failure_rate"] is None
+
+
+def test_every_rate_ships_with_its_denominator():
+    """비율 옆에 **분모**가 같이 나온다.
+
+    `verifier.py:195` 가 룰 DB 에 대해 세운 규칙이다 - 「비율만 두면 표본
+    여덟 개짜리가 통계처럼 읽히므로 표본을 반드시 함께 담는다」. `/healthz`
+    만 그 규칙 밖이었다.
+    """
+    from sourcing_guard.kats_client import KatsHealth
+
+    snap = KatsHealth().snapshot()
+    assert {"calls", "failures", "failure_rate"} <= set(snap)
+    for path, v in snap["by_path"].items():
+        assert {"calls", "failures", "failure_rate"} <= set(v), (path, v)
+
+
+def test_a_new_call_site_cannot_forget_the_path_label():
+    """표지를 빠뜨리면 **TypeError 로 즉시 걸린다.** 기본값을 두지 않는다.
+
+    기본값이 있으면 새 호출부가 조용히 엉뚱한 통에 쌓인다 - 그게 우리가
+    고치려던 바로 그 병이다.
+    """
+    import inspect
+
+    from sourcing_guard.kats_client import KatsClient, KatsHealth
+
+    for fn in (KatsHealth.record_success, KatsHealth.record_failure, KatsClient._call):
+        sig = inspect.signature(fn)
+        p = sig.parameters["path"]
+        assert p.default is inspect.Parameter.empty, f"{fn.__name__} 의 path 에 기본값이 있다"
+
+
+def test_no_call_site_is_left_unlabelled():
+    """`_call(` 을 부르는 **모든** 자리가 `path=` 를 준다.
+
+    주의(중요): 주석을 걷고 본다 - 이 규칙을 설명한 주석이 검사에 걸린다.
+    """
+    import re
+    from pathlib import Path
+
+    from tests.srccheck import code_only
+
+    src = code_only((Path(__file__).resolve().parents[1]
+                     / "sourcing_guard" / "kats_client.py").read_text(encoding="utf-8"))
+    calls = list(re.finditer(r"self\s*\.\s*_call\s*\(", src))
+    assert len(calls) >= 5, f"_call 호출부가 {len(calls)}곳뿐이다 - 못 찾고 있다"
+    for m in calls:
+        # 호출 끝까지 훑어 path= 가 있는지
+        depth, i = 0, m.end() - 1
+        while i < len(src):
+            if src[i] == "(":
+                depth += 1
+            elif src[i] == ")":
+                depth -= 1
+                if depth == 0:
+                    break
+            i += 1
+        body = src[m.end():i]
+        assert "path =" in body or "path=" in body, f"표지 없는 호출: …{body[:60]}"

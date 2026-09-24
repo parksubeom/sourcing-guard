@@ -121,6 +121,18 @@ def _log_unreadable_body(op: str, resp: "httpx.Response | None") -> None:
     )
 
 
+#: `_call()` 을 쓰는 갈래. **합쳐 세면 무엇의 실패율인지 말할 수 없다.**
+#:
+#: ⚠ 기본값을 두지 않는다 - 새 호출부가 표지를 빠뜨리면 `TypeError` 로 즉시
+#:   걸린다. 기본값이 있으면 조용히 엉뚱한 통에 쌓인다.
+CALL_PATHS: tuple[str, ...] = (
+    "user_cert",          # 셀러가 친 인증번호 조회
+    "user_recall",        # 셀러 상품의 리콜 대조
+    "sync_incremental",   # 배경 동기화 - 월 윈도
+    "sync_full",          # 배경 동기화 - 전량 적재
+)
+
+
 class KatsHealth:
     """정부 API 호출 상태를 프로세스 메모리에 들고 있는다.
 
@@ -152,6 +164,24 @@ class KatsHealth:
         self.calls: int = 0
         self.failures: int = 0
         self.last_success_at: str | None = None
+        # ⚠⚠ **경로별로도 센다** (2026-09-24).
+        #
+        #   `_call()` 을 네 갈래가 공유한다 - 사용자 인증 조회 · 사용자 리콜
+        #   조회 · 동기화 증분 · 동기화 전량. 한 통에 세면 `failure_rate` 가
+        #   무엇의 실패율인지 말할 수 없다.
+        #
+        #   실제로 그 오독이 문서에 남았다 - `docs/미완_목록.md:3049` 가
+        #   「9회 중 3회 실패(0.333) → **셀러 셋 중 하나**가 조회 실패를 본다」
+        #   고 적었는데, 그 실패는 **동기화의 domestic 호출**이었을 수 있다.
+        #   배포 직후 사용자가 없는 시점의 `calls` 가 그 증거다(2026-09-22
+        #   실측: calls 3 = domestic 1 + overseas 2, 전부 sync).
+        #
+        #   ⚠ 합계(`calls`·`failures`)는 **그대로 둔다.** 기존 감시·검사가
+        #     본다. 경로별은 더하는 것이지 대체가 아니다.
+        self.by_path: dict[str, dict] = {
+            k: {"calls": 0, "failures": 0, "last_success_at": None}
+            for k in CALL_PATHS
+        }
 
     @staticmethod
     def _now() -> str:
@@ -159,18 +189,29 @@ class KatsHealth:
 
         return datetime.now(timezone.utc).isoformat(timespec="seconds")
 
-    def record_success(self) -> None:
+    def _bucket(self, path: str) -> dict:
+        """모르는 경로는 **만들어 준다.** 세다 말고 KeyError 로 죽으면 안 된다."""
+        return self.by_path.setdefault(
+            path, {"calls": 0, "failures": 0, "last_success_at": None})
+
+    def record_success(self, path: str) -> None:
         self.consecutive_failures = 0
         self.calls += 1
         self.last_success_at = self._now()
+        b = self._bucket(path)
+        b["calls"] += 1
+        b["last_success_at"] = self.last_success_at
 
-    def record_failure(self, code: str, message: str = "") -> None:
+    def record_failure(self, code: str, message: str = "", *, path: str) -> None:
         self.last_error_code = code
         self.last_error_at = self._now()
         self.last_error_message = message or None
         self.consecutive_failures += 1
         self.calls += 1
         self.failures += 1
+        b = self._bucket(path)
+        b["calls"] += 1
+        b["failures"] += 1
 
     def is_operator_fault(self) -> bool:
         """우리 설정 문제인가. 셀러에게 '다시 시도' 를 권하면 안 되는 경우다."""
@@ -192,6 +233,20 @@ class KatsHealth:
                 round(self.failures / self.calls, 3) if self.calls else None
             ),
             "last_success_at": self.last_success_at,
+            # ⚠ 경로별. 비율 옆에 **분모(calls)** 를 같이 낸다 - 비율만 두면
+            #   표본 두 개짜리가 통계처럼 읽힌다 (`verifier.py:195` 가 룰 DB 에
+            #   대해 세운 규칙을 여기에도 적용한다).
+            "by_path": {
+                k: {
+                    "calls": v["calls"],
+                    "failures": v["failures"],
+                    "failure_rate": (
+                        round(v["failures"] / v["calls"], 3) if v["calls"] else None
+                    ),
+                    "last_success_at": v["last_success_at"],
+                }
+                for k, v in sorted(self.by_path.items())
+            },
             "note": (
                 "프로세스 메모리 · 재배포하면 0. 실패율이 None 이면 이 프로세스가 "
                 "정부 API 를 한 번도 부르지 않은 것입니다(목 모드이거나 조회할 "
@@ -636,7 +691,9 @@ class KatsClient:
         key = normalize_kc(kc_number)
         if self._mock:
             return _mock_cert(key)
-        rows = self._call("certification", self._query("certification", "cert_number", key))
+        rows = self._call("certification",
+                          self._query("certification", "cert_number", key),
+                          path="user_cert")
         row = self._pick_exact(rows, key)
         if row is None:
             # 근처 값이 있어도 **없는 것으로 답한다.** 셀러가 적지 않은 번호로
@@ -665,6 +722,7 @@ class KatsClient:
             rows = self._call(
                 "recall_domestic",
                 self._query("recall_domestic", "cert_number", normalize_kc(cert_number)),
+                path="user_recall",
             )
             out.extend(self._to_recall(r, "domestic") for r in rows)
 
@@ -673,7 +731,7 @@ class KatsClient:
             # 검색 대상 필드를 정하므로 무엇으로 찾는지 명시해야 한다 (p.9, p.15).
             logical = "model_name" if model_name else "product_name"
             for op, scope in (("recall_domestic", "domestic"), ("recall_overseas", "overseas")):
-                rows = self._call(op, self._query(op, logical, term))
+                rows = self._call(op, self._query(op, logical, term), path="user_recall")
                 out.extend(self._to_recall(r, scope) for r in rows)
         return out
 
@@ -730,7 +788,8 @@ class KatsClient:
         if self._mock:
             return []
         op = "recall_overseas" if overseas else "recall_domestic"
-        rows = self._call(op, self._query(op, "published_on", date_prefix))
+        rows = self._call(op, self._query(op, "published_on", date_prefix),
+                          path="sync_incremental")
         scope = "overseas" if overseas else "domestic"
         return [self._to_recall(r, scope) for r in rows]
 
@@ -750,7 +809,7 @@ class KatsClient:
         if self._mock:
             return []
         op = "recall_overseas" if overseas else "recall_domestic"
-        rows = self._call(op, self._query(op, "all", "%"))
+        rows = self._call(op, self._query(op, "all", "%"), path="sync_full")
         scope = "overseas" if overseas else "domestic"
         return [self._to_recall(r, scope) for r in rows]
 
@@ -786,7 +845,7 @@ class KatsClient:
             cfg["params"]["query"]: value,
         }
 
-    def _call(self, op: str, params: dict[str, str]) -> list[dict]:
+    def _call(self, op: str, params: dict[str, str], *, path: str) -> list[dict]:
         cfg = self._op(op)
         url = f"{self._base}/{cfg['path'].lstrip('/')}"
         # 나가기 **전에** 승인 호스트를 확인한다 (CLAUDE.md R4).
@@ -841,7 +900,7 @@ class KatsClient:
             # 인증키가 틀리면 JSON 4000 이 아니라 302 로 온다(실측:
             # error/accessDeniedByKey.json 으로 리다이렉트). 설계서와 다르다.
             code = "4000" if exc.response.status_code in (301, 302, 401, 403) else "http"
-            health.record_failure(code, f"HTTP {exc.response.status_code}")
+            health.record_failure(code, f"HTTP {exc.response.status_code}", path=path)
             raise KatsApiError(code, f"HTTP {exc.response.status_code}") from exc
         except (httpx.HTTPError, ValueError) as exc:
             # 주의(가장 중요): 실패 **원인을 가른다** (2026-09-20 P1).
@@ -852,7 +911,7 @@ class KatsClient:
             #       network.read     시간을 늘리면 된다
             #   주의: 재시도가 아니다. 추가하는 것은 **관측**뿐이다(133행 주석).
             code = _network_code(exc)
-            health.record_failure(code, type(exc).__name__)
+            health.record_failure(code, type(exc).__name__, path=path)
             # ValueError 는 `resp.json()` 의 파싱 실패다 - 본문을 남긴다.
             if isinstance(exc, ValueError):
                 _log_unreadable_body(op, locals().get("resp"))
@@ -874,16 +933,16 @@ class KatsClient:
         #
         # ⚠ 이것은 R3 다 - 우리가 못 읽은 것을 "없다" 로 반올림하지 않는다.
         if not isinstance(payload, dict) or "resultCode" not in payload:
-            health.record_failure("parse", "resultCode 가 없는 응답")
+            health.record_failure("parse", "resultCode 가 없는 응답", path=path)
             _log_unreadable_body(op, resp)
             raise KatsApiError("parse", "resultCode 가 없는 응답 - 형식이 다릅니다")
         code = str(payload.get("resultCode", ""))
         if code == _CODE_NO_DATA:
-            health.record_success()
+            health.record_success(path)
             return []
         if code and code != _CODE_SUCCESS:
             msg = str(payload.get("resultMsg", ""))
-            health.record_failure(code, msg)
+            health.record_failure(code, msg, path=path)
             if code in OPERATOR_FAULT_CODES:
                 # 셀러가 다시 시도해도 우리가 고치기 전엔 계속 실패한다.
                 _log.error(
@@ -891,7 +950,7 @@ class KatsClient:
                     "(연속 실패 %d회)", code, msg, health.consecutive_failures,
                 )
             raise KatsApiError(code, msg)
-        health.record_success()
+        health.record_success(path)
 
         rows: Any = payload
         for step in cfg["rows_path"]:            # 설계서 기준 ["resultData"]

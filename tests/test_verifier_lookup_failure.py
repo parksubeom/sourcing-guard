@@ -44,7 +44,7 @@ class EmptyRecallIndex:
 @pytest.fixture(autouse=True)
 def _reset_health():
     yield
-    health.record_success()
+    health.record_success("user_cert")
     health.last_error_code = None
     health.last_error_at = None
 
@@ -113,7 +113,7 @@ def test_wording_splits_our_fault_from_someone_elses():
     assert "설정을 점검하고 있습니다" in ours_text
     assert "다시 시도" not in ours_text
 
-    health.record_success()
+    health.record_success("user_cert")
     theirs = verify(FACTS, FailingClient("5000"), RuleBook(), EmptyRecallIndex())
     theirs_text = next(f.statement_ko for f in theirs if f.kind is FindingKind.LOOKUP_FAILED)
     assert "설정을 점검" not in theirs_text, "남의 장애를 우리 설정 문제로 말한다"

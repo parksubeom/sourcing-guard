@@ -572,13 +572,13 @@ def test_health_counts_consecutive_failures_and_resets_on_success():
     h = KatsHealth()
     assert h.consecutive_failures == 0
 
-    h.record_failure("5000", "Internal Server Error")
-    h.record_failure("5000", "Internal Server Error")
+    h.record_failure("5000", "Internal Server Error", path="user_cert")
+    h.record_failure("5000", "Internal Server Error", path="user_cert")
     assert h.consecutive_failures == 2
     assert h.last_error_code == "5000"
     assert h.last_error_at is not None
 
-    h.record_success()
+    h.record_success("user_cert")
     assert h.consecutive_failures == 0
     # 마지막 오류 코드는 남긴다. 방금 무슨 일이 있었는지 알 수 있어야 한다.
     assert h.last_error_code == "5000"
@@ -599,7 +599,7 @@ def test_operator_fault_is_distinguished(code, is_ours):
     from sourcing_guard.kats_client import KatsHealth
 
     h = KatsHealth()
-    h.record_failure(code)
+    h.record_failure(code, path="user_cert")
     assert h.is_operator_fault() is is_ours
 
 
@@ -614,14 +614,14 @@ def test_healthz_never_reports_not_ok_on_kats_failure():
     from sourcing_guard.kats_client import health
     from sourcing_guard.main import app
 
-    health.record_failure("4001", "Invalid IP")
+    health.record_failure("4001", "Invalid IP", path="user_cert")
     try:
         body = TestClient(app).get("/healthz").json()
         assert body["ok"] is True
         assert body["kats"]["last_error_code"] == "4001"
         assert body["kats"]["consecutive_failures"] >= 1
     finally:
-        health.record_success()
+        health.record_success("user_cert")
         health.last_error_code = None
         health.last_error_at = None
 
