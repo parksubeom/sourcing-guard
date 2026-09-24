@@ -97,7 +97,10 @@ def main() -> int:
 
     print(f"옛 사본 {old_p}  {len(o_items)}장")
     print(f"새 사본 {new_p}  {len(n_items)}장")
-    print(f"rescanned: {new.get('rescanned')}\n")
+    # ⚠ 회차가 쌓이므로 전부 찍으면 길어진다. 수와 **마지막 한 벌**만 낸다.
+    rounds = new.get("rescans") or ([new["rescanned"]] if new.get("rescanned") else [])
+    print(f"재기록 회차 {len(rounds)}회" + (f" · 마지막 {rounds[-1]}" if rounds else ""))
+    print()
 
     gone = sorted(set(o_items) - set(n_items))
     added = sorted(set(n_items) - set(o_items))

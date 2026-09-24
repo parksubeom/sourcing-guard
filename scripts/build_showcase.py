@@ -619,9 +619,25 @@ def scan(base: str, *, sleep: float = 6.0, only: set[str] | None = None,
     else:
         # ⚠ `scanned_at` 을 덮지 않는다. 23장은 그때 것이고 6장만 지금 것이다 -
         #   하나로 적으면 23장의 조회 시각이 오늘로 둔갑한다 (R5).
-        payload["rescanned"] = {"at": now, "items": rescanned,
-                                "dropped_lookup": dropped_lookup,
-                                "dropped_red": dropped_red}
+        #
+        # ⚠⚠ **회차를 쌓는다. 대입하지 않는다** (2026-09-23).
+        #   전에는 `payload["rescanned"] = {...}` 였고 회차마다 앞의 것을 지웠다.
+        #   9/22 에 4장을 뺀 기록(`dropped_lookup`)이 9/23 회차에 **통째로
+        #   지워졌다** - 사본이 말하는 구성과 실제 구성이 갈렸다.
+        #
+        #   ⚠ 항목마다 시각을 붙이지 **않는다.** `showcase_pii` 의 `KEEP_FIELDS`
+        #     는 허용목록이라 `OWN_KEYS` 를 고쳐야 하고(개인정보 계약 파일이다),
+        #     제거기록의 「목록 밖 필드 제거」 수에 개인정보가 아닌 필드가 섞여
+        #     그 사이드카의 뜻이 흐려진다. 그리고 **항목 시각은 이 목록에서
+        #     도출된다** - 같은 사실을 두 곳에 적는 것이다 (§6).
+        rounds = payload.get("rescans")
+        if not isinstance(rounds, list):
+            rounds = []
+        rounds.append({"at": now, "items": rescanned,
+                       "dropped_lookup": dropped_lookup,
+                       "dropped_red": dropped_red})
+        payload["rescans"] = rounds
+        payload.pop("rescanned", None)      # 옛 단수 키. 남으면 둘이 갈린다
         if dropped_lookup:
             payload.setdefault("뺀_상품", []).extend(
                 {"no": no, "이유": f"인증 조회 {st} - 근거가 셀러 표기와 다른 번호를 "

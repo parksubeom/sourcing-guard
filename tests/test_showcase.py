@@ -109,18 +109,29 @@ def test_every_thumbnail_exists_and_is_small(raw):
     # ⚠⚠ 다만 **잠시 자리를 비운 것**은 주인 없는 것이 아니다 (2026-09-22).
     #   조회가 실패해 목록에서 뺀 카드는 서버가 살아나면 다시 들어온다. 그때
     #   썸네일을 다시 받으려면 도매꾹을 또 불러야 하므로 파일은 남긴다 -
-    #   사본이 `rescanned.dropped_lookup` 에 **누구를 왜 뺐는지 적고 있다.**
+    #   사본이 `rescans[].dropped_lookup` 에 **누구를 왜 뺐는지 적고 있다.**
     #   그 목록에 없는 파일만 주인이 없는 것이다.
+    #
     #   ⚠ 이 예외는 사본이 스스로 밝힌 것에만 열린다. 목록을 안 적고 빼면
     #     그 파일은 여기서 걸린다.
+    #
+    #   ⚠⚠ **회차 전부를 훑고, 그중 「지금 목록에 없는 것」만 자리 비움이다**
+    #     (2026-09-23). 마지막 회차만 보면 옛 drop 을 놓치고, 전부 합치기만 하면
+    #     **되살아난 카드까지 자리 비움으로 친다** - 9/22 에 뺀 넷이 9/23 에
+    #     돌아왔다. 현재 목록과 대조해야 둘 다 맞다.
     on_disk = {f.name for f in _THUMBS.glob("*.webp")}
     used = {i["thumb_file"] for i in raw["items"]}
-    parked = {f"{no}.webp"
-              for no, _ in ((raw.get("rescanned") or {}).get("dropped_lookup") or [])}
+    present = {str(i["no"]) for i in raw["items"]}
+    dropped = {no for r in (raw.get("rescans") or [])
+               for no, _ in (r.get("dropped_lookup") or [])}
+    parked = {f"{no}.webp" for no in dropped if no not in present}
     orphan = on_disk - used - parked
     assert not orphan, f"주인 없는 썸네일: {sorted(orphan)}"
     assert parked <= on_disk, (
         f"자리를 비웠다고 적힌 카드의 썸네일이 없다: {sorted(parked - on_disk)}")
+    # 회차 기록이 통째로 없어지면 위 예외가 **조용히 닫힌다.** 그것도 본다 -
+    # 0 이 「뺀 적 없음」인지 「기록을 잃음」인지 가르는 것은 회차 수다.
+    assert raw.get("rescans"), "재기록 회차 기록이 없다 - 예외의 근거가 사라졌다"
 
 
 def test_no_seller_identity_survives(raw):
@@ -527,3 +538,47 @@ def test_the_collect_metadata_never_reaches_the_screen():
     blob1 = _json.dumps(one, ensure_ascii=False)
     assert "certs" not in blob1, "단건 응답에 certs 가 새 나갔다"
     assert "detail_url" not in blob1, "단건 응답에 detail_url 이 새 나갔다"
+
+
+def test_rescan_rounds_accumulate_instead_of_overwriting():
+    """**회차를 쌓는다. 대입하지 않는다.**
+
+    전에는 `payload["rescanned"] = {...}` 였고 회차마다 앞의 것을 지웠다.
+    9/22 에 4장을 뺀 기록(`dropped_lookup`)이 9/23 회차에 **통째로 지워졌다** -
+    사본이 말하는 구성과 실제 구성이 갈렸다.
+
+    주의(가장 중요): **옛 단수 키가 남아 있으면 안 된다.** 둘이 공존하면 읽는
+      쪽마다 다른 것을 보고, 그게 §6 이 금지하는 두 벌이다.
+
+    주의(중요): 회차는 **시간순**이어야 한다. 섞이면 「언제 뺐나」를 못 읽는다.
+    """
+    raw = json.loads((_ROOT / "sourcing_guard" / "data" / "showcase.json")
+                     .read_text(encoding="utf-8"))
+    rounds = raw.get("rescans")
+    assert isinstance(rounds, list) and rounds, "회차가 목록이 아니거나 비었다"
+    assert "rescanned" not in raw, "옛 단수 키가 남아 있다 - 읽는 쪽이 갈린다"
+
+    ats = [r["at"] for r in rounds]
+    assert ats == sorted(ats), f"회차가 시간순이 아니다: {ats}"
+    for r in rounds:
+        assert {"at", "items", "dropped_lookup", "dropped_red"} <= set(r), r
+
+    # 잃었던 9/22 회차가 들어와 있는가. 복원이 아니라 **기록의 완성**이다.
+    assert any(r["at"].startswith("2026-09-22") for r in rounds), (
+        "9/22 회차가 없다 - 덮어쓰기로 잃은 그 한 벌이다")
+    assert len(rounds) >= 2, f"회차가 {len(rounds)}개뿐이다 - 쌓이는지 알 수 없다"
+
+
+def test_the_writer_appends_a_round_and_drops_the_old_key():
+    """쓰는 쪽이 **append 인지** 본다. 사본만 재면 손으로 고친 것과 구분이 안 된다.
+
+    주의(중요): 주석을 걷고 본다 - 이 규칙을 설명한 주석이 검사에 걸린다.
+    """
+    from tests.srccheck import code_only
+
+    src = code_only((_ROOT / "scripts" / "build_showcase.py").read_text(encoding="utf-8"))
+    assert re.search(r"rounds\s*\.\s*append\s*\(", src), "회차를 쌓지 않는다"
+    assert not re.search(r'payload\s*\[\s*"rescanned"\s*\]\s*=', src), (
+        "옛 대입이 돌아왔다 - 회차마다 앞의 것을 지운다")
+    assert re.search(r'payload\s*\.\s*pop\s*\(\s*"rescanned"', src), (
+        "옛 단수 키를 걷어내지 않는다 - 둘이 공존하면 읽는 쪽이 갈린다")
