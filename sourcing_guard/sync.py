@@ -352,6 +352,22 @@ def run_sync(
     store.set_sync_state(
         "last_retried",
         json.dumps(report.retried, ensure_ascii=False) if report.retried else "")
+    # ⚠⚠ **스코프별로 몇 줄 받아 왔나.** 「리콜 건수가 안 늘어난다」를 물을 때
+    #   가르는 값이다 (2026-09-28).
+    #
+    #   2026-09-22 와 09-28 에 같은 걱정이 두 번 올라왔다 - 공표일이 며칠째
+    #   그대로다. 두 번 다 답은 「공표가 없었던 것」이었지만, 확인하려면 **창
+    #   조회가 몇 줄을 받아 왔는지**를 알아야 했고 그 수가 어디에도 없어서
+    #   09-28 에는 실호출 2회를 썼다.
+    #
+    #       받아 온 줄이 있는데 공표일이 안 움직인다  → 공표가 없는 것
+    #       받아 온 줄이 0 이다                      → **우리가 못 받는 것** (R6)
+    #
+    #   ⚠ `fetched` 에 **키가 없는 스코프는 실패한 것**이다 (0 이 아니다) -
+    #     `_one_scope` 가 실패하면 대입 전에 빠져나간다.
+    store.set_sync_state(
+        "last_fetched",
+        json.dumps(report.fetched, ensure_ascii=False) if report.fetched else "")
 
     # 메모리 인덱스가 갱신된 사본을 다시 읽게 한다. 안 부르면 스캔이 재시작
     # 전까지 옛 사본으로 대조하고, 새로 공표된 리콜을 놓친다.

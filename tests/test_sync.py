@@ -740,3 +740,41 @@ def test_the_retry_count_is_written_where_healthz_can_read_it(store):
     )
     run_sync(c2, store, today=today, min_plausible=0, retry_gaps=(0, 0, 0))
     assert not store.get_sync_state("last_retried"), "옛 재시도 수가 남았다"
+
+
+def test_the_fetched_rows_are_written_where_healthz_can_read_them(store):
+    """「리콜 건수가 안 늘어난다」를 **실호출 없이** 가를 수 있어야 한다.
+
+    2026-09-22 와 09-28 에 같은 걱정이 두 번 올라왔다. 두 번 다 답은 「공표가
+    없었던 것」이었지만, 확인하려면 **창 조회가 몇 줄을 받아 왔는지**를 알아야
+    했고 그 수가 어디에도 없어서 09-28 에는 실호출 2회를 썼다.
+
+        받아 온 줄이 있는데 공표일이 안 움직인다  → 공표가 없는 것
+        받아 온 줄이 0 이다                      → **우리가 못 받는 것** (R6)
+
+    주의(가장 중요): **키가 없는 스코프는 실패한 것**이다. 0 이 아니다 -
+      `_one_scope` 가 실패하면 대입 전에 빠져나간다. 0 과 부재를 같게 읽으면
+      「못 받았다」와 「받았는데 비었다」가 섞인다.
+    """
+    today = date(2026, 9, 22)
+    _incremental(store)
+    c = FlakyClient(
+        monthly={(s, w): [rec(f"{s}{w}", scope=s)]
+                 for s in SCOPES for w in month_windows(today)},
+        first_window=month_windows(today)[0],
+    )
+    run_sync(c, store, today=today, min_plausible=0)
+    got = json.loads(store.get_sync_state("last_fetched"))
+    assert set(got) == set(SCOPES), got
+    assert all(v > 0 for v in got.values()), got
+
+    # 실패한 스코프는 **키가 없다.** 그게 「0 줄 받음」과 다르다.
+    c2 = FlakyClient(
+        monthly={(s, w): [rec(f"{s}{w}2", scope=s)]
+                 for s in SCOPES for w in month_windows(today)},
+        fail_until={"domestic": 99}, first_window=month_windows(today)[0],
+    )
+    run_sync(c2, store, today=today, min_plausible=0)
+    got2 = json.loads(store.get_sync_state("last_fetched"))
+    assert "domestic" not in got2, f"실패한 스코프에 키가 있다: {got2}"
+    assert got2.get("overseas", 0) > 0, got2

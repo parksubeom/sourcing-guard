@@ -729,6 +729,14 @@ class SqliteWatchStore:
                 "retrying": _json_or_none(self.get_sync_state("retrying")),
                 # 마지막 회차에서 스코프별 재시도 횟수. 없으면 None(한 번에 됐다).
                 "last_retried": _json_or_none(self.get_sync_state("last_retried")),
+                # 마지막 회차에서 스코프별로 **몇 줄 받아 왔나.**
+                #
+                # ⚠ 「리콜 건수가 안 늘어난다」를 물을 때 가르는 값이다 -
+                #   줄이 있는데 공표일이 안 움직이면 공표가 없는 것이고,
+                #   줄이 0 이면 우리가 못 받는 것이다 (R6). 이 수가 없어서
+                #   2026-09-28 에 실호출 2회를 썼다.
+                # ⚠ **키가 없는 스코프는 실패한 것**이다 (0 이 아니다).
+                "last_fetched": _json_or_none(self.get_sync_state("last_fetched")),
                 "recalls": {
                     "domestic": self.recall_count("domestic"),
                     "overseas": self.recall_count("overseas"),
