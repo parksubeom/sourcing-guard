@@ -1611,6 +1611,18 @@ a.btn-t, a.btn{display:inline-flex; align-items:center; justify-content:center;
 .dg-t{
   font-size:14px; line-height:20px; color:var(--fg-1); overflow-wrap:anywhere;
   display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+  /* 두 줄 자리를 늘 차지한다 (2026-09-28).
+
+     안 그러면 제목이 한 줄인 카드만 **키가 짧아진다** - 아래 테두리가 이웃보다
+     약 33px 위로 올라오고, did 줄과 가격 줄이 같이 뜬다. 자동으로 넘어가는
+     가로 줄에서 그 한 장이 지나갈 때 깨진 것처럼 보인다.
+
+     주의(가장 중요): 지금 실측으로 한 줄 제목은 29장 중 **1장**뿐이다. 그래서
+       이 규칙이 작아 보인다. 그런데 **재수집하면 제목 분포가 바뀐다** -
+       도매꾹 랭킹순으로 다시 고르면 몇 장이 될지 우리가 정하지 않는다.
+       min-height 는 **데이터와 상관없이 줄을 세운다.** 그게 이 규칙을 두는
+       이유다 - 지금 1장이라서가 아니다. */
+  min-height:40px;
 }
 .dg-m{
   display:flex; flex-wrap:wrap; gap:var(--s1) var(--s2); margin-top:auto;
@@ -1628,7 +1640,7 @@ a.btn-t, a.btn{display:inline-flex; align-items:center; justify-content:center;
 @media (max-width:480px){
   .dg-list > li{width:150px}
   .dg-card{padding:var(--s2)}
-  .dg-t{font-size:13px; line-height:19px}
+  .dg-t{font-size:13px; line-height:19px; min-height:38px}
 }
 
 /* == 대비 한 컷 (랜딩) ================================================
