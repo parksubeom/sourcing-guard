@@ -349,6 +349,19 @@ def run_sync(
     store.set_sync_state("last_sync_error", "; ".join(report.errors) if report.errors else "")
     # ㉡ 재시도가 **실제로 들었는지**는 이 수로만 알 수 있다. 만들어 놓고 안 내면
     #   `/healthz` 를 보는 사람은 「한 번에 됐다」와 「두 번 만에 됐다」를 못 가린다.
+    #
+    # ⚠⚠ **대기 중에 보이는 값은 지난 회차 것이다.** 이 줄이 `run_sync` 의 끝에
+    #   있어서다 - 재시도를 기다리는 동안에는 아직 안 덮어썼고, `/healthz` 는
+    #   **직전에 끝난 회차**의 수를 그대로 보여준다. 「last」 이니 맞는 동작이지만
+    #   읽는 사람이 헷갈리는 자리다.
+    #
+    #   지금 이 회차가 무엇을 하는 중인지는 **`retrying`** 이 답한다 - 대기
+    #   중에만 켜지고(`_set_retrying`) 끝나면 위에서 지워진다. 둘을 같이 읽는다:
+    #   `retrying` 이 현재형 · `last_retried` 가 과거형이다.
+    #
+    #   실측 (2026-09-28 00:47Z · 부팅 회차가 2번째 재시도를 기다리는 중):
+    #       retrying      {scopes:[domestic], attempt:2, of:3, gap_seconds:1800}
+    #       last_retried  {domestic: 1, overseas: 1}      ← **지난 회차** 값
     store.set_sync_state(
         "last_retried",
         json.dumps(report.retried, ensure_ascii=False) if report.retried else "")
