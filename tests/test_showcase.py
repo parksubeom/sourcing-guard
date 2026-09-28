@@ -582,3 +582,38 @@ def test_the_writer_appends_a_round_and_drops_the_old_key():
         "옛 대입이 돌아왔다 - 회차마다 앞의 것을 지운다")
     assert re.search(r'payload\s*\.\s*pop\s*\(\s*"rescanned"', src), (
         "옛 단수 키를 걷어내지 않는다 - 둘이 공존하면 읽는 쪽이 갈린다")
+
+
+def test_the_card_title_always_takes_two_lines():
+    """제목이 한 줄인 카드만 **키가 짧아지는** 것을 막는다.
+
+    막지 않으면 아래 테두리가 이웃보다 약 33px 위로 올라오고 did·가격 줄이
+    같이 뜬다. 자동으로 넘어가는 가로 줄에서 그 한 장이 지나갈 때 깨진 것처럼
+    보인다 (총괄 2026-09-28 · 캡처 둘 대조).
+
+    ⚠⚠ **지금 한 줄 제목은 29장 중 1장뿐이다.** 그래서 이 규칙이 작아 보인다.
+      그런데 재수집하면 제목 분포가 바뀌고, 몇 장이 될지 우리가 정하지 않는다.
+      `min-height` 는 **데이터와 상관없이** 줄을 세운다 - 지금 1장이라서 두는
+      규칙이 아니다.
+
+    ⚠ 두 폭을 다 본다. 폰은 `line-height` 가 달라 값도 다르다.
+    """
+    css = markup_only(
+        (_ROOT / "sourcing_guard" / "static" / "app.css").read_text(encoding="utf-8"))
+    base = re.search(r"\.dg-t\s*\{([^}]*)\}", css)
+    assert base, ".dg-t 규칙이 없다"
+    lh = re.search(r"line-height\s*:\s*(\d+)px", base.group(1))
+    mh = re.search(r"min-height\s*:\s*(\d+)px", base.group(1))
+    assert lh and mh, f"line-height / min-height 가 없다: {base.group(1)!r}"
+    assert int(mh.group(1)) == int(lh.group(1)) * 2, (
+        f"min-height {mh.group(1)} 가 두 줄({int(lh.group(1))*2}) 이 아니다")
+
+    # 좁은 폭 규칙도 같은 계약을 지키는가. 한쪽만 고치면 폰에서 다시 어긋난다.
+    narrow = [m for m in re.finditer(r"\.dg-t\s*\{([^}]*)\}", css)][1:]
+    assert narrow, "좁은 폭 .dg-t 규칙이 없다 - 폰에서 line-height 가 다르다"
+    for m in narrow:
+        lh2 = re.search(r"line-height\s*:\s*(\d+)px", m.group(1))
+        mh2 = re.search(r"min-height\s*:\s*(\d+)px", m.group(1))
+        assert lh2 and mh2, f"좁은 폭에 min-height 가 없다: {m.group(1)!r}"
+        assert int(mh2.group(1)) == int(lh2.group(1)) * 2, (
+            f"좁은 폭 min-height {mh2.group(1)} 가 두 줄이 아니다")
