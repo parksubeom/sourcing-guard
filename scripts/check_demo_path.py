@@ -119,7 +119,10 @@ def main() -> int:
             resp = pg.goto(args.base + "/", wait_until="networkidle", timeout=60_000)
             want(resp is not None and resp.status == 200, f"HTTP {resp and resp.status}")
             b = (before.get("baseline") or {})
-            for hook, expect in (("ok_rate", f"{b.get('ok_rate')}%"),
+            # ⚠ 비율은 **서버가 준 글자**(`ok_rate_label`)와 맞춘다. 여기서
+            #   숫자로 만들면 이 점검이 화면과 똑같은 실수를 하게 된다 -
+            #   `f"{77.0}%"` 는 파이썬에선 "77.0%" 라 JS 의 결함을 못 본다.
+            for hook, expect in (("ok_rate", b.get("ok_rate_label")),
                                  ("denominator", str(b.get("denominator"))),
                                  ("off_target", f"{b.get('off_target')}건")):
                 got = pg.eval_on_selector(f'[data-h="{hook}"]', "el => el.textContent.trim()")

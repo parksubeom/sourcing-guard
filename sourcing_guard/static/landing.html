@@ -22,7 +22,8 @@
   숫자는 **넷뿐이고 전부 그 자리에서 그린다.** HTML 에 적지 않는다:
     리콜 N건 · 공표일   /healthz  sync.recalls · sync.latest_published_on
     5개 중 1개          /static/data/안전성조사_보도자료.json (2026-05-14 · 420/85)
-    70.4% · 135건       /healthz  baseline.ok_rate · baseline.denominator
+    비율 · 135건        /healthz  baseline.ok_rate_label · baseline.denominator
+                        (비율은 **글자째** 받는다. 여기서 만들면 .0 이 날아간다)
     0건                 /healthz  baseline.off_target
   데모 문구와 예시 결과  /api/v1/demos   (items[].title · preview)
 
@@ -434,7 +435,9 @@
       set("recalls", total ? num(total) + "건" : null);
       set("as_of", fmtDate(h.sync && h.sync.latest_published_on));
       var b = h.baseline || {};
-      set("ok_rate", typeof b.ok_rate === "number" ? b.ok_rate + "%" : null);
+      /* 서버가 준 **글자**를 그대로 찍는다. 여기서 만들면 `77.0` 이 `77%` 가
+         된다 - JS 에 정수/실수 구분이 없다 (2026-09-28 실측). */
+      set("ok_rate", typeof b.ok_rate_label === "string" ? b.ok_rate_label : null);
       set("denominator", num(b.denominator));
       set("off_target", typeof b.off_target === "number" ? b.off_target + "건" : null);
     })
