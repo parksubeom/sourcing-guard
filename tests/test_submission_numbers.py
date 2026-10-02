@@ -186,6 +186,9 @@ def test_the_draft_names_the_extractors_we_actually_use():
     for label, body in _answer_bodies().items():
         if "AI 도구" not in label:
             continue
+        if "claude" in settings.extractor_order:
+            assert settings.extractor_model in body, (
+                f"{label}: 런타임 모델 {settings.extractor_model} 이 없다")
         assert settings.gpt_model in body, (
             f"{label}: 기준 추출기 모델 {settings.gpt_model} 이 없다")
         # ⚠⚠ **2026-09-20 에 같은 결함이 반대 방향으로 났다.** R7 이 개정돼
@@ -197,7 +200,9 @@ def test_the_draft_names_the_extractors_we_actually_use():
         for vendor in set(settings.extractor_order):
             assert _RUNTIME_NAME[vendor] in body, (
                 f"{label}: 쓰는 벤더 {_RUNTIME_NAME[vendor]} 가 없다")
-        for vendor in set(_RUNTIME_NAME) - set(settings.extractor_order):
+        # ⚠ 기준 추출기는 런타임에서 빠져도 **숫자의 출처로** 적혀야 한다
+        #   (2026-10-02 · 런타임 Claude · 기준선 GPT). 그래서 금지에서 뺀다.
+        for vendor in set(_RUNTIME_NAME) - set(settings.extractor_order) - {BASELINE_EXTRACTOR}:
             assert _RUNTIME_NAME[vendor] not in body, (
                 f"{label}: 쓰지 않는 {_RUNTIME_NAME[vendor]} 를 쓴다고 적었다 - "
                 "심사위원이 /healthz 를 열면 바로 보인다 (§9)")

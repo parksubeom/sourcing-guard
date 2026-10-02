@@ -138,7 +138,10 @@ class Settings:
             #     `gpt,claude` 한 줄 + 잔액이면 된다.
             #   ⚠ 빈 값도 기본값으로 떨어진다 - `_csv` 주석 참조. 전에는
             #     `EXTRACTOR_ORDER=` 가 **빈 순서**가 되어 추출기가 하나도 없었다.
-            extractor_order=_csv("EXTRACTOR_ORDER", "gpt"),
+            #   ⚠⚠ **2026-10-02 다시 Claude 한 벌로 옮겼다** (시피님 지시 · GPT 미사용).
+            #     기준선 다섯 숫자는 GPT 로 잰 것이다 - 새표본235 재측정 전까지
+            #     화면 추출기와 발표 숫자의 기준 추출기가 갈린다 (R7 "되돌릴 때").
+            extractor_order=_csv("EXTRACTOR_ORDER", "claude"),
             kats_base_url=os.getenv("KATS_BASE_URL") or None,
             kats_service_key=os.getenv("KATS_SERVICE_KEY") or None,
             kats_connect_timeout=_env_float("KATS_CONNECT_TIMEOUT", 8.0),

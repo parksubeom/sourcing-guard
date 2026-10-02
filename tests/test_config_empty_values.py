@@ -50,7 +50,7 @@ def test_an_empty_extractor_order_falls_back_to_the_documented_default(monkeypat
       이 검사가 먼저 깨져서 사람이 알게 된다.
     """
     monkeypatch.setenv("EXTRACTOR_ORDER", "")
-    assert Settings.from_env().extractor_order == ("gpt",)
+    assert Settings.from_env().extractor_order == ("claude",)
 
 
 @pytest.mark.parametrize("raw", ["", "   ", ",", " , ,"])
