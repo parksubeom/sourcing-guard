@@ -126,7 +126,7 @@
         감지·차단 코드를 넣지 않았다 - 오탐은 코드가 막을 때만 생기고, 문구는
         아무것도 막지 않으므로 오탐이 없다.
 
-        실측 (2026-09-18 · 10쌍 · 기준 추출기 gpt):
+        실측 (2026-09-18 · 10쌍):
           상품명이 한쪽으로 쏠림  8/10 · 품목은 **언제나 하나** · 밖의 번호가 섞임 2/10
         그래서 "섞입니다" 가 아니라 "한쪽 기준으로만 나옵니다" 다 - 8/10 은
         섞인 것이 아니라 **다른 상품이 아예 검사되지 않은 것**이다.
@@ -1479,11 +1479,11 @@
     var bits = [];
     if (meta.extraction_path === "heuristic") {
       bits.push("추출 <b>휴리스틱(LLM 응답 없음)</b>");
-    } else if (meta.extracted_by) {
-      bits.push("추출 <b>" + esc(meta.extracted_by) + "</b>");
-    } else if (meta.extractor_vendor) {
-      bits.push("추출 <b>" + esc(meta.extractor_vendor) +
-                (meta.extractor_model ? " · " + esc(meta.extractor_model) : "") + "</b>");
+    } else if (meta.extracted_by || meta.extractor_vendor) {
+      // 주의: 벤더 이름은 화면에 적지 않는다 (2026-10-02 지시). 미리 기록한
+      //   사본에는 옛 벤더 이름이 남아 있어, 그대로 그리면 지금 쓰지 않는
+      //   벤더가 보인다. 셀러에게 필요한 것은 "LLM 이 뽑았나 / 휴리스틱인가" 다.
+      bits.push("추출 <b>LLM</b>");
     }
     var gl = meta.gov_lookup;
     if (gl) {

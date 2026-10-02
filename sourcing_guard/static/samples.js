@@ -56,7 +56,8 @@
     }
 
     var foot = [];
-    if (s.extractor) foot.push("추출 <b>" + esc(s.extractor) + "</b>");
+    /* 벤더 이름은 화면에 적지 않는다 (2026-10-02). 사본에 옛 벤더가 남아 있다. */
+    if (s.extractor) foot.push("추출 <b>LLM</b>");
     if (s.gov_lookup) {
       foot.push("정부 조회 인증 <b>" + esc(LOOKUP[s.gov_lookup.cert] || s.gov_lookup.cert) +
                 "</b> · 리콜 <b>" + esc(LOOKUP[s.gov_lookup.recall] || s.gov_lookup.recall) + "</b>");
